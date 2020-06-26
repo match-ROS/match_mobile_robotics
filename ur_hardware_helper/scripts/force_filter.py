@@ -46,25 +46,39 @@ def callbackWrench(msg):
     global zero_wrench
     global pub
     global enable_calibration
+    global counter
 
     wrench=Wrench()
-    wrench_filtered=WrenchStamped()
+    wrench_filtered=Wrench()
     
     wrench=msg.wrench
-
-    if enable_calibration:
+    
+    
+    
+       
+    if len(wrench_list)!=40:      #IMPORTANT TO CHANGE LATER
         wrench_list.append(wrench)
-        if len(wrench_list)==40:      #IMPORTANT TO CHANGE LATER
-            zero_wrench=mean(wrench_list)
+    else:
+        wrench_filtered.force.x=wrench.force.x-zero_wrench.force.x
+        wrench_filtered.force.y=wrench.force.y-zero_wrench.force.y
+        wrench_filtered.force.z=wrench.force.z-zero_wrench.force.z
+        wrench_filtered.torque.x=wrench.torque.x-zero_wrench.torque.x
+        wrench_filtered.torque.y=wrench.torque.y-zero_wrench.torque.y
+        wrench_filtered.torque.z=wrench.torque.z-zero_wrench.torque.z
+
+        wrench_list[counter]=wrench_filtered     
+        counter=counter+1
+        if counter==40:
+            counter=0
+    wrench_filtered=mean(wrench_list)
+    if enable_calibration:
+            zero_wrench=wrench_filtered
             enable_calibration=False
 
-    wrench_filtered.wrench.force.x=wrench.force.x-zero_wrench.force.x
-    wrench_filtered.wrench.force.y=wrench.force.y-zero_wrench.force.y
-    wrench_filtered.wrench.force.z=wrench.force.z-zero_wrench.force.z
-    wrench_filtered.wrench.torque.x=wrench.torque.x-zero_wrench.torque.x
-    wrench_filtered.wrench.torque.y=wrench.torque.y-zero_wrench.torque.y
-    wrench_filtered.wrench.torque.z=wrench.torque.z-zero_wrench.torque.z
-    pub.publish(wrench_filtered)
+    wrench_msg=WrenchStamped()
+    wrench_msg.header=msg.header
+    wrench_msg.wrench=wrench_filtered
+    pub.publish(wrench_msg)
 
 def callbackCalibrateSrv(msg):
     global enable_calibration
@@ -80,6 +94,8 @@ if __name__=="__main__":
     wrench_list=list()
     global enable_calibration
     enable_calibration=False
+    global counter
+    counter=0
 
     rospy.init_node("force_filter")
     pub=rospy.Publisher("/wrench_filtered",WrenchStamped,queue_size=10)

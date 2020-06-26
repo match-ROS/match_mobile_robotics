@@ -1,0 +1,3 @@
+<launch>
+    <node name="robot_state_juggler" pkg="plotjuggler" type="PlotJuggler" args="-l $(find ur_visualisation)/plot/joint_states.xml"/>
+</launch>

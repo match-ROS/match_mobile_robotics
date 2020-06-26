@@ -1,0 +1,149 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root version="2.3.8">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <plotmatrix columns="3" rows="2" tab_name="force">
+   <plot style="Lines" row="0" col="0">
+    <range right="43.935829" left="-16.063908" bottom="-9.400098" top="-4.824729"/>
+    <limitY/>
+    <curve R="255" name="/wrench/wrench/force/x" B="14" custom_transform="noTransform" G="127"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="1" col="0">
+    <range right="43.936306" left="-16.063405" bottom="-7.674325" top="-6.573699"/>
+    <limitY/>
+    <curve R="31" name="/wrench_filtered/wrench/force/x" B="180" custom_transform="noTransform" G="119"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="0" col="1">
+    <range right="43.935829" left="-16.063908" bottom="-10.835790" top="-7.610819"/>
+    <limitY/>
+    <curve R="241" name="/wrench/wrench/force/y" B="193" custom_transform="noTransform" G="76"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="1" col="1">
+    <range right="43.936306" left="-16.063405" bottom="-9.787517" top="-8.772687"/>
+    <limitY/>
+    <curve R="214" name="/wrench_filtered/wrench/force/y" B="40" custom_transform="noTransform" G="39"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="0" col="2">
+    <range right="43.935829" left="-16.063908" bottom="-3.657109" top="-0.979179"/>
+    <limitY/>
+    <curve R="148" name="/wrench/wrench/force/z" B="189" custom_transform="noTransform" G="103"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="1" col="2">
+    <range right="43.936306" left="-16.063405" bottom="-2.679736" top="-2.196139"/>
+    <limitY/>
+    <curve R="26" name="/wrench_filtered/wrench/force/z" B="56" custom_transform="noTransform" G="201"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix columns="3" rows="2" tab_name="torque">
+   <plot style="Lines" row="0" col="0">
+    <range right="65.373258" left="5.375112" bottom="-3.735913" top="-2.619459"/>
+    <limitY/>
+    <curve R="23" name="/wrench/wrench/torque/x" B="207" custom_transform="noTransform" G="190"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="1" col="0">
+    <range right="65.373535" left="5.375658" bottom="-3.283231" top="-3.032961"/>
+    <limitY/>
+    <curve R="214" name="/wrench_filtered/wrench/torque/x" B="40" custom_transform="noTransform" G="39"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="0" col="1">
+    <range right="65.373258" left="5.375112" bottom="2.851780" top="4.361546"/>
+    <limitY/>
+    <curve R="188" name="/wrench/wrench/torque/y" B="34" custom_transform="noTransform" G="189"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="1" col="1">
+    <range right="65.373535" left="5.375658" bottom="3.460723" top="3.693852"/>
+    <limitY/>
+    <curve R="26" name="/wrench_filtered/wrench/torque/y" B="56" custom_transform="noTransform" G="201"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="0" col="2">
+    <range right="65.373258" left="5.375112" bottom="-0.853898" top="-0.185832"/>
+    <limitY/>
+    <curve R="31" name="/wrench/wrench/torque/z" B="180" custom_transform="noTransform" G="119"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot style="Lines" row="1" col="2">
+    <range right="65.373535" left="5.375658" bottom="-0.585663" top="-0.478121"/>
+    <limitY/>
+    <curve R="255" name="/wrench_filtered/wrench/torque/z" B="14" custom_transform="noTransform" G="127"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <currentPlotMatrix index="1"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS bags">
+   <use_header_stamp value="false"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS Topic Subscriber">
+   <use_header_stamp value="false"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin status="idle" ID="ROS /rosout Visualization"/>
+  <plugin status="idle" ID="ROS Topic Re-Publisher"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets>
+  <snippet language="JS" name="1st_derivative">
+   <global>var prevX = 0
+var prevY = 0</global>
+   <equation>dx = time - prevX
+dy = value - prevY
+prevX = time
+prevY = value
+
+return dy/dx</equation>
+  </snippet>
+  <snippet language="JS" name="1st_order_lowpass">
+   <global>var prevY = 0
+var alpha = 0.1</global>
+   <equation>prevY = alpha * value + (1.-alpha) * prevY
+
+return prevY</equation>
+  </snippet>
+  <snippet language="JS" name="sum_A_B">
+   <global></global>
+   <equation>return $$PLOT_A$$ + $$PLOT_B$$</equation>
+  </snippet>
+  <snippet language="JS" name="yaw_from_quaternion">
+   <global>// source: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+function quaternionToYaw(x, y, z, w)
+{
+  // yaw (z-axis rotation)
+  t1 = 2.0 * (w * z + x * y);
+  t2 = 1.0 - 2.0 * (y * y + z * z);
+  yaw = Math.atan2(t1, t2);
+
+  return yaw
+}</global>
+   <equation>return quaternionToYaw(x, y, z, w);</equation>
+  </snippet>
+ </snippets>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

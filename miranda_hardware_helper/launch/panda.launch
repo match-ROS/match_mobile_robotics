@@ -2,10 +2,10 @@
     <arg name="robot_ip" default="panda"/> 
     <arg name="load_gripper" default="true"/>
     <arg name="panda_start_controller" default="" doc="Give the names of controller that should be started additionally"/>
-    <arg name="controllers_started" default=""/>
+    <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
 
-    <arg name="controllers_started" value="$(arg controllers_started) $(arg panda_start_controller) "/>
+    <arg name="controllers_start" value="$(arg controllers_started) $(arg panda_start_controller) "/>
   
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
@@ -20,7 +20,7 @@
     </node>
     
     <rosparam command="load" file="$(find miranda_hardware_helper)/config/controllers.yaml" />
-    <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="franka_state_controller $(arg controllers_started)"/>
+    <node if="$(eval arg('controllers_start')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="franka_state_controller $(arg controllers_start)"/>
     <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
     
     

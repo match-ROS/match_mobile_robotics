@@ -1,0 +1,249 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root version="2.3.8">
+ <tabbed_widget parent="main_window" name="Main Window">
+  <plotmatrix columns="1" tab_name="JointAngles" rows="7">
+   <plot row="0" col="0" style="Lines">
+    <range top="-0.158751" left="36.553737" bottom="-0.158762" right="46.526130"/>
+    <limitY/>
+    <curve R="31" G="119" B="180" name="/panda/franka_state_controller/franka_states/q.0" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range top="-0.173765" left="36.553737" bottom="-0.173777" right="46.526130"/>
+    <limitY/>
+    <curve R="214" G="39" B="40" name="/panda/franka_state_controller/franka_states/q.1" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range top="0.235662" left="36.553737" bottom="0.235648" right="46.526130"/>
+    <limitY/>
+    <curve R="26" G="201" B="56" name="/panda/franka_state_controller/franka_states/q.2" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range top="-1.099425" left="36.553737" bottom="-1.099436" right="46.526130"/>
+    <limitY/>
+    <curve R="255" G="127" B="14" name="/panda/franka_state_controller/franka_states/q.3" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range top="-0.093863" left="36.553737" bottom="-0.093870" right="46.526130"/>
+    <limitY/>
+    <curve R="241" G="76" B="193" name="/panda/franka_state_controller/franka_states/q.4" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range top="1.159821" left="36.553737" bottom="1.159816" right="46.526130"/>
+    <limitY/>
+    <curve R="148" G="103" B="189" name="/panda/franka_state_controller/franka_states/q.5" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="6" col="0" style="Lines">
+    <range top="0.961079" left="36.553737" bottom="0.961066" right="46.526130"/>
+    <limitY/>
+    <curve R="23" G="190" B="207" name="/panda/franka_state_controller/franka_states/q.6" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix columns="1" tab_name="JointVelocities" rows="7">
+   <plot row="0" col="0" style="Lines">
+    <range top="-0.058805" left="33.422101" bottom="-0.258805" right="43.394991"/>
+    <limitY/>
+    <curve R="188" G="189" B="34" name="/panda/franka_state_controller/franka_states/q_d.0" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range top="-0.073808" left="33.422101" bottom="-0.273808" right="43.394991"/>
+    <limitY/>
+    <curve R="31" G="119" B="180" name="/panda/franka_state_controller/franka_states/q_d.1" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range top="0.335168" left="33.422101" bottom="0.135168" right="43.394991"/>
+    <limitY/>
+    <curve R="214" G="39" B="40" name="/panda/franka_state_controller/franka_states/q_d.2" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range top="-0.999238" left="33.422101" bottom="-1.199238" right="43.394991"/>
+    <limitY/>
+    <curve R="26" G="201" B="56" name="/panda/franka_state_controller/franka_states/q_d.3" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range top="0.005969" left="33.422101" bottom="-0.194031" right="43.394991"/>
+    <limitY/>
+    <curve R="255" G="127" B="14" name="/panda/franka_state_controller/franka_states/q_d.4" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range top="1.259778" left="33.422101" bottom="1.059778" right="43.394991"/>
+    <limitY/>
+    <curve R="241" G="76" B="193" name="/panda/franka_state_controller/franka_states/q_d.5" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="6" col="0" style="Lines">
+    <range top="1.060928" left="33.422101" bottom="0.860928" right="43.394991"/>
+    <limitY/>
+    <curve R="148" G="103" B="189" name="/panda/franka_state_controller/franka_states/q_d.6" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix columns="1" tab_name="JointTorques" rows="7">
+   <plot row="0" col="0" style="Lines">
+    <range top="0.067895" left="32.809772" bottom="-0.065406" right="42.783754"/>
+    <limitY/>
+    <curve R="23" G="190" B="207" name="/panda/franka_state_controller/franka_states/tau_J.0" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range top="-15.722400" left="32.809772" bottom="-15.880694" right="42.783754"/>
+    <limitY/>
+    <curve R="188" G="189" B="34" name="/panda/franka_state_controller/franka_states/tau_J.1" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range top="-1.734499" left="32.809772" bottom="-1.892794" right="42.783754"/>
+    <limitY/>
+    <curve R="31" G="119" B="180" name="/panda/franka_state_controller/franka_states/tau_J.2" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range top="15.323032" left="32.809772" bottom="15.189732" right="42.783754"/>
+    <limitY/>
+    <curve R="214" G="39" B="40" name="/panda/franka_state_controller/franka_states/tau_J.3" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range top="0.242042" left="32.809772" bottom="0.195899" right="42.783754"/>
+    <limitY/>
+    <curve R="26" G="201" B="56" name="/panda/franka_state_controller/franka_states/tau_J.4" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range top="2.447552" left="32.809772" bottom="2.396603" right="42.783754"/>
+    <limitY/>
+    <curve R="255" G="127" B="14" name="/panda/franka_state_controller/franka_states/tau_J.5" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="6" col="0" style="Lines">
+    <range top="-0.068028" left="32.809772" bottom="-0.190113" right="42.783754"/>
+    <limitY/>
+    <curve R="241" G="76" B="193" name="/panda/franka_state_controller/franka_states/tau_J.6" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix columns="1" tab_name="JointTorquesEx" rows="7">
+   <plot row="0" col="0" style="Lines">
+    <range top="0.038569" left="32.299864" bottom="-0.063016" right="42.280418"/>
+    <limitY/>
+    <curve R="148" G="103" B="189" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.0" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range top="-0.149200" left="32.299864" bottom="-0.243936" right="42.280418"/>
+    <limitY/>
+    <curve R="23" G="190" B="207" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.1" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range top="-0.632418" left="32.299864" bottom="-0.756288" right="42.280418"/>
+    <limitY/>
+    <curve R="188" G="189" B="34" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.2" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range top="0.250125" left="32.299864" bottom="0.201201" right="42.280418"/>
+    <limitY/>
+    <curve R="31" G="119" B="180" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.3" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range top="-0.119359" left="32.299864" bottom="-0.135972" right="42.280418"/>
+    <limitY/>
+    <curve R="214" G="39" B="40" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.4" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range top="-0.128956" left="32.299864" bottom="-0.135153" right="42.280418"/>
+    <limitY/>
+    <curve R="26" G="201" B="56" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.5" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="6" col="0" style="Lines">
+    <range top="-0.129626" left="32.299864" bottom="-0.139564" right="42.280418"/>
+    <limitY/>
+    <curve R="255" G="127" B="14" name="/panda/franka_state_controller/franka_states/tau_ext_hat_filtered.6" custom_transform="noTransform"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <currentPlotMatrix index="0"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS bags">
+   <use_header_stamp value="false"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS Topic Subscriber">
+   <use_header_stamp value="false"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="ROS /rosout Visualization" status="idle"/>
+  <plugin ID="ROS Topic Re-Publisher" status="idle"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets>
+  <snippet name="1st_derivative" language="JS">
+   <global>var prevX = 0
+var prevY = 0</global>
+   <equation>dx = time - prevX
+dy = value - prevY
+prevX = time
+prevY = value
+
+return dy/dx</equation>
+  </snippet>
+  <snippet name="1st_order_lowpass" language="JS">
+   <global>var prevY = 0
+var alpha = 0.1</global>
+   <equation>prevY = alpha * value + (1.-alpha) * prevY
+
+return prevY</equation>
+  </snippet>
+  <snippet name="sum_A_B" language="JS">
+   <global></global>
+   <equation>return $$PLOT_A$$ + $$PLOT_B$$</equation>
+  </snippet>
+  <snippet name="yaw_from_quaternion" language="JS">
+   <global>// source: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+function quaternionToYaw(x, y, z, w)
+{
+  // yaw (z-axis rotation)
+  t1 = 2.0 * (w * z + x * y);
+  t2 = 1.0 - 2.0 * (y * y + z * z);
+  yaw = Math.atan2(t1, t2);
+
+  return yaw
+}</global>
+   <equation>return quaternionToYaw(x, y, z, w);</equation>
+  </snippet>
+ </snippets>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

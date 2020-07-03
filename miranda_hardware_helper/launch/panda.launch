@@ -1,0 +1,36 @@
+<launch>
+    <arg name="robot_ip" default="panda"/> 
+    <arg name="load_gripper" default="true"/>
+    <arg name="panda_start_controller" default="" doc="Give the names of controller that should be started additionally"/>
+    <arg name="controllers_started" default=""/>
+    <arg name="controllers_stopped" default=""/>
+
+    <arg name="controllers_started" value="$(arg controllers_started) $(arg panda_start_controller) "/>
+  
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
+
+    <include file="$(find franka_gripper)/launch/franka_gripper.launch" if="$(arg load_gripper)">
+        <arg name="robot_ip" value="$(arg robot_ip)" />
+    </include>
+
+    <node name="franka_control" pkg="franka_control" type="franka_control_node" output="screen" required="true">
+        <rosparam command="load" file="$(find miranda_hardware_helper)/config/control_node.yaml" />
+        <param name="robot_ip" value="$(arg robot_ip)" />
+    </node>
+    
+    <rosparam command="load" file="$(find miranda_hardware_helper)/config/controllers.yaml" />
+    <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="franka_state_controller $(arg controllers_started)"/>
+    <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
+    
+    
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
+      
+    <node name="joint_state_publisher" type="joint_state_publisher" pkg="joint_state_publisher" output="screen" >
+        <rosparam if="$(arg load_gripper)" param="source_list">[franka_state_controller/joint_states, franka_gripper/joint_states] </rosparam>
+        <rosparam unless="$(arg load_gripper)" param="source_list">[franka_state_controller/joint_states] </rosparam>
+        <param name="rate" value="30"/>
+    </node>
+
+  
+</launch>

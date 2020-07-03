@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find miranda_visualisation)/rviz/miranda.rviz"/>
+   <node ns="panda"  name="interactive_marker" pkg="franka_example_controllers" type="interactive_marker.py" output="screen">
+     <param name="link_name" value="panda_link0" />
+    </node>
+</launch>

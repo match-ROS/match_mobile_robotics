@@ -1,0 +1,8 @@
+<launch>
+    <arg name="load_gripper" value="false"/>
+    <!-- If needed, broadcast static tf for robot root -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="virtual_joint_broadcaster_1" args="0 0 0 0 0 0 world panda_link0" />
+
+    <include file="$(find miranda_hardware_helper)/launch/miranda.launch" pass_all_args="true"/>
+
+</launch>

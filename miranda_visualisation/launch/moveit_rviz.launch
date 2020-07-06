@@ -1,5 +1,5 @@
 <launch>
-   <arg name="load_gripper" value="true"/>
+   <arg name="load_gripper" default="true"/>
     <param if="$(eval  arg('load_gripper'))" name="panda/robot_description" command="$(find xacro)/xacro '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'"/>
     <param if="$(eval not arg('load_gripper'))" name="panda/robot_description" command="$(find xacro)/xacro '$(find franka_description)/robots/panda_arm.urdf.xacro'"/>
 

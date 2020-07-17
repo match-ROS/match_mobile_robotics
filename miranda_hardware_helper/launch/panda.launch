@@ -3,6 +3,7 @@
     <arg name="load_gripper" default="true"/>
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
+    <arg name="tf_prefix" default=""/>
 
     
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
@@ -22,7 +23,9 @@
     <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
     
     
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen"/>
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+        <param name="tf_prefix" value="$(arg tf_prefix)"/>
+    </node>    
       
     <node name="joint_state_publisher" type="joint_state_publisher" pkg="joint_state_publisher" output="screen" >
         <rosparam if="$(arg load_gripper)" param="source_list">[franka_state_controller/joint_states, franka_gripper/joint_states] </rosparam>

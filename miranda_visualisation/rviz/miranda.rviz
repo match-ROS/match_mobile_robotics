@@ -5,7 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Global Options1
-        - /InteractiveMarkers1
       Splitter Ratio: 0.5
     Tree Height: 1645
   - Class: rviz/Selection
@@ -116,7 +115,6 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-          Value: true
         panda_rightfinger:
           Alpha: 1
           Show Axes: false
@@ -124,7 +122,7 @@ Visualization Manager:
           Value: true
       Name: Panda
       Robot Description: /panda/robot_description
-      TF Prefix: ""
+      TF Prefix: panda
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -172,15 +170,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        camera_link_optical:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         fl_caster_rotation_link:
           Alpha: 1
           Show Axes: false
@@ -238,24 +227,10 @@ Visualization Manager:
           Show Trail: false
       Name: MIR
       Robot Description: mir/robot_description
-      TF Prefix: ""
+      TF Prefix: mir
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Alpha: 1
-      Arrow Width: 0.5
-      Class: rviz/WrenchStamped
-      Enabled: true
-      Force Arrow Scale: 2
-      Force Color: 204; 51; 51
-      Hide Small Values: true
-      History Length: 1
-      Name: EndEffectorEffort
-      Topic: /panda/franka_state_controller/F_ext
-      Torque Arrow Scale: 2
-      Torque Color: 204; 204; 51
-      Unreliable: false
-      Value: true
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true
       Enabled: true
@@ -265,11 +240,25 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /panda/equilibrium_pose_marker/update
       Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.5
+      Name: BaseLink
+      Radius: 0.05000000074505806
+      Reference Frame: mir/base_link
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.5
+      Name: Link8
+      Radius: 0.05000000074505806
+      Reference Frame: panda/panda_link8
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base_link
+    Fixed Frame: mir/base_link
     Frame Rate: 30
   Name: root
   Tools:
@@ -308,10 +297,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5303975939750671
+      Pitch: 0.8203970193862915
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.8454034328460693
+      Yaw: 2.9617419242858887
     Saved: ~
 Window Geometry:
   Displays:

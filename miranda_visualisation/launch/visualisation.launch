@@ -1,5 +1,5 @@
 <launch>
-<node pkg="plotjuggler" type="PlotJuggler" name="plot_miranda" args="-l $(find miranda_visualisation)/plot/taskspace.xml"/>
+<node pkg="plotjuggler" type="PlotJuggler" name="plot_miranda" args="-l $(find miranda_visualisation)/plot/jointspace.xml"/>
 
     <node pkg="rviz" type="rviz" output="screen" name="rviz" args="-d $(find miranda_visualisation)/rviz/miranda.rviz"/>
 

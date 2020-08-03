@@ -1,6 +1,0 @@
-<launch>
-<arg name="layout" default="default.xml"/>
-
-<node pkg="plotjuggler" type="PlotJuggler" name="plot_miranda" args="-l $(find miranda_visualisation)/plot/$(arg layout)"/>
-
-</launch>

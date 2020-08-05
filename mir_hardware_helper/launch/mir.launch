@@ -1,6 +1,6 @@
 <launch>    
     <arg name="use_ros_amcl"    default="false"   doc="Wehther or not to use ros amcl for localisation"/>
-    <arg name="use_mir_amcls"   default="true"    doc="Wehther or not to use mir internals for localisation"/>
+    <arg name="use_mir_amcls"   default="false"    doc="Wehther or not to use mir internals for localisation"/>
     <arg name="tf_prefix"   default=""            doc="Prefix for looking up the mirs tf_frames"/>
     
     <!-- Spawn the common mir controller with given tf prefixes -->
@@ -9,12 +9,12 @@
     </include>
 
     <!-- Use the ros amcl implementation -->
-    <include if="$(eval 'use_ros_amcl')" file="$(find miranda_hardware_helper)/launch/odom_map_broadcaster.launch">
+    <include if="$(eval use_ros_amcl)" file="$(find mir_hardware_helper)/launch/mir_amcl.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
     </include>
 
     <!-- Use the mir internal amcl implementation -->
-    <include if="$(eval 'use_mir_amcls')" file="$(find miranda_hardware_helper)/launch/ros_amcl.launch">
+    <include if="$(eval use_mir_amcls)" file="$(find mir_hardware_helper)/launch/ros_amcl.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
     </include>
 </launch>

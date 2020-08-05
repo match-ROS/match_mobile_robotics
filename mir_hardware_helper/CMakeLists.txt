@@ -9,9 +9,11 @@ project(mir_hardware_helper)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED
             roscpp
-            tf2_ros
-            tf2_geometry_msgs
             tf
+            tf2
+            tf2_ros
+            tf2_geometry_msgs 
+            geometry_msgs           
             )
 
 ## System dependencies are found with CMake's conventions

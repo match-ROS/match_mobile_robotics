@@ -51,12 +51,6 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>rospy</depend>
   <depend>roscpp</depend>
-  <exec_depend>ur_robot_driver</exec_depend>
-
-
-  <build_depend>ur_dashboard_msgs</build_depend>
-  <exec_depend>ur_dashboard_msgs</exec_depend>
-
   <exec_depend>actionlib</exec_depend>
 
 

@@ -1,0 +1,225 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<root version="2.3.8">
+ <tabbed_widget name="Main Window" parent="main_window">
+  <plotmatrix tab_name="position" rows="6" columns="1">
+   <plot row="0" col="0" style="Lines">
+    <range bottom="-0.063292" left="-24.808675" right="35.189740" top="0.048794"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="127" name="/joint_states/shoulder_pan_joint/position" R="255" B="14"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range bottom="-1.403374" left="-24.808675" right="35.189740" top="-1.256207"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="103" name="/joint_states/shoulder_lift_joint/position" R="148" B="189"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range bottom="-1.726870" left="-24.808675" right="35.189740" top="-1.631553"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="76" name="/joint_states/elbow_joint/position" R="241" B="193"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range bottom="-2.600764" left="-24.808675" right="35.189740" top="-2.385988"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="119" name="/joint_states/wrist_1_joint/position" R="31" B="180"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range bottom="1.681460" left="-24.808675" right="35.189740" top="1.767748"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="39" name="/joint_states/wrist_2_joint/position" R="214" B="40"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range bottom="-1.507543" left="-24.808675" right="35.189740" top="-1.426990"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="201" name="/joint_states/wrist_3_joint/position" R="26" B="56"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix tab_name="velocity" rows="6" columns="1">
+   <plot row="0" col="0" style="Lines">
+    <range bottom="-0.053043" left="-24.328892" right="35.669840" top="0.119541"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="189" name="/joint_states/shoulder_pan_joint/velocity" R="188" B="34"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range bottom="-0.062949" left="-24.328892" right="35.669840" top="0.155244"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="119" name="/joint_states/shoulder_lift_joint/velocity" R="31" B="180"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range bottom="-0.048394" left="-24.328892" right="35.669840" top="0.099668"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="39" name="/joint_states/elbow_joint/velocity" R="214" B="40"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range bottom="-0.235285" left="-24.328892" right="35.669840" top="0.118486"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="76" name="/joint_states/wrist_1_joint/velocity" R="241" B="193"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range bottom="-0.046223" left="-24.328892" right="35.669840" top="0.099217"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="103" name="/joint_states/wrist_2_joint/velocity" R="148" B="189"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range bottom="-0.048175" left="-24.328892" right="35.669840" top="0.091678"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="190" name="/joint_states/wrist_3_joint/velocity" R="23" B="207"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix tab_name="effort" rows="6" columns="1">
+   <plot row="0" col="0" style="Lines">
+    <range bottom="-1.083187" left="-22.128046" right="37.869901" top="0.816411"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="190" name="/joint_states/shoulder_pan_joint/effort" R="23" B="207"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range bottom="-1.306695" left="-22.128046" right="37.869901" top="1.882841"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="189" name="/joint_states/shoulder_lift_joint/effort" R="188" B="34"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range bottom="0.354374" left="-22.128046" right="37.869901" top="2.324589"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="119" name="/joint_states/elbow_joint/effort" R="31" B="180"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="3" col="0" style="Lines">
+    <range bottom="-0.332268" left="-22.128046" right="37.869901" top="0.364294"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="39" name="/joint_states/wrist_1_joint/effort" R="214" B="40"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="4" col="0" style="Lines">
+    <range bottom="-0.374703" left="-22.128046" right="37.869901" top="0.310651"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="201" name="/joint_states/wrist_2_joint/effort" R="26" B="56"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="5" col="0" style="Lines">
+    <range bottom="-0.190211" left="-22.128046" right="37.869901" top="0.240537"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="127" name="/joint_states/wrist_3_joint/effort" R="255" B="14"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <plotmatrix tab_name="force_ee" rows="3" columns="2">
+   <plot row="0" col="0" style="Lines">
+    <range bottom="-15.447135" left="7.400849" right="67.397788" top="-12.973418"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="201" name="/wrench/wrench/force/x" R="26" B="56"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="0" style="Lines">
+    <range bottom="-26.937811" left="7.400849" right="67.397788" top="-21.346538"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="127" name="/wrench/wrench/force/y" R="255" B="14"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="0" style="Lines">
+    <range bottom="-15.807624" left="7.400849" right="67.397788" top="-8.564535"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="76" name="/wrench/wrench/force/z" R="241" B="193"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="0" col="1" style="Lines">
+    <range bottom="-5.991052" left="7.400849" right="67.397788" top="-4.573278"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="103" name="/wrench/wrench/torque/x" R="148" B="189"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="1" col="1" style="Lines">
+    <range bottom="-0.000132" left="7.400849" right="67.397788" top="0.630962"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="190" name="/wrench/wrench/torque/y" R="23" B="207"/>
+    <transform value="noTransform"/>
+   </plot>
+   <plot row="2" col="1" style="Lines">
+    <range bottom="-0.631985" left="7.400849" right="67.397788" top="-0.159451"/>
+    <limitY/>
+    <curve custom_transform="noTransform" G="189" name="/wrench/wrench/torque/z" R="188" B="34"/>
+    <transform value="noTransform"/>
+   </plot>
+  </plotmatrix>
+  <currentPlotMatrix index="3"/>
+ </tabbed_widget>
+ <use_relative_time_offset enabled="1"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <!-- - - - - - - - - - - - - - - -->
+ <Plugins>
+  <plugin ID="DataLoad CSV">
+   <default time_axis=""/>
+  </plugin>
+  <plugin ID="DataLoad ROS bags">
+   <use_header_stamp value="false"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="DataLoad ULog"/>
+  <plugin ID="ROS Topic Subscriber">
+   <use_header_stamp value="false"/>
+   <use_renaming_rules value="true"/>
+   <discard_large_arrays value="true"/>
+   <max_array_size value="100"/>
+  </plugin>
+  <plugin ID="ROS /rosout Visualization" status="idle"/>
+  <plugin ID="ROS Topic Re-Publisher" status="idle"/>
+ </Plugins>
+ <!-- - - - - - - - - - - - - - - -->
+ <previouslyLoaded_Datafiles/>
+ <previouslyLoaded_Streamer name="ROS Topic Subscriber"/>
+ <!-- - - - - - - - - - - - - - - -->
+ <customMathEquations/>
+ <snippets>
+  <snippet name="1st_derivative" language="JS">
+   <global>var prevX = 0
+var prevY = 0</global>
+   <equation>dx = time - prevX
+dy = value - prevY
+prevX = time
+prevY = value
+
+return dy/dx</equation>
+  </snippet>
+  <snippet name="1st_order_lowpass" language="JS">
+   <global>var prevY = 0
+var alpha = 0.1</global>
+   <equation>prevY = alpha * value + (1.-alpha) * prevY
+
+return prevY</equation>
+  </snippet>
+  <snippet name="sum_A_B" language="JS">
+   <global></global>
+   <equation>return $$PLOT_A$$ + $$PLOT_B$$</equation>
+  </snippet>
+  <snippet name="yaw_from_quaternion" language="JS">
+   <global>// source: https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+
+function quaternionToYaw(x, y, z, w)
+{
+  // yaw (z-axis rotation)
+  t1 = 2.0 * (w * z + x * y);
+  t2 = 1.0 - 2.0 * (y * y + z * z);
+  yaw = Math.atan2(t1, t2);
+
+  return yaw
+}</global>
+   <equation>return quaternionToYaw(x, y, z, w);</equation>
+  </snippet>
+ </snippets>
+ <!-- - - - - - - - - - - - - - - -->
+</root>
+

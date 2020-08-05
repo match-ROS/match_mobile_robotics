@@ -16,16 +16,5 @@
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/base_link $(arg tf_prefix)/panda_link0" ns="mir" />
 
-    <!-- Bringup the mir in its own namespace and with localisation due ros amcl -->
-    <group ns="mir">
-        <include file="$(find mir_driver)/launch/mir.launch">
-            <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-        </include>
-        <include file="$(find miranda_hardware_helper)/launch/odom_map_broadcaster.launch">
-           <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-        </include>
-        <!-- <include file="$(find miranda_hardware_helper)/launch/amcl.launch">
-            <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-        </include> -->
-    </group>
+    <include file="$(find miranda_hardware_helper)/launch/mir.launch" ns="mir"/>
 </launch>

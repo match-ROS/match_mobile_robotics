@@ -14,7 +14,7 @@
     </include>
 
     <!-- Use the mir internal amcl implementation -->
-    <include if="$(eval 'use_mir_amcls')" file="$(find miranda_hardware_helper)/launch/amcl.launch">
+    <include if="$(eval 'use_mir_amcls')" file="$(find miranda_hardware_helper)/launch/ros_amcl.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
     </include>
 </launch>

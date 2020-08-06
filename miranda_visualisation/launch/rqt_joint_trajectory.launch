@@ -1,6 +1,0 @@
-
-<launch>
-<node pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" name="trajectory">
-    <remap from="robot_description" to="panda/robot_description" />
-</node>
-</launch>

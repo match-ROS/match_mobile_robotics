@@ -13,8 +13,8 @@
 std::string tf_prefix="";
 geometry_msgs::Transform map_base;
 tf2_ros::Buffer tfBuffer;
-void poseCallback(const geometry_msgs::PoseConstPtr& msg){
-   
+
+void poseCallback(const geometry_msgs::PoseConstPtr& msg){   
     geometry_msgs::Transform map_base;
     map_base.translation.x = msg->position.x;
     map_base.translation.y = msg->position.y;
@@ -30,8 +30,9 @@ void poseCallback(const geometry_msgs::PoseConstPtr& msg){
     tf2_ros::TransformListener tfListener(tfBuffer);
 
     try{
-        odom_base = tfBuffer.lookupTransform(   tf::resolve(tf_prefix,"odom"),
-                                                tf::resolve(tf_prefix,"base_footprint"),
+        odom_base = tfBuffer.lookupTransform(   
+                                                tf::resolve(tf_prefix,"odom"),
+                                                tf::resolve(tf_prefix,"base_link"),
                                                 ros::Time(0));
         
         
@@ -49,6 +50,7 @@ void poseCallback(const geometry_msgs::PoseConstPtr& msg){
     }
     catch (tf2::TransformException &ex) {
         ROS_WARN("%s",ex.what());
+        ros::Duration(1.0).sleep();
     }
   
 }

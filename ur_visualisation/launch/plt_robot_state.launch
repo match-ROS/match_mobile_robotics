@@ -1,4 +1,0 @@
-<launch>
-    <arg name="layout" default="joint_states.xml" doc="type of the plotjuggler layout to load"/>
-    <node name="robot_state_juggler" pkg="plotjuggler" type="PlotJuggler" args="-l $(find ur_visualisation)/plot/$(arg layout)"/>
-</launch>

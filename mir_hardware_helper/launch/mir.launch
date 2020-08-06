@@ -12,28 +12,18 @@
     <!-- Robot state publisher -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
         <param name="tf_prefix" value="$(arg tf_prefix)"/>
-        <remap from="/tf"        to="/tf_old" />
     </node>
-
+    
     <node name="fake_mir_joint_publisher" pkg="mir_driver" type="fake_mir_joint_publisher.py" output="screen"/>
 
 
     <node name="mir_bridge" pkg="mir_driver" type="mir_bridge.py" output="screen">
-    <param name="hostname" value="$(arg mir_hostname)" />
-    <remap from="map" to="/map" />
-    <remap from="map_metadata" to="/map_metadata" />
-    <remap from="rosout" to="/rosout" />
-    <remap from="rosout_agg" to="/rosout_agg" />
-    <remap from="tf" to="/tf_old" />
-
-    <remap from="tf" to="/tf" />
-    <param name="tf_prefix" value="$(arg tf_prefix)"/>
-    </node>
-
-    <node pkg="tf" type="tf_remap" name="tf_remapper" output="screen">
-        <rosparam param="mappings" subst_value="true">
-            [{old: odom, new: $(arg tf_prefix)/odom},{old: /base_footprint, new: $(arg tf_prefix)/base_footprint}]
-        </rosparam>
+        <param name="hostname" value="$(arg mir_hostname)" />
+        <remap from="map" to="/map" />
+        <remap from="map_metadata" to="/map_metadata" />
+        <remap from="rosout" to="/rosout" />
+        <remap from="rosout_agg" to="/rosout_agg" />
+        <remap from="tf" to="/tf_mir" />
     </node>
  
     <node name="b_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">

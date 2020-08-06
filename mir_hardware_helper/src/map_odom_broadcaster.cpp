@@ -32,15 +32,18 @@ void poseCallback(const geometry_msgs::PoseConstPtr& msg){
     try{
         odom_base = tfBuffer.lookupTransform(   
                                                 tf::resolve(tf_prefix,"odom"),
-                                                tf::resolve(tf_prefix,"base_link"),
+                                                tf::resolve(tf_prefix,"base_footprint"),
                                                 ros::Time(0));
         
         
 
+        //alloc tf2 objects from the msg and lookup
         tf2::Transform odom_base_transform;
         tf2::fromMsg(odom_base.transform,odom_base_transform);
         tf2::Transform map_base_transform;
         tf2::fromMsg(map_base,map_base_transform);
+
+        //build new map odom trafo
         geometry_msgs::TransformStamped map_odom;
         map_odom.header.stamp = ros::Time::now();
         map_odom.header.frame_id = "/map";

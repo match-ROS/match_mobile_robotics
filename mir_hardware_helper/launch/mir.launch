@@ -1,6 +1,6 @@
 <launch>
-    <arg name="use_mir_amcl"    default="false"/>
-    <arg name="use_ros_amcl"    default="false"/>
+    <arg name="use_mir_loc"    default="false"/>
+    <arg name="use_ros_loc"    default="false"/>
     <arg name="tf_prefix"       default="" doc="TF prefix to use for all of MiR's TF frames"/>
     <arg name="mir_hostname"    default="192.168.12.20" />
     <arg name="disable_map"     default="false" doc="Disable the map topic and map -> odom_comb TF transform from the MiR" />
@@ -40,12 +40,12 @@
 
 
     <!-- Use the ros amcl implementation -->
-    <include if="$(arg use_mir_amcl)" file="$(find mir_hardware_helper)/launch/mir_amcl.launch">
+    <include if="$(arg use_mir_loc)" file="$(find mir_hardware_helper)/launch/use_mir_localisation.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
     </include>
 
     <!-- Use the mir internal amcl implementation -->
-    <include if="$(arg use_ros_amcl)" file="$(find mir_hardware_helper)/launch/ros_amcl.launch">
+    <include if="$(arg use_ros_loc)" file="$(find mir_hardware_helper)/launch/use_ros_localisation.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
     </include>
 

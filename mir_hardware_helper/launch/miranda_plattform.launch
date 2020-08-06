@@ -2,6 +2,6 @@
 <arg name="tf_prefix" default="miranda"/>
 <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="mir">
     <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-    <arg name="use_mir_amcl" value="true"/>
+    <arg name="use_mir_loc" value="true"/>
 </include>
 </launch>

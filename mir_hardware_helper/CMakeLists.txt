@@ -138,6 +138,7 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(map_odom_broadcaster src/map_odom_broadcaster.cpp)
 add_executable(map_base_broadcaster src/map_base_broadcaster.cpp)
+add_executable(robot_pose_publisher src/robot_pose_publisher.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -154,6 +155,9 @@ target_link_libraries(map_odom_broadcaster
   ${catkin_LIBRARIES}
 )
 target_link_libraries(map_base_broadcaster
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(robot_pose_publisher
   ${catkin_LIBRARIES}
 )
 #############

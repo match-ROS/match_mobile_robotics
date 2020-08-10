@@ -4,12 +4,11 @@
     <arg name="tf_prefix" default="miranda"/>
     
     <!-- Bringup the panda and configure it for working in combination with mir -->
-    <!-- <remap  from="/equilibrium_pose" to="/panda/equilibrium_pose" />
-    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="panda">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+    <remap  from="/equilibrium_pose" to="/panda/equilibrium_pose" />
+    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="panda" pass_all_args="true">        
         <arg name="robot_ip" default="panda"/> 
         <arg name="load_gripper" default="true"/>  
-    </include> -->
+    </include>
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 

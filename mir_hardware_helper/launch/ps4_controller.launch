@@ -1,0 +1,17 @@
+<launch>
+    <arg name="namespace" default="mur/mir"/>
+    
+    <node if="$(eval arg(namespace)=='')" respawn="true" pkg="joy" type="joy_node"  name="ps4_joy">
+        <param name="dev" value="/dev/input/js0"/>
+        <param name="deadzone" value="0.12"/>
+        <param name="coalesce_interval" value="0.001"/>
+    <node>
+  
+    <node unless="$(eval arg(namespace)=='')" respawn="true" pkg="joy" type="joy_node"  name="ps4_joy" ns="$(arg namespace)">
+        <param name="dev" value="/dev/input/js0"/>
+        <param name="deadzone" value="0.12"/>
+        <param name="coalesce_interval" value="0.001"/>
+    <node>
+  
+
+</launc>

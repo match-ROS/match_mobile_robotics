@@ -51,6 +51,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>mir_robot</depend>
   <depend>roscpp</depend>
+  <exec_depend>joy</exec_depend>
   <build_depend>geometry_msgs</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf</build_depend>

@@ -4,7 +4,7 @@
     <arg name="tf_prefix"       default="" doc="TF prefix to use for all of MiR's TF frames"/>
     <arg name="mir_hostname"    default="192.168.12.20" />
     <arg name="disable_map"     default="false" doc="Disable the map topic and map -> odom_comb TF transform from the MiR" />
-  
+    <arg name="ps4_control"     default="true" doc="Set true if mir should be controled by ps4 controller"/>
     <!-- URDF -->
     <include file="$(find mir_description)/launch/upload_mir_urdf.launch"/>
 
@@ -13,6 +13,8 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
         <param name="tf_prefix" value="$(arg tf_prefix)"/>
     </node>
+
+    <node if="$(arg ps4_control)" name="ps4_driver" pkg="mir_hardware_helper" type="ps4_ros.py"/>
     
     <node name="fake_mir_joint_publisher" pkg="mir_driver" type="fake_mir_joint_publisher.py" output="screen"/>
 

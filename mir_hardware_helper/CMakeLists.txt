@@ -106,8 +106,8 @@ find_package(catkin REQUIRED
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES mir_hardware_helper
+  INCLUDE_DIRS include
+  LIBRARIES mir_hardware_helper
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -119,15 +119,15 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
+ include
  ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/mir_hardware_helper.cpp
-# )
-
+add_library(vel_integrator
+  include/${PROJECT_NAME}/vel_integrator.hpp
+)
+set_target_properties(vel_integrator PROPERTIES LINKER_LANGUAGE CXX)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -139,6 +139,7 @@ include_directories(
 add_executable(map_odom_broadcaster src/map_odom_broadcaster.cpp)
 add_executable(map_base_broadcaster src/map_base_broadcaster.cpp)
 add_executable(robot_pose_publisher src/robot_pose_publisher.cpp)
+add_executable(vel_integrator_node src/vel_integrator_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -158,6 +159,10 @@ target_link_libraries(map_base_broadcaster
   ${catkin_LIBRARIES}
 )
 target_link_libraries(robot_pose_publisher
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(vel_integrator_node
+  vel_integrator
   ${catkin_LIBRARIES}
 )
 #############

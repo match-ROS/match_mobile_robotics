@@ -4,7 +4,7 @@
 int main(int argc, char** argv)
 {
     ros::init(argc,argv,"vel_integrator_node");
-    ros::NodeHandle nh("/miranda/mir");
+    ros::NodeHandle nh("/mur/mir");
     VelIntegrator inegrator(nh,"cmd_vel","cmd_vel_integrated");
     ros::spin();
 }

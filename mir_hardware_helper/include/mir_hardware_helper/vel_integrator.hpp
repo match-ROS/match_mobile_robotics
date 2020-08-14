@@ -1,6 +1,8 @@
 #include<ros/ros.h>
 #include<geometry_msgs/Twist.h>
+#include<mir_hardware_helper/SetInitialPose.h>
 #include<tf/tf.h>
+
 
 class VelIntegrator{
     public:
@@ -8,6 +10,7 @@ class VelIntegrator{
     {
         this->sub_=this->nh_.subscribe(topic_name_vel,10,&VelIntegrator::callbackIntegrate,this);
         this->pub_=this->nh_.advertise<geometry_msgs::PoseStamped>(topic_name_pose,10);
+        this->initial_server_=this->nh_.advertiseService("set_initial_pose",&VelIntegrator::callbackSetInitial,this);
     }
 
     private:
@@ -33,13 +36,18 @@ class VelIntegrator{
         geometry_msgs::PoseStamped pose_msg;
         tf::poseTFToMsg(this->pose_,pose_msg.pose);
         pose_msg.header.stamp=now;
-        this->pub_.publish(pose_msg); 
-        
+        this->pub_.publish(pose_msg);         
+    }
+    bool callbackSetInitial(mir_hardware_helper::SetInitialPoseRequest &req,mir_hardware_helper::SetInitialPoseResponse &res)
+    {
+        tf::poseMsgToTF(req.pose.pose,this->pose_);
+        this->time_=ros::Time::now();
     }
     tf::Pose pose_;
     ros::Time time_;
     ros::NodeHandle nh_;
     ros::Subscriber sub_;
     ros::Publisher pub_;
+    ros::ServiceServer initial_server_;
 
 };

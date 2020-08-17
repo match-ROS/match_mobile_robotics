@@ -3,17 +3,24 @@
 import rospy
 from sensor_msgs.msg import Joy
 #from sensor_msgs.msg import Imu
+from geometry_msgs.msg import TwistStamped
 from geometry_msgs.msg import Twist
-
 
 class ps4_ros():
 
     def __init__(self):
         rospy.init_node('controller_ros_node', anonymous=False)
         sub_joy = rospy.Subscriber('joy', Joy, self.joy_callback)
-        self.cmd_vel_pub_miranda = rospy.Publisher('cmd_vel', Twist, queue_size=1) 
-        self.cmd_vel_pub_mur = rospy.Publisher('cmd_vel', Twist, queue_size=1)
-        self.twist_msg = Twist()
+        self.is_twist_stamped=True
+        if self.is_twist_stamped:
+            self.cmd_vel_pub_miranda = rospy.Publisher('mur/mir/cmd_vel', TwistStamped, queue_size=1) 
+            self.cmd_vel_pub_mur = rospy.Publisher('miranda/mir/cmd_vel', TwistStamped, queue_size=1)
+            self.twist_msg = TwistStamped()
+        else:
+            self.cmd_vel_pub_miranda = rospy.Publisher('mur/mir/cmd_vel', Twist, queue_size=1) 
+            self.cmd_vel_pub_mur = rospy.Publisher('miranda/mir/cmd_vel', Twist, queue_size=1)
+            self.twist_msg = Twist()
+       
 
         # Default values
         self.speed_vx = 0.1
@@ -29,6 +36,9 @@ class ps4_ros():
             if self.state == 1:
                 self.cmd_vel_pub_miranda.publish(self.twist_msg)
             elif self.state == 2:
+                self.cmd_vel_pub_mur.publish(self.twist_msg)
+            elif self.state == 2:
+                self.cmd_vel_pub_miranda.publish(self.twist_msg)
                 self.cmd_vel_pub_mur.publish(self.twist_msg)
             rate.sleep()
 
@@ -55,8 +65,12 @@ class ps4_ros():
             if self.state > self.maxStates:
                 self.state = 1
 
-        self.twist_msg.linear.x = self.x * self.speed_vx
-        self.twist_msg.angular.z = self.w * self.speed_w
+        if self.is_twist_stamped:
+            self.twist_msg.twist.linear.x = self.x * self.speed_vx
+            self.twist_msg.twist.angular.z = self.w * self.speed_w
+        else:
+            self.twist_msg.linear.x = self.x * self.speed_vx
+            self.twist_msg.angular.z = self.w * self.speed_w
 
 
 

@@ -11,7 +11,7 @@ class VelIntegrator{
         this->sub_=this->nh_.subscribe(topic_name_vel,10,&VelIntegrator::callbackIntegrate,this);
         this->pub_=this->nh_.advertise<geometry_msgs::PoseStamped>(topic_name_pose,10);
         this->initial_server_=this->nh_.advertiseService("set_initial_pose",&VelIntegrator::callbackSetInitial,this);
-        this->pose_=tf::Transform::getIdentity();
+        this->pose_.setIdentity();
     }
 
     private:

@@ -49,16 +49,19 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>mir_robot</depend>
+ 
   <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>
+  <exec_depend>message_runtime</exec_depend>  
   <depend>roscpp</depend>
-  <exec_depend>joy</exec_depend>
+
   <build_depend>geometry_msgs</build_depend>
   <build_depend>tf2_ros</build_depend>
   <build_depend>tf</build_depend>
   <build_depend>tf2</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
+
+  <depend>mir_describtion</depend>
+  <exec_depend>joy</exec_depend>  
   <exec_depend>amcl</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>

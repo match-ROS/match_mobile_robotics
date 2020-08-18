@@ -1,5 +1,5 @@
 #include<ros/ros.h>
-#include<geometry_msgs/Twist.h>
+#include<geometry_msgs/TwistStamped.h>
 #include<mir_hardware_helper/SetInitialPose.h>
 #include<tf/tf.h>
 
@@ -15,7 +15,7 @@ class VelIntegrator{
     }
 
     private:
-    void callbackIntegrate(geometry_msgs::Twist msg)
+    void callbackIntegrate(geometry_msgs::TwistStamped msg)
     {
         ros::Duration d_t;
         ros::Time now=ros::Time::now();
@@ -23,7 +23,7 @@ class VelIntegrator{
         this->time_=now;
 
         tf::Vector3 lin;
-        tf::vector3MsgToTF(msg.linear,lin);
+        tf::vector3MsgToTF(msg.twist.linear,lin);
         lin.setZ(0.0);
        
         tf::Transform rot;
@@ -31,7 +31,7 @@ class VelIntegrator{
         lin=rot*lin;
         
         tf::Vector3 ang;
-        tf::vector3MsgToTF(msg.angular,ang);
+        tf::vector3MsgToTF(msg.twist.angular,ang);
 
         this->pose_.setOrigin(this->pose_.getOrigin()+lin*d_t.toSec());
         this->pose_.setRotation(tf::createQuaternionFromYaw(ang.z()*d_t.toSec())*this->pose_.getRotation());

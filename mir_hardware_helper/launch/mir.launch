@@ -13,14 +13,7 @@
         <param name="tf_prefix" value="$(arg tf_prefix)"/>
     </node>
 
-    <!-- <node name="cmd_vel_integrator" pkg="mir_hardware_helper" type="vel_integrator_node">
-    </node> -->
-
     <node name="fake_mir_joint_publisher" pkg="mir_driver" type="fake_mir_joint_publisher.py" output="screen"/>
-
-    <node name="robot_pose_publisher" pkg="mir_hardware_helper" type="robot_pose_publisher">
-        <param name="rate" value="20"/>
-    </node>
 
     <node name="mir_bridge" pkg="mir_driver" type="mir_bridge.py" output="screen">
         <param name="hostname" value="$(arg mir_hostname)" />
@@ -28,7 +21,9 @@
         <remap from="map_metadata" to="/map_metadata" />
         <remap from="rosout" to="/rosout" />
         <remap from="rosout_agg" to="/rosout_agg" />
-        <remap from="tf" to="/tf_mir" />
+        <remap from="tf" to="/tf" />
+        <remap from="tf_static" to="/tf_static"/>
+        <param name="tf_prefix" value="$(arg tf_prefix)"/>
     </node>
  
     <node name="b_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
@@ -42,16 +37,5 @@
         <remap from="scan" to="f_scan" />
         <remap from="scan_filtered" to="f_scan_rep117" />
     </node>
-
-
-    <!-- Use the ros amcl implementation -->
-    <include if="$(arg use_mir_loc)" file="$(find mir_hardware_helper)/launch/use_mir_localisation.launch">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-    </include>
-
-    <!-- Use the mir internal amcl implementation -->
-    <include if="$(arg use_ros_loc)" file="$(find mir_hardware_helper)/launch/use_ros_localisation.launch">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-    </include>
 
 </launch>

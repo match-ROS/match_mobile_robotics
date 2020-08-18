@@ -60,7 +60,7 @@ def _prepend_tf_prefix_dict_filter(msg_dict):
             try:
                 # prepend frame_id
                 frame_id = value['frame_id'].strip('/')
-                if (frame_id != 'map'):
+                if (frame_id != 'map' and not tf_prefix in frame_id):
                     # prepend tf_prefix, then remove leading '/' (e.g., when tf_prefix is empty)
                     value['frame_id'] = (tf_prefix + '/' + frame_id).strip('/')
                 else:
@@ -201,8 +201,8 @@ PUB_TOPICS = [
               TopicConfig('rosout_agg', Log),
               TopicConfig('scan', LaserScan),
               TopicConfig('scan_filter/visualization_marker', Marker),
-              TopicConfig('tf', TFMessage), #dict_filter=_tf_dict_filter),
-              TopicConfig('tf_static', TFMessage), #dict_filter=_tf_dict_filter),
+              TopicConfig('tf', TFMessage,dict_filter=_tf_dict_filter),
+              TopicConfig('tf_static', TFMessage,dict_filter=_tf_dict_filter),
               TopicConfig('transform_footprint/parameter_descriptions', ConfigDescription),
               TopicConfig('transform_footprint/parameter_updates', Config),
               TopicConfig('transform_imu/parameter_descriptions', ConfigDescription),
@@ -244,10 +244,6 @@ class PublisherWrapper(rospy.SubscribeListener):
 
     def peer_unsubscribe(self, topic_name, num_peers):
         pass
-## doesn't work: once ubsubscribed, robot doesn't let us subscribe again
-#         if self.pub.get_num_connections() == 0:
-#             rospy.loginfo("[%s] stopping to stream messages on topic '%s'", rospy.get_name(), self.topic_config.topic)
-#             self.robot.unsubscribe(topic=('/' + self.topic_config.topic))
 
     def callback(self, msg_dict):
         msg_dict = _prepend_tf_prefix_dict_filter(msg_dict)

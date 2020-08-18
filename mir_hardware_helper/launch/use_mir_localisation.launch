@@ -1,6 +1,0 @@
-<launch>
-<arg name="tf_prefix" default=""/>
-<node name="odom_map_broadcaster" type="map_base_broadcaster" pkg="mir_hardware_helper">
-    <param name="tf_prefix" value="$(arg tf_prefix)"/>
-</node>
-</launch>

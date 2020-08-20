@@ -8,12 +8,36 @@
     <include file="$(find mir_description)/launch/upload_mir_urdf.launch"/>
 
 
-    <!-- Robot state publisher -->
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
-        <param name="tf_prefix" value="$(arg tf_prefix)"/>
+     <!-- Robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <param name="tf_prefix" value="$(arg tf_prefix)"/>
+    <remap from="/tf"        to="tf_rss" />
+    <remap from="/tf_static" to="tf_static_rss" />
+    <param name="ignore_timestamp" value="true"/>
+  </node>
+
+  <!-- remove those TFs that are also published by the MiR to avoid conflicts -->
+  <node name="tf_remove_state_publisher_frames" pkg="mir_driver" type="tf_remove_child_frames.py" output="screen">
+    <remap from="tf_in"         to="tf_rss" />
+    <remap from="tf_out"        to="/tf" />
+    <remap from="tf_static_in"  to="tf_static_rss" />
+    <remap from="tf_static_out" to="/tf_static" />
+    <rosparam param="remove_frames" subst_value="True">
+      - $(arg tf_prefix)/base_link
+      - $(arg tf_prefix)/front_laser_link
+      - $(arg tf_prefix)/back_laser_link
+      - $(arg tf_prefix)/camera_top_link
+      - $(arg tf_prefix)/camera_top_depth_optical_frame
+      - $(arg tf_prefix)/camera_floor_link
+      - $(arg tf_prefix)/camera_floor_depth_optical_frame
+      - $(arg tf_prefix)/imu_link
+    </rosparam>
+  </node>
+
+    <node name="fake_mir_joint_publisher" pkg="mir_driver" type="fake_mir_joint_publisher.py" output="screen">
     </node>
 
-    <node name="fake_mir_joint_publisher" pkg="mir_driver" type="fake_mir_joint_publisher.py" output="screen"/>
+    <node name="pose_stamper" pkg="mir_hardware_helper" type="robot_pose_publisher"/>
 
     <node name="mir_bridge" pkg="mir_driver" type="mir_bridge.py" output="screen">
         <param name="hostname" value="$(arg mir_hostname)" />

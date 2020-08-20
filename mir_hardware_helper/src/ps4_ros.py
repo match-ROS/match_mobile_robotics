@@ -13,12 +13,12 @@ class ps4_ros():
         sub_joy = rospy.Subscriber('joy', Joy, self.joy_callback)
         self.is_twist_stamped=True
         if self.is_twist_stamped:
-            self.cmd_vel_pub_miranda = rospy.Publisher('mur/mir/cmd_vel', TwistStamped, queue_size=1) 
-            self.cmd_vel_pub_mur = rospy.Publisher('miranda/mir/cmd_vel', TwistStamped, queue_size=1)
+            self.cmd_vel_pub_miranda = rospy.Publisher('/mur/mir/cmd_vel', TwistStamped, queue_size=1) 
+            self.cmd_vel_pub_mur = rospy.Publisher('/miranda/mir/cmd_vel', TwistStamped, queue_size=1)
             self.twist_msg = TwistStamped()
         else:
-            self.cmd_vel_pub_miranda = rospy.Publisher('mur/mir/cmd_vel', Twist, queue_size=1) 
-            self.cmd_vel_pub_mur = rospy.Publisher('miranda/mir/cmd_vel', Twist, queue_size=1)
+            self.cmd_vel_pub_miranda = rospy.Publisher('/mur/mir/cmd_vel', Twist, queue_size=1) 
+            self.cmd_vel_pub_mur = rospy.Publisher('/miranda/mir/cmd_vel', Twist, queue_size=1)
             self.twist_msg = Twist()
        
 

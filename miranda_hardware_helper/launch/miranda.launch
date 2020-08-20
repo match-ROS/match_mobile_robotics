@@ -14,7 +14,7 @@
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 
         args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/base_link $(arg tf_prefix)/panda_link0" ns="miranda" />
 
-    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="miranda/mir">
+    <include file="$(find mir_launcher)/launch/mir.launch" ns="miranda/mir">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
     </include>
 </launch>

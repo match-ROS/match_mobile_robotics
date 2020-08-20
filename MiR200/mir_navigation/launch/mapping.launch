@@ -7,8 +7,5 @@
 
   <include file="$(find mir_navigation)/launch/mir_nav/hector_mapping.launch.xml">
   </include>
-
-  <!-- <include file="$(find mir_navigation)/launch/mir_launch/sim_start.launch">
-  </include> -->
-
+  
 </launch>

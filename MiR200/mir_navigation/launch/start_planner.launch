@@ -1,6 +1,6 @@
 <launch>
   <arg name="local_planner"          default="dwa"            doc="Local planner can be either dwa, eband, base, teb or pose" />
-  <arg name="map_file" default="$(find mir_gazebo)/maps/match_7.yaml" doc="Path to a map .yaml file (required)." />
+  <arg name="map_file" default="$(find mir_gazebo)/maps/pp_test_5.yaml" doc="Path to a map .yaml file (required)." />
 
   <include file="$(find mir_navigation)/launch/start_maps.launch">
     <arg name="map_file" value="$(arg map_file)" />

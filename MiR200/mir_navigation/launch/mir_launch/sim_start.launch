@@ -1,7 +1,0 @@
-<launch>
-  <node name="unpause_physics" pkg="rosservice" type="rosservice" args="call --wait /gazebo/unpause_physics">
-  </node>
-
-  <include file="$(find mir_gazebo)/launch/mir_maze_world.launch">
-  </include>
-</launch>

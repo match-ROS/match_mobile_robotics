@@ -1,0 +1,33 @@
+<launch>
+    <arg name="namespace" default=""/>
+    
+    <group if="$(eval namespace=='')">
+        <node respawn="true" pkg="joy" type="joy_node"  name="ps4_joy">
+            <param name="dev" value="/dev/input/js0"/>
+            <param name="deadzone" value="0.12"/>
+            <param name="coalesce_interval" value="0.001"/>
+        </node>
+
+        <node name="ps4_driver" pkg="mir_hardware_helper" type="ps4_ros.py">
+                <remap from="/mur/mir/cmd_vel" to="cmd_vel_vm"/>
+                <remap from="/miranda/mir/cmd_vel" to="cmd_vel_vm"/>
+        </node>
+
+    </group>
+    
+  
+    <group unless="$(eval namespace=='')" ns="$(arg namespace)">
+        <node respawn="true" pkg="joy" type="joy_node"  name="ps4_joy">
+            <param name="dev" value="/dev/input/js0"/>
+            <param name="deadzone" value="0.12"/>
+            <param name="coalesce_interval" value="0.001"/>
+        </node>
+
+        <node name="ps4_driver" pkg="mir_hardware_helper" type="ps4_ros.py">
+            <remap from="/mur/mir/cmd_vel" to="cmd_vel_vm"/>
+            <remap from="/miranda/mir/cmd_vel" to="cmd_vel_vm"/>
+        </node>
+    </group>
+  
+
+</launch>

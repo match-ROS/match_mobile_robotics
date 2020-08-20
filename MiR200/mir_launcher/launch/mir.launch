@@ -4,6 +4,8 @@
     <arg name="disable_map_tf" value="false"/>
   </include>
 
-  <include file="$(find mir_navigation)/launch/move_base.launch"/>
+  <!-- <include file="$(find mir_navigation)/launch/move_base.launch">
+    <arg name="prefix" value="$(arg tf_prefix)/"/>
+  </include> -->
 
 </launch>

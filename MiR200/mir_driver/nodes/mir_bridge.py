@@ -11,7 +11,7 @@ from rospy_message_converter import message_converter
 from actionlib_msgs.msg import GoalID, GoalStatusArray
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from dynamic_reconfigure.msg import Config, ConfigDescription
-from geometry_msgs.msg import PolygonStamped, Pose, PoseArray, PoseStamped, PoseWithCovarianceStamped, Twist, TwistStamped
+from geometry_msgs.msg import PolygonStamped, Pose, PoseArray, PoseStamped, PoseWithCovarianceStamped, Twist
 from mir_actions.msg import *
 from mir_msgs.msg import *
 from move_base_msgs.msg import MoveBaseActionFeedback, MoveBaseActionGoal, MoveBaseActionResult, MoveBaseFeedback, MoveBaseResult
@@ -20,7 +20,7 @@ from rosgraph_msgs.msg import Log
 from sdc21x0.msg import MotorCurrents
 from sensor_msgs.msg import Imu, LaserScan, PointCloud2, Range
 from std_msgs.msg import Float64, String
-from tf2_msgs.msg import TFMessage
+from tf.msg import tfMessage
 from visualization_msgs.msg import Marker, MarkerArray
 
 tf_prefix = ''
@@ -60,7 +60,7 @@ def _prepend_tf_prefix_dict_filter(msg_dict):
             try:
                 # prepend frame_id
                 frame_id = value['frame_id'].strip('/')
-                if (frame_id != 'map' and not tf_prefix in frame_id):
+                if (frame_id != 'map'):
                     # prepend tf_prefix, then remove leading '/' (e.g., when tf_prefix is empty)
                     value['frame_id'] = (tf_prefix + '/' + frame_id).strip('/')
                 else:
@@ -103,122 +103,84 @@ def _remove_tf_prefix_dict_filter(msg_dict):
 
 # topics we want to publish to ROS (and subscribe to from the MiR)
 PUB_TOPICS = [
-              TopicConfig('LightCtrl/us_list', Range),
-              TopicConfig('MC/currents', MotorCurrents),
-              TopicConfig('MC/battery_voltage', Float64),
-              TopicConfig('MissionController/CheckArea/visualization_marker', Marker),
-              TopicConfig('SickPLC/parameter_descriptions', ConfigDescription),
-              TopicConfig('SickPLC/parameter_updates', Config),
-              TopicConfig('amcl_pose', PoseWithCovarianceStamped),
-              TopicConfig('b_raw_scan', LaserScan),
-              TopicConfig('b_scan', LaserScan),
-              TopicConfig('camera_floor_left/obstacles', PointCloud2),
-              TopicConfig('camera_floor_left/background', PointCloud2),
-              TopicConfig('camera_floor/background', PointCloud2),
-              TopicConfig('camera_floor/depth/parameter_descriptions', ConfigDescription),
-              TopicConfig('camera_floor/depth/parameter_updates', Config),
-              TopicConfig('camera_floor/depth/points', PointCloud2),
-              TopicConfig('camera_floor/filter/parameter_descriptions', ConfigDescription),
-              TopicConfig('camera_floor/filter/parameter_updates', Config),
-              TopicConfig('camera_floor/floor', PointCloud2),
-              TopicConfig('camera_floor/obstacles', PointCloud2),
-              TopicConfig('camera_floor/transform/parameter_descriptions', ConfigDescription),
-              TopicConfig('camera_floor/transform/parameter_updates', Config),
-              TopicConfig('check_area/polygon', PolygonStamped),
-              TopicConfig('diagnostics', DiagnosticArray),
-              TopicConfig('diagnostics_agg', DiagnosticArray),
-              TopicConfig('diagnostics_toplevel_state', DiagnosticStatus),
+            #   TopicConfig('LightCtrl/us_list', Range),
+            #   TopicConfig('MC/currents', MotorCurrents),
+            #   TopicConfig('MissionController/CheckArea/visualization_marker', Marker),
+            #   TopicConfig('SickPLC/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('SickPLC/parameter_updates', Config),
+            #   TopicConfig('amcl_pose', PoseWithCovarianceStamped),
+               TopicConfig('b_raw_scan', LaserScan),
+               TopicConfig('b_scan', LaserScan),
+            #   TopicConfig('camera_floor/background', PointCloud2),
+            #   TopicConfig('camera_floor/depth/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('camera_floor/depth/parameter_updates', Config),
+            #   TopicConfig('camera_floor/depth/points', PointCloud2),
+            #   TopicConfig('camera_floor/filter/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('camera_floor/filter/parameter_updates', Config),
+            #   TopicConfig('camera_floor/floor', PointCloud2),
+            #   TopicConfig('camera_floor/obstacles', PointCloud2),
+            #   TopicConfig('camera_floor/transform/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('camera_floor/transform/parameter_updates', Config),
+            #   TopicConfig('check_area/polygon', PolygonStamped),
+            #   TopicConfig('diagnostics', DiagnosticArray),
+            #   TopicConfig('diagnostics_agg', DiagnosticArray),
+            #   TopicConfig('diagnostics_toplevel_state', DiagnosticStatus),
               TopicConfig('f_raw_scan', LaserScan),
               TopicConfig('f_scan', LaserScan),
               TopicConfig('imu_data', Imu),  # not available in simulation
-              TopicConfig('laser_back/driver/parameter_descriptions', ConfigDescription),
-              TopicConfig('laser_back/driver/parameter_updates', Config),
-              TopicConfig('laser_back/transform/parameter_descriptions', ConfigDescription),
-              TopicConfig('laser_back/transform/parameter_updates', Config),
-              TopicConfig('laser_front/driver/parameter_descriptions', ConfigDescription),
-              TopicConfig('laser_front/driver/parameter_updates', Config),
-              TopicConfig('laser_front/transform/parameter_descriptions', ConfigDescription),
-              TopicConfig('laser_front/transform/parameter_updates', Config),
+            #   TopicConfig('laser_back/driver/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('laser_back/driver/parameter_updates', Config),
+            #   TopicConfig('laser_back/transform/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('laser_back/transform/parameter_updates', Config),
+            #   TopicConfig('laser_front/driver/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('laser_front/driver/parameter_updates', Config),
+            #   TopicConfig('laser_front/transform/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('laser_front/transform/parameter_updates', Config),
               TopicConfig('map', OccupancyGrid, latch=True),
               TopicConfig('map_metadata', MapMetaData),
-              TopicConfig('mir_amcl/parameter_descriptions', ConfigDescription),
-              TopicConfig('mir_amcl/parameter_updates', Config),
-              TopicConfig('mir_amcl/selected_points', PointCloud2),
-              TopicConfig('mir_log', Log),
-              TopicConfig('mir_serial_button', Serial),
-              TopicConfig('mir_sound', String),
-              TopicConfig('mir_status', MirStatus),
-              TopicConfig('mir_status_msg', String),
-#              TopicConfig('mirspawn/node_events', LaunchItem),
-              TopicConfig('mirwebapp/grid_map_metadata', LocalMapStat),
-              TopicConfig('mirwebapp/laser_map_metadata', LocalMapStat),
-##              TopicConfig('move_base/feedback', MirMoveBaseActionFeedback),
-##              TopicConfig('move_base/result', MirMoveBaseActionResult),
-              TopicConfig('move_base/feedback', MoveBaseActionFeedback, dict_filter=_move_base_feedback_dict_filter),  # really mir_actions/MirMoveBaseActionFeedback
-              TopicConfig('move_base/result',   MoveBaseActionResult,   dict_filter=_move_base_result_dict_filter),    # really mir_actions/MirMoveBaseActionResult
-              TopicConfig('move_base/status', GoalStatusArray),
-#              TopicConfig('move_base_node/MIRPlannerROS/cost_cloud', PointCloud2),
-#              TopicConfig('move_base_node/MIRPlannerROS/global_plan', Path),
-#              TopicConfig('move_base_node/MIRPlannerROS/len_to_goal', Float64),
-              TopicConfig('move_base_node/MIRPlannerROS/local_plan', Path),
-#              TopicConfig('move_base_node/MIRPlannerROS/parameter_descriptions', ConfigDescription),
-#              TopicConfig('move_base_node/MIRPlannerROS/parameter_updates', Config),
-              TopicConfig('move_base_node/SBPLLatticePlanner/plan', Path),
-#              TopicConfig('move_base_node/SBPLLatticePlanner/visualization_marker', MarkerArray),
-              TopicConfig('move_base_node/current_goal', PoseStamped),
-#              TopicConfig('move_base_node/global_costmap/forbidden_area', GridCells),
-#              TopicConfig('move_base_node/global_costmap/inflated_obstacles', GridCells),
-#              TopicConfig('move_base_node/global_costmap/obstacles', GridCells),
-#              TopicConfig('move_base_node/global_costmap/parameter_descriptions', ConfigDescription),
-#              TopicConfig('move_base_node/global_costmap/parameter_updates', Config),
-#              TopicConfig('move_base_node/global_costmap/robot_footprint', PolygonStamped),
-#              TopicConfig('move_base_node/global_costmap/unknown_space', GridCells),
-#              TopicConfig('move_base_node/global_plan', Path),
-#              TopicConfig('move_base_node/local_costmap/forbidden_area', GridCells),
-              TopicConfig('move_base_node/local_costmap/inflated_obstacles', GridCells),
-              TopicConfig('move_base_node/local_costmap/obstacles', GridCells),
-#              TopicConfig('move_base_node/local_costmap/parameter_descriptions', ConfigDescription),
-#              TopicConfig('move_base_node/local_costmap/parameter_updates', Config),
-              TopicConfig('move_base_node/local_costmap/robot_footprint', PolygonStamped),
-#              TopicConfig('move_base_node/local_costmap/unknown_space', GridCells),
-#              TopicConfig('move_base_node/mir_escape_recovery/visualization_marker', Marker),
-#              TopicConfig('move_base_node/parameter_descriptions', ConfigDescription),
-#              TopicConfig('move_base_node/parameter_updates', Config),
-              TopicConfig('odom_comb', Odometry),    # odom_comb on real robot, odom on simulator
+            #   TopicConfig('mir_amcl/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('mir_amcl/parameter_updates', Config),
+            #   TopicConfig('mir_amcl/selected_points', PointCloud2),
+            #   TopicConfig('mir_log', Log),
+            #   TopicConfig('mir_serial_button', Serial),
+            #   TopicConfig('mir_sound', String),
+            #   TopicConfig('mir_status', MirStatus),
+            #   TopicConfig('mir_status_msg', String),
+            #   TopicConfig('mirwebapp/grid_map_metadata', LocalMapStat),
+            #   TopicConfig('mirwebapp/laser_map_metadata', LocalMapStat),
+              TopicConfig('odom', Odometry),   
               TopicConfig('odom_enc', Odometry),
-              TopicConfig('particlecloud', PoseArray),
-              TopicConfig('relative_move_action/feedback', RelativeMoveActionFeedback),
-              TopicConfig('relative_move_action/result', RelativeMoveActionResult),
-              TopicConfig('relative_move_action/status', GoalStatusArray),
-              TopicConfig('relative_move_node/parameter_descriptions', ConfigDescription),
-              TopicConfig('relative_move_node/parameter_updates', Config),
-              TopicConfig('relative_move_node/time_to_coll', Float64),
-              TopicConfig('relative_move_node/visualization_marker', Marker),
-              TopicConfig('robot_mode', RobotMode),
+            #   TopicConfig('particlecloud', PoseArray),
+            #   TopicConfig('relative_move_action/feedback', RelativeMoveActionFeedback),
+            #   TopicConfig('relative_move_action/result', RelativeMoveActionResult),
+            #   TopicConfig('relative_move_action/status', GoalStatusArray),
+            #   TopicConfig('relative_move_node/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('relative_move_node/parameter_updates', Config),
+            #   TopicConfig('relative_move_node/time_to_coll', Float64),
+            #   TopicConfig('relative_move_node/visualization_marker', Marker),
+            #   TopicConfig('robot_mode', RobotMode),
               TopicConfig('robot_pose', Pose),
               TopicConfig('robot_state', RobotState),
               TopicConfig('rosout', Log),
               TopicConfig('rosout_agg', Log),
               TopicConfig('scan', LaserScan),
               TopicConfig('scan_filter/visualization_marker', Marker),
-              TopicConfig('tf', TFMessage,dict_filter=_tf_dict_filter),
-              TopicConfig('tf_static', TFMessage,dict_filter=_tf_dict_filter),
-              TopicConfig('transform_footprint/parameter_descriptions', ConfigDescription),
-              TopicConfig('transform_footprint/parameter_updates', Config),
-              TopicConfig('transform_imu/parameter_descriptions', ConfigDescription),
-              TopicConfig('transform_imu/parameter_updates', Config)]
+              TopicConfig('tf', tfMessage, dict_filter=_tf_dict_filter),
+            #   TopicConfig('transform_footprint/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('transform_footprint/parameter_updates', Config),
+            #   TopicConfig('transform_imu/parameter_descriptions', ConfigDescription),
+            #   TopicConfig('transform_imu/parameter_updates', Config)
+            ]
 
 # topics we want to subscribe to from ROS (and publish to the MiR)
-SUB_TOPICS = [TopicConfig('cmd_vel', TwistStamped),
+SUB_TOPICS = [TopicConfig('cmd_vel', Twist),
               TopicConfig('initialpose', PoseWithCovarianceStamped),
-              TopicConfig('light_cmd', String),
-              TopicConfig('mir_cmd', String),
-              TopicConfig('move_base/cancel', GoalID),
-##              TopicConfig('move_base/goal', MirMoveBaseActionGoal),
-              TopicConfig('move_base/goal', MoveBaseActionGoal),  # really mir_actions/MirMoveBaseActionGoal
-              TopicConfig('move_base_simple/goal', PoseStamped),
-              TopicConfig('relative_move_action/cancel', GoalID),
-              TopicConfig('relative_move_action/goal', RelativeMoveActionGoal)]
+            #   TopicConfig('light_cmd', String),
+            #   TopicConfig('mir_cmd', String),
+            #   TopicConfig('move_base_simple/goal', PoseStamped),
+            #   TopicConfig('relative_move_action/cancel', GoalID),
+            #   TopicConfig('relative_move_action/goal', RelativeMoveActionGoal)
+            ]
 
 class PublisherWrapper(rospy.SubscribeListener):
     def __init__(self, topic_config, robot):
@@ -244,6 +206,10 @@ class PublisherWrapper(rospy.SubscribeListener):
 
     def peer_unsubscribe(self, topic_name, num_peers):
         pass
+## doesn't work: once ubsubscribed, robot doesn't let us subscribe again
+#         if self.pub.get_num_connections() == 0:
+#             rospy.loginfo("[%s] stopping to stream messages on topic '%s'", rospy.get_name(), self.topic_config.topic)
+#             self.robot.unsubscribe(topic=('/' + self.topic_config.topic))
 
     def callback(self, msg_dict):
         msg_dict = _prepend_tf_prefix_dict_filter(msg_dict)
@@ -304,15 +270,18 @@ class MiR100Bridge(object):
         published_topics = [topic_name for (topic_name, _, has_publishers, _) in topics if has_publishers]
         subscribed_topics = [topic_name for (topic_name, _, _, has_subscribers) in topics if has_subscribers]
 
-        for pub_topic in PUB_TOPICS:
-            PublisherWrapper(pub_topic, self.robot)
+        for pub_topic in PUB_TOPICS:            
             if ('/' + pub_topic.topic) not in published_topics:
                 rospy.logwarn("[%s] topic '%s' is not published by the MiR!", rospy.get_name(), pub_topic.topic)
+            else:
+                PublisherWrapper(pub_topic, self.robot)
 
-        for sub_topic in SUB_TOPICS:
-            SubscriberWrapper(sub_topic, self.robot)
+        for sub_topic in SUB_TOPICS:            
             if ('/' + sub_topic.topic) not in subscribed_topics:
                 rospy.logwarn("[%s] topic '%s' is not yet subscribed to by the MiR!", rospy.get_name(), sub_topic.topic)
+            else:
+                SubscriberWrapper(sub_topic, self.robot)
+
 
     def get_topics(self):
         srv_response = self.robot.callService('/rosapi/topics', msg={})

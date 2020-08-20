@@ -19,7 +19,6 @@
         <rosparam file="$(find mir_navigation)/config/costmap_local_params_plugins.yaml" command="load"/>
 
         <remap from="map" to="/map" />
-        <remap from="odom" to="odom_comb" />
-        <remap from="marker" to="move_base_node/DWBLocalPlanner/markers" />
+        <remap from="cmd_vel" to="move_base/cmd_vel"/>
     </node>
 </launch>

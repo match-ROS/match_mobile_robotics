@@ -23,6 +23,8 @@
   <exec_depend>dwb_critics</exec_depend>         <!-- for dwb_local_planner -->
   <exec_depend>dwb_local_planner</exec_depend>   <!-- for dwb_local_planner -->
   <exec_depend>dwb_plugins</exec_depend>         <!-- for dwb_local_planner -->
+  <exec_depend>dwa_local_planner</exec_depend>
+  <exec_depend>base_local_planner</exec_depend>
   <!-- <exec_depend>eband_local_planner</exec_depend> -->
   <exec_depend>map_server</exec_depend>
   <exec_depend>mir_driver</exec_depend>

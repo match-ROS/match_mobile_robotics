@@ -1,0 +1,32 @@
+#base_global_planner: SBPLLatticePlanner
+base_global_planner: GlobalPlanner
+#base_global_planner: navfn/NavfnROS
+#base_global_planner: carrot_planner/CarrotPlanner
+
+GlobalPlanner:
+  allow_unknown: true
+  default_tolerance: 0.0
+  visualize_potential: false
+  use_dijkstra: true   #If true, use dijkstra's algorithm. Otherwise, A*. 
+  use_quadratic: true  #If true, use the quadratic approximation of the potential. Otherwise, use a simpler calculation. 
+  use_grid_path: false  #If true, create a path that follows the grid boundaries. Otherwise, use a gradient descent method. 
+  old_navfn_behavior: false #If for some reason, you want global_planner to exactly mirror the behavior of navfn, set this to true
+  lethal_cost: 253
+  neutral_cost: 50
+  cost_factor: 3.0
+  publish_potential: true
+  orientation_mode: 0.0
+  orientation_window_size: 1.0
+
+
+
+
+
+SBPLLatticePlanner:
+  environment_type: XYThetaLattice
+  planner_type: ARAPlanner
+  allocated_time: 30.0
+  initial_epsilon: 50.0
+  forward_search: false
+  nominalvel_mpersecs: 0.8
+  timetoturn45degsinplace_secs: 1.31 # = 0.6 rad/s

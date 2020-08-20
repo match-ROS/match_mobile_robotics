@@ -1,0 +1,25 @@
+<launch>
+    <arg name="local_planner"   default="dwa"   doc="Local planner can be either dwa, base, teb or pose"/>
+    <arg name="prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
+
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen" clear_params="true">
+        <param name="SBPLLatticePlanner/primitive_filename" value="$(find mir_navigation)/mprim/unicycle_highcost_5cm.mprim" />
+        <rosparam file="$(find mir_navigation)/config/move_base_common_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/global_planner_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/$(arg local_planner)_local_planner_params.yaml" command="load" />
+        
+        <!-- global costmap params -->
+        <rosparam file="$(find mir_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />
+        <rosparam file="$(find mir_navigation)/config/costmap_global_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/costmap_global_params_plugins.yaml" command="load"/>
+
+        <!-- local costmap params -->
+        <rosparam file="$(find mir_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" subst_value="true" />
+        <rosparam file="$(find mir_navigation)/config/costmap_local_params.yaml" command="load" subst_value="true" />
+        <rosparam file="$(find mir_navigation)/config/costmap_local_params_plugins.yaml" command="load"/>
+
+        <remap from="map" to="/map" />
+        <remap from="odom" to="odom_comb" />
+        <remap from="marker" to="move_base_node/DWBLocalPlanner/markers" />
+    </node>
+</launch>

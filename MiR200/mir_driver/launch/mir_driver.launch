@@ -3,7 +3,7 @@
 
   <arg name="mir_hostname" default="192.168.12.20" />
 
-  <arg name="disable_map" default="true" doc="Disable the map topic and map -> odom_comb TF transform from the MiR" />
+  <arg name="disable_map_tf" default="true" doc="Disable the map topic and map -> odom_comb TF transform from the MiR" />
 
   <param name="tf_prefix" type="string" value="$(arg tf_prefix)"/>
 
@@ -35,13 +35,13 @@
   </node>
 
   <!-- Disable the map topic and the localisation by mir-->
-  <group if="$(arg disable_map)">
+  <group if="$(arg disable_map_tf)">
 
     <node name="mir_bridge" pkg="mir_driver" type="mir_bridge.py" output="screen">
       <param name="hostname" value="$(arg mir_hostname)" />
       <param name="tf_prefix" value="$(arg tf_prefix)" />
-      <remap from="map" to="map_mir" />
-      <remap from="map_metadata" to="map_metadata_mir" />
+      <remap from="map" to="/map" />
+      <remap from="map_metadata" to="/map_metadata" />
       <remap from="rosout" to="/rosout" />
       <remap from="rosout_agg" to="/rosout_agg" />
       <remap from="tf" to="tf_mir" />
@@ -64,7 +64,7 @@
 
 
   <!-- Enable the map topic and the localisation by mir-->
-  <group unless="$(arg disable_map)">
+  <group unless="$(arg disable_map_tf)">
 
     <node name="mir_bridge" pkg="mir_driver" type="mir_bridge.py" output="screen">
       <param name="hostname" value="$(arg mir_hostname)" />

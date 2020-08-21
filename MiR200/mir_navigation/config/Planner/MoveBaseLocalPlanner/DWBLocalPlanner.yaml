@@ -9,11 +9,11 @@ DWBLocalPlanner:
   max_vel_y: 0.0  # diff drive robot
   min_vel_y: 0.0  # diff drive robot
 
-  max_speed_xy: 0.8    # max_trans_vel: 0.8  # choose slightly less than the base's capability
-  min_speed_xy: 0.1    # min_trans_vel: 0.1  # this is the min trans velocity when there is negligible rotational velocity
+  max_speed_xy: 0.8    # max_vel_trans: 0.8  # choose slightly less than the base's capability
+  min_speed_xy: 0.1    # min_vel_trans: 0.1  # this is the min trans velocity when there is negligible rotational velocity
 
-  max_vel_theta: 1.0    # max_rot_vel: 1.0  # choose slightly less than the base's capability
-  min_speed_theta: 0.1  # min_rot_vel: 0.1 default: 0.4  # this is the min angular velocity when there is negligible translational velocity
+  max_vel_theta: 1.0    # max_vel_theta: 1.0  # choose slightly less than the base's capability
+  min_speed_theta: 0.1  # min_vel_theta: 0.1 default: 0.4  # this is the min angular velocity when there is negligible translational velocity
 
   acc_lim_x: 1.5
   acc_lim_y: 0.0      # diff drive robot
@@ -23,7 +23,7 @@ DWBLocalPlanner:
   decel_lim_theta: -2.0
 
   # Goal tolerance
-  yaw_goal_tolerance: 0.03  # yaw_goal_tolerance > (sim_time * min_rot_vel) / 2 (from Navigation Tuning Guide)
+  yaw_goal_tolerance: 0.03  # yaw_goal_tolerance > (sim_time * min_vel_theta) / 2 (from Navigation Tuning Guide)
   xy_goal_tolerance: 0.08   # xy_goal_tolerance  > (sim_time * min_vel_x)   / 2
   #latch_xy_goal_tolerance: true
 

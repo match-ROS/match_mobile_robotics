@@ -34,7 +34,7 @@ PoseFollower:
 
     # we're "stopped" if we're going slower than these velocities
     trans_stopped_velocity: 0.03
-    rot_stopped_velocity: 0.1
+    theta_stopped_velocity: 0.1
 
     # if this is true, we don't care whether we go backwards or forwards
     allow_backwards: true

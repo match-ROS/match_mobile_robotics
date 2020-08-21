@@ -4,14 +4,14 @@ MIRPlannerROS:
   max_vel_x: 0.8
   min_vel_x: -0.2
 
-  min_trans_vel: 0.1  # this is the min trans velocity when there is negligible rotational velocity
+  min_vel_trans: 0.1  # this is the min trans velocity when there is negligible rotational velocity
 
   # Warning!
-  #   do not set min_trans_vel to 0.0 otherwise dwa will always think translational velocities
+  #   do not set min_vel_trans to 0.0 otherwise dwa will always think translational velocities
   #   are non-negligible and small in place rotational velocities will be created.
 
-  max_rot_vel: 1.0  # choose slightly less than the base's capability
-  min_rot_vel: 0.1  # this is the min angular velocity when there is negligible translational velocity
+  max_vel_theta: 1.0  # choose slightly less than the base's capability
+  min_vel_theta: 0.1  # this is the min angular velocity when there is negligible translational velocity
 
   acc_lim_x: 1.5
   acc_lim_y: 0.0      # diff drive robot
@@ -23,7 +23,7 @@ MIRPlannerROS:
   holonomic_robot: false
 
   # Goal tolerance
-  yaw_goal_tolerance: 0.03  # yaw_goal_tolerance > (sim_time * min_rot_vel) / 2 (from Navigation Tuning Guide)
+  yaw_goal_tolerance: 0.03  # yaw_goal_tolerance > (sim_time * min_vel_theta) / 2 (from Navigation Tuning Guide)
   xy_goal_tolerance: 0.08   # xy_goal_tolerance  > (sim_time * min_vel_x)   / 2
 
   # Forward simulaton

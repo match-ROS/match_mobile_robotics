@@ -1,11 +1,16 @@
 <launch>
-    <arg name="local_planner"   default="dwa"   doc="Local planner can be either dwa, base, teb or pose"/>
-    <arg name="prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
+    <arg name="tf_prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
+    <arg name="global_planner" default="GlobalPlanner"  />
+    <arg name="local_planner"   default="DWAPlannerROS" />
 
     <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen" clear_params="true">
+        
+        <!-- general move_base param -->
         <rosparam file="$(find mir_navigation)/config/Planner/move_base_common_params.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/Planner/MoveBaseGlobalPlanner/global_planner_params.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/Planner/MoveBaseLocalPlanner/$(arg local_planner)_local_planner_params.yaml" command="load" />
+       
+        <!-- planner params -->
+        <rosparam file="$(find mir_navigation)/config/Planner/MoveBaseGlobalPlanner/$(arg global_planner).yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/Planner/MoveBaseLocalPlanner/$(arg local_planner).yaml" command="load" />
         
         <!-- global costmap params -->
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />
@@ -17,10 +22,8 @@
         <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params.yaml" command="load" subst_value="true" />
         <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params_plugins.yaml" command="load"/>
 
-        <param name="SBPLLatticePlanner/primitive_filename" value="$(find mir_navigation)/config/Planner/GlobalPlanner/mprim/unicycle_highcost_5cm.mprim" />
-
-        <!-- Rmappings -->
+        <!-- Remappings -->
         <remap from="map" to="/map" />
-        <remap from="cmd_vel" to="move_base/cmd_vel"/>
+        <remap from="cmd_vel" to="cmd_vel_mir"/>
     </node>
 </launch>

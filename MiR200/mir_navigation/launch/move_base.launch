@@ -3,21 +3,23 @@
     <arg name="prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
 
     <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen" clear_params="true">
-        <param name="SBPLLatticePlanner/primitive_filename" value="$(find mir_navigation)/mprim/unicycle_highcost_5cm.mprim" />
-        <rosparam file="$(find mir_navigation)/config/move_base_common_params.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/global_planner_params.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/$(arg local_planner)_local_planner_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/Planner/move_base_common_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/Planner/MoveBaseGlobalPlanner/global_planner_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/Planner/MoveBaseLocalPlanner/$(arg local_planner)_local_planner_params.yaml" command="load" />
         
         <!-- global costmap params -->
-        <rosparam file="$(find mir_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />
-        <rosparam file="$(find mir_navigation)/config/costmap_global_params.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/costmap_global_params_plugins.yaml" command="load"/>
+        <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />
+        <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseGlobalCostmap/costmap_global_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseGlobalCostmap/costmap_global_params_plugins.yaml" command="load"/>
 
         <!-- local costmap params -->
-        <rosparam file="$(find mir_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" subst_value="true" />
-        <rosparam file="$(find mir_navigation)/config/costmap_local_params.yaml" command="load" subst_value="true" />
-        <rosparam file="$(find mir_navigation)/config/costmap_local_params_plugins.yaml" command="load"/>
+        <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="local_costmap" subst_value="true" />
+        <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params.yaml" command="load" subst_value="true" />
+        <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params_plugins.yaml" command="load"/>
 
+        <param name="SBPLLatticePlanner/primitive_filename" value="$(find mir_navigation)/config/Planner/GlobalPlanner/mprim/unicycle_highcost_5cm.mprim" />
+
+        <!-- Rmappings -->
         <remap from="map" to="/map" />
         <remap from="cmd_vel" to="move_base/cmd_vel"/>
     </node>

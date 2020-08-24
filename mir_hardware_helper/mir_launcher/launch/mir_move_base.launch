@@ -1,0 +1,10 @@
+<launch>
+  <arg name="tf_prefix" default=""/>
+  <include file="$(find mir_launcher)/launch/mir.launch" pass_all_args="true"/> 
+
+  <remap from="move_base/cmd_vel" to="cmd_vel"/>
+  <include file="$(find mir_navigation)/launch/move_base.launch" pass_all_args="true">
+    <arg name="global_planner" value="GlobalPlanner"/>
+    <arg name="local_planner" value="DWAPlannerROS"/>
+  </include>
+</launch>

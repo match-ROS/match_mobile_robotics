@@ -6,7 +6,8 @@
 * `mir_gazebo`: Simulation specific launch and configuration files for the MiR robot
 * `mir_msgs`: Message definitions for the MiR robot
 * `mir_navigation`: move_base launch and configuration files
-
+* `mir_helper`  : Tools for some walkarounds and better usage auf the mir plattform
+* `mir_helper`  : Standalone launchfiles for some different tasks
 
 # 2. Installation
 The instructions below use the ROS distro `kinetic` as an example.

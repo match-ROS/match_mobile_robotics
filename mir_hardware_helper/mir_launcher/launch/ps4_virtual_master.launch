@@ -8,7 +8,7 @@
             <param name="coalesce_interval" value="0.001"/>
         </node>
 
-        <node name="ps4_driver" pkg="mir_hardware_helper" type="ps4_ros.py">
+        <node name="ps4_driver" pkg="mir_helper" type="ps4_ros.py">
                 <remap from="/mur/mir/cmd_vel" to="cmd_vel_vm"/>
                 <remap from="/miranda/mir/cmd_vel" to="cmd_vel_vm"/>
         </node>
@@ -23,7 +23,7 @@
             <param name="coalesce_interval" value="0.001"/>
         </node>
 
-        <node name="ps4_driver" pkg="mir_hardware_helper" type="ps4_ros.py">
+        <node name="ps4_driver" pkg="mir_helper" type="ps4_ros.py">
             <remap from="/mur/mir/cmd_vel" to="cmd_vel_vm"/>
             <remap from="/miranda/mir/cmd_vel" to="cmd_vel_vm"/>
         </node>

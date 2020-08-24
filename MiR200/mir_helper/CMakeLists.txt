@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(mir_hardware_helper)
+project(mir_helper)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -106,7 +106,7 @@ generate_messages(
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   INCLUDE_DIRS include
-  LIBRARIES mir_hardware_helper
+  LIBRARIES mir_helper
   CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
@@ -137,9 +137,9 @@ add_dependencies(vel_integrator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(map_odom_broadcaster src/map_odom_broadcaster.cpp)
 add_executable(map_base_broadcaster src/map_base_broadcaster.cpp)
-add_executable(robot_pose_publisher src/robot_pose_publisher.cpp)
+add_executable(pose_stamper src/pose_stamper.cpp)
 add_executable(vel_integrator_node src/vel_integrator_node.cpp)
-
+add_executable(twist_stamper src/twist_stamper.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -157,7 +157,10 @@ target_link_libraries(map_odom_broadcaster
 target_link_libraries(map_base_broadcaster
   ${catkin_LIBRARIES}
 )
-target_link_libraries(robot_pose_publisher
+target_link_libraries(pose_stamper
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(twist_stamper
   ${catkin_LIBRARIES}
 )
 target_link_libraries(vel_integrator_node
@@ -211,7 +214,7 @@ target_link_libraries(vel_integrator_node
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_mir_hardware_helper.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_mir_helper.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -11,7 +11,7 @@ from rospy_message_converter import message_converter
 from actionlib_msgs.msg import GoalID, GoalStatusArray
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from dynamic_reconfigure.msg import Config, ConfigDescription
-from geometry_msgs.msg import PolygonStamped, Pose, PoseArray, PoseStamped, PoseWithCovarianceStamped, Twist
+from geometry_msgs.msg import PolygonStamped, Pose, PoseArray, PoseStamped, PoseWithCovarianceStamped, Twist , TwistStamped
 from mir_actions.msg import *
 from mir_msgs.msg import *
 from move_base_msgs.msg import MoveBaseActionFeedback, MoveBaseActionGoal, MoveBaseActionResult, MoveBaseFeedback, MoveBaseResult
@@ -20,7 +20,7 @@ from rosgraph_msgs.msg import Log
 from sdc21x0.msg import MotorCurrents
 from sensor_msgs.msg import Imu, LaserScan, PointCloud2, Range
 from std_msgs.msg import Float64, String
-from tf.msg import tfMessage
+from tf2_msgs.msg import TFMessage
 from visualization_msgs.msg import Marker, MarkerArray
 
 tf_prefix = ''
@@ -165,7 +165,8 @@ PUB_TOPICS = [
               TopicConfig('rosout_agg', Log),
               TopicConfig('scan', LaserScan),
               TopicConfig('scan_filter/visualization_marker', Marker),
-              TopicConfig('tf', tfMessage, dict_filter=_tf_dict_filter),
+              TopicConfig('tf', TFMessage, dict_filter=_tf_dict_filter),
+              TopicConfig('tf_static', TFMessage, dict_filter=_tf_dict_filter),
             #   TopicConfig('transform_footprint/parameter_descriptions', ConfigDescription),
             #   TopicConfig('transform_footprint/parameter_updates', Config),
             #   TopicConfig('transform_imu/parameter_descriptions', ConfigDescription),
@@ -173,7 +174,7 @@ PUB_TOPICS = [
             ]
 
 # topics we want to subscribe to from ROS (and publish to the MiR)
-SUB_TOPICS = [TopicConfig('cmd_vel', Twist),
+SUB_TOPICS = [TopicConfig('cmd_vel', TwistStamped),
               TopicConfig('initialpose', PoseWithCovarianceStamped),
             #   TopicConfig('light_cmd', String),
             #   TopicConfig('mir_cmd', String),

@@ -16,15 +16,15 @@ void callback_pose(geometry_msgs::Pose msg)
 
 int main(int argc, char **argv)
 {
-  ros::init(argc, argv, "talker");
+  ros::init(argc, argv, "pose_stamper");
 
   ros::NodeHandle n;
 
   ros::NodeHandle private_("~");
 
-  chatter_pub = n.advertise<geometry_msgs::PoseStamped>("robot_pose_stamped", 10);
+  chatter_pub = n.advertise<geometry_msgs::PoseStamped>("pose_out", 10);
 
-  ros::Subscriber pos_sub=n.subscribe("robot_pose",10,callback_pose);
+  ros::Subscriber pos_sub=n.subscribe("pose_in",10,callback_pose);
 
   
   ros::spin();

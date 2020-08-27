@@ -1,9 +1,10 @@
 <launch>
-    <include file="$(find ur_robot_driver)/launch/ur5_bringup.launch" >
+    <arg name="tf_prefix" default=""/>
+    <include file="$(find ur_robot_driver)/launch/ur5_bringup.launch" pass_all_args="true">
         <arg name="controllers" value=" joint_state_controller pos_traj_controller speed_scaling_state_controller force_torque_sensor_controller" doc="Controllers that are activated by default."/>
         <arg name="stopped_controllers" value=" my_cartesian_compliance_controller joint_group_position_controller joint_group_velocity_controller vel_traj_controller scaled_vel_traj_controller scaled_pos_traj_controller " doc="Controllers that are initally loaded, but not started."/>
-        <arg name="controller_config_file" value="$(find ur_hardware_helper)/config/ur5_controllers.yaml" doc="Config file used for defining the ROS-Control controllers."/>
-        <arg name="kinematics_config" value="$(find ur_hardware_helper)/config/calibration.yaml"/>
+        <arg name="controller_config_file" value="$(find ur_launcher)/config/ur5_controllers.yaml" doc="Config file used for defining the ROS-Control controllers."/>
+        <arg name="kinematics_config" value="$(find ur_launcher)/config/calibration.yaml"/>
         <arg name="robot_ip" value="ur"/>
     </include>
 </launch>

@@ -2,3 +2,6 @@
 	path = ur_hardware_helper/ur_robot
 	url = https://github.com/ros-industrial/universal_robot.git
 	branch = melodic-devel
+[submodule "ur_hardware_helper/ur_ros_driver"]
+	path = ur_hardware_helper/ur_ros_driver
+	url = https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git

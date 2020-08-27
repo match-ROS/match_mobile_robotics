@@ -1,0 +1,4 @@
+[submodule "ur_hardware_helper/ur_robot"]
+	path = ur_hardware_helper/ur_robot
+	url = https://github.com/ros-industrial/universal_robot.git
+	branch = melodic-devel

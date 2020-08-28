@@ -3,16 +3,22 @@
     <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>
     <arg name="tf_prefix" default="mur"/>
     
+
+    <!-- Bringup the ur -->
+    <!-- Fixing missing tf_prefix forwarding to the ur packages -->
+    <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/> 
+    <!-- Bringup the ur in proper namespaces -->
     <include file="$(find ur_launcher)/launch/ur.launch" ns="mur/ur">
-        <arg name="tf_prefix" value="mur"/>
+        <arg name="tf_prefix" value="$(arg tf_prefix)/ur/"/>
     </include>
+   
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_ur_transformer" 
-        args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/base_link $(arg tf_prefix)/ur_link0" ns="mur" />
+        args="0.35 -0.15 0.35 0 0 1 0 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/world" ns="mur" />
     
 
     <include file="$(find mir_launcher)/launch/mir.launch" ns="mur/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>       
+        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>       
     </include>
 </launch>

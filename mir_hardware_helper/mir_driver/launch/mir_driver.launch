@@ -29,7 +29,6 @@
       -  $(arg tf_prefix)/camera_top_depth_optical_frame
       -  $(arg tf_prefix)/camera_floor_link
       -  $(arg tf_prefix)/camera_floor_depth_optical_frame
-      -  $(arg tf_prefix)/imu_link
     </rosparam>
   </node>
 

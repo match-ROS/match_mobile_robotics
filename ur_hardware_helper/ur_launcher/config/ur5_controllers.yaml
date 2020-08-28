@@ -3,14 +3,14 @@ hardware_control_loop:
    loop_hz: &loop_hz 125
 
 # Settings for ros_control hardware interface
-hardware_interface:
+ur_hardware_interface:
    joints: &robot_joints
-     - shoulder_pan_joint
-     - shoulder_lift_joint
-     - elbow_joint
-     - wrist_1_joint
-     - wrist_2_joint
-     - wrist_3_joint
+   - shoulder_pan_joint
+   - shoulder_lift_joint
+   - elbow_joint
+   - wrist_1_joint
+   - wrist_2_joint
+   - wrist_3_joint
 
 # Publish all joint states ----------------------------------
 joint_state_controller:
@@ -147,31 +147,31 @@ vel_traj_controller:
    #stop_trajectory_duration: 0 # Defaults to 0.0
 
 
-my_cartesian_compliance_controller:
-    type: "position_controllers/CartesianComplianceController"
-    end_effector_link: "ee_link"
-    robot_base_link: "base_link"
-    ft_sensor_ref_link: "ee_link"
-    compliance_ref_link: "ee_link"
-    target_frame_topic: "target_frame"
-    joints: *robot_joints
-    
+# my_cartesian_compliance_controller:
+#    type: "position_controllers/CartesianComplianceController"
+#    end_effector_link: "ee_link"
+#    robot_base_link: "base_link"
+#    ft_sensor_ref_link: "ee_link"
+#    compliance_ref_link: "ee_link"
+#    target_frame_topic: "target_frame"
+#    joints: *robot_joints
+   
 
-    stiffness:
-        trans_x: 500
-        trans_y: 500
-        trans_z: 500
-        rot_x: 100
-        rot_y: 100
-        rot_z: 100
+#    stiffness:
+#       trans_x: 500
+#       trans_y: 500
+#       trans_z: 500
+#       rot_x: 100
+#       rot_y: 100
+#       rot_z: 100
 
-    pd_gains:
-        trans_x: {p: 0.05}
-        trans_y: {p: 0.05}
-        trans_z: {p: 0.05}
-        rot_x: {p: 0.01}
-        rot_y: {p: 0.01}
-        rot_z: {p: 0.01}
+#    pd_gains:
+#       trans_x: {p: 0.05}
+#       trans_y: {p: 0.05}
+#       trans_z: {p: 0.05}
+#       rot_x: {p: 0.01}
+#       rot_y: {p: 0.01}
+#       rot_z: {p: 0.01}
 
 robot_status_controller:
    type: industrial_robot_status_controller/IndustrialRobotStatusController

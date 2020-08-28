@@ -1,20 +1,21 @@
 <launch>
-    <!-- Defining arguments for the panda launch -->
-    <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>
+    <!-- Defining arguments for the panda launch -->  
     <arg name="tf_prefix" default="miranda"/>
     
     <!-- Bringup the panda and configure it for working in combination with mir -->
-    <!-- <remap  from="/equilibrium_pose" to="miranda/panda/equilibrium_pose" />
-    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="miranda" pass_all_args="true">        
+    <remap  from="/equilibrium_pose" to="miranda/panda/equilibrium_pose" />
+    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="miranda">        
         <arg name="robot_ip" default="panda"/> 
-        <arg name="load_gripper" default="true"/>  
-    </include> -->
+        <arg name="tf_prefix" value="$(arg tf_prefix)/panda"/>
+        <arg name="load_gripper" value="true"/>
+        <arg name="controllers_started" value="franka_state_controller"/> 
+    </include>
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 
-        args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/base_link $(arg tf_prefix)/panda_link0" ns="miranda" />
+        args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/panda/panda_link0" ns="miranda" />
 
     <include file="$(find mir_launcher)/launch/mir.launch" ns="miranda/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>
     </include>
 </launch>

@@ -1,0 +1,51 @@
+# Settings for ros_control control loop
+hardware_control_loop:
+   loop_hz: &loop_hz 125
+
+# Settings for ros_control hardware interface
+ur_hardware_interface:
+   joints: &robot_joints
+   - shoulder_pan_joint
+   - shoulder_lift_joint
+   - elbow_joint
+   - wrist_1_joint
+   - wrist_2_joint
+   - wrist_3_joint
+
+# Publish all joint states ----------------------------------
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: *loop_hz
+
+# Publish wrench ----------------------------------
+force_torque_sensor_controller:
+   type:         force_torque_sensor_controller/ForceTorqueSensorController
+   publish_rate: *loop_hz
+# Publish all robot state ----------------------------------
+robot_status_controller:
+   type: industrial_robot_status_controller/IndustrialRobotStatusController
+   handle_name: industrial_robot_status_handle
+   publish_rate: 10
+
+
+position_joint_controller:
+  type: position_controllers/JointTrajectoryController
+  joints: *robot_joints
+  constraints:
+    goal_time: 0.5
+    panda_joint1:
+      goal: 0.05
+    panda_joint2:
+      goal: 0.05
+    panda_joint3:
+      goal: 0.05
+    panda_joint4:
+      goal: 0.05
+    panda_joint5:
+      goal: 0.05
+    panda_joint6:
+      goal: 0.05
+    panda_joint7:
+      goal: 0.05
+
+

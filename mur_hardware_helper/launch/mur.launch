@@ -2,7 +2,7 @@
     <!-- Defining arguments for the panda launch -->
     <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>
     <arg name="tf_prefix" default="mur"/>
-    
+    <arg name="move_base" default="false"/>
 
     <!-- Bringup the ur -->
     <!-- Fixing missing tf_prefix forwarding to the ur packages -->
@@ -18,7 +18,12 @@
         args="0.35 -0.15 0.35 0 0 1 0 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/world" ns="mur" />
     
 
-    <include file="$(find mir_launcher)/launch/mir.launch" ns="mur/mir">
+    <include unless="$(eval move_base)"  file="$(find mir_launcher)/launch/mir.launch" ns="mur/mir">
         <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>       
     </include>
+
+    <include if="$(eval move_base)"  file="$(find mir_launcher)/launch/mir_move_base.launch" ns="mur/mir">
+        <arg name="tf_prefix" value="$(arg tf_prefix)"/>       
+    </include>
+
 </launch>

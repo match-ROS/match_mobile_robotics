@@ -50,6 +50,7 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <depend>franka_ros</depend>
+  <exec_depend>ros_controllers</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

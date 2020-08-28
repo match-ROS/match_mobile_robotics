@@ -1,14 +1,7 @@
 <launch>
-    <!-- Defining arguments for the panda launch -->
-    <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>
     <arg name="tf_prefix" default="mur"/>
     
-
-    <!-- Add a Transformation from Mir to panda for closed tf tree -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="mir_ur_transformer" 
-        args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/base_link $(arg tf_prefix)/ur_link0" ns="mur" />
-
-    <include file="$(find mir_launcher)/launch/mir_move_base.launch" ns="mur/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>       
+    <include file="$(find mur_hardware_helper)/launch/mur.launch">
+        <arg name="move_base" value="true"/>
     </include>
 </launch>

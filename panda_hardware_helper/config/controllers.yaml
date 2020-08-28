@@ -1,6 +1,6 @@
 position_joint_controller:
   type: position_controllers/JointTrajectoryController
-  joints:
+  joints: &joints
     - panda_joint1
     - panda_joint2
     - panda_joint3
@@ -28,24 +28,10 @@ position_joint_controller:
 franka_state_controller:
   type: franka_control/FrankaStateController
   publish_rate: 30  # [Hz]
-  joint_names:
-    - panda_joint1
-    - panda_joint2
-    - panda_joint3
-    - panda_joint4
-    - panda_joint5
-    - panda_joint6
-    - panda_joint7
+  joint_names: *joints
   arm_id: panda
 
 cartesian_impedance_controller:
   type: franka_example_controllers/CartesianImpedanceExampleController
   arm_id: panda
-  joint_names:
-      - panda_joint1
-      - panda_joint2
-      - panda_joint3
-      - panda_joint4
-      - panda_joint5
-      - panda_joint6
-      - panda_joint7
+  joint_names: *joints

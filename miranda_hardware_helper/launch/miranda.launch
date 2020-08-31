@@ -3,6 +3,7 @@
     <arg name="tf_prefix" default="miranda"/>
     <arg name="move_base" default="false"/>
     <arg name="controllers_started" default="franka_state_controller"/>
+    <arg name="controllers_stopped" default=""/>
 
     <!-- Bringup the panda and configure it for working in combination with mir -->
     <remap  from="/equilibrium_pose" to="miranda/panda/equilibrium_pose" />
@@ -10,7 +11,7 @@
         <arg name="robot_ip" default="panda"/> 
         <arg name="tf_prefix" value="$(arg tf_prefix)/panda"/>
         <arg name="load_gripper" value="true"/>
-        <arg name="controllers_started" value="franka_state_controller"/> 
+        <arg name="controllers_started" value="$(arg controllers_started)"/> 
     </include>
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
@@ -22,7 +23,7 @@
     </include>
 
     <include if="$(eval move_base)" file="$(find mir_launcher)/launch/mir_move_base.launch" ns="miranda/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>
     </include>
 
 </launch>

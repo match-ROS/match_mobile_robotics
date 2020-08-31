@@ -1,14 +1,15 @@
 <launch>
     <!-- Defining arguments for the panda launch -->
-    <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>
+    <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
+    <arg name="controllers_stopped" default="pos_joint_traj_controller"/>
     <arg name="tf_prefix" default="mur"/>
     <arg name="move_base" default="false"/>
 
     <!-- Bringup the ur -->
     <!-- Fixing missing tf_prefix forwarding to the ur packages -->
     <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/> 
-    <!-- Bringup the ur in proper namespaces -->
-    <include file="$(find ur_launcher)/launch/ur.launch" ns="mur/ur">
+
+    <include file="$(find ur_launcher)/launch/ur.launch" ns="mur/ur" pass_all_args="true">
         <arg name="tf_prefix" value="$(arg tf_prefix)/ur/"/>
     </include>
    
@@ -23,7 +24,7 @@
     </include>
 
     <include if="$(eval move_base)"  file="$(find mir_launcher)/launch/mir_move_base.launch" ns="mur/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>       
+        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>       
     </include>
 
 </launch>

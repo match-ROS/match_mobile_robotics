@@ -1,0 +1,6 @@
+<launch>
+<node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" cwd="node" output="screen">
+    <remap from="/position_joint_controller/command" to="miranda/panda/position_joint_controller/command"/>
+    <remap from="joint_states" to="miranda/panda/joint_states"/>
+</node>
+</launch>

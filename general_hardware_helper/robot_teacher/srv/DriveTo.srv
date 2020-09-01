@@ -1,0 +1,4 @@
+string name
+duration time
+---
+bool success

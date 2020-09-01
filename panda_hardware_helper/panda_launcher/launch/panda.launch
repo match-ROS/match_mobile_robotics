@@ -13,11 +13,11 @@
     </include>
 
     <node name="franka_control" pkg="franka_control" type="franka_control_node" output="screen" required="true">
-        <rosparam command="load" file="$(find panda_hardware_helper)/config/control_node.yaml" />
+        <rosparam command="load" file="$(find panda_launcher)/config/control_node.yaml" />
         <param name="robot_ip" value="$(arg robot_ip)" />
     </node>
     
-    <rosparam command="load" file="$(find panda_hardware_helper)/config/controllers.yaml" />
+    <rosparam command="load" file="$(find panda_launcher)/config/controllers.yaml" />
     <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="$(arg controllers_started)"/>
     <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
     

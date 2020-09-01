@@ -7,7 +7,7 @@
 
     <!-- Bringup the panda and configure it for working in combination with mir -->
     <remap  from="/equilibrium_pose" to="miranda/panda/equilibrium_pose" />
-    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="miranda/panda">        
+    <include file="$(find panda_launcher)/launch/panda.launch" ns="miranda/panda">        
         <arg name="robot_ip" default="panda"/> 
         <arg name="tf_prefix" value="$(arg tf_prefix)/panda"/>
         <arg name="load_gripper" value="true"/>

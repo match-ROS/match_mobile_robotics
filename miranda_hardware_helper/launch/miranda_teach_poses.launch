@@ -1,0 +1,10 @@
+<launch>
+    
+    <arg name="poses_file_name" default="my_poses.yaml"/>
+
+    <include file="$(find miranda_hardware_helper)/launch/miranda_state.launch"/>
+
+    <node name="pose_teacher" type="joint_state_saver_node.py" pkg="robot_teacher" output="screen" ns="miranda/panda">
+       <param name="file_name" value="/home/rosmatch/poses/grip_pose.yaml"/>
+    </node>
+</launch>

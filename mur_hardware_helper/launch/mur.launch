@@ -1,7 +1,7 @@
 <launch>
     <!-- Defining arguments for the panda launch -->
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
-    <arg name="controllers_stopped" default="pos_joint_traj_controller"/>
+    <arg name="controllers_stopped" default="force_torque_sensor_controller"/>  <!--Must not be empty-->
     <arg name="tf_prefix" default="mur"/>
     <arg name="move_base" default="false"/>
 

@@ -1,6 +1,4 @@
-<launch>
-    <arg name="tf_prefix" default="mur"/>
-    
+<launch>    
     <include file="$(find mur_hardware_helper)/launch/mur.launch">
         <arg name="move_base" value="true"/>
     </include>

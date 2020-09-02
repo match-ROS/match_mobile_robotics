@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-from typing import List,Dict
-
 import yaml
 import collections
 import os
 import errno
+
+
 
 import rospy
 import rospkg
@@ -52,7 +52,8 @@ class JointStateSaver:
                         raise
 
             with open(self.__filename, 'a+') as outfile:
-                yaml.safe_dump(self.__joint_states_dict,outfile,default_flow_style=False)   
+                yaml.safe_dump(self.__joint_states_dict,outfile,default_flow_style=False) 
+                  
         return  len(self.__joint_states_dict)
 
 
@@ -96,7 +97,7 @@ class JointStateCommander():
         self.__drive_to_srv=rospy.Service("~drive_to",SetName,self.__driveTo__)
        
         self.__arm_joint_names=rospy.get_param("~arm_joint_names",[])       
-        self.__max_joint_velocity=rospy.get_param("~max_joint_velocity",0.1)
+        self.__max_joint_velocity=rospy.get_param("~max_joint_velocity",0.08)
         self.__joint_states=dict()
 
     def __currentJointCallback__(self,msg):

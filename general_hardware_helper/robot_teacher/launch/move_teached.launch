@@ -1,6 +1,12 @@
 <launch>
-<node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" cwd="node" output="screen">
-    <remap from="/position_joint_controller/command" to="miranda/panda/position_joint_controller/command"/>
-    <remap from="joint_states" to="miranda/panda/joint_states"/>
-</node>
+    <node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" cwd="node" output="screen">
+        <rosparam param="arm_joint_names">[ panda_joint1,
+                                            panda_joint2,
+                                            panda_joint3,
+                                            panda_joint4,
+                                            panda_joint5,
+                                            panda_joint6,
+                                            panda_joint7]</rosparam>
+        <param name="file_name" value="$(find robot_teacher)/poses/my_poses.yaml"/>
+    </node>
 </launch>

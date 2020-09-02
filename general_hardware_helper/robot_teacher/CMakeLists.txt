@@ -107,7 +107,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES robot_teacher
-  CATKIN_DEPENDS message_runtime
+  CATKIN_DEPENDS message_runtime rospy
 #  DEPENDS system_lib
 )
 
@@ -119,7 +119,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-# ${catkin_INCLUDE_DIRS}
+ ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library

@@ -7,5 +7,5 @@ if __name__=="__main__":
     try:
         joint_state_saver=JointStateSaver()
         rospy.spin()
-    except Exception:
-        rospy.loginfo("Something went wrong!")
+   except Exception as ex:
+        rospy.logerr(ex)

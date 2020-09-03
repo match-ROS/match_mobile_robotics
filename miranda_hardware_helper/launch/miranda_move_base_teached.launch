@@ -1,0 +1,21 @@
+<launch>
+
+    <arg name="poses_file_name" default="transport_poses.yaml"/>
+
+    <include file="$(find miranda_hardware_helper)/launch/miranda.launch">
+        <arg name="move_base" value="true"/>
+        <arg name="controllers_started" value="franka_state_controller position_joint_controller"/>
+    </include>
+
+    <node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" output="screen" ns="miranda/panda">
+        <rosparam param="arm_joint_names">[ panda_joint1,
+                                            panda_joint2,
+                                            panda_joint3,
+                                            panda_joint4,
+                                            panda_joint5,
+                                            panda_joint6,
+                                            panda_joint7]</rosparam>
+        <param name="file_name" value="$(find miranda_hardware_helper)/poses/$(arg poses_file_name)"/>
+        <param name="max_joint_velocity" value="0.08"/>
+    </node>
+</launch>

@@ -16,6 +16,8 @@ class VelIntegrator{
         ros::NodeHandle priv("~");
         this->initial_server_=priv.advertiseService("reset",&VelIntegrator::callbackReset,this);
         this->pose_.setIdentity();
+
+        this->initialized_=false;
         
         priv.getParam("topic_name",this->pose_topic_);
         priv.getParam("frame_id",this->frame_id_);
@@ -24,6 +26,7 @@ class VelIntegrator{
     private:
     void callbackSetInitial(geometry_msgs::PoseWithCovarianceStamped msg)
     {
+        this->initialized_=true;
         tf::poseMsgToTF(msg.pose.pose,this->pose_);
     }
     void callbackIntegrate(geometry_msgs::TwistStamped msg)
@@ -47,11 +50,15 @@ class VelIntegrator{
         this->pose_.setOrigin(this->pose_.getOrigin()+lin*d_t.toSec());
         this->pose_.setRotation(tf::createQuaternionFromYaw(ang.z()*d_t.toSec())*this->pose_.getRotation());
 
-        geometry_msgs::PoseStamped pose_msg;
-        tf::poseTFToMsg(this->pose_,pose_msg.pose);
-        pose_msg.header.stamp=now;
-        pose_msg.header.frame_id=this->frame_id_;
-        this->pub_.publish(pose_msg);         
+        if(this->initialized_)
+        {
+            geometry_msgs::PoseStamped pose_msg;
+            tf::poseTFToMsg(this->pose_,pose_msg.pose);
+            pose_msg.header.stamp=now;
+            pose_msg.header.frame_id=this->frame_id_;
+            this->pub_.publish(pose_msg);        
+        }
+        
     }
     bool callbackReset(std_srvs::EmptyRequest &req,std_srvs::EmptyResponse  &res)
     {
@@ -59,6 +66,7 @@ class VelIntegrator{
         return true;
     }
     
+    bool initialized_;
     std::string frame_id_;
     tf::Pose pose_;    
     ros::Time time_;

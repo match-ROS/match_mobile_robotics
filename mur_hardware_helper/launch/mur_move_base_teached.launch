@@ -7,8 +7,8 @@
         <arg name="controllers_started" value="joint_state_controller robot_status_controller position_joint_controller"/>
     </include>
 
-    <node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" output="screen" ns="mur/ur">
-        <rosparam param="arm_joint_names">[ elbow_joint,
+    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher" output="screen" ns="mur/ur">
+        <rosparam param="joint_names">[     elbow_joint,
                                             shoulder_lift_joint,
                                             shoulder_pan_joint,
                                             wrist_1_joint,

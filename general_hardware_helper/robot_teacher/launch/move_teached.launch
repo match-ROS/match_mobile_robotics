@@ -1,5 +1,5 @@
 <launch>
-    <node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" cwd="node" output="screen">
+    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher" cwd="node" output="screen">
         <rosparam param="arm_joint_names">[ panda_joint1,
                                             panda_joint2,
                                             panda_joint3,

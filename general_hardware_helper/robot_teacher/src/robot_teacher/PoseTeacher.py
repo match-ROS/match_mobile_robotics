@@ -17,28 +17,27 @@ from robot_teacher.srv import SetName,DriveTo
 from trajectory_msgs.msg import JointTrajectory,JointTrajectoryPoint
 
 
-class JointStateSaver:
+class PoseFileHandler:
     def __init__(self):
-       
-        self.__save_named_srv=rospy.Service("~save_named",SetName,self.__addStatesCallback__)
-        self.__joint_listener=rospy.Subscriber("joint_states",JointState,self.__jointCallback__)
-
-        self.__filename=rospy.get_param("~file_name","default_file.yaml")
-        self.__joint_states=dict()   
+        self.__filename=rospy.get_param("~file_name",str())  
+        self.__joint_names=rospy.get_param("~joint_names",list())
+        self.__save_srv=rospy.Service("~save_pose",SetName,self.__save__)                    
         self.__joint_states_dict=dict()
+       
+       
+        self.__load__()
 
-
-    def __jointCallback__(self,msg):
-        self.__joint_states=dict()
-        for index,name in enumerate(msg.name):
-            self.__joint_states[name]=msg.position[index]
+    def __load__(self):
+        if os.path.exists(os.path.dirname(self.__filename)):
+            with open(self.__filename, 'r') as infile:
+                raw=yaml.safe_load(infile)
+                for pose in raw:
+                    self.__joint_states_dict[pose]={joint_name:raw[pose][joint_name] for joint_name in self.__joint_names}
+            print("Loaded yaml: ")
+            print(yaml.safe_dump(self.__joint_states_dict,default_flow_style=False))
+        
     
-    def __addStatesCallback__(self,req):
-        rospy.loginfo("Adding joint state position: ")
-        rospy.loginfo(self.__joint_states)
-        rospy.loginfo("With name: ")
-        rospy.loginfo(req.name)
-        self.__joint_states_dict[req.name]=self.__joint_states  
+    def __save__(self):
         if self.__joint_states_dict:
             rospy.loginfo("Saving:")
             rospy.loginfo(self.__joint_states_dict)
@@ -51,58 +50,53 @@ class JointStateSaver:
                     if exc.errno != errno.EEXIST:
                         raise
 
-            with open(self.__filename, 'a+') as outfile:
+            with open(self.__filename, 'w') as outfile:
                 yaml.safe_dump(self.__joint_states_dict,outfile,default_flow_style=False) 
-                  
-        return  len(self.__joint_states_dict)
-
-
-
-class JointStateLoader:
-    def __init__(self):
-        self.__filename=rospy.get_param("~file_name","default_file.yaml")    
-        self.__reload_srv=rospy.Service("~reload",Empty,self.__reload__)
-        self.__load__()
     
-    def __load__(self):
-        with open(self.__filename, 'r') as infile:
-            self.__joint_states_dict=yaml.safe_load(infile)
-        print("Loaded yaml: ")
-        print(yaml.safe_dump(self.__joint_states_dict,default_flow_style=False))
-        print("As dict:")
-        print(self.__joint_states_dict)
-
-    def __reload__(self,req):
-        self.__load__()
-        return []
-    
-    def getStates(self,pose_name,joint_names):
-        states=dict()
-        joint_states=self.__joint_states_dict[pose_name]
-        states={name : joint_states[name] for name in joint_names}
-        return states
-
     def getNames(self):
-        return self.__joint_states_dict.keys()
+        return self.__joint_states_dict.keys()              
+    
+    def getStates(self,pose_name):
+        return self.__joint_states_dict[pose_name]
+
+    def __jointCallback__(self,msg):
+        self.__joint_states=dict()
+        for index,name in enumerate(msg.name):
+            self.__joint_states[name]=msg.position[index]
+    
+    def __addStatesCallback__(self,req):
+        rospy.loginfo("Adding joint state position: ")
+        rospy.loginfo(self.__joint_states)
+        rospy.loginfo("With name: ")
+        rospy.loginfo(req.name)
+        
+        self.__joint_states_dict[req.name]={name:self.__joint_states[name] for name in self.__joint_names}  
+        self.__save__()        
+        return  len(self.__joint_states_dict)
   
 
 
    
 
-class JointStateCommander():
+class TeachedPoseHandler():
     def __init__(self):
-        self.__file_loader=JointStateLoader()
+        self.__file_handler=PoseFileHandler()
+
         self.__trajectory_commander=rospy.Publisher("position_joint_controller/command",JointTrajectory,queue_size=10)
-        self.__current_joint_sub=rospy.Subscriber("joint_states",JointState,self.__currentJointCallback__)
-        self.__drive_to_srv=rospy.Service("~drive_to",SetName,self.__driveTo__)
        
-        self.__arm_joint_names=rospy.get_param("~arm_joint_names",[])       
-        self.__max_joint_velocity=rospy.get_param("~max_joint_velocity",0.08)
+        self.__current_joint_sub=rospy.Subscriber("joint_states",JointState,self.__currentJointCallback__)
+       
+        self.__drive_to_srv=rospy.Service("~drive_to",SetName,self.__driveTo__)
+           
+        self.__max_joint_velocity=rospy.get_param("~max_joint_velocity",0.08)        
+        self.__joint_names=rospy.get_param("~joint_names",list())
+
+
         self.__joint_states=dict()
 
     def __currentJointCallback__(self,msg):
         for index,name in enumerate(msg.name):
-            if name in self.__arm_joint_names:
+            if name in self.__joint_names:
                 self.__joint_states[name]=msg.position[index] 
 
 
@@ -119,8 +113,8 @@ class JointStateCommander():
 
 
     def __driveTo__(self,req):
-        if req.name in self.__file_loader.getNames():     
-            joint_states=self.__file_loader.getStates(req.name,self.__arm_joint_names)
+        if req.name in self.__file_handler.getNames():     
+            joint_states=self.__file_handler.getStates(req.name)
         else:
             raise KeyError("Pose name does not exist")
 

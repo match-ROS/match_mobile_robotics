@@ -5,8 +5,7 @@ from catkin_pkg.python_setup import generate_distutils_setup
 setup_args = generate_distutils_setup(
     packages=['robot_teacher'],
     package_dir={'': 'src'},
-    scripts=[   "scripts/joint_state_saver_node.py",
-                "scripts/move_teached_node.py"]
+    scripts=[   "scripts/pose_teacher_node.py"]
 )
 
 setup(**setup_args)

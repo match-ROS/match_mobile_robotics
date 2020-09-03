@@ -4,8 +4,8 @@
 
     <include file="$(find miranda_hardware_helper)/launch/miranda_joint_trajectory.launch"/>
 
-    <node name="move_teached" type="move_teached_node.py" pkg="robot_teacher" output="screen" ns="miranda/panda">
-        <rosparam param="arm_joint_names">[ panda_joint1,
+    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher" output="screen" ns="miranda/panda">
+        <rosparam param="joint_names">[ panda_joint1,
                                             panda_joint2,
                                             panda_joint3,
                                             panda_joint4,

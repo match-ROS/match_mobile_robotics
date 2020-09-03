@@ -5,6 +5,9 @@
     <arg name="tf_prefix" default="mur"/>
     <arg name="move_base" default="false"/>
 
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="mur_hardware_helper" ns="mur/ur"/>
+
+
     <!-- Bringup the ur -->
     <!-- Fixing missing tf_prefix forwarding to the ur packages -->
     <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/> 

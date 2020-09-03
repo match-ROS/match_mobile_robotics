@@ -5,6 +5,8 @@
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
 
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="miranda_hardware_helper" ns="miranda/panda"/>
+
     <!-- Bringup the panda and configure it for working in combination with mir -->
     <remap  from="/equilibrium_pose" to="miranda/panda/equilibrium_pose" />
     <include file="$(find panda_launcher)/launch/panda.launch" ns="miranda/panda">        

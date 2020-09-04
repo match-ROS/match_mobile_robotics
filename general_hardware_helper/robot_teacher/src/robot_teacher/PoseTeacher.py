@@ -21,7 +21,7 @@ class PoseFileHandler:
     def __init__(self):
         self.__filename=rospy.get_param("~file_name",str())  
         self.__joint_names=rospy.get_param("~joint_names",list())
-        self.__save_srv=rospy.Service("~save_pose",SetName,self.__save__)                    
+        self.__save_srv=rospy.Service("~save_pose",SetName,self.__saveCallback__)                    
         self.__joint_states_dict=dict()
        
        
@@ -36,7 +36,11 @@ class PoseFileHandler:
             print("Loaded yaml: ")
             print(yaml.safe_dump(self.__joint_states_dict,default_flow_style=False))
         
-    
+    def __saveCallback__(self,req):
+        self.__joint_states_dict[req.name]=self.__joint_states
+        self.__save__()
+
+
     def __save__(self):
         if self.__joint_states_dict:
             rospy.loginfo("Saving:")
@@ -123,12 +127,14 @@ class TeachedPoseHandler():
 
         point=JointTrajectoryPoint()
         point.positions=joint_states.values()
+        point.velocities=[0.0]*len(joint_states.values())
+        point.accelerations=[0.0]*len(joint_states.values())
         point.time_from_start=self.__calcTime__(joint_states,self.__joint_states)       
        
         if point.time_from_start.to_sec() >0.05:
             joint=JointTrajectory()
             joint.joint_names=joint_states.keys()
-            joint.points=[point]  
+            joint.points=[point]
             print(joint)
             self.__trajectory_commander.publish(joint)
             return 1

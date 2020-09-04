@@ -13,6 +13,6 @@
                                             panda_joint6,
                                             panda_joint7]</rosparam>
         <param name="file_name" value="$(find miranda_hardware_helper)/poses/$(arg poses_file_name)"/>
-        <param name="max_joint_velocity" value="0.08"/>
+        <param name="max_joint_velocity" value="0.5"/>
     </node>
 </launch>

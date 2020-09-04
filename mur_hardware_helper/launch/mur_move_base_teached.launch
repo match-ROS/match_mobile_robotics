@@ -15,6 +15,6 @@
                                             wrist_2_joint,
                                             wrist_3_joint]</rosparam>
         <param name="file_name" value="$(find mur_hardware_helper)/poses/$(arg poses_file_name)"/>
-        <param name="max_joint_velocity" value="0.08"/>
+        <param name="max_joint_velocity" value="0.5"/>
     </node>
 </launch>

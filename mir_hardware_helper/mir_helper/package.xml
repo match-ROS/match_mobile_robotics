@@ -60,7 +60,7 @@
   <build_depend>tf2</build_depend>
   <build_depend>tf2_geometry_msgs</build_depend>
 
-  <depend>mir_describtion</depend>
+  <depend>mir_description</depend>
   <exec_depend>joy</exec_depend>  
   <exec_depend>amcl</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->

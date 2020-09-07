@@ -4,15 +4,8 @@
 
     <include file="$(find miranda_hardware_helper)/launch/miranda_joint_trajectory.launch"/>
 
-    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher" output="screen" ns="miranda/panda">
-        <rosparam param="joint_names">[ panda_joint1,
-                                            panda_joint2,
-                                            panda_joint3,
-                                            panda_joint4,
-                                            panda_joint5,
-                                            panda_joint6,
-                                            panda_joint7]</rosparam>
-        <param name="file_name" value="$(find miranda_hardware_helper)/poses/$(arg poses_file_name)"/>
-        <param name="max_joint_velocity" value="0.5"/>
+    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="miranda/panda">
+        <rosparam command="load" file="$(find miranda_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
     </node>
+
 </launch>

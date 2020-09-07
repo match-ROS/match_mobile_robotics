@@ -14,6 +14,7 @@
         <arg name="tf_prefix" value="$(arg tf_prefix)/panda"/>
         <arg name="load_gripper" value="true"/>
         <arg name="controllers_started" value="$(arg controllers_started)"/> 
+        <arg name="controllers_stopped" default="$(arg controllers_stopped)"/>
     </include>
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->

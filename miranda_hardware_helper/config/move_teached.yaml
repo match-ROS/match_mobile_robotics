@@ -1,0 +1,11 @@
+joint_names:
+  - panda_joint1
+  - panda_joint2
+  - panda_joint3
+  - panda_joint4
+  - panda_joint5
+  - panda_joint6
+  - panda_joint7
+
+file_name: $(find miranda_hardware_helper)/poses/$(arg poses_file_name)
+max_joint_velocity: 0.5 

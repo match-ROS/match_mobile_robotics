@@ -1,17 +1,13 @@
 <launch>
 
-    <arg name="poses_file_name" default="transport_poses.yaml"/>
-
+  
     <include file="$(find mur_hardware_helper)/launch/mur_joint_trajectory.launch"/>
 
-    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher" output="screen" ns="mur/ur">
-        <rosparam param="joint_names">[     elbow_joint,
-                                            shoulder_lift_joint,
-                                            shoulder_pan_joint,
-                                            wrist_1_joint,
-                                            wrist_2_joint,
-                                            wrist_3_joint]</rosparam>
-        <param name="file_name" value="$(find mur_hardware_helper)/poses/$(arg poses_file_name)"/>
-        <param name="max_joint_velocity" value="0.5"/>
+
+    <arg name="poses_file_name" default="transport_poses.yaml"/>
+    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="mur/ur">
+        <rosparam command="load" file="$(find mur_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
     </node>
+
+
 </launch>

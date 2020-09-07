@@ -11,7 +11,7 @@ def gripCallback(req):
     goal=GripperCommandGoal()
   
     if not req.data:
-        goal.command.position=0.04
+        goal.command.position=0.035
         goal.command.max_effort=20
         msg="Released"
     else :

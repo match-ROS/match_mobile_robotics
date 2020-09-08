@@ -1,13 +1,9 @@
 <launch>
-
   
-    <include file="$(find mur_hardware_helper)/launch/mur_joint_trajectory.launch"/>
-
-
-    <arg name="poses_file_name" default="transport_poses.yaml"/>
-    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="mur/ur">
-        <rosparam command="load" file="$(find mur_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
-    </node>
-
+    <include file="$(find mur_hardware_helper)/launch/mur.launch">
+        <arg name="move_base" value="false"/>
+        <arg name="move_teached" value="true"/>
+        <arg name="controllers_started" value="joint_state_controller robot_status_controller position_joint_controller"/>
+    </include>
 
 </launch>

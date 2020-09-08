@@ -5,6 +5,5 @@ joint_names:
   - wrist_1_joint
   - wrist_2_joint
   - wrist_3_joint
-
-file_name: $(find mur_hardware_helper)/poses/$(arg poses_file_name)
+file_name: $(find mur_hardware_helper)/poses/transport_poses.yaml
 max_joint_velocity: 0.5 

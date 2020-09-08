@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find panda_launcher)/launch/panda.launch">
+        <arg name="controllers_started" value="franka_state_controller cartesian_impedance_controller"/>
+        <arg name="controllers_stopped" value=""/>
+    </include>
+</launch>

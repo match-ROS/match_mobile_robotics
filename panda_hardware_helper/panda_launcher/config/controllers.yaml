@@ -33,6 +33,6 @@ franka_state_controller:
   arm_id: panda
 
 cartesian_impedance_controller:
-  type: franka_example_controllers/CartesianImpedanceExampleController
+  type: cartesian_impedance_controller/CartesianImpedanceExampleController
   arm_id: panda
   joint_names: *joints

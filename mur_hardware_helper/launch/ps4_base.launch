@@ -8,9 +8,9 @@
         <param name="coalesce_interval" value="0.001"/>
     </node>
 
-    <node name="mur_ps4_controller" type="ps4_diffdrive.py" pkg="ps4_controller" ns="mur/mir">
+    <node name="mur_ps4_controller" type="ps4_diffdrive.py" pkg="ps4_controller" ns="mur/mir" output="screen">
         <remap from="joy" to="/joy"/>
         <param name="rot_incr" value="0.01"/>
-        <param name="trans_incr" value="0.01"/>
+        <param name="trans_incr" value="0.05"/>
     </node>
 </launch>

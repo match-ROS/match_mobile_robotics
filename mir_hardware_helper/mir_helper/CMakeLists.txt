@@ -127,19 +127,36 @@ add_library(vel_integrator
   include/${PROJECT_NAME}/vel_integrator.hpp
 )
 set_target_properties(vel_integrator PROPERTIES LINKER_LANGUAGE CXX)
-## Add cmake target dependencies of the library
-## as an example, code may need to be generated before libraries
-## either from message generation or dynamic reconfigure
 add_dependencies(vel_integrator ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+
+
+add_library(planner
+  include/${PROJECT_NAME}/planner_base.h
+  src/planner_base.cpp
+
+  include/${PROJECT_NAME}/spiral_planner.h
+  src/spiral_planner.cpp
+
+  include/${PROJECT_NAME}/primitive_planner.h
+  src/primitive_planner.cpp
+
+  include/${PROJECT_NAME}/lissajous_planner.h
+  src/lissajous_planner.cpp
+)
+target_link_libraries(planner
+  ${catkin_LIBRARIES}
+)
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(map_odom_broadcaster src/map_odom_broadcaster.cpp)
-add_executable(map_base_broadcaster src/map_base_broadcaster.cpp)
-add_executable(pose_stamper src/pose_stamper.cpp)
-add_executable(vel_integrator_node src/vel_integrator_node.cpp)
-add_executable(twist_stamper src/twist_stamper.cpp)
+add_executable(map_odom_broadcaster nodes/map_odom_broadcaster.cpp)
+add_executable(map_base_broadcaster nodes/map_base_broadcaster.cpp)
+add_executable(pose_stamper nodes/pose_stamper.cpp)
+add_executable(vel_integrator_node nodes/vel_integrator_node.cpp)
+add_executable(twist_stamper nodes/twist_stamper.cpp)
+add_executable(planner_node nodes/planner_node.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -165,6 +182,10 @@ target_link_libraries(twist_stamper
 )
 target_link_libraries(vel_integrator_node
   vel_integrator
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(planner_node
+  planner
   ${catkin_LIBRARIES}
 )
 #############

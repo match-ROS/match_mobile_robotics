@@ -1,0 +1,9 @@
+<launch>
+    <node name="planner" type="planner_node" pkg="mir_helper" output="screen">
+        <rosparam command="load" file="$(find transport_launcher)/config/planner.yaml"/>
+        <remap from="trajectory_odom" to="/planner_odom"/>
+        <remap from="trajectory_vel" to="/planner_vel"/>
+        <remap from="trajectory_pose" to="/planner_pose"/>
+        <remap from="start_pose" to="/initialpose"/>        
+    </node>
+</launch>

@@ -33,16 +33,25 @@ class PlayStationDiffDrive(PlayStationHandler):
 
 
     def __increaseRot__(self):
+        print("Increasing rot")
         self.__speed_rotation=self.__speed_rotation+self.__rot_incr
+        
       
     def __increaseTrans__(self):
+        print("Increasing trans")
         self.__speed_translation=self.__speed_translation+self.__trans_incr
     
     def __decreaseRot__(self):
+        print("Decreasing rot")
         self.__speed_rotation=self.__speed_rotation-self.__rot_incr
+        if self.__speed_rotation<0.0:
+            self.__speed_rotation=0.0
       
     def __decreaseTrans__(self):
+        print("Decreasing trans")
         self.__speed_translation=self.__speed_translation-self.__trans_incr
+        if  self.__speed_translation<0.0:
+            self.__speed_translation=0.0
  
 
 
@@ -71,7 +80,7 @@ class PlayStationDiffDrive(PlayStationHandler):
                         pass
 
             self.__translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.__speed_translation #data.axes[1] + data.axes[4]
-            self.__rotation = (self._axes[0] + self._axes[3])*self.__speed_translation
+            self.__rotation = (self._axes[0] + self._axes[3])*self.__speed_rotation
 
             self.__publishFunction()
             self.__rate.sleep()            

@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mir_helper</name>
+  <name>base_trajectory_analytical</name>
   <version>0.0.0</version>
-  <description>The mir_helper package</description>
+  <description>The base_trajectory_analytical package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/mir_helper</url> -->
+  <!-- <url type="website">http://wiki.ros.org/base_trajectory_analytical</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,20 +49,13 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
- 
-  <build_depend>message_generation</build_depend>
-  <exec_depend>message_runtime</exec_depend>  
   <depend>roscpp</depend>
 
   
-  <build_depend>tf</build_depend>
-  <build_depend>tf2</build_depend>
-  <build_depend>tf2_ros</build_depend>
-  <build_depend>geometry_msgs</build_depend>
-
-  <build_depend>tf2_geometry_msgs</build_depend>
-
-  
+  <depend>tf</depend>
+  <depend>nav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>std_srvs</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

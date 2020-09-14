@@ -1,10 +1,10 @@
 #include <ros/ros.h>
 #include <tf/tf.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
-#include <mir_helper/planner_base.h>
-#include <mir_helper/spiral_planner.h>
-#include <mir_helper/lissajous_planner.h>
-#include <mir_helper/primitive_planner.h>
+#include <base_trajectory_analytical/planner_base.h>
+#include <base_trajectory_analytical/spiral_planner.h>
+#include <base_trajectory_analytical/lissajous_planner.h>
+#include <base_trajectory_analytical/primitive_planner.h>
 
 enum ControllerTypes{
     lissajous=0,

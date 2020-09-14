@@ -1,4 +1,4 @@
-#include <mir_helper/lissajous_planner.h>
+#include <base_trajectory_analytical/lissajous_planner.h>
 
 LissajousPlanner::LissajousPlanner(ros::NodeHandle &nh):PlannerBase(nh)
 {

@@ -1,4 +1,4 @@
-#include<mir_helper/primitive_planner.h>
+#include<base_trajectory_analytical/primitive_planner.h>
 
 //Implementation of a StepResponse planner that gives a spiral########################################################################################
 //#######################################################################################################################################

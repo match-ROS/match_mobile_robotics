@@ -1,4 +1,4 @@
-#include <mir_helper/spiral_planner.h>
+#include <base_trajectory_analytical/spiral_planner.h>
 
 Spiralplanner::Spiralplanner(ros::NodeHandle &nh):PlannerBase(nh)
 {

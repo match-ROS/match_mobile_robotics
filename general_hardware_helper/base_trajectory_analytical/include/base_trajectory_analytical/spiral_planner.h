@@ -1,4 +1,4 @@
-#include <mir_helper/planner_base.h>
+#include <base_trajectory_analytical/planner_base.h>
 
 #define PARAM_R0 "r0"
 #define PARAM_GROWTH "growth"

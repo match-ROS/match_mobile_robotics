@@ -1,6 +1,6 @@
 #pragma once
 
-#include <mir_helper/planner_base.h>
+#include <base_trajectory_analytical/planner_base.h>
 
 #define PARAM_OMEGA "omega"
 #define PARAM_RATIO "ratio"

@@ -1,14 +1,9 @@
-<launch>
-
-    <arg name="poses_file_name" default="transport_poses.yaml"/>
+<launch> 
 
     <include file="$(find miranda_hardware_helper)/launch/miranda.launch">
         <arg name="move_base" value="true"/>
+        <arg name="move_teached" value="true"/>
         <arg name="controllers_started" value="franka_state_controller position_joint_controller"/>
-    </include>
-
-    <node name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="miranda/panda">
-        <rosparam command="load" file="$(find miranda_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
-    </node>
+    </include>  
 
 </launch>

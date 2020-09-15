@@ -23,8 +23,8 @@
     <remap from="tf_static_in"  to="tf_static_rss" />
     <remap from="tf_static_out" to="/tf_static" />
     <rosparam param="remove_frames" subst_value="true">
-      -  $(arg tf_prefix)/front_laser_link
-      -  $(arg tf_prefix)/back_laser_link
+      <!-- -  $(arg tf_prefix)/front_laser_link
+      -  $(arg tf_prefix)/back_laser_link -->
       -  $(arg tf_prefix)/camera_top_link
       -  $(arg tf_prefix)/camera_top_depth_optical_frame
       -  $(arg tf_prefix)/camera_floor_link

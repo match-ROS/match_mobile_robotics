@@ -1,9 +1,12 @@
 <launch>
     <!-- Defining arguments for the panda launch -->
+    <arg name="tf_prefix" default="mur"/>
+
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>  <!--Must not be empty-->
-    <arg name="tf_prefix" default="mur"/>
+    
     <arg name="move_base" default="false"/>
+    <arg name="move_teached" default="false"/>
 
     <node name="gripper_interface" type="grip_service_interface.py" pkg="mur_hardware_helper" ns="mur/ur"/>
 
@@ -22,12 +25,13 @@
         args="0.35 -0.15 0.35 0 0 1 0 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/world" ns="mur" />
     
 
-    <include unless="$(eval move_base)"  file="$(find mir_launcher)/launch/mir.launch" ns="mur/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>       
+    <include file="$(find mir_launcher)/launch/mir.launch" ns="mur/mir">
+        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
+        <arg name="move_base" value="$(arg move_base)"/>   
     </include>
 
-    <include if="$(eval move_base)"  file="$(find mir_launcher)/launch/mir_move_base.launch" ns="mur/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>       
-    </include>
+    <node if="$(eval move_teached)"  name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="mur/ur">
+       <rosparam command="load" file="$(find mur_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
+    </node>
 
 </launch>

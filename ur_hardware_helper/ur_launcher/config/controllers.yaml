@@ -49,4 +49,8 @@ position_joint_controller:
     panda_joint7:
       goal: 0.05
 
+compliant_axis_controller:
+  type: ur_controllers_extended/CompliantAxisController
+  joints:  *robot_joints
+  joint_stiffness: 1 #Nm/rad
 

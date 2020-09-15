@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>miranda_hardware_helper</name>
+  <name>ur_controllers_extended</name>
   <version>0.0.0</version>
-  <description>The miranda_hardware_helper package</description>
+  <description>The ur_controllers_extended package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/miranda_hardware_helper</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ur_controllers_extended</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,12 +49,14 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <exec_depend>mir_helper</exec_depend>
-  <exec_depend>joy</exec_depend>
-
+  <depend>roscpp</depend>
+  <depend>hardware_interface</depend>
+  <depend>controller_interface</depend>
+  <depend>pluginlib</depend>
+  
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
-
+    <controller_interface plugin="${prefix}/ur_controllers_plugins.xml"/>
   </export>
+
 </package>

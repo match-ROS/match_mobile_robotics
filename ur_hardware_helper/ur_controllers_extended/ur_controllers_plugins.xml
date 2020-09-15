@@ -1,0 +1,7 @@
+<library path="lib/libur_controllers_extended">
+    <class name="ur_controllers_extended/CompliantAxisController" type="ur_controllers_extended::CompliantAxisController" base_class_type="controller_interface::ControllerBase">
+    <description>
+        A controller that controls a given joint complient
+    </description>
+    </class>
+</library>

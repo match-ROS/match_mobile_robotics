@@ -1,14 +1,17 @@
 <launch>
     <!-- Defining arguments for the panda launch -->  
     <arg name="tf_prefix" default="miranda"/>
-    <arg name="move_base" default="false"/>
+    
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
+
+    <arg name="move_base" default="false"/>
+    <arg name="move_teached" default="false"/>
 
     <node name="gripper_interface" type="grip_service_interface.py" pkg="miranda_hardware_helper" ns="miranda/panda"/>
 
     <!-- Bringup the panda and configure it for working in combination with mir -->
-    <remap  from="/equilibrium_pose" to="miranda/panda/equilibrium_pose" />
+    <remap  from="/equilibrium_pose" to="equilibrium_pose" />
     <include file="$(find panda_launcher)/launch/panda.launch" ns="miranda/panda">        
         <arg name="robot_ip" default="panda"/> 
         <arg name="tf_prefix" value="$(arg tf_prefix)/panda"/>
@@ -21,12 +24,13 @@
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 
         args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/panda/panda_link0" ns="miranda" />
 
-    <include unless="$(eval move_base)" file="$(find mir_launcher)/launch/mir.launch" ns="miranda/mir">
+    <include file="$(find mir_launcher)/launch/mir.launch" ns="miranda/mir">
         <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>
+        <arg name="move_base" value="$(arg move_base)"/>
     </include>
 
-    <include if="$(eval move_base)" file="$(find mir_launcher)/launch/mir_move_base.launch" ns="miranda/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>
-    </include>
+     <node if="$(eval move_teached)" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="miranda/panda">
+        <rosparam command="load" file="$(find miranda_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
+    </node>
 
 </launch>

@@ -1,9 +1,4 @@
 <launch>
-    <!-- Defining arguments for the panda launch -->
-    <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>
-    <arg name="controllers_stopped" default=""/>   
-    <arg name="tf_prefix" default="miranda"/>
-   
     <include file="$(find miranda_hardware_helper)/launch/miranda.launch" pass_all_args="true">
         <arg name="move_base" value="true"/>
     </include>

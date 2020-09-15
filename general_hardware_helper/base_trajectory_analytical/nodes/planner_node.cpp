@@ -62,19 +62,17 @@ int main(int argc,char**argv)
     }
 
 
-    tf::Pose reference(tf::createIdentityQuaternion(),tf::Vector3(0,0,0));
-    geometry_msgs::PoseWithCovarianceStamped pose;
+     geometry_msgs::PoseWithCovarianceStamped pose;
     ROS_INFO_STREAM("Waiting for start_pose");
     pose=*ros::topic::waitForMessage<geometry_msgs::PoseWithCovarianceStamped>("start_pose");
-    geometry_msgs::Pose tmp= pose.pose.pose;
     ROS_INFO_STREAM("Got start_pose");
-
-    tf::poseMsgToTF(tmp,reference);
-
-    planner->setStartPose(reference);
-    planner->load();
     
-    ros::Duration(2).sleep();
+    tf::Pose reference;   
+    tf::poseMsgToTF(pose.pose.pose,reference);
+
+    planner->load();
+    planner->setStartPose(reference);
+   
     if(!pause)
     {
         planner->start();

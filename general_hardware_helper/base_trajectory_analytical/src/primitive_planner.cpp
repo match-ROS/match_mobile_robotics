@@ -109,7 +109,7 @@ void PrimitivePlanner::check_period(ros::Duration time)
        }
        else
        {
-           this->stop();
+           this->pause();
        }
        
     }

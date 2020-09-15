@@ -7,6 +7,7 @@
 #include<nav_msgs/Odometry.h>
 #include<std_srvs/Empty.h>
 #include <geometry_msgs/PoseWithCovarianceStamped.h>
+#include <nav_msgs/Path.h>
 
 
 //Generic path planning class
@@ -19,6 +20,7 @@
 class PlannerBase{
    
     public:
+       
         /**
          * @brief Construct a new Planner object
          * 
@@ -30,40 +32,54 @@ class PlannerBase{
          * 
          */
         void start();
-        /**
-         * @brief Stops the planner
-         * 
-         */
-        void stop();
-        /**
+         /**
          * @brief Pauses the planner
          * 
          */
         void pause();
-        //Sets the initial pose of the robot from wich the planning starts
+
+        /**
+         * @brief Set the Start Pose
+         * 
+         * @param pose pose to be set
+         */
         void setStartPose(tf::Pose pose);
+        
+        /**
+         * @brief Load parameters from the parameter server
+         * 
+         */
         void load();
-        //Load nessecarry parameter from ros parameter server
+        
+        /**
+         * @brief Load child parameter from the parameter server (To be changed)
+         * 
+         */
         virtual void loadChild()=0;
+    
     protected:
         int iterations_counter;                                 ///Counter for the iterations of periodic planner functions
         ros::NodeHandle nh;
         int iterations;        
         tf::Transform start_reference;                          //Transformation for modifieing offset to initial pose
+        nav_msgs::Path trajectory_;
+
     private:
         void resetCallback(geometry_msgs::PoseWithCovarianceStamped msg);
+        void calc_values(ros::Duration local_time);
+        void simulate();
         ros::Timer tim_sampling;                                //Timer for publishing trajectory
         ros::Publisher pub_current_odometry;
         ros::Publisher pub_current_vel;
         ros::Publisher pub_current_pose;
+        ros::Publisher pub_path;
         ros::Subscriber sub_reset_pose;
 
         ros::ServiceServer set_start_service;                   //Service for starting the planner
         ros::ServiceServer set_stop_service;                    //Service for shutting the planner down
 
         bool is_planning;                                       //Flag if the planner is planning at the moment
-        bool is_paused;                                         //Flag if the planner is paused at the moment
-
+     
                                               //Number of Iterations to do
 
         std::string frame_name;                                 //Frame in wich the pose is calculated
@@ -91,7 +107,7 @@ class PlannerBase{
 
         ///Transforming all values that are not rotation or translation invariant
         ///@param trafo : The Transformation applied to all values
-        void transformValues(tf::Transform trafo);       
+        void transformValues(tf::Transform trafo,tf::Vector3 &pos,tf::Vector3 &vel,tf::Quaternion &ori);       
 
         ///service procedure for satrting the planner
         ///@param req : Reqest the service is getting

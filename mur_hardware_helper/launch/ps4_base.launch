@@ -1,6 +1,6 @@
 <launch> 
     
-    <arg name="controller_running" default="true"/>
+    <arg name="controller_running" default="false"/>
 
     <node unless="$(eval controller_running)" respawn="true" pkg="joy" type="joy_node"  name="ps4_joy">
         <param name="dev" value="/dev/input/js0"/>
@@ -8,9 +8,11 @@
         <param name="coalesce_interval" value="0.001"/>
     </node>
 
-    <node name="mur_ps4_controller" type="ps4_diffdrive.py" pkg="ps4_controller" ns="mur/mir" output="screen">
+    <node name="miranda_ps4_controller" type="ps4_diffdrive.py" pkg="ps4_controller" ns="mur/mir" output="screen">
         <remap from="joy" to="/joy"/>
-        <param name="rot_incr" value="0.01"/>
-        <param name="trans_incr" value="0.05"/>
+        <param name="rot_incr" value="0.1"/>
+        <param name="trans_incr" value="0.1"/>
+        <param name="rotation" value="0.2"/>
+        <param name="translation" value="0.1"/>
     </node>
 </launch>

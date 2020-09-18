@@ -5,3 +5,6 @@
 	path = ur_hardware_helper/ur_robot
 	url = https://github.com/fmauch/universal_robot.git
 	branch = calibration_devel
+[submodule "general_hardware_helper/cartesian_controllers"]
+	path = general_hardware_helper/cartesian_controllers
+	url = https://github.com/fzi-forschungszentrum-informatik/cartesian_controllers

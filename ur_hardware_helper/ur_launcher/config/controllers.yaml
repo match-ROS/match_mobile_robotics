@@ -54,3 +54,15 @@ compliant_axis_controller:
   joints:  *robot_joints
   joint_stiffness: 1 #Nm/rad
 
+cartesian_controller:
+  type: ur_controllers_extended/CartesianController
+  joints:  *robot_joints
+
+compliance_controller:
+    type: "position_controllers/CartesianComplianceController"
+    end_effector_link: "tool0"    # All links below must come before this link
+    joints: *robot_joints
+    robot_base_link: "base_link"
+    ft_sensor_ref_link: "base_link"
+    compliance_ref_link: "base_link"
+    target_frame_topic: "target_frame"   

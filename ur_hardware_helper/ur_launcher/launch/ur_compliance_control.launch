@@ -1,0 +1,5 @@
+<launch>
+    <include file="$(find ur_launcher)/launch/ur.launch">
+        <arg name="controllers_started" default="joint_state_controller compliance_controller"/>       
+    </include>
+</launch>

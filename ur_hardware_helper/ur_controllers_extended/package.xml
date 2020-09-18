@@ -53,6 +53,8 @@
   <depend>hardware_interface</depend>
   <depend>controller_interface</depend>
   <depend>pluginlib</depend>
+  <depend>eigen</depend>
+  <depend>kdl</depend>
   
   <!-- The export tag contains other, unspecified, tags -->
   <export>

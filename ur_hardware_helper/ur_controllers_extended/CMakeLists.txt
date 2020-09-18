@@ -11,13 +11,17 @@ find_package(catkin REQUIRED
     roscpp
     rospy
     pluginlib
+    kdl_parser
+    
+    
 
     controller_interface  
     hardware_interface      
 )
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+ find_package(  Eigen3 REQUIRED
+                kdl)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -108,8 +112,6 @@ find_package(catkin REQUIRED
 catkin_package(
     INCLUDE_DIRS include
     LIBRARIES ur_controllers_extended
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
 )
 
 ###########
@@ -120,6 +122,7 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
    include
+   ${EIGEN3_INCLUDE_DIR}
    ${catkin_INCLUDE_DIRS}
 )
 
@@ -127,6 +130,8 @@ include_directories(
  add_library(${PROJECT_NAME}
     include/${PROJECT_NAME}/compliant_axis_controller.h
     src/compliant_axis_controller.cpp
+    include/${PROJECT_NAME}/cartesian_controller.h
+    src/cartesian_controller.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -152,6 +157,8 @@ include_directories(
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}
+  ${Eigen3_LIBRARIES}
+  ${kdl_LIBRARIES}
 )
 
 #############

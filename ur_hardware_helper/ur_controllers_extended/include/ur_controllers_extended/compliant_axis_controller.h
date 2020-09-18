@@ -1,5 +1,4 @@
 #include <controller_interface/controller.h>
-#include <position_controllers/joint_group_position_controller.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <pluginlib/class_list_macros.h>
 
@@ -20,6 +19,7 @@ class CompliantAxisController :public controller_interface::Controller<hardware_
         double stiffness_;
         double last_effort_;
         double position_equi_;
+
 };
 
 }//namespace

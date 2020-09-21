@@ -58,11 +58,46 @@ cartesian_controller:
   type: ur_controllers_extended/CartesianController
   joints:  *robot_joints
 
+
+
+
 compliance_controller:
-    type: "position_controllers/CartesianComplianceController"
-    end_effector_link: "tool0"    # All links below must come before this link
-    joints: *robot_joints
-    robot_base_link: "base_link"
-    ft_sensor_ref_link: "base_link"
-    compliance_ref_link: "base_link"
-    target_frame_topic: "target_frame"   
+  type: "position_controllers/CartesianComplianceController"
+  end_effector_link: "tool0"    # All links below must come before this link
+  robot_base_link: "base_link"
+  ft_sensor_ref_link: "base_link"
+  compliance_ref_link: "tool0"
+  target_frame_topic: "target_frame" #target_frame
+  joints: *robot_joints
+
+  stiffness:
+      trans_x: 500
+      trans_y: 500
+      trans_z: 500
+      rot_x: 100
+      rot_y: 100
+      rot_z: 100
+
+  pd_gains:
+      trans_x: {p: 0.025}
+      trans_y: {p: 0.025}
+      trans_z: {p: 0.025}
+      rot_x: {p: 0.005}
+      rot_y: {p: 0.005}
+      rot_z: {p: 0.005}
+
+cartesian_controller:
+  type: "position_controllers/CartesianMotionController"
+  end_effector_link: "tool0"
+  robot_base_link: "base_link"
+  target_frame_topic: "target_frame"
+  joints: *robot_joints
+
+
+  pd_gains:
+    trans_x: {p: 0.025}
+    trans_y: {p: 0.025}
+    trans_z: {p: 0.025}
+    rot_x: {p: 0.005}
+    rot_y: {p: 0.005}
+    rot_z: {p: 0.005}

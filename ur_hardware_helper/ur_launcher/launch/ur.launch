@@ -3,13 +3,16 @@
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
 
-    <include file="$(find ur_launcher)/launch/enable_ur.launch"/>
-
-    <node pkg="ur_launcher" type="enable_ur.py" name="enable_ur" ns="mur/ur" output="screen" />
+    <node pkg="ur_launcher" type="enable_ur.py" name="enable_ur" output="screen" />
+    <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="pose_tf_prefix_remover">
+        <remap from="topic_in" to="cartesian_controller/target_pose_prefixed"/>
+        <remap from="topic_out" to="cartesian_controller/target_pose"/>
+    </node>
+    <remap from="/robot_description" to="robot_description"/>
+    <rosparam file="$(find ur_launcher)/config/controllers.yaml" command="load" subst_value="true"/>
     <include file="$(find ur_robot_driver)/launch/ur5_bringup.launch" pass_all_args="true">
         <arg name="controllers" value="$(arg controllers_started)"/>
-        <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
-        <arg name="controller_config_file" value="$(find ur_launcher)/config/controllers.yaml" doc="Config file used for defining the ROS-Control controllers."/>
+        <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>      
         <arg name="kinematics_config" value="$(find ur_launcher)/config/calibration.yaml"/>
         <arg name="robot_ip" value="ur"/>        
     </include>

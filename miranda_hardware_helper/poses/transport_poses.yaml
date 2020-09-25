@@ -1,13 +1,13 @@
 grip:
   panda_finger_joint1: 0.04000084847211838
   panda_finger_joint2: 0.04000084847211838
-  panda_joint1: -0.12870115857234243
-  panda_joint2: -0.23406939264138535
-  panda_joint3: 0.11925874948790312
-  panda_joint4: -2.7263299499523588
-  panda_joint5: 0.030485931228806742
-  panda_joint6: 2.543417718463474
-  panda_joint7: -0.8412180879295276
+  panda_joint1:  1.57
+  panda_joint2: -1.57
+  panda_joint3: 0.93
+  panda_joint4: -2.32
+  panda_joint5: 1.1
+  panda_joint6: 1.11
+  panda_joint7: -1.68
 
 drive:
   panda_finger_joint1: 0.04000084847211838
@@ -19,3 +19,6 @@ drive:
   panda_joint5: 0.0252675066275399
   panda_joint6: 0.7060845757060581
   panda_joint7: -2.300628343132437
+
+
+ 

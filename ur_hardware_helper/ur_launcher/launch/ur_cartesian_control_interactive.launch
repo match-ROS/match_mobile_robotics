@@ -2,7 +2,9 @@
     <include file="$(find ur_launcher)/launch/ur.launch">
         <arg name="controllers_started" default="joint_state_controller cartesian_controller"/>       
     </include>
-    <node name="ee_pose_marker" pkg="ur_launcher" type="ee_pose_marker.py">
-        <remap from="pose" to="target_frame"/>
+    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
+        <remap from="pose" to="cartesian_controller/target_pose_prefixed"/>
+        <param name="base_frame" value="base_link"/>
+        <param name="ee_frame" value="tool0"/>
     </node>
 </launch>

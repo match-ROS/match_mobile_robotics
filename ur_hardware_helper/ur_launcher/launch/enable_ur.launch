@@ -3,6 +3,6 @@
 
     <node if="$(eval arg('namespace')=='')" pkg="ur_launcher" type="enable_ur.py" name="enable_ur" output="screen" />
 
-    <node unless="$(eval arg('namespace')=='')" pkg="ur_launcher" type="enable_ur.py" name="enable_ur" output="screen" ns="$arg namespace"/>
+    <node unless="$(eval arg('namespace')=='')" pkg="ur_launcher" type="enable_ur.py" name="enable_ur" output="screen" ns="$(arg namespace)"/>
 
 </launch>

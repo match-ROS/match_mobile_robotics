@@ -7,7 +7,6 @@ Panels:
         - /Global Options1
         - /Status1
         - /InteractiveMarkers1
-        - /Pose1
       Splitter Ratio: 0.5
     Tree Height: 1758
   - Class: rviz/Selection
@@ -123,57 +122,19 @@ Visualization Manager:
       Value: true
       Visual Enabled: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
         All Enabled: true
-        base:
-          Value: true
-        base_link:
-          Value: true
-        ee_link:
-          Value: true
-        forearm_link:
-          Value: true
-        shoulder_link:
-          Value: true
-        tool0:
-          Value: true
-        tool0_controller:
-          Value: true
-        upper_arm_link:
-          Value: true
-        world:
-          Value: true
-        wrist_1_link:
-          Value: true
-        wrist_2_link:
-          Value: true
-        wrist_3_link:
-          Value: true
       Marker Scale: 1
       Name: TF
       Show Arrows: false
       Show Axes: true
       Show Names: false
       Tree:
-        world:
-          base_link:
-            base:
-              tool0_controller:
-                {}
-            shoulder_link:
-              upper_arm_link:
-                forearm_link:
-                  wrist_1_link:
-                    wrist_2_link:
-                      wrist_3_link:
-                        ee_link:
-                          {}
-                        tool0:
-                          {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true
       Enabled: true
@@ -226,7 +187,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.0659780502319336
+      Distance: 1.4238526821136475
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -241,10 +202,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.3403971791267395
+      Pitch: 0.47479718923568726
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.4853945970535278
+      Yaw: 0.4803831875324249
     Saved: ~
 Window Geometry:
   Displays:

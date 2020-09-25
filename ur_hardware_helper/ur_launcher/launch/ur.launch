@@ -4,9 +4,13 @@
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
 
     <node pkg="ur_launcher" type="enable_ur.py" name="enable_ur" output="screen" />
-    <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="pose_tf_prefix_remover">
+    <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_controller_tf_prefix_remover">
         <remap from="topic_in" to="cartesian_controller/target_pose_prefixed"/>
         <remap from="topic_out" to="cartesian_controller/target_pose"/>
+    </node>
+     <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
+        <remap from="topic_in" to="cartesian_impedance_controller/target_pose_prefixed"/>
+        <remap from="topic_out" to="cartesian_impedance_controller/target_pose"/>
     </node>
     <remap from="/robot_description" to="robot_description"/>
     <rosparam file="$(find ur_launcher)/config/controllers.yaml" command="load" subst_value="true"/>

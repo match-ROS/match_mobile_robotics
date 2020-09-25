@@ -28,13 +28,16 @@ if __name__=="__main__":
     rospy.init_node("simple_marker")
     publisher=rospy.Publisher("pose",PoseStamped,queue_size=10)
 
+    base_frame=rospy.get_param("~base_frame","base_link")
+    ee_frame=rospy.get_param("~ee_frame","tool0")
+
     global initial_trafo
     tfBuffer = tf2_ros.Buffer()
     listener = tf2_ros.TransformListener(tfBuffer)
     succeeded=False
     while not succeeded:
         try:
-            initial_trafo = tfBuffer.lookup_transform("base_link","tool0", rospy.Time())
+            initial_trafo = tfBuffer.lookup_transform(base_frame,ee_frame, rospy.Time())
             succeeded=True
         except :
             rospy.sleep(1)
@@ -46,7 +49,7 @@ if __name__=="__main__":
     
     # create an interactive marker for our server
     int_marker = InteractiveMarker()
-    int_marker.header.frame_id = "base_link"
+    int_marker.header.frame_id = base_frame
     int_marker.name = "endeffector pose"
     int_marker.description = "Simple 6-DOF Control"
     int_marker.pose.position=initial_trafo.transform.translation
@@ -83,6 +86,15 @@ if __name__=="__main__":
     x_control.orientation.z = 0
     x_control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
 
+    rotx_control = InteractiveMarkerControl()
+    rotx_control.name = "rotate x"
+    rotx_control.orientation.w = 1
+    rotx_control.orientation.x = 1
+    rotx_control.orientation.y = 0
+    rotx_control.orientation.z = 0
+    rotx_control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+
+
     y_control = InteractiveMarkerControl()
     y_control.orientation.w = 1
     y_control.orientation.x = 0
@@ -90,6 +102,14 @@ if __name__=="__main__":
     y_control.orientation.z = 1
     y_control.name = "move y"
     y_control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
+
+    roty_control = InteractiveMarkerControl()
+    roty_control.name = "rotate y"
+    roty_control.orientation.w = 1
+    roty_control.orientation.x = 0
+    roty_control.orientation.y = 0
+    roty_control.orientation.z = 1
+    roty_control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
 
     z_control = InteractiveMarkerControl()
     z_control.orientation.w = 1
@@ -99,11 +119,23 @@ if __name__=="__main__":
     z_control.name = "move z"
     z_control.interaction_mode = InteractiveMarkerControl.MOVE_AXIS
 
+    rotz_control = InteractiveMarkerControl()
+    rotz_control.name = "rotate z"
+    rotz_control.orientation.w = 1
+    rotz_control.orientation.x = 0
+    rotz_control.orientation.y = 1
+    rotz_control.orientation.z = 0
+    rotz_control.interaction_mode = InteractiveMarkerControl.ROTATE_AXIS
+
 
     # add the control to the interactive marker
     int_marker.controls.append(x_control)
     int_marker.controls.append(y_control)
     int_marker.controls.append(z_control)
+    int_marker.controls.append(rotx_control)
+    int_marker.controls.append(roty_control)
+    int_marker.controls.append(rotz_control)
+
 
     # add the interactive marker to our collection &
     # tell the server to call processFeedback() when feedback arrives for it

@@ -1,0 +1,7 @@
+<library path="lib/libpanda_controllers_extended">
+    <class name="panda_controllers_extended/CartesianImpedanceController" type="panda_controllers_extended::CartesianImpedanceController" base_class_type="controller_interface::ControllerBase">
+    <description>
+        A controller that executes cartesian impedance control
+    </description>
+    </class>
+</library>

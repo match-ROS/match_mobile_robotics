@@ -1,5 +1,0 @@
-<launch>
-    <include file="$(find miranda_hardware_helper)/launch/miranda.launch" pass_all_args="true">
-        <arg name="move_base" value="true"/>
-    </include>
-</launch>

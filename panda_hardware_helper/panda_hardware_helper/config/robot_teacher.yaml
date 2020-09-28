@@ -7,5 +7,4 @@ joint_names:
   - panda_joint6
   - panda_joint7
 
-file_name: $(find miranda_hardware_helper)/poses/$(arg poses_file_name)
 max_joint_velocity: 0.5 

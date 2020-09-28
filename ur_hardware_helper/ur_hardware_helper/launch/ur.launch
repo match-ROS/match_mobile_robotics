@@ -2,6 +2,7 @@
     <arg name="tf_prefix" default=""/>
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
+    <arg name="pose_filename" default=""/>
 
     <node pkg="ur_hardware_helper" type="enable_ur.py" name="enable_ur" output="screen" />
     <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_controller_tf_prefix_remover">
@@ -9,8 +10,10 @@
         <remap from="topic_out" to="cartesian_controller/target_pose"/>
     </node>
 
-    
-     <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_hardware_helper"/>
+
+
+    <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
         <remap from="topic_in" to="cartesian_impedance_controller/target_pose_prefixed"/>
         <remap from="topic_out" to="cartesian_impedance_controller/target_pose"/>
     </node>
@@ -24,4 +27,11 @@
         <arg name="kinematics_config" value="$(find ur_hardware_helper)/config/calibration.yaml"/>
         <arg name="robot_ip" value="ur"/>        
     </include>
+
+    <node unless="$(eval pose_filename=='')" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" >
+       <rosparam command="load" file="$(find ur_hardware_helper)/config/robot_teacher.yaml"/>
+       <param name="file_name" value="$(arg pose_filename)"/>
+    </node>
+
+
 </launch>

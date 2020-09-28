@@ -1,36 +1,22 @@
 <launch>
-    <!-- Defining arguments for the panda launch -->  
-    <arg name="tf_prefix" default="miranda"/>
-    
+    <!-- Defining arguments for the panda launch -->    
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
 
     <arg name="move_base" default="false"/>
-    <arg name="move_teached" default="false"/>
-
-    <node name="gripper_interface" type="grip_service_interface.py" pkg="miranda_hardware_helper" ns="miranda/panda"/>
+   
+   
+    <!-- Bringup   the miranda base  -->
+    <include file="$(find mur_hardware_helper)/launch/miranda_base.launch"/>
 
     <!-- Bringup the panda and configure it for working in combination with mir -->
     <remap  from="/equilibrium_pose" to="equilibrium_pose" />
     <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="miranda/panda">        
         <arg name="robot_ip" default="panda"/> 
-        <arg name="tf_prefix" value="$(arg tf_prefix)/panda"/>
+        <arg name="tf_prefix" value="miranda/panda"/>
         <arg name="load_gripper" value="true"/>
         <arg name="controllers_started" value="$(arg controllers_started)"/> 
         <arg name="controllers_stopped" default="$(arg controllers_stopped)"/>
     </include>
-
-    <!-- Add a Transformation from Mir to panda for closed tf tree -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 
-        args="0.35 0.15 0.35 0 0 0 1 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/panda/panda_link0" ns="miranda" />
-
-    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="miranda/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>
-        <arg name="move_base" value="$(arg move_base)"/>
-    </include>
-
-     <node if="$(eval move_teached)" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="miranda/panda">
-        <rosparam command="load" file="$(find miranda_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
-    </node>
-
+    
 </launch>

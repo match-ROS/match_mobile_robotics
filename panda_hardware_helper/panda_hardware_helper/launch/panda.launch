@@ -4,13 +4,19 @@
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
     <arg name="tf_prefix" default=""/>
+    <arg name="pose_filename" default=""/>
 
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
 
+
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="panda_hardware_helper"/>
+
+
     <!-- Careful Walkaround!!! -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper1" 
         args="0.0 0.0 0.0 0 0 0 1 $(arg tf_prefix)/panda_link8 panda_link8" />
+    
     <node pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper2" 
         args="0.0 0.0 0.0 0 0 0 1 panda_EE $(arg tf_prefix)/panda_EE "/>
     <!-- Walkaround end -->
@@ -38,5 +44,12 @@
         <rosparam unless="$(arg load_gripper)" param="source_list">[franka_state_controller/joint_states] </rosparam>
         <param name="rate" value="30"/>
     </node>
+
+    <node unless="$(eval pose_filename=='')" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" >
+       <rosparam command="load" file="$(find ur_hardware_helper)/config/robot_teacher.yaml"/>
+       <param name="file_name" value="$(arg pose_filename)"/>
+    </node>
+
+
   
 </launch>

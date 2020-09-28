@@ -1,9 +1,0 @@
-<launch>
-  
-    <include file="$(find mur_hardware_helper)/launch/mur.launch">
-        <arg name="move_base" value="false"/>
-        <arg name="move_teached" value="true"/>
-        <arg name="controllers_started" value="joint_state_controller robot_status_controller position_joint_controller"/>
-    </include>
-
-</launch>

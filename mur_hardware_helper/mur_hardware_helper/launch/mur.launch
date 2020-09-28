@@ -4,34 +4,20 @@
 
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>  <!--Must not be empty-->
-    
-    <arg name="move_base" default="false"/>
-    <arg name="move_teached" default="false"/>
-
-    <node name="gripper_interface" type="grip_service_interface.py" pkg="mur_hardware_helper" ns="mur/ur"/>
+    <arg name="pose_filename" default="$(find mur_hardware_helper)/config/move_teached.yaml"/>
 
 
-    <!-- Bringup the ur -->
-    <!-- Fixing missing tf_prefix forwarding to the ur packages -->
-    <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/> 
+    <!-- Bringup the base of the mur -->
+    <include file="$(find mur_hardware_helper)/launch/mur_base.launch"/>      
+
+
+    <!-- Bringup the ur -->   
+    <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/>   <!-- Fixing missing tf_prefix forwarding to the ur packages -->
 
     <include file="$(find ur_hardware_helper)/launch/ur.launch" ns="mur/ur" pass_all_args="true">
         <arg name="tf_prefix" value="$(arg tf_prefix)/ur/"/>
-    </include>
-   
+    </include> 
 
-    <!-- Add a Transformation from Mir to panda for closed tf tree -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="mir_ur_transformer" 
-        args="0.35 -0.15 0.35 0 0 1 0 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/world" ns="mur" />
-    
 
-    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="mur/mir">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
-        <arg name="move_base" value="$(arg move_base)"/>   
-    </include>
-
-    <node if="$(eval move_teached)"  name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" ns="mur/ur">
-       <rosparam command="load" file="$(find mur_hardware_helper)/config/move_teached.yaml" subst_value="true"/>
-    </node>
 
 </launch>

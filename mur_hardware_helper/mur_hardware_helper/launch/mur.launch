@@ -15,7 +15,7 @@
     <!-- Fixing missing tf_prefix forwarding to the ur packages -->
     <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/> 
 
-    <include file="$(find ur_launcher)/launch/ur.launch" ns="mur/ur" pass_all_args="true">
+    <include file="$(find ur_hardware_helper)/launch/ur.launch" ns="mur/ur" pass_all_args="true">
         <arg name="tf_prefix" value="$(arg tf_prefix)/ur/"/>
     </include>
    

@@ -1,5 +1,0 @@
-<launch>
-<node name="state_saver" type="joint_state_saver_node.py" pkg="robot_teacher" cwd="node" output="screen">
-    <param name="file_name" value="$(find robot_teacher)/poses/my_poses.yaml"/>
-</node>
-</launch>

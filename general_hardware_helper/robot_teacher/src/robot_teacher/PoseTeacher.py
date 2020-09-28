@@ -23,19 +23,28 @@ class PoseFileHandler:
         self.__joint_names=rospy.get_param("~joint_names",list())
         self.__save_srv=rospy.Service("~save_pose",SetName,self.__saveCallback__)                    
         self.__joint_states_dict=dict()
-       
-       
+        self.__current_joint_sub=rospy.Subscriber("joint_states",JointState,self.__currentJointCallback__)
+        self.__joint_states=dict()
         self.__load__()
 
+    def __currentJointCallback__(self,msg):
+            for index,name in enumerate(msg.name):
+                if name in self.__joint_names:
+                    self.__joint_states[name]=msg.position[index] 
+
     def __load__(self):
-        if os.path.exists(os.path.dirname(self.__filename)):
+        if os.path.isfile(self.__filename):
             with open(self.__filename, 'r') as infile:
                 raw=yaml.safe_load(infile)
                 for pose in raw:
                     self.__joint_states_dict[pose]={joint_name:raw[pose][joint_name] for joint_name in self.__joint_names}
             print("Loaded yaml: ")
             print(yaml.safe_dump(self.__joint_states_dict,default_flow_style=False))
+       
+
         
+   
+   
     def __saveCallback__(self,req):
         self.__joint_states_dict[req.name]=self.__joint_states
         self.__save__()

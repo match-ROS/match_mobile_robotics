@@ -25,7 +25,7 @@
         args="0.35 -0.15 0.35 0 0 1 0 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/world" ns="mur" />
     
 
-    <include file="$(find mir_launcher)/launch/mir.launch" ns="mur/mir">
+    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="mur/mir">
         <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
         <arg name="move_base" value="$(arg move_base)"/>   
     </include>

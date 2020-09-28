@@ -10,7 +10,7 @@ This package came originally from (mir_robot)[https://github.com/dfki-ric/mir_ro
 * `mir_msgs`: Message definitions for the MiR robot
 * `mir_navigation`: move_base launch and configuration files
 * `mir_helper`  : Tools for some walkarounds and better usage auf the mir plattform
-* `mir_launcher`  : Standalone launchfiles for some different tasks
+* `mir_hardware_helper`  : Standalone launchfiles for some different tasks
 
 # 2. Installation
 ## Install dependencies

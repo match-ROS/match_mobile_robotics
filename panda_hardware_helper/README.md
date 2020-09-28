@@ -1,5 +1,5 @@
 # 1. Package overview
-* `panda_launcher`: Standalone launchfiles for some different tasks
+* `panda_hardware_helper`: Standalone launchfiles for some different tasks
 
 # 2. Installation
 ## Install dependencies

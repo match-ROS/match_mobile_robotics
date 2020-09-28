@@ -8,16 +8,23 @@
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
 
+    <!-- Careful Walkaround!!! -->
+    <node pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper1" 
+        args="0.0 0.0 0.0 0 0 0 1 $(arg tf_prefix)/panda_link8 panda_link8" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper2" 
+        args="0.0 0.0 0.0 0 0 0 1 panda_EE $(arg tf_prefix)/panda_EE "/>
+    <!-- Walkaround end -->
+
     <include file="$(find franka_gripper)/launch/franka_gripper.launch" if="$(arg load_gripper)">
         <arg name="robot_ip" value="$(arg robot_ip)" />
     </include>
 
     <node name="franka_control" pkg="franka_control" type="franka_control_node" output="screen" required="true">
-        <rosparam command="load" file="$(find panda_launcher)/config/control_node.yaml" />
+        <rosparam command="load" file="$(find panda_hardware_helper)/config/control_node.yaml" />
         <param name="robot_ip" value="$(arg robot_ip)" />
     </node>
     
-    <rosparam command="load" file="$(find panda_launcher)/config/controllers.yaml" />
+    <rosparam command="load" file="$(find panda_hardware_helper)/config/controllers.yaml" />
     <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="$(arg controllers_started)"/>
     <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
     

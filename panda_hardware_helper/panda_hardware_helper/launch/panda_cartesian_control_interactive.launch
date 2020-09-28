@@ -1,5 +1,5 @@
 <launch>
-    <include file="$(find panda_launcher)/launch/panda.launch">
+    <include file="$(find panda_hardware_helper)/launch/panda.launch">
         <arg name="controllers_started" default="franka_state_controller cartesian_controller"/>       
     </include>
     <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">

@@ -27,4 +27,4 @@ inline void pseudoInverse(const Eigen::MatrixXd& M_, Eigen::MatrixXd& M_pinv_, b
   M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
 }
 
-}  // namespace franka_example_controllers
+}  // namespace panda_controllers_extended

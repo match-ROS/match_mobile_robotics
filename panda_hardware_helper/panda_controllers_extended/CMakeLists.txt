@@ -128,8 +128,10 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-include/${PROJECT_NAME}/cartesian_impedance_controller.h
-  src/cartesian_impedance_controller.cpp
+    include/${PROJECT_NAME}/cartesian_impedance_controller.h
+    src/cartesian_impedance_controller.cpp
+    include/${PROJECT_NAME}/cartesian_controller.h
+    src/cartesian_controller.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

@@ -73,6 +73,7 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+  
   Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_;
   Eigen::Vector3d position_d_target_;
@@ -90,4 +91,4 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 };
 
-}  // namespace franka_example_controllers
+}  // namespace panda_controllers_extended

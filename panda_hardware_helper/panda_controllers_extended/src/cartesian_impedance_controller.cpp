@@ -237,7 +237,7 @@ void CartesianImpedanceController::equilibriumPoseCallback(
   }
 }
 
-}  // namespace franka_example_controllers
+}  // namespace panda_controllers_extended
 
 PLUGINLIB_EXPORT_CLASS(panda_controllers_extended::CartesianImpedanceController,
                        controller_interface::ControllerBase)

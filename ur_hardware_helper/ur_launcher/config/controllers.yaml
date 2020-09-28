@@ -75,6 +75,8 @@ compliance_controller:
       rot_y: {p: 0.005}
       rot_z: {p: 0.005}
 
+
+
 cartesian_controller:
   type: "position_controllers/CartesianMotionController"
   end_effector_link: "tool0"
@@ -91,6 +93,8 @@ cartesian_controller:
     rot_y: {p: 1.3}
     rot_z: {p: 1.3}
 
+
+    
 cartesian_impedance_controller:
   type: "position_controllers/CartesianMotionController"
   end_effector_link: "tool0"
@@ -105,4 +109,5 @@ cartesian_impedance_controller:
     trans_z: {p: 5.0}
     rot_x: {p: 1.3}
     rot_y: {p: 1.3}
+    rot_z: {p: 1.3}
 

@@ -46,7 +46,7 @@
     </node>
 
     <node unless="$(eval pose_filename=='')" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" >
-       <rosparam command="load" file="$(find ur_hardware_helper)/config/robot_teacher.yaml"/>
+       <rosparam command="load" file="$(find panda_hardware_helper)/config/robot_teacher.yaml"/>
        <param name="file_name" value="$(arg pose_filename)"/>
     </node>
 

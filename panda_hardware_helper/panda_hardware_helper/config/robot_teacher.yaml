@@ -7,4 +7,4 @@ joint_names:
   - panda_joint6
   - panda_joint7
 
-max_joint_velocity: 0.5 
+max_joint_velocity: 0.5

@@ -9,9 +9,9 @@
 
     <node name="miranda_ps4_controller" type="ps4_diffdrive.py" pkg="ps4_controller" ns="miranda/mir" output="screen">
         <remap from="joy" to="/joy"/>
-        <param name="rot_incr" value="0.1"/>
+        <param name="rot_incr" value="0.3"/>
         <param name="trans_incr" value="0.1"/>
-        <param name="rotation" value="0.2"/>
+        <param name="rotation" value="0.3"/>
         <param name="translation" value="0.1"/>
     </node>
 </launch>

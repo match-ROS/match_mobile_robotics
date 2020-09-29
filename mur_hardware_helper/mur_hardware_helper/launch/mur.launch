@@ -4,11 +4,11 @@
 
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>  <!--Must not be empty-->
-    <arg name="pose_filename" default="$(find mur_hardware_helper)/config/move_teached.yaml"/>
+    <arg name="pose_filename" default="$(find mur_hardware_helper)/poses/my_poses.yaml"/>
 
 
     <!-- Bringup the base of the mur -->
-    <include file="$(find mur_hardware_helper)/launch/mur_base.launch"/>      
+    <include file="$(find mur_hardware_helper)/launch/mur_base.launch" pass_all_args="true"/>      
 
 
     <!-- Bringup the ur -->   

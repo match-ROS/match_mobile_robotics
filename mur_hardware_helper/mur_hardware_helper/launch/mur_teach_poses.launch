@@ -4,7 +4,7 @@
         <arg name="pose_filename" value="poses/mur_teached_poses.yaml"/>
     </include>
    
-    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
+    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py" ns="mur/ur">
         <remap from="pose" to="cartesian_controller/equilibrium_pose"/>
         <param name="base_frame" value="mur/ur/base_link"/>
         <param name="ee_frame" value="mur/ur/tool0"/>

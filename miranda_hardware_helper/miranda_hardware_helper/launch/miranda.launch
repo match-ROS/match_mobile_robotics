@@ -2,21 +2,18 @@
     <!-- Defining arguments for the panda launch -->    
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
-
+    <arg name="pose_filename" default="$(find miranda_hardware_helper)/poses/my_poses.yaml"/>
+    <arg name="tf_prefix" default="miranda"/>
     <arg name="move_base" default="false"/>
    
    
     <!-- Bringup   the miranda base  -->
-    <include file="$(find mur_hardware_helper)/launch/miranda_base.launch"/>
+    <include file="$(find miranda_hardware_helper)/launch/miranda_base.launch" pass_all_args="true"/>
 
     <!-- Bringup the panda and configure it for working in combination with mir -->
     <remap  from="/equilibrium_pose" to="equilibrium_pose" />
-    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="miranda/panda">        
-        <arg name="robot_ip" default="panda"/> 
-        <arg name="tf_prefix" value="miranda/panda"/>
-        <arg name="load_gripper" value="true"/>
-        <arg name="controllers_started" value="$(arg controllers_started)"/> 
-        <arg name="controllers_stopped" default="$(arg controllers_stopped)"/>
+    <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="miranda/panda" pass_all_args="true">        
+        <arg name="tf_prefix" value="miranda/panda"/>        
     </include>
     
 </launch>

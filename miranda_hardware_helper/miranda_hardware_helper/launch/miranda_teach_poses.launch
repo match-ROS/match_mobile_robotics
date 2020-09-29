@@ -1,12 +1,14 @@
 <launch>
+     <arg name="tf_prefix" default="miranda"/>
+
     <include file="$(find miranda_hardware_helper)/launch/miranda.launch">
         <arg name="controllers_started" value="franka_state_controller cartesian_controller"/> 
         <arg name="pose_filename" value="poses/miranda_teached_poses.yaml"/>
     </include>
    
-    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
+    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py" ns="miranda/panda">
         <remap from="pose" to="cartesian_controller/equilibrium_pose"/>
-        <param name="base_frame" value="miranda/panda/panda_link0"/>
-        <param name="ee_frame" value="miranda/panda/panda_EE"/>
+        <param name="base_frame" value="$(arg tf_prefix)/panda/panda_link0"/>
+        <param name="ee_frame" value="$(arg tf_prefix)/panda/panda_EE"/>
     </node>
 </launch>

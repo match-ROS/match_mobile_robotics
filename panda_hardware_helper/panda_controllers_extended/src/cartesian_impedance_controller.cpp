@@ -175,7 +175,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                        (2.0 * sqrt(nullspace_stiffness_)) * dq);
+                        nullspace_damping_* dq);
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis;
   // Saturate torque rate to avoid discontinuities
@@ -192,6 +192,9 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
       filter_params_ * cartesian_damping_target_ + (1.0 - filter_params_) * cartesian_damping_;
   nullspace_stiffness_ =
       filter_params_ * nullspace_stiffness_target_ + (1.0 - filter_params_) * nullspace_stiffness_;
+  nullspace_damping_ =
+      filter_params_ * nullspace_damping_target_ + (1.0 - filter_params_) * nullspace_damping_;
+  
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
@@ -216,14 +219,16 @@ void CartesianImpedanceController::complianceParamCallback(
   cartesian_stiffness_target_.topLeftCorner(3, 3)
       << config.Kx,0.0,0.0,0.0,config.Ky,0.0,0.0,0.0,config.Kz;
   cartesian_stiffness_target_.bottomRightCorner(3, 3)
-      << config.rotational_stiffness * Eigen::Matrix3d::Identity();
+      << config.Kroll,0.0,0.0,0.0,config.Kpitch,0.0,0.0,0.0,config.Kyaw;
   
   cartesian_damping_target_.setIdentity();
   cartesian_damping_target_.topLeftCorner(3, 3)
        << config.Dx,0.0,0.0,0.0,config.Dy,0.0,0.0,0.0,config.Dz;
   cartesian_damping_target_.bottomRightCorner(3, 3)
-      << 2.0 * sqrt(config.rotational_stiffness) * Eigen::Matrix3d::Identity();
+      << config.Droll,0.0,0.0,0.0,config.Dpitch,0.0,0.0,0.0,config.Dyaw;
+
   nullspace_stiffness_target_ = config.nullspace_stiffness;
+  nullspace_damping_target_= config.nullspace_damping;
 }
 
 void CartesianImpedanceController::equilibriumPoseCallback(

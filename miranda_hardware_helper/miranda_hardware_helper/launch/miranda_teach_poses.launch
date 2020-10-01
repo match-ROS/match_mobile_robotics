@@ -1,10 +1,9 @@
 <launch>
-     <arg name="tf_prefix" default="miranda"/>
+    <arg name="tf_prefix" default="miranda"/>
+    <arg name="pose_filename" default="poses/test.yaml"/>
 
-    <include file="$(find miranda_hardware_helper)/launch/miranda.launch">
-        <arg name="controllers_started" value="franka_state_controller cartesian_controller"/> 
-        <arg name="pose_filename" value="poses/miranda_teached_poses.yaml"/>
-    </include>
+    <include file="$(find miranda_hardware_helper)/launch/miranda_cartesian.launch" pass_all_args="true"/>
+
    
     <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py" ns="miranda/panda">
         <remap from="pose" to="cartesian_controller/equilibrium_pose"/>

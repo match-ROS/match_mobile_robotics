@@ -1,7 +1,7 @@
-# Panda Hardware Helper
+# Ur Hardware Helper
 ## 1. Package overview
-* `panda_hardware_helper`: Standalone launchfiles for some different tasks
-* `panda_controllers_extended`: Extension of the default franka controllers
+* `ur_hardware_helper`: Standalone launchfiles for different tasks of the ur
+* `ur_controllers_extended`: Extension of the default universal robots controllers
 
 # 2. Installation
 ### Install dependencies

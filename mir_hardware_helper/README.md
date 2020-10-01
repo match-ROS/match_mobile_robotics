@@ -1,7 +1,8 @@
-# 0. Package origin
+# Mir Hardware Helper
+## 0. Package origin
 This package came originally from (mir_robot)[https://github.com/dfki-ric/mir_robot].
 
-# 1. Package overview
+## 1. Package overview
 * `mir_actions`: Action definitions for the MiR robot
 * `mir_description`: URDF description of the MiR robot
 * `mir_dwb_critics`: Plugins for the dwb_local_planner used in Gazebo
@@ -12,11 +13,11 @@ This package came originally from (mir_robot)[https://github.com/dfki-ric/mir_ro
 * `mir_helper`  : Tools for some walkarounds and better usage auf the mir plattform
 * `mir_hardware_helper`  : Standalone launchfiles for some different tasks
 
-# 2. Installation
-## Install dependencies
+## 2. Installation
+### Install dependencies
 ```
 rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```
-## Build packages
+### Build packages
 Use your standard build system to build the downloaded packages

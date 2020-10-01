@@ -1,6 +1,6 @@
 <launch>
   <arg name="tf_prefix" default=""/>
-  <arg name="move_base" default="false"/>
+  <arg name="move_base" default="true"/>
 
   <include file="$(find mir_driver)/launch/mir_driver.launch" pass_all_args="true"/>
 

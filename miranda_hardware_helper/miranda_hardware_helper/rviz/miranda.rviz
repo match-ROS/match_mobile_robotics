@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /Mir1/Status1
         - /Panda1/Status1
+        - /InteractiveMarkers1
       Splitter Ratio: 0.5
     Tree Height: 1708
   - Class: rviz/Selection
@@ -256,7 +257,7 @@ Visualization Manager:
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
-      Update Topic: /pose_marker/update
+      Update Topic: /miranda/panda/pose_marker/update
       Value: true
   Enabled: true
   Global Options:
@@ -286,25 +287,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.984634876251221
+      Distance: 4.261058330535889
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.6465260982513428
-        Y: -1.062501311302185
-        Z: -0.6625399589538574
+        X: -0.7151448726654053
+        Y: -1.2426626682281494
+        Z: -0.09758340567350388
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6147969961166382
+      Pitch: 0.31479719281196594
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.7553979158401489
+      Yaw: 0.6953979730606079
     Saved: ~
 Window Geometry:
   Displays:

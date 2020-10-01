@@ -209,7 +209,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /cartesian_controller/equilibrium_pose
+      Topic: /cartesian_controller/target_pose
       Unreliable: false
       Value: false
   Enabled: true

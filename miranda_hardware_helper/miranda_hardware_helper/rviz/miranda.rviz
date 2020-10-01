@@ -247,7 +247,7 @@ Visualization Manager:
       Shaft Length: 1
       Shaft Radius: 0.05000000074505806
       Shape: Arrow
-      Topic: /miranda/panda/cartesian_impedance_controller/equilibrium_pose
+      Topic: /miranda/panda/cartesian_impedance_controller/target_pose
       Unreliable: false
       Value: true
     - Class: rviz/InteractiveMarkers

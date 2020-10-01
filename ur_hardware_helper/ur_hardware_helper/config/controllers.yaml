@@ -81,7 +81,7 @@ cartesian_controller:
   type: "position_controllers/CartesianMotionController"
   end_effector_link: "tool0"
   robot_base_link: "base_link"  #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
-  target_frame_topic: "target_pose" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
+  target_frame_topic: "target_pose_adjusted" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
   joints: *robot_joints
 
 
@@ -99,7 +99,7 @@ cartesian_impedance_controller:
   type: "position_controllers/CartesianMotionController"
   end_effector_link: "tool0"
   robot_base_link: "base_link"  #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
-  target_frame_topic: "target_pose" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
+  target_frame_topic: "target_pose_adjusted" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
   joints: *robot_joints
 
 

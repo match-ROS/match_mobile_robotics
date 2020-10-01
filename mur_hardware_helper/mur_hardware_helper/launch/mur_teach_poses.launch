@@ -8,7 +8,7 @@
     </include>
    
     <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py" ns="mur/ur">
-        <remap from="pose" to="cartesian_controller/equilibrium_pose"/>
+        <remap from="pose" to="cartesian_controller/target_pose"/>
         <param name="base_frame" value="$(arg tf_prefix)/ur/base_link"/>
         <param name="ee_frame" value="$(arg tf_prefix)/ur/tool0"/>
     </node>

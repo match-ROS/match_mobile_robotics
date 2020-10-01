@@ -16,6 +16,8 @@ This package came originally from (mir_robot)[https://github.com/dfki-ric/mir_ro
 ## 2. Installation
 ### Install dependencies
 ```
+git submodule init
+git submodule update
 rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```

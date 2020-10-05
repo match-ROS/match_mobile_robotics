@@ -1,7 +1,7 @@
 <launch>
     <!-- Defining arguments for the mur launch --> 
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
-    <arg name="controllers_stopped" default="force_torque_sensor_controller"/>  <!--Must not be empty-->
+    <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_hardware_helper)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="mur"/>
  

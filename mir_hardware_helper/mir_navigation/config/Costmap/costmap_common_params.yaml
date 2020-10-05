@@ -1,4 +1,4 @@
-robot_base_frame: $(arg tf_prefix)/base_footprint
+robot_base_frame: $(arg tf_prefix_slashed)base_footprint
 transform_tolerance: 3.0 #0.4   changed by Malte Heinrich
 update_frequency: 5.0
 publish_frequency: 1.0

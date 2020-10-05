@@ -8,3 +8,7 @@
 [submodule "general_hardware_helper/cartesian_controllers"]
 	path = general_hardware_helper/cartesian_controllers
 	url = https://github.com/fzi-forschungszentrum-informatik/cartesian_controllers
+[submodule "panda_hardware_helper/franka_ros"]
+	path = panda_hardware_helper/franka_ros
+	url = https://github.com/frankaemika/franka_ros.git
+	branch = melodic-devel

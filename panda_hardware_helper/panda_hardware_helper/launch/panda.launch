@@ -17,10 +17,10 @@
     
 
     <!-- Careful Walkaround!!! -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper1" 
+    <node unless="$(eval tf_prefix =='')" pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper1" 
         args="0.0 0.0 0.0 0 0 0 1 $(arg tf_prefix)/panda_link8 panda_link8" />
     
-    <node pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper2" 
+    <node unless="$(eval tf_prefix =='')" pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper2" 
         args="0.0 0.0 0.0 0 0 0 1 panda_EE $(arg tf_prefix)/panda_EE "/>
     <!-- Walkaround end -->
 

@@ -6,11 +6,11 @@ dictitems:
   Dy: 0.3
   Dyaw: 0.2
   Dz: 0.3
-  Kpitch: 100.0
-  Kroll: 100.0
-  Kx: 0.0
-  Ky: 0.0
-  Kyaw: 100.0
+  Kpitch: 10.0
+  Kroll: 10.0
+  Kx: 1200.0
+  Ky: 1200.0
+  Kyaw: 10.0
   Kz: 1200.0
   groups: !!python/object/new:dynamic_reconfigure.encoding.Config
     dictitems:
@@ -20,11 +20,11 @@ dictitems:
       Dy: 0.3
       Dyaw: 0.2
       Dz: 0.3
-      Kpitch: 100.0
-      Kroll: 100.0
-      Kx: 0.0
-      Ky: 0.0
-      Kyaw: 100.0
+      Kpitch: 10.0
+      Kroll: 10.0
+      Kx: 1200.0
+      Ky: 1200.0
+      Kyaw: 10.0
       Kz: 1200.0
       groups: !!python/object/new:dynamic_reconfigure.encoding.Config
         state: []

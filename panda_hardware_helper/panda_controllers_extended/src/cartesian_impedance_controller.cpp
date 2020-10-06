@@ -139,26 +139,18 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(  // NOLINT (readability-identifier-naming)
-      robot_state.tau_J_d.data());
-  Eigen::Affine3d transform(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
-  Eigen::Vector3d position(transform.translation());
-  Eigen::Quaterniond orientation(transform.linear());
+      robot_state.tau_J_d.data());  
+  transform_=Eigen::Affine3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
+  
+  Eigen::Vector3d position(transform_.translation());
+  Eigen::Quaterniond orientation(transform_.linear());
 
   // compute error to desired pose
   // position error
   Eigen::Matrix<double, 6, 1> error;
-  error.head(3) << position - position_d_;
+  computeError(error,position,orientation);
 
-  // orientation error
-  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
-    orientation.coeffs() << -orientation.coeffs();
-  }
-  // "difference" quaternion
-  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
-  error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
-  // Transform to base frame
-  error.tail(3) << -transform.linear() * error.tail(3);
-
+ 
   // compute control
   // allocate variables
   Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7);
@@ -168,6 +160,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   Eigen::MatrixXd jacobian_transpose_pinv;
   pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
+  
   // Cartesian PD control with damping ratio = 1
   tau_task << jacobian.transpose() *
                   (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
@@ -184,6 +177,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
     joint_handles_[i].setCommand(tau_d(i));
   }
 
+ 
   // update parameters changed online either through dynamic reconfigure or through the interactive
   // target by filtering
   cartesian_stiffness_ =
@@ -197,6 +191,9 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
+
+
+
 }
 
 Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
@@ -240,6 +237,35 @@ void CartesianImpedanceController::equilibriumPoseCallback(
   if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
     orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
   }
+
+  // Predict the new joint angle state
+  std::array<double, 42> jacobian_array =
+      model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
+  Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
+  // pseudoinverse for nullspace handling
+  // kinematic pseuoinverse
+  Eigen::MatrixXd jacobian_pinv;
+  pseudoInverse(jacobian, jacobian_pinv);
+  Eigen::Matrix<double, 6, 1> error;
+  computeError(error,position_d_target_,orientation_d_target_);
+
+  this->q_d_nullspace_=this->q_d_nullspace_+jacobian_pinv*error;
+
+}
+
+void CartesianImpedanceController::computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation)
+{
+  error.head(3) << position - position_d_;
+
+  // orientation error
+  if (orientation_d_.coeffs().dot(orientation.coeffs()) < 0.0) {
+    orientation.coeffs() << -orientation.coeffs();
+  }
+  // "difference" quaternion
+  Eigen::Quaterniond error_quaternion(orientation.inverse() * orientation_d_);
+  error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
+  // Transform to base frame
+  error.tail(3) << -transform_.linear() * error.tail(3);
 }
 
 }  // namespace panda_controllers_extended

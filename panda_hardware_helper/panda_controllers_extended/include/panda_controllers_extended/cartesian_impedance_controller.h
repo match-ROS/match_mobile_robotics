@@ -70,6 +70,7 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   double nullspace_damping_{9.0};
   double nullspace_damping_target_{9.0};
   const double delta_tau_max_{1.0};
+
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_;
   Eigen::Matrix<double, 6, 6> cartesian_stiffness_target_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
@@ -80,7 +81,10 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   Eigen::Quaterniond orientation_d_;
   Eigen::Vector3d position_d_target_;
   Eigen::Quaterniond orientation_d_target_;
+  Eigen::Affine3d transform_;
 
+
+  void computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation);
   // Dynamic reconfigure
   std::unique_ptr<dynamic_reconfigure::Server<multi_robot_controller::StiffnessConfig>>
       dynamic_server_compliance_param_;

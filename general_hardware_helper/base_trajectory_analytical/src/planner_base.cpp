@@ -115,6 +115,8 @@ void PlannerBase::setStartPose(tf::Pose pose)
     this->start_pose=pose;
     this->start_reference=this->getTransform(pose);
     this->calc_values(ros::Duration(0.0));
+    this->vel=tf::Vector3(0.0,0.0,0.0);
+    this->ang_vel=0.0;
     this->simulate();
 }
 

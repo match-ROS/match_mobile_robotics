@@ -1,7 +1,7 @@
 <launch>
     <arg name="tf_prefix" default=""/>
 
-    <include file="$(find panda_hardware_helper/launch/panda_cartesian.launch"  pass_all_args="true"/>
+    <include file="$(find panda_hardware_helper)/launch/panda_cartesian.launch"  pass_all_args="true"/>
 
     <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
         <remap from="pose" to="cartesian_controller/target_pose"/>

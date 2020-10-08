@@ -36,9 +36,11 @@ cartesian_impedance_controller:
   type: panda_controllers_extended/CartesianImpedanceController
   arm_id: panda
   joint_names: *joints
+  rate: 400
 
 cartesian_controller:
   type: panda_controllers_extended/CartesianImpedanceController
   arm_id: panda
   joint_names: *joints
+  rate: 400
 

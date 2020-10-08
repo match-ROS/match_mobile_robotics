@@ -64,6 +64,8 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   std::unique_ptr<franka_hw::FrankaModelHandle> model_handle_;
   std::vector<hardware_interface::JointHandle> joint_handles_;
 
+  ros::Timer my_timer_;
+
   double filter_params_{0.005};
   double nullspace_stiffness_{20.0};
   double nullspace_stiffness_target_{20.0};
@@ -76,12 +78,15 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+  Eigen::VectorXd tau_d_;
   
   Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_;
   Eigen::Vector3d position_d_target_;
   Eigen::Quaterniond orientation_d_target_;
   Eigen::Affine3d transform_;
+
+  void myUpdate(const ros::TimerEvent &);
 
 
   void computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation);

@@ -28,6 +28,11 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
     ROS_ERROR_STREAM("CartesianImpedanceController: Could not read parameter arm_id");
     return false;
   }
+  double rate;
+  if (!node_handle.getParam("rate", rate)) {
+    ROS_ERROR_STREAM("CartesianImpedanceController: Could not read parameter rate");
+    return false;
+  }
   std::vector<std::string> joint_names;
   if (!node_handle.getParam("joint_names", joint_names) || joint_names.size() != 7) {
     ROS_ERROR(
@@ -93,10 +98,14 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   dynamic_server_compliance_param_->setCallback(
       boost::bind(&CartesianImpedanceController::complianceParamCallback, this, _1, _2));
 
+  my_timer_=node_handle.createTimer(ros::Rate(rate),&CartesianImpedanceController::myUpdate,this);
+  
   position_d_.setZero();
   orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   position_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
+  tau_d_=Eigen::VectorXd(7);
+  tau_d_.setZero();
 
   cartesian_stiffness_.setZero();
   cartesian_damping_.setZero();
@@ -124,14 +133,12 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // set nullspace equilibrium configuration to initial q
   q_d_nullspace_ = q_initial;
 }
-
-void CartesianImpedanceController::update(const ros::Time& /*time*/,
-                                                 const ros::Duration& /*period*/) {
-  // get state variables
+void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
+{
+   // get state variables
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
-  std::array<double, 42> jacobian_array =
-      model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
+  std::array<double, 42> jacobian_array =model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
 
   // convert to Eigen
   Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
@@ -161,10 +168,10 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   pseudoInverse(jacobian.transpose(), jacobian_transpose_pinv);
 
   
-  // Cartesian PD control with damping ratio = 1
+  // Cartesian PD control with damping 
   tau_task << jacobian.transpose() *
                   (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
-  // nullspace PD control with damping ratio = 1
+  // nullspace PD control with damping 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
@@ -172,9 +179,15 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   // Desired torque
   tau_d << tau_task + tau_nullspace + coriolis;
   // Saturate torque rate to avoid discontinuities
-  tau_d << saturateTorqueRate(tau_d, tau_J_d);
-  for (size_t i = 0; i < 7; ++i) {
-    joint_handles_[i].setCommand(tau_d(i));
+  tau_d_ << saturateTorqueRate(tau_d, tau_J_d);
+}
+void CartesianImpedanceController::update(const ros::Time& /*time*/,
+                                                 const ros::Duration& /*period*/) {
+ 
+
+  for (size_t i = 0; i < 7; ++i) 
+  {
+    joint_handles_[i].setCommand(tau_d_(i));
   }
 
  
@@ -191,9 +204,6 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
   
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
-
-
-
 }
 
 Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(

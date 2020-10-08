@@ -26,5 +26,9 @@ inline void pseudoInverse(const Eigen::MatrixXd& M_, Eigen::MatrixXd& M_pinv_, b
 
   M_pinv_ = Eigen::MatrixXd(svd.matrixV() * S_.transpose() * svd.matrixU().transpose());
 }
+inline void moorePenrose(const Eigen::MatrixXd& M_, Eigen::MatrixXd& M_pinv_) {
+  
+  M_pinv_=M_.transpose()*(M_*M_.transpose()).inverse();
+}
 
 }  // namespace panda_controllers_extended

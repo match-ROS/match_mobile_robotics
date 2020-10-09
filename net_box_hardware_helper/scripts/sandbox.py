@@ -25,9 +25,15 @@ socket.stopStreaming()
 time.sleep(3)
 print("initial start")
 socket.startStreaming()
-time.sleep(10)
+time.sleep(3)
+socket.stopStreaming()
+print("Set bias")
+socket.setSoftwareBias()
+time.sleep(3)
+socket.startStreaming()
+time.sleep(3)
 socket.stopStreaming()
 print("stopped")
-time.sleep(10)
+
 
 

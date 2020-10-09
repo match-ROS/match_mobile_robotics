@@ -8,8 +8,7 @@ class NetBoxSocket:
         self.__adress = (ip_adress, port)
         self.__socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.__msg_gen = NetBoxMessageGenerator()
-        self.__sample_gen = NetBoxSampleGenerator(1000000,1000000)
-        self.__scope=threading.Thread(target=self.__scope__)
+        self.__sample_gen = NetBoxSampleGenerator(1000000,1000000,7000)
         self.__streaming=False
         self.__data=NetBoxMeasurement()
         self.__receiveCb=None
@@ -18,7 +17,10 @@ class NetBoxSocket:
         data = self.__msg_gen(enum.START_RT_STREAMING)
         self.__socket.sendto(data,self.__adress)
         self.__streaming = True
-        self.__scope.start()
+        thread=threading.Thread(target=self.__scope__)    
+        thread.start()  
+        
+       
        
     def registerReceiveCb(self,callback):
         self.__receiveCb=callback
@@ -27,8 +29,13 @@ class NetBoxSocket:
         data = self.__msg_gen(enum.STOP_STREAMING)
         self.__streaming = False
         self.__socket.sendto(data,self.__adress)
-        
-        
+    
+    def setSoftwareBias(self):
+        data=self.__msg_gen(enum.SET_SOFTWARE_BIAS)
+        self.__socket.sendto(data,self.__adress)
+    
+    def getSingleSample(self):
+        return self.__data
 
 
 
@@ -60,15 +67,17 @@ class NetBoxMessageGenerator:
             return self.__data
 
 class NetBoxSampleGenerator:
-    def __init__(self,f_counts,m_counts):
+    def __init__(self,f_counts,m_counts,rate):
         self.__f_counts=f_counts
         self.__m_counts=m_counts
+        self.__rate=rate
         self.__unpacker=struct.Struct('> I I I i i i i i i')
 
 
     def __call__(self,data):
         tupel_data=self.__unpacker.unpack(data)
         measurement_data=NetBoxMeasurement()
+        measurement_data.stamp= float(tupel_data[1]) / self.__rate
         measurement_data.Fx = float(tupel_data[3]) / self.__f_counts
         measurement_data.Fy = float(tupel_data[4]) / self.__f_counts
         measurement_data.Fz = float(tupel_data[5]) / self.__f_counts
@@ -80,7 +89,7 @@ class NetBoxSampleGenerator:
 
 
 class NetBoxMeasurement:
-    seq=long()
+    stamp=long()
     Fx=float()
     Fy=float()
     Fz=float()
@@ -89,7 +98,7 @@ class NetBoxMeasurement:
     Mz=float()
     
     def __repr__(self):
-        string= "Seq:\t"+str(self.seq)+\
+        string= "Seq:\t"+str(self.stamp)+\
                 "\tFx:\t"+str(self.Fx)+\
                 "\tFy:\t"+str(self.Fy)+\
                 "\tFz:\t"+str(self.Fz)+\

@@ -6,8 +6,16 @@ from net_box_hardware_helper import NetBoxSocket
 class NetBoxRosWrapper:
     def __init__(self):
         ip_adress=rospy.get_param("~ip_adress",'192.168.1.1')
+        if ip_adress=='192.168.1.1':
+            rospy.logwarn("Got default parameter for "+'ip_adress')
+
         port=rospy.get_param("~port",49152)
+        if port==49152:
+            rospy.logwarn("Got default parameter for "+'port')
+
         self.__frame_id=rospy.get_param("~frame_id",'ft_sensor_frame')
+        if self.__frame_id=='ft_sensor_frame':
+            rospy.logwarn("Got default parameter for "+'frame_id')
 
         self.__publisher=rospy.Publisher("Wrench",WrenchStamped,queue_size=10)
         self.__set_zero_srv=rospy.Service("~set_zero",Trigger,self.__setZeroCallback__)        

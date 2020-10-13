@@ -3,22 +3,24 @@
     <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
     <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
     <arg name="pose_filename" default=""/>
+    <arg name="has_ft_sensor" default="true"/>
 
+
+    <!-- Bringup the enabeling procdeure for the ur -->
     <node pkg="ur_hardware_helper" type="enable_ur.py" name="enable_ur" output="screen" />
+    <!-- Make sure the controllers topic dont contain tf prefixes since they may be checked against urdf files -->
     <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_controller_tf_prefix_remover">
         <remap from="topic_in" to="cartesian_controller/target_pose"/>
         <remap from="topic_out" to="cartesian_controller/target_pose_adjusted"/>
     </node>
-
-    <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_hardware_helper"/>
-
-
     <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
         <remap from="topic_in" to="cartesian_impedance_controller/target_pose"/>
         <remap from="topic_out" to="cartesian_impedance_controller/target_pose_adjusted"/>
     </node>
+    <!-- Bringup an sevice for calling the gripper by ros (mostly for constency to other robot hardware) -->
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_hardware_helper"/>
 
-
+    <!-- Bringup the ur driver within proper namespaces -->
     <remap from="/robot_description" to="robot_description"/>
     <rosparam file="$(find ur_hardware_helper)/config/controllers.yaml" command="load" subst_value="true"/>
     <include file="$(find ur_robot_driver)/launch/ur5_bringup.launch" pass_all_args="true">
@@ -27,11 +29,24 @@
         <arg name="kinematics_config" value="$(find ur_hardware_helper)/config/calibration.yaml"/>
         <arg name="robot_ip" value="ur"/>        
     </include>
-
+    
+    <!-- Node for easily teaching robot poses -->
     <node unless="$(eval pose_filename=='')" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" >
        <rosparam command="load" file="$(find ur_hardware_helper)/config/robot_teacher.yaml"/>
        <param name="file_name" value="$(arg pose_filename)"/>
     </node>
+
+    <!-- Add a ft sensor if there is one-->    
+    <group if="$(eval has_ft_sensor)">
+        <node pkg="tf2_ros" type="static_transform_publisher" name="ur_ft_transformer" 
+            args="0.35 0.0 0.0 0 1.5707 0  $(arg tf_prefix)/ee_link $(arg tf_prefix)/ft_sensor_link"/>
+        <node pkg="tf2_ros" type="static_transform_publisher" name="ft_ee_transformer" 
+            args="0.0 0.0 -4 0 3.14159 0  $(arg tf_prefix)/ft_sensor_link $(arg tf_prefix)/my_tool_link"/>
+
+        <node  name="ft_sensor" pkg="net_box_hardware_helper" type="driver.py">
+            <rosparam command="load" file="$(find ur_hardware_helper)/config/net_box_ft.yaml" subst_value="true"/>
+        </node>
+    </group>
 
 
 </launch>

@@ -17,7 +17,7 @@ print(enum.RESET_TRESH_LATCH)
 print(enum.SET_SOFTWARE_BIAS)
 print(enum.START_IDENTIFIER)
 
-socket=NetBoxSocket('192.168.1.1', 49152)
+socket=NetBoxSocket('192.168.13.1', 49152)
 socket.registerReceiveCb(recCb)
 
 print("initial stop")

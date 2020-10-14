@@ -35,14 +35,14 @@ class NetBoxSocket:
         self.__socket.sendto(data,self.__adress)
     
     def getSingleSample(self):
-        return self.__data
+        data=self.__socket.recv(4096) 
+        return self.__sample_gen(data)
 
 
 
     def __scope__(self):
-        while self.__streaming:
-            data=self.__socket.recv(4096)
-            self.__data=self.__sample_gen(data)
+        while self.__streaming:            
+            self.__data=self.getSingleSample()
             if self.__receiveCb:
                 self.__receiveCb(self.__data)
         

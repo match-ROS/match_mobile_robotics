@@ -158,6 +158,20 @@ Visualization Manager:
       Topic: /test_pose
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Arrow Width: 0.5
+      Class: rviz/WrenchStamped
+      Enabled: true
+      Force Arrow Scale: 2
+      Force Color: 204; 51; 51
+      Hide Small Values: true
+      History Length: 1
+      Name: WrenchStamped
+      Topic: /Wrench
+      Torque Arrow Scale: 2
+      Torque Color: 204; 204; 51
+      Unreliable: false
+      Value: true
     - Class: rviz/Axes
       Enabled: true
       Length: 1

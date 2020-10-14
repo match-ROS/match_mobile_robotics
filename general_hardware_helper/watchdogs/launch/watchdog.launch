@@ -1,0 +1,7 @@
+<launch>
+
+    <node name="force_watchdog" type="force_watchdog.py" pkg="watchdogs" output="screen">
+        <remap from="watch_topic" to="/mur/ur/Wrench"/>      
+    </node>    
+
+</launch>

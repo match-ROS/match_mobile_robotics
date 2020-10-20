@@ -10,6 +10,8 @@
 # 2. Installation
 ### Install dependencies
 ```
+git submodule init
+git submodule update
 rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```

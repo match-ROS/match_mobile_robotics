@@ -13,7 +13,7 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <ur_controllers_extended/PDConfig.h>
-
+#include <std_msgs/Float64.h>
 
 namespace ur_controllers_extended{
 
@@ -32,6 +32,10 @@ class CompliantAxisVelController :public controller_interface::Controller<hardwa
     private:
         dynamic_reconfigure::Server<ur_controllers_extended::PDConfig> config_server_;
         ros::Subscriber wrench_sub_;
+        ros::Publisher debug_input_;
+        ros::Publisher debug_output_;
+        
+
         std::vector<std::string>  joint_names_;       
         std::vector<hardware_interface::JointHandle> joints_;
         bool measure_;

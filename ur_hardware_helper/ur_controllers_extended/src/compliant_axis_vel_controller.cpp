@@ -88,6 +88,9 @@ bool CompliantAxisVelController::init(hardware_interface::VelocityJointInterface
     } 
     this->wrench_sub_=n.subscribe(topic_name,1,&CompliantAxisVelController::wrenchCallback,this);
     this->config_server_.setCallback(boost::bind(&CompliantAxisVelController::dynConfigcallback,this,_1,_2));     
+    this->debug_input_=n.advertise<std_msgs::Float64>("input",1);
+    this->debug_output_=n.advertise<std_msgs::Float64>("output",1);
+
 
     this->time_old_=ros::Time::now();
     this->torque_=0.0;
@@ -119,10 +122,17 @@ void CompliantAxisVelController::update(const ros::Time& time, const ros::Durati
   if(this->d_time_.toSec()>0.0)
   {
     d_M=(this->torque_-this->torque_old_)/this->d_time_.toSec();
-  }  
- 
+  }   
   this->vel_old_=this->joints_.back().getVelocity();
+  std_msgs::Float64 msg_torque;
+  msg_torque.data=this->torque_;
+  this->debug_input_.publish(msg_torque);
+  
+ 
   double vel=this->p_gain_*this->torque_+this->d_gain_*d_M;
+  std_msgs::Float64 msg_vel;
+  msg_vel.data=vel;
+  this->debug_output_.publish(msg_vel);  
   this->joints_.back().setCommand(vel);
 }
 

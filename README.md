@@ -10,6 +10,7 @@
 # 2. Installation
 ### Install dependencies
 ```
+git clone https://github.com/ibMH/Helper_Tools.git
 git submodule init
 git submodule update
 rosdep update

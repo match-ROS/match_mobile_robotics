@@ -10,11 +10,11 @@
     <!-- Bringup the enabeling procdeure for the ur -->
     <node pkg="ur_hardware_helper" type="enable_ur.py" name="enable_ur" output="screen" />
     <!-- Make sure the controllers topic dont contain tf prefixes since they may be checked against urdf files -->
-    <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_controller_tf_prefix_remover">
+    <node pkg="manipulate_topics" type="remove_pose_tf_prefix.py" name="cartesian_controller_tf_prefix_remover">
         <remap from="topic_in" to="cartesian_controller/target_pose"/>
         <remap from="topic_out" to="cartesian_controller/target_pose_adjusted"/>
     </node>
-    <node pkg="manipulate_headers" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
+    <node pkg="manipulate_topics" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
         <remap from="topic_in" to="cartesian_impedance_controller/target_pose"/>
         <remap from="topic_out" to="cartesian_impedance_controller/target_pose_adjusted"/>
     </node>
@@ -38,15 +38,11 @@
     </node>
 
     <!-- Add a ft sensor if there is one-->    
-    <group if="$(eval has_ft_sensor)">
-        <node pkg="tf2_ros" type="static_transform_publisher" name="ur_ft_transformer" 
-            args="0.035 0.0 0.0 -1.5707 0.0 1.5707  $(arg tf_prefix)ee_link $(arg tf_prefix)ft_sensor_link"/>
-        <node pkg="tf2_ros" type="static_transform_publisher" name="ft_ee_transformer" 
-            args="0.0 0.0 -0.04 0 0  3.14159  $(arg tf_prefix)ft_sensor_link $(arg tf_prefix)my_tool_link"/>
+    <include if="$(eval has_ft_sensor)" file="$(find ur_hardware_helper)/launch/ft_sensor.launch"/>
 
-        <node  name="ft_sensor" pkg="net_box_hardware_helper" type="driver.py">
-            <rosparam command="load" file="$(find ur_hardware_helper)/config/net_box_ft.yaml" subst_value="true"/>
-        </node>
-    </group>
-    
+    <node name="joint_state_filter" type="joints_mean_filter" pkg="manipulate_topics" output="screen">
+        <rosparam command="load" file="$(find ur_hardware_helper)/config/ft_filter.yaml"/>
+        <remap from="input" to="joint_states"/>
+        <remap from="output" to="joint_states_filtered"/>
+    </node>
 </launch>

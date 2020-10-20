@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /WrenchStamped1
       Splitter Ratio: 0.5
     Tree Height: 1758
   - Class: rviz/Selection
@@ -214,18 +215,18 @@ Visualization Manager:
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.06309500336647034
-        Y: -0.24209262430667877
-        Z: 0.5226588845252991
+        X: -0.2637452483177185
+        Y: 0.030475366860628128
+        Z: 0.6679165959358215
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.10979659110307693
+      Pitch: 0.07979662716388702
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.918571949005127
+      Yaw: 2.4685707092285156
     Saved: ~
 Window Geometry:
   Displays:

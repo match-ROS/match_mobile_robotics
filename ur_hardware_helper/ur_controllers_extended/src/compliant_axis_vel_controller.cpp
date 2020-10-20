@@ -6,20 +6,28 @@
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include <ur_controllers_extended/compliant_axis_controller.h>
+#include <ur_controllers_extended/compliant_axis_vel_controller.h>
 
 namespace ur_controllers_extended{
 
 
-bool CompliantAxisController::init(hardware_interface::PositionJointInterface* hw, ros::NodeHandle &n)
+bool CompliantAxisVelController::init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &n)
 {
     if(!n.getParam("joint_stiffness", this->stiffness_))
     {
       ROS_ERROR_STREAM("Failed to getParam '" << "joint_stiffness" << "' (namespace: " << n.getNamespace() << ").");
     }
+    if(!n.getParam("p_gain", this->p_gain_))
+    {
+      ROS_ERROR_STREAM("Failed to getParam '" << "p_gain" << "' (namespace: " << n.getNamespace() << ").");
+    }
     if(!n.getParam("d_gain", this->d_gain_))
     {
       ROS_ERROR_STREAM("Failed to getParam '" << "d_gain" << "' (namespace: " << n.getNamespace() << ").");
+    }
+    if(!n.getParam("theta", this->theta_))
+    {
+      ROS_ERROR_STREAM("Failed to getParam '" << "theta" << "' (namespace: " << n.getNamespace() << ").");
     }
     // List of controlled joints
     if(!n.getParam("joints", this->joint_names_))
@@ -78,21 +86,22 @@ bool CompliantAxisController::init(hardware_interface::PositionJointInterface* h
       ROS_ERROR_STREAM("Failed to getParam '" << "topic_name" << "' (namespace: " << n.getNamespace() << ").");
       return false;
     } 
-    this->wrench_sub_=n.subscribe(topic_name,1,&CompliantAxisController::wrenchCallback,this);
+    this->wrench_sub_=n.subscribe(topic_name,1,&CompliantAxisVelController::wrenchCallback,this);
+    this->config_server_.setCallback(boost::bind(&CompliantAxisVelController::dynConfigcallback,this,_1,_2));     
 
-    
-    this->torque_=0.0; 
-    this->vel_old_=0.0;
+    this->time_old_=ros::Time::now();
+    this->torque_=0.0;
+    this->acceleration_=0.0;
     return true;
 
 }
 
-void CompliantAxisController::starting(const ros::Time& time)
+void CompliantAxisVelController::starting(const ros::Time& time)
 {
   //Holding current position
   for(unsigned int i=0; i<this->joints_.size(); i++)
   {
-    this->joints_[i].setCommand(this->joints_[i].getPosition());
+    this->joints_[i].setCommand(0.0);
     
   }
   this->position_equi_=this->joints_.back().getPosition();
@@ -100,41 +109,59 @@ void CompliantAxisController::starting(const ros::Time& time)
 
 
 
-void CompliantAxisController::stopping(const ros::Time& time)
+void CompliantAxisVelController::stopping(const ros::Time& time)
 {}
 
 
-void CompliantAxisController::update(const ros::Time& time, const ros::Duration& period)
+void CompliantAxisVelController::update(const ros::Time& time, const ros::Duration& period)
 { 
-  // double acc=(this->joints_.back().getVelocity()-this->vel_old_)/period.toSec();
-  // this->vel_old_=this->joints_.back().getVelocity();
-
-  // double angle=(this->torque_+acc*0.0006)/this->stiffness_+this->position_equi_;
-  double angle=this->torque_/this->stiffness_+this->position_equi_+this->d_gain_*this->joints_.back().getPosition();
-  this->joints_.back().setCommand(angle);
+  double d_M=0.0;
+  if(this->d_time_.toSec()>0.0)
+  {
+    d_M=(this->torque_-this->torque_old_)/this->d_time_.toSec();
+  }  
+ 
+  this->vel_old_=this->joints_.back().getVelocity();
+  double vel=this->p_gain_*this->torque_+this->d_gain_*d_M;
+  this->joints_.back().setCommand(vel);
 }
 
-void CompliantAxisController::wrenchCallback(geometry_msgs::WrenchStamped msg)
-{  
-  switch (this->direction_)
+void CompliantAxisVelController::wrenchCallback(geometry_msgs::WrenchStamped msg)
+{
+  this->d_time_=msg.header.stamp-this->time_old_;
+  if(this->d_time_.toSec()>0.0)
   {
-  case Direction::x_axis:
-    this->torque_=msg.wrench.torque.x;
-    break;
-  case Direction::y_axis:
-    this->torque_=msg.wrench.torque.y;
-    break;
-  case Direction::z_axis:
-    this->torque_=msg.wrench.torque.z;
-    break;  
+    this->time_old_=msg.header.stamp;
+    this->torque_old_=this->torque_;
+  }
+ 
+  double torque_measure=0.0;
+  switch (this->direction_)
+  {   
+    case Direction::x_axis:
+      torque_measure=msg.wrench.torque.x;
+      break;
+    case Direction::y_axis:
+      torque_measure=msg.wrench.torque.y;
+      break;
+    case Direction::z_axis:
+      torque_measure=msg.wrench.torque.z;
+      break;  
   default:
     ROS_ERROR_STREAM("Direction of torque is not specified!");
     throw std::runtime_error("Direction of torque is not specified!");
     break;
   }  
+  this->torque_=torque_measure-this->acceleration_*this->theta_;
+}
+void CompliantAxisVelController::dynConfigcallback(ur_controllers_extended::PDConfig &config, uint32_t level) {
+    ROS_INFO_STREAM("Reconfigure Request: "<<config.p<<"/t"<<config.d);
+    this->d_gain_=config.d;
+    this->p_gain_=config.p;
+    this->theta_=config.theta;
 }
 
 }//namespace
 
-PLUGINLIB_EXPORT_CLASS(ur_controllers_extended::CompliantAxisController,
+PLUGINLIB_EXPORT_CLASS(ur_controllers_extended::CompliantAxisVelController,
                        controller_interface::ControllerBase)

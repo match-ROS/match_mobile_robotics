@@ -14,7 +14,7 @@ find_package(catkin REQUIRED
     kdl_parser
     
     
-
+    dynamic_reconfigure
     controller_interface  
     hardware_interface      
 )
@@ -95,10 +95,9 @@ find_package(catkin REQUIRED
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/p_d_gain.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -130,10 +129,12 @@ include_directories(
  add_library(${PROJECT_NAME}
     include/${PROJECT_NAME}/compliant_axis_controller.h
     src/compliant_axis_controller.cpp
+    include/${PROJECT_NAME}/compliant_axis_vel_controller.h
+    src/compliant_axis_vel_controller.cpp
     include/${PROJECT_NAME}/cartesian_controller.h
     src/cartesian_controller.cpp
 )
-
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure

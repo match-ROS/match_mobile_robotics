@@ -17,7 +17,7 @@ class NetBoxRosWrapper:
         if self.__frame_id=='ft_sensor_frame':
             rospy.logwarn("Got default parameter for "+'frame_id')
 
-        self.__publisher=rospy.Publisher("Wrench",WrenchStamped,queue_size=10)
+        self.__publisher=rospy.Publisher("wrench",WrenchStamped,queue_size=10)
         self.__set_zero_srv=rospy.Service("~set_zero",Trigger,self.__setZeroCallback__)        
        
 

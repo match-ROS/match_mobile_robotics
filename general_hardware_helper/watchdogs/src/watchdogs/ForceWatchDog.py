@@ -4,8 +4,27 @@ import numpy as np
 from numpy import linalg as lin
 from std_srvs.srv import Empty,EmptyRequest
 import rosservice
+
+
+
+""" Class that implements a watchdog for a force topic.
+
+An instance of this class calls several services 
+when it comes to force overshoot.
+"""
 class ForceWatchDog:
-    def __init__(self):      
+    def __init__(self): 
+        """ Constuctor of the force watchdog.
+        
+        It searches for the following parameters:
+        |Parameter              |Description                                        |
+        |-----------------------|-------------------------------------------------- |
+        |~lower_abs_force       |Lower thresh for the absolute value of the force   |
+        |~upper_abs_force       |Upper thresh for the absolute value of the force   |
+        |~lower_abs_torque      |Lower thresh for the absolute value of the torque  |
+        |~upper_abs_torque      |Upper thresh for the absolute value of the torque  |
+        
+        """     
 
         self.__lower_abs_force=rospy.get_param("~lower_abs_force")
         self.__upper_abs_force=rospy.get_param("~upper_abs_force")
@@ -24,6 +43,11 @@ class ForceWatchDog:
             self.__services.append(rospy.ServiceProxy(service,Empty))
 
     def watch(self,msg):
+        """ Callback for the message the watchdog is setup to.
+        
+        Is called everytime a new message appeares and if limits are reached the watchdog barks.
+        """
+
         force=np.array([msg.wrench.force.x,msg.wrench.force.y,msg.wrench.force.z])
         torque=np.array([msg.wrench.torque.x,msg.wrench.torque.y,msg.wrench.torque.z])
         abs_force=lin.norm(force)
@@ -37,6 +61,13 @@ class ForceWatchDog:
             self.bark()
 
     def bark(self):
+        """Procedure to be executed when it comes to force overshoot.
+
+        Dependend on the type of overshoot that occures, different messages for force respectivly torque are displayed.
+        Independently of that all services are called.
+
+        """
+        
         if self.__force_flag:
            self.__force_flag=False
            rospy.logwarn("Watchdog realised Force overshooting!")

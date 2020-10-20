@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(manipulate_headers)
+project(manipulate_topics)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,7 +7,9 @@ project(manipulate_headers)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+              roscpp
+)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -99,9 +101,9 @@ catkin_python_setup()
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES manipulate_headers
-#  CATKIN_DEPENDS other_catkin_pkg
+  INCLUDE_DIRS include
+#  LIBRARIES manipulate_topics
+  CATKIN_DEPENDS roscpp
 #  DEPENDS system_lib
 )
 
@@ -112,15 +114,24 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-# include
-# ${catkin_INCLUDE_DIRS}
+ include
+ ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-# add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/manipulate_headers.cpp
-# )
+add_library(message_convolution_filters
+  include/${PROJECT_NAME}/msg_filters.hpp
 
+  include/${PROJECT_NAME}/msg_operators.hpp
+
+  include/${PROJECT_NAME}/msg_filter_base.h
+  src/msg_filter_base.cpp
+
+  include/${PROJECT_NAME}/msg_mean_filter.h
+  src/msg_mean_filter.cpp
+
+)
+set_target_properties(message_convolution_filters PROPERTIES LINKER_LANGUAGE CXX)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -129,7 +140,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/manipulate_headers_node.cpp)
+add_executable(wrench_stamped_mean_filter nodes/wrench_stamped_mean_filter.cpp)
+add_executable(joints_mean_filter nodes/joints_mean_filter.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -142,9 +154,18 @@ include_directories(
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(${PROJECT_NAME}_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(message_convolution_filters
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(wrench_stamped_mean_filter
+  message_convolution_filters
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(joints_mean_filter
+  message_convolution_filters
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
@@ -194,7 +215,7 @@ catkin_install_python(PROGRAMS
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_manipulate_headers.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_manipulate_topics.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

@@ -1,0 +1,109 @@
+\hypertarget{classMessageFilterBase}{}\section{Message\+Filter\+Base$<$ T $>$ Class Template Reference}
+\label{classMessageFilterBase}\index{Message\+Filter\+Base$<$ T $>$@{Message\+Filter\+Base$<$ T $>$}}
+
+
+Base class for topic filters (convulutional filters)  
+
+
+
+
+{\ttfamily \#include $<$msg\+\_\+filter\+\_\+base.\+hpp$>$}
+
+
+
+Inheritance diagram for Message\+Filter\+Base$<$ T $>$\+:
+\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=206pt]{d3/d58/classMessageFilterBase__inherit__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\hyperlink{classMessageFilterBase_aeb8e41a157fef0bcf63bd8061eea4b4a}{Message\+Filter\+Base} (ros\+::\+Node\+Handle \&nh)
+\begin{DoxyCompactList}\small\item\em Construct a new Message Filter Base object. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+virtual T \hyperlink{classMessageFilterBase_a9ddc835d7366cacf63ba4a4e42839f6b}{filter} ()=0
+\begin{DoxyCompactList}\small\item\em Procedure the filter algorithm is implemented in. \end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Protected Attributes}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classMessageFilterBase_a0b7db0e443e75ce02ef154f233adc97d}\label{classMessageFilterBase_a0b7db0e443e75ce02ef154f233adc97d}} 
+std\+::unique\+\_\+ptr$<$ boost\+::circular\+\_\+buffer$<$ T $>$ $>$ {\bfseries buffer\+\_\+}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class T$>$\newline
+class Message\+Filter\+Base$<$ T $>$}
+
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Subscribed Topic}&\textbf{ Description  }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Subscribed Topic}&\textbf{ Description  }\\\cline{1-2}
+\endhead
+input&The topic the value to be filtered is published at \\\cline{1-2}
+output&The topic the filtered value is published at \\\cline{1-2}
+\end{longtabu}
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Ros-\/\+Parameter}&\textbf{ Desciption  }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Ros-\/\+Parameter}&\textbf{ Desciption  }\\\cline{1-2}
+\endhead
+$\sim$sample\+\_\+number$<$td$>$Number of samples the mean is calculated from \\\cline{1-2}
+\end{longtabu}
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em T} & Tpye of the Message to be filtered. Operators for the derived filteres must be implemented. \\
+\hline
+\end{DoxyTemplParams}
+
+
+\subsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{classMessageFilterBase_aeb8e41a157fef0bcf63bd8061eea4b4a}\label{classMessageFilterBase_aeb8e41a157fef0bcf63bd8061eea4b4a}} 
+\index{Message\+Filter\+Base@{Message\+Filter\+Base}!Message\+Filter\+Base@{Message\+Filter\+Base}}
+\index{Message\+Filter\+Base@{Message\+Filter\+Base}!Message\+Filter\+Base@{Message\+Filter\+Base}}
+\subsubsection{\texorpdfstring{Message\+Filter\+Base()}{MessageFilterBase()}}
+{\footnotesize\ttfamily template$<$class T $>$ \\
+\hyperlink{classMessageFilterBase}{Message\+Filter\+Base}$<$ T $>$\+::\hyperlink{classMessageFilterBase}{Message\+Filter\+Base} (\begin{DoxyParamCaption}\item[{ros\+::\+Node\+Handle \&}]{nh }\end{DoxyParamCaption})}
+
+
+\begin{DoxyParams}{Parameters}
+{\em nh} & Nodehandle for handling ros namespaces \\
+\hline
+\end{DoxyParams}
+
+
+\subsection{Member Function Documentation}
+\mbox{\Hypertarget{classMessageFilterBase_a9ddc835d7366cacf63ba4a4e42839f6b}\label{classMessageFilterBase_a9ddc835d7366cacf63ba4a4e42839f6b}} 
+\index{Message\+Filter\+Base@{Message\+Filter\+Base}!filter@{filter}}
+\index{filter@{filter}!Message\+Filter\+Base@{Message\+Filter\+Base}}
+\subsubsection{\texorpdfstring{filter()}{filter()}}
+{\footnotesize\ttfamily template$<$class T $>$ \\
+virtual T \hyperlink{classMessageFilterBase}{Message\+Filter\+Base}$<$ T $>$\+::filter (\begin{DoxyParamCaption}{ }\end{DoxyParamCaption})\hspace{0.3cm}{\ttfamily [protected]}, {\ttfamily [pure virtual]}}
+
+Uses values from the buffer\+\_\+ and filters them.
+
+\begin{DoxyReturn}{Returns}
+T Filtered value. 
+\end{DoxyReturn}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/manipulate\+\_\+topics/msg\+\_\+filter\+\_\+base.\+hpp\item 
+src/msg\+\_\+filter\+\_\+base.\+cpp\end{DoxyCompactItemize}

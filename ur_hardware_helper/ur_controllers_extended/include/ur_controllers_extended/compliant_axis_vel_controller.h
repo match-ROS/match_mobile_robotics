@@ -40,17 +40,16 @@ class CompliantAxisVelController :public controller_interface::Controller<hardwa
         std::vector<hardware_interface::JointHandle> joints_;
         bool measure_;
         double p_gain_;        
-        double d_gain_;
+        double virtual_damping_;
+        double theta_model_;
 
-        double stiffness_;
-        double theta_;
         double torque_;
-        double torque_old_;
-        double vel_old_;
         double acceleration_;
+        double vel_old_;
+
         ros::Time time_old_;
         ros::Duration d_time_;
-        double position_equi_;
+        
         Direction direction_;
 
         void wrenchCallback(geometry_msgs::WrenchStamped msg);

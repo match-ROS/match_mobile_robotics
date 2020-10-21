@@ -61,9 +61,8 @@ compliant_axis_controller:
 compliant_axis_vel_controller:
   type: "ur_controllers_extended/CompliantAxisVelController"
   joints: *robot_joints
-  p_gain: 1.4
-  d_gain: 0.3
-  theta: 0.0
+  theta_model: 0.0
+  virtual_damping: 1.0
   joint_stiffness: 5 #Nm/rad
   topic_name: wrench
   direction: z

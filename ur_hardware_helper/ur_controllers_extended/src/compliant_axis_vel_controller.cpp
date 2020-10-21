@@ -13,21 +13,13 @@ namespace ur_controllers_extended{
 
 bool CompliantAxisVelController::init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &n)
 {
-    if(!n.getParam("joint_stiffness", this->stiffness_))
+    if(!n.getParam("virtual_damping", this->virtual_damping_))
     {
-      ROS_ERROR_STREAM("Failed to getParam '" << "joint_stiffness" << "' (namespace: " << n.getNamespace() << ").");
+      ROS_ERROR_STREAM("Failed to getParam '" << "virtual_damping" << "' (namespace: " << n.getNamespace() << ").");
     }
-    if(!n.getParam("p_gain", this->p_gain_))
+    if(!n.getParam("theta_model", this->theta_model_))
     {
-      ROS_ERROR_STREAM("Failed to getParam '" << "p_gain" << "' (namespace: " << n.getNamespace() << ").");
-    }
-    if(!n.getParam("d_gain", this->d_gain_))
-    {
-      ROS_ERROR_STREAM("Failed to getParam '" << "d_gain" << "' (namespace: " << n.getNamespace() << ").");
-    }
-    if(!n.getParam("theta", this->theta_))
-    {
-      ROS_ERROR_STREAM("Failed to getParam '" << "theta" << "' (namespace: " << n.getNamespace() << ").");
+      ROS_ERROR_STREAM("Failed to getParam '" << "theta_model" << "' (namespace: " << n.getNamespace() << ").");
     }
     // List of controlled joints
     if(!n.getParam("joints", this->joint_names_))
@@ -94,7 +86,7 @@ bool CompliantAxisVelController::init(hardware_interface::VelocityJointInterface
 
     this->time_old_=ros::Time::now();
     this->torque_=0.0;
-    this->acceleration_=0.0;
+
     return true;
 
 }
@@ -104,10 +96,8 @@ void CompliantAxisVelController::starting(const ros::Time& time)
   //Holding current position
   for(unsigned int i=0; i<this->joints_.size(); i++)
   {
-    this->joints_[i].setCommand(0.0);
-    
+    this->joints_[i].setCommand(0.0);    
   }
-  this->position_equi_=this->joints_.back().getPosition();
 }
 
 
@@ -118,33 +108,39 @@ void CompliantAxisVelController::stopping(const ros::Time& time)
 
 void CompliantAxisVelController::update(const ros::Time& time, const ros::Duration& period)
 { 
-  double d_M=0.0;
-  if(this->d_time_.toSec()>0.0)
+  double acc=0.0;
+  if(period.toSec()>0.0)
   {
-    d_M=(this->torque_-this->torque_old_)/this->d_time_.toSec();
+    acc=(this->joints_.back().getVelocity()-this->vel_old_)/period.toSec();
   }   
   this->vel_old_=this->joints_.back().getVelocity();
+  this->torque_=this->torque_-acc*this->theta_model_;
+  
+  //DEBUG PUBLISH
   std_msgs::Float64 msg_torque;
   msg_torque.data=this->torque_;
   this->debug_input_.publish(msg_torque);
   
  
-  double vel=this->p_gain_*this->torque_+this->d_gain_*d_M;
+  double vel=0.0;
+  if(this->virtual_damping_>0.0)
+  {
+    vel=1.0/this->virtual_damping_*this->torque_;
+  }
+  
+  this->joints_.back().setCommand(vel);
+
+  //DEBUG PUBLISH
   std_msgs::Float64 msg_vel;
   msg_vel.data=vel;
   this->debug_output_.publish(msg_vel);  
-  this->joints_.back().setCommand(vel);
+
+  
 }
 
 void CompliantAxisVelController::wrenchCallback(geometry_msgs::WrenchStamped msg)
 {
-  this->d_time_=msg.header.stamp-this->time_old_;
-  if(this->d_time_.toSec()>0.0)
-  {
-    this->time_old_=msg.header.stamp;
-    this->torque_old_=this->torque_;
-  }
- 
+ ROS_WARN_STREAM("IN1");
   double torque_measure=0.0;
   switch (this->direction_)
   {   
@@ -162,15 +158,13 @@ void CompliantAxisVelController::wrenchCallback(geometry_msgs::WrenchStamped msg
     throw std::runtime_error("Direction of torque is not specified!");
     break;
   }  
-  this->torque_=torque_measure-this->acceleration_*this->theta_;
+  this->torque_=torque_measure;
 }
 void CompliantAxisVelController::dynConfigcallback(ur_controllers_extended::PDConfig &config, uint32_t level) {
-    ROS_INFO_STREAM("Reconfigure Request: "<<config.p<<"/t"<<config.d);
-    this->d_gain_=config.d;
-    this->p_gain_=config.p;
-    this->theta_=config.theta;
+    ROS_INFO_STREAM("Reconfigure Request: "<<config.virtual_damping<<"\t"<<config.theta_model);
+    this->virtual_damping_=config.virtual_damping;   
+    this->theta_model_=config.theta_model;
 }
-
 }//namespace
 
 PLUGINLIB_EXPORT_CLASS(ur_controllers_extended::CompliantAxisVelController,

@@ -1,21 +1,35 @@
 #pragma once
 #include<geometry_msgs/WrenchStamped.h>
 #include<sensor_msgs/JointState.h>
-
-#define  TIME_SCALING_FACTOR 10000.0
+#include<geometry_msgs/Twist.h>
+#include<geometry_msgs/TwistStamped.h>
 
 
 namespace msg_operators{
 
+    //Vector3
+    geometry_msgs::Vector3 operator+(geometry_msgs::Vector3 one,geometry_msgs::Vector3 other)
+    {
+        geometry_msgs::Vector3 ret;
+        ret.x=one.x+other.x;
+        ret.y=one.y+other.y;
+        ret.z=one.z+other.z;
+    }
+    template<typename T>
+    geometry_msgs::Vector3 operator/(geometry_msgs::Vector3 one,T other)
+    {
+        geometry_msgs::Vector3 ret;
+        ret.x=one.x/other;
+        ret.y=one.y/other;
+        ret.z=one.z/other;
+    }
+
+    //WrenchStamped
     geometry_msgs::WrenchStamped operator+(geometry_msgs::WrenchStamped one,geometry_msgs::WrenchStamped other) 
     {
         geometry_msgs::WrenchStamped ret;
-        ret.wrench.force.x=one.wrench.force.x+other.wrench.force.x;
-        ret.wrench.force.y=one.wrench.force.y+other.wrench.force.y;
-        ret.wrench.force.z=one.wrench.force.z+other.wrench.force.z;
-        ret.wrench.torque.x=one.wrench.torque.x+other.wrench.torque.x;
-        ret.wrench.torque.y=one.wrench.torque.y+other.wrench.torque.y;
-        ret.wrench.torque.z=one.wrench.torque.z+other.wrench.torque.z;
+        ret.wrench.force=one.wrench.force+other.wrench.force;      
+        ret.wrench.torque=one.wrench.torque+other.wrench.torque;
         return ret;
     }
 
@@ -23,15 +37,49 @@ namespace msg_operators{
     geometry_msgs::WrenchStamped operator/(geometry_msgs::WrenchStamped one,T other) 
     {
         geometry_msgs::WrenchStamped ret;
-        ret.wrench.force.x=one.wrench.force.x/other;
-        ret.wrench.force.y=one.wrench.force.y/other;
-        ret.wrench.force.z=one.wrench.force.z/other;
-        ret.wrench.torque.x=one.wrench.torque.x/other;
-        ret.wrench.torque.y=one.wrench.torque.y/other;
-        ret.wrench.torque.z=one.wrench.torque.z/other;
+        ret.wrench.force=one.wrench.force/other;       
+        ret.wrench.torque=one.wrench.torque/other;
         return ret;
     }
 
+    //Twist
+    geometry_msgs::Twist operator+(geometry_msgs::Twist one,geometry_msgs::Twist other)
+    {
+        geometry_msgs::Twist ret;
+        ret.angular=one.angular+other.angular;
+        ret.linear=one.linear+other.linear;
+        return ret;
+    }
+    template <typename T>
+    geometry_msgs::Twist operator/(geometry_msgs::Twist one,T other)
+    {
+        geometry_msgs::Twist ret;
+        ret.angular=one.angular/other;
+        ret.linear=one.linear/other;
+        return ret;
+    }
+
+    //TwistStamped
+    geometry_msgs::TwistStamped operator+(geometry_msgs::TwistStamped one,geometry_msgs::TwistStamped other)
+    {
+        geometry_msgs::TwistStamped ret;
+        ret.twist.angular=one.twist.angular+other.twist.angular;
+        ret.twist.linear=one.twist.linear+other.twist.linear;
+        return ret;
+    }
+    template <typename T>
+    geometry_msgs::TwistStamped operator/(geometry_msgs::TwistStamped one,T other)
+    {
+        geometry_msgs::TwistStamped ret;
+        ret.twist.angular=one.twist.angular/other;
+        ret.twist.linear=one.twist.linear/other;
+        return ret;
+    }
+
+
+
+    
+     //JointState
     sensor_msgs::JointState operator+(sensor_msgs::JointState one,sensor_msgs::JointState other) 
     {
         if(one.name.size()==0)
@@ -77,5 +125,4 @@ namespace msg_operators{
         
         return one;
     }
-    
 }

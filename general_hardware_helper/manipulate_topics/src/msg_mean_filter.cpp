@@ -1,6 +1,4 @@
-#include <manipulate_topics/msg_mean_filter.h>
-
-
+//Directly included within the hpp
 template <class T>
 MessageMeanFilter<T>::MessageMeanFilter(ros::NodeHandle &nh):MessageFilterBase<T>(nh)
 {

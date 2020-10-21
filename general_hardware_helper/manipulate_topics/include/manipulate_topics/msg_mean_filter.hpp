@@ -1,11 +1,18 @@
 #pragma once
-#include <manipulate_topics/msg_filter_base.h>
+#include <manipulate_topics/msg_filter_base.hpp>
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/accumulators/statistics/mean.hpp>
 #include <numeric>
 #include <manipulate_topics/msg_operators.hpp>
 #include<geometry_msgs/WrenchStamped.h>
 #include <sensor_msgs/JointState.h>
+
+/**
+ * @brief Class that implements a mean filter for a given Topic type.
+ * 
+ * @tparam T Type of the topic to be filtered. Operators + and / must be implemented within the msg_operators namespace.
+ */
+
 template<class T>
 class MessageMeanFilter: public MessageFilterBase<T>{
     public:
@@ -19,5 +26,4 @@ class MessageMeanFilter: public MessageFilterBase<T>{
         int samples_num_;
         T filter() override; 
 };
-template class MessageMeanFilter<geometry_msgs::WrenchStamped>;
-template class MessageMeanFilter<sensor_msgs::JointState>;
+#include "../src/msg_mean_filter.cpp"

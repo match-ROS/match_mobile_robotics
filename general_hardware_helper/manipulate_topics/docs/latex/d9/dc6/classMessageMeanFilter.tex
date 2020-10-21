@@ -1,0 +1,71 @@
+\hypertarget{classMessageMeanFilter}{}\section{Message\+Mean\+Filter$<$ T $>$ Class Template Reference}
+\label{classMessageMeanFilter}\index{Message\+Mean\+Filter$<$ T $>$@{Message\+Mean\+Filter$<$ T $>$}}
+
+
+Class that implements a mean filter for a given Topic type.  
+
+
+
+
+{\ttfamily \#include $<$msg\+\_\+mean\+\_\+filter.\+hpp$>$}
+
+
+
+Inheritance diagram for Message\+Mean\+Filter$<$ T $>$\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=206pt]{dd/d60/classMessageMeanFilter__inherit__graph}
+\end{center}
+\end{figure}
+
+
+Collaboration diagram for Message\+Mean\+Filter$<$ T $>$\+:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=206pt]{d2/db9/classMessageMeanFilter__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Types}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classMessageMeanFilter_aabbf6eb4a2e2251228ece38f88609d29}\label{classMessageMeanFilter_aabbf6eb4a2e2251228ece38f88609d29}} 
+typedef boost\+::accumulators\+::accumulator\+\_\+set$<$ T, boost\+::accumulators\+::stats$<$ boost\+::accumulators\+::tag\+::mean $>$ $>$ {\bfseries accumulator}
+\end{DoxyCompactItemize}
+\subsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\Hypertarget{classMessageMeanFilter_a613460b271336914553f2beb05f4da9b}\label{classMessageMeanFilter_a613460b271336914553f2beb05f4da9b}} 
+{\bfseries Message\+Mean\+Filter} (ros\+::\+Node\+Handle \&nh)
+\end{DoxyCompactItemize}
+\subsection*{Additional Inherited Members}
+
+
+\subsection{Detailed Description}
+\subsubsection*{template$<$class T$>$\newline
+class Message\+Mean\+Filter$<$ T $>$}
+
+\tabulinesep=1mm
+\begin{longtabu} spread 0pt [c]{*{2}{|X[-1]}|}
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Ros-\/\+Parameter }&\textbf{ Desciption  }\\\cline{1-2}
+\endfirsthead
+\hline
+\endfoot
+\hline
+\rowcolor{\tableheadbgcolor}\textbf{ Ros-\/\+Parameter }&\textbf{ Desciption  }\\\cline{1-2}
+\endhead
+$\sim$sample\+\_\+number &Number of samples the mean is calculated from \\\cline{1-2}
+\end{longtabu}
+
+\begin{DoxyTemplParams}{Template Parameters}
+{\em T} & Type of the topic to be filtered. Operators + and / must be implemented within the msg\+\_\+operators namespace. \\
+\hline
+\end{DoxyTemplParams}
+
+
+The documentation for this class was generated from the following files\+:\begin{DoxyCompactItemize}
+\item 
+include/manipulate\+\_\+topics/msg\+\_\+mean\+\_\+filter.\+hpp\item 
+src/msg\+\_\+mean\+\_\+filter.\+cpp\end{DoxyCompactItemize}

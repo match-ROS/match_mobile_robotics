@@ -13,9 +13,6 @@
  * |input|The topic the value to be filtered is published at|
  * |output|The topic the filtered value is published at|
  * 
- * |Ros-Parameter|Desciption|
- * |----|-----|
- * |~sample_number|Number of samples the mean is calculated from|
  * 
  * @tparam T Tpye of the Message to be filtered. Operators for the derived filteres must be implemented.
  */

@@ -10,6 +10,10 @@
 /**
  * @brief Class that implements a mean filter for a given Topic type.
  * 
+ * |Ros-Parameter | Desciption|
+ * |---- | -----|
+ * |~sample_number | Number of samples the mean is calculated from|
+ * 
  * @tparam T Type of the topic to be filtered. Operators + and / must be implemented within the msg_operators namespace.
  */
 

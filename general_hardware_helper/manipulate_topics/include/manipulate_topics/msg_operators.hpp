@@ -14,6 +14,7 @@ namespace msg_operators{
         ret.x=one.x+other.x;
         ret.y=one.y+other.y;
         ret.z=one.z+other.z;
+        return ret;
     }
     template<typename T>
     geometry_msgs::Vector3 operator/(geometry_msgs::Vector3 one,T other)
@@ -22,6 +23,7 @@ namespace msg_operators{
         ret.x=one.x/other;
         ret.y=one.y/other;
         ret.z=one.z/other;
+        return ret;
     }
 
     //WrenchStamped

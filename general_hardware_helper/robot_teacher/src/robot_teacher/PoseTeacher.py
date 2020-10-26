@@ -140,7 +140,7 @@ class TeachedPoseHandler():
         point.accelerations=[0.0]*len(joint_states.values())
         point.time_from_start=self.__calcTime__(joint_states,self.__joint_states)       
        
-        if point.time_from_start.to_sec() >0.05:
+        if point.time_from_start.to_sec()>0.1:
             joint=JointTrajectory()
             joint.joint_names=joint_states.keys()
             joint.points=[point]

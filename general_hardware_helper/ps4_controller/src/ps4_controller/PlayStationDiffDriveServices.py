@@ -60,6 +60,6 @@ class PlayStationDiffDriveServices(PlayStationHandler):
 
             self.__translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.__speed_translation #data.axes[1] + data.axes[4]
             self.__rotation = (self._axes[0] + self._axes[3])*self.__speed_rotation
-
-            self.__publishFunction()
+            if self.__enable_cmd_vel:
+                self.__publishFunction()
             self.__rate.sleep()            

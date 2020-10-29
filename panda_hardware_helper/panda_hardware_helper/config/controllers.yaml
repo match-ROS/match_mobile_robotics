@@ -37,10 +37,11 @@ cartesian_impedance_controller:
   arm_id: panda
   joint_names: *joints
   rate: 400
+  enable_accelaration: false
 
 cartesian_controller:
   type: panda_controllers_extended/CartesianImpedanceController
   arm_id: panda
   joint_names: *joints
   rate: 400
-
+  enable_accelaration: false

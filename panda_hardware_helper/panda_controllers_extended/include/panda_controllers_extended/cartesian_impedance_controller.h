@@ -9,6 +9,7 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <sensor_msgs/Imu.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
@@ -54,6 +55,7 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
    */
   void update(const ros::Time&, const ros::Duration& period) override;
 
+
  private:
   // Saturation
   Eigen::Matrix<double, 7, 1> saturateTorqueRate(
@@ -79,27 +81,38 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
   Eigen::VectorXd tau_d_;
-  
+
+  bool enable_acc_;
+
   Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_;
+  Eigen::Matrix<double,6,1> acceleration_d_;
+  
   Eigen::Vector3d position_d_target_;
   Eigen::Quaterniond orientation_d_target_;
+  Eigen::Matrix<double,6,1> acceleration_d_target_;
+  
   Eigen::Affine3d transform_;
+
+  std::unique_ptr<dynamic_reconfigure::Server<multi_robot_controller::StiffnessConfig>>dynamic_server_compliance_param_;
+  ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
+ 
+  // Equilibrium pose subscriber
+  ros::Subscriber sub_equilibrium_pose_;
+  ros::Subscriber sub_imu_;
 
   void myUpdate(const ros::TimerEvent &);
 
-
   void computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation);
   // Dynamic reconfigure
-  std::unique_ptr<dynamic_reconfigure::Server<multi_robot_controller::StiffnessConfig>>
-      dynamic_server_compliance_param_;
-  ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
+ 
   void complianceParamCallback(multi_robot_controller::StiffnessConfig& config,
                                uint32_t level);
 
-  // Equilibrium pose subscriber
-  ros::Subscriber sub_equilibrium_pose_;
+
   void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+
+  void accelerationCallback(const sensor_msgs::ImuConstPtr& msg);
 };
 
 }  // namespace panda_controllers_extended

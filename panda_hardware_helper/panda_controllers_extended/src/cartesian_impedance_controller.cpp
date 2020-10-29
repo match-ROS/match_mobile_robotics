@@ -15,17 +15,14 @@
 namespace panda_controllers_extended {
 
 bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
-                                               ros::NodeHandle& node_handle) {
-  std::vector<double> cartesian_stiffness_vector;
-  std::vector<double> cartesian_damping_vector;
-
-  sub_equilibrium_pose_ = node_handle.subscribe(
-      "equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
-      ros::TransportHints().reliable().tcpNoDelay());
-
+                                               ros::NodeHandle& node_handle) {      
   std::string arm_id;
   if (!node_handle.getParam("arm_id", arm_id)) {
     ROS_ERROR_STREAM("CartesianImpedanceController: Could not read parameter arm_id");
+    return false;
+  }
+  if (!node_handle.getParam("enable_accelaration", this->enable_acc_)) {
+    ROS_ERROR_STREAM("CartesianImpedanceController: Could not read parameter enable_accelaration");
     return false;
   }
   double rate;
@@ -88,6 +85,17 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
       return false;
     }
   }
+  
+  std::vector<double> cartesian_stiffness_vector;
+  std::vector<double> cartesian_damping_vector;
+
+  sub_equilibrium_pose_ = node_handle.subscribe(
+      "equilibrium_pose", 20, &CartesianImpedanceController::equilibriumPoseCallback, this,
+      ros::TransportHints().reliable().tcpNoDelay());
+      
+  sub_imu_=node_handle.subscribe("imu",20,&CartesianImpedanceController::accelerationCallback,this,
+      ros::TransportHints().reliable().tcpNoDelay());
+
 
   dynamic_reconfigure_compliance_param_node_ =
       ros::NodeHandle("dynamic_reconfigure_compliance_param_node");
@@ -101,8 +109,10 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
   my_timer_=node_handle.createTimer(ros::Rate(rate),&CartesianImpedanceController::myUpdate,this);
   
   position_d_.setZero();
+  acceleration_d_.setZero();
   orientation_d_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   position_d_target_.setZero();
+  acceleration_d_target_.setZero();
   orientation_d_target_.coeffs() << 0.0, 0.0, 0.0, 1.0;
   tau_d_=Eigen::VectorXd(7);
   tau_d_.setZero();
@@ -133,20 +143,25 @@ void CartesianImpedanceController::starting(const ros::Time& /*time*/) {
   // set nullspace equilibrium configuration to initial q
   q_d_nullspace_ = q_initial;
 }
+
+
 void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
 {
    // get state variables
   franka::RobotState robot_state = state_handle_->getRobotState();
   std::array<double, 7> coriolis_array = model_handle_->getCoriolis();
   std::array<double, 42> jacobian_array =model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
+  std::array<double, 49> mass_array= this->model_handle_->getMass();
 
   // convert to Eigen
   Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
   Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(  // NOLINT (readability-identifier-naming)
-      robot_state.tau_J_d.data());  
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(  // NOLINT (readability-identifier-naming)  
+                                                    robot_state.tau_J_d.data());  
+  Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data());
+
   transform_=Eigen::Affine3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
   
   Eigen::Vector3d position(transform_.translation());
@@ -170,7 +185,7 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
   
   // Cartesian PD control with damping 
   tau_task << jacobian.transpose() *
-                  (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq));
+                  (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq))+mass*jacobian.transpose()*acceleration_d_;
   // nullspace PD control with damping 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
@@ -203,6 +218,7 @@ void CartesianImpedanceController::update(const ros::Time& /*time*/,
       filter_params_ * nullspace_damping_target_ + (1.0 - filter_params_) * nullspace_damping_;
   
   position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
+  acceleration_d_ = filter_params_ * acceleration_d_target_ + (1.0 - filter_params_) * acceleration_d_;
   orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);
 }
 
@@ -239,28 +255,38 @@ void CartesianImpedanceController::complianceParamCallback(
 }
 
 void CartesianImpedanceController::equilibriumPoseCallback(
-    const geometry_msgs::PoseStampedConstPtr& msg) {
+    const geometry_msgs::PoseStampedConstPtr& msg) 
+{
+  //Set desired position
   position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+
+  //Save orientation from last scope
   Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
-  orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,
-      msg->pose.orientation.z, msg->pose.orientation.w;
+
+  //Set desired orientation
+  orientation_d_target_.coeffs() << msg->pose.orientation.x, 
+                                    msg->pose.orientation.y,
+                                    msg->pose.orientation.z,
+                                    msg->pose.orientation.w;
+  //Flip orientation if nescessary                                  
   if (last_orientation_d_target.coeffs().dot(orientation_d_target_.coeffs()) < 0.0) {
     orientation_d_target_.coeffs() << -orientation_d_target_.coeffs();
   }
 
-  // Predict the new joint angle state
-  std::array<double, 42> jacobian_array =
-      model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
+  // Predict the new joint angle state based on the transformation of cartesian error
+  std::array<double, 42> jacobian_array =model_handle_->getZeroJacobian(franka::Frame::kEndEffector);
   Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
-  // pseudoinverse for nullspace handling
-  // kinematic pseuoinverse
   Eigen::MatrixXd jacobian_pinv;
-  pseudoInverse(jacobian, jacobian_pinv);
+  pseudoInverse(jacobian, jacobian_pinv);  
   Eigen::Matrix<double, 6, 1> error;
   computeError(error,position_d_target_,orientation_d_target_);
-
   this->q_d_nullspace_=this->q_d_nullspace_+jacobian_pinv*error;
+}
 
+
+void CartesianImpedanceController::accelerationCallback(const sensor_msgs::ImuConstPtr& msg)
+{
+  return;
 }
 
 void CartesianImpedanceController::computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation)

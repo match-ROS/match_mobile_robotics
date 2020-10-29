@@ -16,6 +16,7 @@ find_package(
   eigen_conversions
   franka_hw    
   hardware_interface
+  sensor_msgs
 )
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -93,7 +94,6 @@ find_package(
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-
     cfg/stiffness.cfg
 )
 
@@ -109,7 +109,7 @@ generate_dynamic_reconfigure_options(
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES panda_controllers_extended
-# CATKIN_DEPENDS roscpp tf
+# CATKIN_DEPENDS geometry_msgs sensor_msgs
 # DEPENDS tf
 )
 

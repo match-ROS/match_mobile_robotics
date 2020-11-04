@@ -20,10 +20,6 @@
 template<class T>
 class MessageMeanFilter: public MessageFilterBase<T>{
     public:
-        typedef boost::accumulators::accumulator_set<T,
-                                                    boost::accumulators::stats<boost::accumulators::tag::mean>>
-                                                    accumulator;
-        
         MessageMeanFilter(ros::NodeHandle &nh);
         
     private:

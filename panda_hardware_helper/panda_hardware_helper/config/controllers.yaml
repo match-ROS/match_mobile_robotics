@@ -32,7 +32,7 @@ franka_state_controller:
   joint_names: *joints
   arm_id: panda
 
-cartesian_impedance_controller:
+compliance_controller:
   type: panda_controllers_extended/CartesianImpedanceController
   arm_id: panda
   joint_names: *joints

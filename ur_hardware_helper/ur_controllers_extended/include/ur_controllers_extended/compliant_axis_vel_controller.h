@@ -12,7 +12,7 @@
 #include <geometry_msgs/WrenchStamped.h>
 
 #include <dynamic_reconfigure/server.h>
-#include <ur_controllers_extended/PDConfig.h>
+#include <ur_controllers_extended/CompliantVelocityConfig.h>
 #include <std_msgs/Float64.h>
 
 namespace ur_controllers_extended{
@@ -30,11 +30,8 @@ class CompliantAxisVelController :public controller_interface::Controller<hardwa
         void starting(const ros::Time& time) override;
         void stopping(const ros::Time& time) override;
     private:
-        dynamic_reconfigure::Server<ur_controllers_extended::PDConfig> config_server_;
-        ros::Subscriber wrench_sub_;
-        ros::Publisher debug_input_;
-        ros::Publisher debug_output_;
-        
+        std::unique_ptr<dynamic_reconfigure::Server<ur_controllers_extended::CompliantVelocityConfig>> config_server_;
+        ros::Subscriber wrench_sub_;        
 
         std::vector<std::string>  joint_names_;       
         std::vector<hardware_interface::JointHandle> joints_;
@@ -42,6 +39,7 @@ class CompliantAxisVelController :public controller_interface::Controller<hardwa
         double p_gain_;        
         double virtual_damping_;
         double theta_model_;
+        double force_thresh_;
 
         double torque_;
         double acceleration_;
@@ -53,7 +51,7 @@ class CompliantAxisVelController :public controller_interface::Controller<hardwa
         Direction direction_;
 
         void wrenchCallback(geometry_msgs::WrenchStamped msg);
-        void dynConfigcallback(ur_controllers_extended::PDConfig &config, uint32_t level);
+        void dynConfigcallback(ur_controllers_extended::CompliantVelocityConfig &config, uint32_t level);
 
 };
 

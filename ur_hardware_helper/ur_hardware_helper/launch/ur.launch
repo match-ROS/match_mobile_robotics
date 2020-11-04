@@ -1,11 +1,12 @@
 <launch>
     <arg name="tf_prefix" default=""/>
-    <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
-    <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
+    <arg name="controllers_started" default="joint_state_controller"/>
+    <arg name="controllers_stopped" default="empty"/>
     <arg name="pose_filename" default=""/>
     <arg name="has_ft_sensor" default="true"/>
     <arg name="has_ft_watchdog" default="true"/>
 
+    <remap from="compliance_controller/wrench" to="wrench_filtered"/>
 
     <!-- Bringup the enabeling procdeure for the ur -->
     <node pkg="ur_hardware_helper" type="enable_ur.py" name="enable_ur" output="screen" />

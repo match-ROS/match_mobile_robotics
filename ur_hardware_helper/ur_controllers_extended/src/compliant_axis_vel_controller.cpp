@@ -13,20 +13,23 @@ namespace ur_controllers_extended{
 
 bool CompliantAxisVelController::init(hardware_interface::VelocityJointInterface* hw, ros::NodeHandle &n)
 {
+    //Virtual damping
     if(!n.getParam("virtual_damping", this->virtual_damping_))
     {
       ROS_ERROR_STREAM("Failed to getParam '" << "virtual_damping" << "' (namespace: " << n.getNamespace() << ").");
     }
-    if(!n.getParam("theta_model", this->theta_model_))
+    //Force threshold
+    if(!n.getParam("force_thresh", this->force_thresh_))
     {
-      ROS_ERROR_STREAM("Failed to getParam '" << "theta_model" << "' (namespace: " << n.getNamespace() << ").");
-    }
+      ROS_ERROR_STREAM("Failed to getParam '" << "force_thresh" << "' (namespace: " << n.getNamespace() << ").");
+    }    
     // List of controlled joints
     if(!n.getParam("joints", this->joint_names_))
     {
       ROS_ERROR_STREAM("Failed to getParam '" << "joints" << "' (namespace: " << n.getNamespace() << ").");
       return false;
     }
+
     if(this->joint_names_.size() == 0){
       ROS_ERROR_STREAM("List of joint names is empty.");
       return false;
@@ -71,17 +74,12 @@ bool CompliantAxisVelController::init(hardware_interface::VelocityJointInterface
       }
       
     }
+    this->wrench_sub_=n.subscribe("wrench",1,&CompliantAxisVelController::wrenchCallback,this);
+    this->config_server_=std::make_unique<
+      dynamic_reconfigure::Server<ur_controllers_extended::CompliantVelocityConfig>>(
+      n);
+    this->config_server_->setCallback(boost::bind(&CompliantAxisVelController::dynConfigcallback,this,_1,_2));     
 
-    std::string topic_name;
-    if(!n.getParam("topic_name", topic_name))
-    {
-      ROS_ERROR_STREAM("Failed to getParam '" << "topic_name" << "' (namespace: " << n.getNamespace() << ").");
-      return false;
-    } 
-    this->wrench_sub_=n.subscribe(topic_name,1,&CompliantAxisVelController::wrenchCallback,this);
-    this->config_server_.setCallback(boost::bind(&CompliantAxisVelController::dynConfigcallback,this,_1,_2));     
-    this->debug_input_=n.advertise<std_msgs::Float64>("input",1);
-    this->debug_output_=n.advertise<std_msgs::Float64>("output",1);
 
 
     this->time_old_=ros::Time::now();
@@ -108,39 +106,23 @@ void CompliantAxisVelController::stopping(const ros::Time& time)
 
 void CompliantAxisVelController::update(const ros::Time& time, const ros::Duration& period)
 { 
-  double acc=0.0;
-  if(period.toSec()>0.0)
-  {
-    acc=(this->joints_.back().getVelocity()-this->vel_old_)/period.toSec();
-  }   
-  this->vel_old_=this->joints_.back().getVelocity();
-  this->torque_=this->torque_-acc*this->theta_model_;
-  
-  //DEBUG PUBLISH
-  std_msgs::Float64 msg_torque;
-  msg_torque.data=this->torque_;
-  this->debug_input_.publish(msg_torque);
-  
- 
+
   double vel=0.0;
   if(this->virtual_damping_>0.0)
   {
     vel=1.0/this->virtual_damping_*this->torque_;
   }
+  else
+  {
+    vel=0.0;
+  }
+  ROS_INFO_STREAM(vel);
   
-  this->joints_.back().setCommand(vel);
-
-  //DEBUG PUBLISH
-  std_msgs::Float64 msg_vel;
-  msg_vel.data=vel;
-  this->debug_output_.publish(msg_vel);  
-
-  
+  this->joints_.back().setCommand(vel);  
 }
 
 void CompliantAxisVelController::wrenchCallback(geometry_msgs::WrenchStamped msg)
 {
- ROS_WARN_STREAM("IN1");
   double torque_measure=0.0;
   switch (this->direction_)
   {   
@@ -157,13 +139,17 @@ void CompliantAxisVelController::wrenchCallback(geometry_msgs::WrenchStamped msg
     ROS_ERROR_STREAM("Direction of torque is not specified!");
     throw std::runtime_error("Direction of torque is not specified!");
     break;
-  }  
+  }
+  if(std::abs(torque_measure)<this->force_thresh_)  
+  {
+    torque_measure=0.0;
+  }
   this->torque_=torque_measure;
 }
-void CompliantAxisVelController::dynConfigcallback(ur_controllers_extended::PDConfig &config, uint32_t level) {
-    ROS_INFO_STREAM("Reconfigure Request: "<<config.virtual_damping<<"\t"<<config.theta_model);
+void CompliantAxisVelController::dynConfigcallback(ur_controllers_extended::CompliantVelocityConfig &config, uint32_t level) {
+    ROS_INFO_STREAM("Reconfigure Request: "<<config.virtual_damping<<"\t"<<config.force_thresh);
     this->virtual_damping_=config.virtual_damping;   
-    this->theta_model_=config.theta_model;
+    this->force_thresh_=config.force_thresh;
 }
 }//namespace
 

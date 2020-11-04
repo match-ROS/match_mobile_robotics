@@ -96,7 +96,7 @@ find_package(catkin REQUIRED
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
-  cfg/p_d_gain.cfg
+  cfg/compliant_velocity.cfg
 )
 
 ###################################

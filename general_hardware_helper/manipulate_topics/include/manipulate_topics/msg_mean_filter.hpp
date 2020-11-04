@@ -6,6 +6,8 @@
 #include <manipulate_topics/msg_operators.hpp>
 #include<geometry_msgs/WrenchStamped.h>
 #include <sensor_msgs/JointState.h>
+#include <dynamic_reconfigure/server.h>
+#include<manipulate_topics/MeanConfig.h>
 
 /**
  * @brief Class that implements a mean filter for a given Topic type.
@@ -27,6 +29,8 @@ class MessageMeanFilter: public MessageFilterBase<T>{
         MessageMeanFilter(ros::NodeHandle &nh);
         
     private:
+        dynamic_reconfigure::Server<manipulate_topics::MeanConfig> server_; 
+        void dynConfigcallback(manipulate_topics::MeanConfig &config, uint32_t level); ///<Callback for the dynamic reconfigure server
         int samples_num_;
         T filter() override; 
 };

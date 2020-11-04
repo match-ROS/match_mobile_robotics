@@ -9,6 +9,7 @@ project(manipulate_topics)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
               roscpp
+              dynamic_reconfigure
 )
 
 ## System dependencies are found with CMake's conventions
@@ -86,10 +87,9 @@ catkin_python_setup()
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/mean.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -133,6 +133,7 @@ set_target_properties(message_convolution_filters PROPERTIES LINKER_LANGUAGE CXX
 target_link_libraries(message_convolution_filters
   ${catkin_LIBRARIES}
 )
+add_dependencies(message_convolution_filters ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -150,11 +151,6 @@ function(generate_mean_filter message_type)
     ${catkin_LIBRARIES}
   )
 endfunction()
-
-  
-
-
-
 
 
 

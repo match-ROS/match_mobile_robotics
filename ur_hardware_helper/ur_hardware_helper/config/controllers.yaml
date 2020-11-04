@@ -30,39 +30,27 @@ robot_status_controller:
 
 
 position_joint_controller:
-  type: position_controllers/JointTrajectoryController
-  joints: *robot_joints
-  constraints:
-    goal_time: 0.5
-    panda_joint1:
-      goal: 0.05
-    panda_joint2:
-      goal: 0.05
-    panda_joint3:
-      goal: 0.05
-    panda_joint4:
-      goal: 0.05
-    panda_joint5:
-      goal: 0.05
-    panda_joint6:
-      goal: 0.05
-    panda_joint7:
-      goal: 0.05
+   type: position_controllers/JointTrajectoryController
+   joints: *robot_joints
+   constraints:
+      goal_time: 0.6
+      stopped_velocity_tolerance: 0.05
+      shoulder_pan_joint: {trajectory: 0.2, goal: 0.1}
+      shoulder_lift_joint: {trajectory: 0.2, goal: 0.1}
+      elbow_joint: {trajectory: 0.2, goal: 0.1}
+      wrist_1_joint: {trajectory: 0.2, goal: 0.1}
+      wrist_2_joint: {trajectory: 0.2, goal: 0.1}
+      wrist_3_joint: {trajectory: 0.2, goal: 0.1}
+   stop_trajectory_duration: 0.5
+   state_publish_rate: *loop_hz
+   action_monitor_rate: 20
 
 
-compliant_axis_controller:
-  type: "ur_controllers_extended/CompliantAxisController"
-  joints: *robot_joints
-  d_gain: 5
-  joint_stiffness: 5 #Nm/rad
-  topic_name: wrench
-  direction: z
-
-compliant_axis_vel_controller:
+compliance_controller:
   type: "ur_controllers_extended/CompliantAxisVelController"
   joints: *robot_joints
-  theta_model: 0.0
-  virtual_damping: 3.35
+  virtual_damping: 7.0
+  force_thresh: 0.06
   direction: z
 
 
@@ -81,22 +69,3 @@ cartesian_controller:
     rot_x: {p: 1.3}
     rot_y: {p: 1.3}
     rot_z: {p: 1.3}
-
-
-    
-cartesian_impedance_controller:
-  type: "position_controllers/CartesianMotionController"
-  end_effector_link: "tool0"
-  robot_base_link: "base_link"  #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
-  target_frame_topic: "target_pose_adjusted" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
-  joints: *robot_joints
-
-
-  pd_gains:    
-    trans_x: {p: 5.0}
-    trans_y: {p: 5.0}
-    trans_z: {p: 5.0}
-    rot_x: {p: 1.3}
-    rot_y: {p: 1.3}
-    rot_z: {p: 1.3}
-

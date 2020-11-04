@@ -6,4 +6,4 @@ joint_names:
   - wrist_2_joint
   - wrist_3_joint
   
-max_joint_velocity: 0.5 
+max_joint_velocity: 0.25 

@@ -138,6 +138,7 @@ class TeachedPoseHandler():
         point.positions=joint_states.values()
         point.velocities=[0.0]*len(joint_states.values())
         point.accelerations=[0.0]*len(joint_states.values())
+        point.effort=[0.0]*len(joint_states.values())
         point.time_from_start=self.__calcTime__(joint_states,self.__joint_states)       
        
         if point.time_from_start.to_sec()>0.1:

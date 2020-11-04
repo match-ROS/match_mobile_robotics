@@ -6,7 +6,8 @@ from std_srvs.srv import Empty,EmptyRequest
 class PlayStationDiffDriveServices(PlayStationHandler):
     def __init__(self,message_type):
         PlayStationHandler.__init__(self)
-        self.__rate=rospy.Rate(10)
+        
+        self.__rate=rospy.Rate(rospy.get_param("~rate",10))
        
         self.__speed_translation = rospy.get_param("~translation")
         self.__speed_rotation =  rospy.get_param("~rotation") 
@@ -57,6 +58,7 @@ class PlayStationDiffDriveServices(PlayStationHandler):
                     except Exception as ex:
                         print(ex)
                         pass
+            self._edges=[0]*11
 
             self.__translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.__speed_translation #data.axes[1] + data.axes[4]
             self.__rotation = (self._axes[0] + self._axes[3])*self.__speed_rotation

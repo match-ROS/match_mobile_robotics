@@ -2,8 +2,8 @@
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/circular_buffer.hpp>
 #include <ros/ros.h>
-#include <geometry_msgs/WrenchStamped.h>
-#include <sensor_msgs/JointState.h>
+
+
 
 /**
  * @brief  Base class for topic filters (convulutional filters)

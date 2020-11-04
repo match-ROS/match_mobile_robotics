@@ -4,8 +4,6 @@
 #include <boost/accumulators/statistics/mean.hpp>
 #include <numeric>
 #include <manipulate_topics/msg_operators.hpp>
-#include<geometry_msgs/WrenchStamped.h>
-#include <sensor_msgs/JointState.h>
 #include <dynamic_reconfigure/server.h>
 #include<manipulate_topics/MeanConfig.h>
 

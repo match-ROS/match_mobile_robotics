@@ -144,7 +144,7 @@ add_dependencies(message_convolution_filters ${PROJECT_NAME}_gencfg)
 ## The recommended prefix ensures that target names across packages don't collide
 
 function(generate_mean_filter message_type)
-  add_executable(${message_type}_mean_filter nodes/${message_type}_mean_filter.cpp)
+  add_executable(${message_type}_mean_filter nodes/mean_filter_${message_type}.cpp)
     
   target_link_libraries(${message_type}_mean_filter
     message_convolution_filters

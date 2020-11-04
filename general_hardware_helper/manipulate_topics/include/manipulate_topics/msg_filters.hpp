@@ -7,13 +7,14 @@
 #include<geometry_msgs/TwistStamped.h>
 #include<sensor_msgs/JointState.h>
 
-
-namespace message_filters
-{
-    typedef MessageMeanFilter<geometry_msgs::Wrench> MeanFilterWrench;
-    typedef MessageMeanFilter<geometry_msgs::WrenchStamped> MeanFilterWrenchStamped;   
-    typedef MessageMeanFilter<geometry_msgs::Twist> MeanFilterTwist;
-    typedef MessageMeanFilter<geometry_msgs::TwistStamped> MeanFilterTwistStamped;
-    typedef MessageMeanFilter<sensor_msgs::JointState> MeanFilterJointState;
-    
+#define ADD_MEAN_FILTER(message_ns,message_type)\
+namespace message_filters\
+{\
+    typedef MessageMeanFilter<message_ns::message_type> MeanFilter##message_type ;\
 }
+
+ADD_MEAN_FILTER(geometry_msgs,WrenchStamped)
+ADD_MEAN_FILTER(geometry_msgs,Wrench)
+ADD_MEAN_FILTER(geometry_msgs,Twist)
+ADD_MEAN_FILTER(geometry_msgs,TwistStamped)
+ADD_MEAN_FILTER(sensor_msgs,JointState)

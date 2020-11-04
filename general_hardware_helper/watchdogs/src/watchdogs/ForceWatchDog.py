@@ -26,10 +26,9 @@ class ForceWatchDog:
         
         """     
 
-        self.__lower_abs_force=rospy.get_param("~lower_abs_force")
-        self.__upper_abs_force=rospy.get_param("~upper_abs_force")
-        self.__lower_abs_torque=rospy.get_param("~lower_abs_torque")
-        self.__upper_abs_torque=rospy.get_param("~upper_abs_torque")
+        self.__limits_low=rospy.get_param("~limits_low")
+        self.__limits_high=rospy.get_param("~limits_high")
+       
        
         self.__force_flag=False
         self.__torque_flag=False
@@ -48,17 +47,20 @@ class ForceWatchDog:
         Is called everytime a new message appeares and if limits are reached the watchdog barks.
         """
 
-        force=np.array([msg.wrench.force.x,msg.wrench.force.y,msg.wrench.force.z])
-        torque=np.array([msg.wrench.torque.x,msg.wrench.torque.y,msg.wrench.torque.z])
-        abs_force=lin.norm(force)
-        abs_torque=lin.norm(torque)
-        if not (self.__lower_abs_force < abs_force < self.__upper_abs_force):
-            self.__force_flag=True
+        current=np.array([msg.wrench.force.x,msg.wrench.force.y,msg.wrench.force.z,
+                         msg.wrench.torque.x,msg.wrench.torque.y,msg.wrench.torque.z])
+
+        lower=np.where(current<np.array(self.__limits_low))
+        upper=np.where(current>np.array(self.__limits_high))
+
+        if np.any(lower) or np.any(upper):
+            rospy.logwarn("Watchdog realised overshooting!")
+            rospy.logwarn("Lower:")
+            rospy.logwarn(lower)
+            rospy.logwarn("Upper:")
+            rospy.logwarn(upper)
             self.bark()
             
-        if not (self.__lower_abs_torque < abs_torque < self.__upper_abs_torque):
-            self.__torque_flag=True
-            self.bark()
 
     def bark(self):
         """Procedure to be executed when it comes to force overshoot.
@@ -66,15 +68,9 @@ class ForceWatchDog:
         Dependend on the type of overshoot that occures, different messages for force respectivly torque are displayed.
         Independently of that all services are called.
 
-        """
-        
-        if self.__force_flag:
-           self.__force_flag=False
-           rospy.logwarn("Watchdog realised Force overshooting!")
-        if self.__torque_flag:
-           self.__torque_flag=False
-           rospy.logwarn("Watchdog realised Torque overshooting!")
-
+        """        
+   
+       
         
         for service in self.__services:
             service.call(EmptyRequest())

@@ -294,7 +294,15 @@ void CartesianImpedanceController::equilibriumPoseCallback(
 
 void CartesianImpedanceController::accelerationCallback(const geometry_msgs::Accel& msg)
 {
-  return;
+  if(this->enable_acc_)
+  {
+    this->acceleration_d_target_<<msg.linear.x,
+                                  msg.linear.y,
+                                  msg.linear.z,
+                                  msg.angular.x,
+                                  msg.angular.y,
+                                  msg.angular.z;
+  }
 }
 
 void CartesianImpedanceController::computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation)

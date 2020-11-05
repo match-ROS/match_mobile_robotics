@@ -6,15 +6,13 @@ namespace msg_operators{
     geometry_msgs::TwistStamped operator+(geometry_msgs::TwistStamped one,geometry_msgs::TwistStamped other)
     {
         geometry_msgs::TwistStamped ret;
-        ret.twist.angular=one.twist.angular+other.twist.angular;
-        ret.twist.linear=one.twist.linear+other.twist.linear;
+        ret.twist=one.twist+other.twist;
         return ret;
     }
     geometry_msgs::TwistStamped operator-(geometry_msgs::TwistStamped one,geometry_msgs::TwistStamped other)
     {
         geometry_msgs::TwistStamped ret;
-        ret.twist.angular=one.twist.angular-other.twist.angular;
-        ret.twist.linear=one.twist.linear-other.twist.linear;
+        ret.twist=one.twist-other.twist;;
         return ret;
 
     }
@@ -22,8 +20,7 @@ namespace msg_operators{
     geometry_msgs::TwistStamped operator/(geometry_msgs::TwistStamped one,T other)
     {
         geometry_msgs::TwistStamped ret;
-        ret.twist.angular=one.twist.angular/other;
-        ret.twist.linear=one.twist.linear/other;
+        ret.twist=one.twist/other;
         return ret;
     }
 }

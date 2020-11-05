@@ -10,6 +10,13 @@ namespace msg_operators{
         ret.linear=one.linear+other.linear;
         return ret;
     }
+    geometry_msgs::Twist operator-(geometry_msgs::Twist one,geometry_msgs::Twist other)
+    {
+        geometry_msgs::Twist ret;
+        ret.angular=one.angular-other.angular;
+        ret.linear=one.linear-other.linear;
+        return ret;
+    }
     template <typename T>
     geometry_msgs::Twist operator/(geometry_msgs::Twist one,T other)
     {

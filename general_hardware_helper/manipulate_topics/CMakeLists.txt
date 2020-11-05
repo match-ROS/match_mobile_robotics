@@ -121,10 +121,11 @@ include_directories(
 ## Declare a C++ library
 add_library(message_operators
   include/${PROJECT_NAME}/msg_operators.hpp
+  include/${PROJECT_NAME}/operators/vector3.hpp
   include/${PROJECT_NAME}/operators/joint_state.hpp
   include/${PROJECT_NAME}/operators/twist.hpp
-  include/${PROJECT_NAME}/operators/twist_stamped.hpp
-  include/${PROJECT_NAME}/operators/vector3.hpp
+  include/${PROJECT_NAME}/operators/twist_stamped.hpp 
+  include/${PROJECT_NAME}/operators/wrench.hpp
   include/${PROJECT_NAME}/operators/wrench_stamped.hpp
 )
 set_target_properties(message_operators PROPERTIES LINKER_LANGUAGE CXX)

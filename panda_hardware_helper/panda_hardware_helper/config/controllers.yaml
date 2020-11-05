@@ -37,7 +37,7 @@ compliance_controller:
   arm_id: panda
   joint_names: *joints
   rate: 400
-  enable_accelaration: false
+  enable_accelaration: true
 
 cartesian_controller:
   type: panda_controllers_extended/CartesianImpedanceController

@@ -29,7 +29,7 @@ position_joint_controller:
 franka_state_controller:
   type: franka_control/FrankaStateController
   publish_rate: 30  # [Hz]
-  joint_names: *joints
+  joints: *joints
   arm_id: panda
 
 compliance_controller:

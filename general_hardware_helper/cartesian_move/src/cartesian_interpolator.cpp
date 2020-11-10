@@ -53,10 +53,9 @@ void CartesianInterpolator::executeCallback(const cartesian_move::CartesianInter
 
 
     ros::Time start_time=ros::Time::now();
-    ROS_INFO_STREAM("IN1");
     std::vector<geometry_msgs::PoseStamped> path=this->calcPath(pose, goal->target);
     ros::Duration sleep_time(this->time_step_);
-    ROS_INFO_STREAM("IN2");
+    
     for(int i=0;i<path.size();i++)
     {
         cartesian_move::CartesianInterpolationFeedback feed;
@@ -113,9 +112,7 @@ std::vector<geometry_msgs::PoseStamped> CartesianInterpolator::calcPath(geometry
     tf2::fromMsg(target.pose,target_tf);
     tf2::Transform diff;
     diff=tf2::Transform(tf2::Quaternion::getIdentity(),target_tf.getOrigin()-source_tf.getOrigin());
-    ROS_INFO_STREAM(source_tf.getOrigin().x()<<"\t"<<source_tf.getOrigin().y()<<"\t"<<source_tf.getOrigin().z()<<"\t");
-    ROS_INFO_STREAM(target_tf.getOrigin().x()<<"\t"<<target_tf.getOrigin().y()<<"\t"<<target_tf.getOrigin().z()<<"\t");
-    ROS_INFO_STREAM(diff.getOrigin().x()<<"\t"<<diff.getOrigin().y()<<"\t"<<diff.getOrigin().z()<<"\t");    
+
     std::vector<geometry_msgs::PoseStamped> path=this->interpolate(diff);
     std::vector<geometry_msgs::PoseStamped> path_off;
     for(auto point:path)

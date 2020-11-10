@@ -12,22 +12,23 @@ class CartesianInterpolator{
     public:
         CartesianInterpolator(ros::NodeHandle &nh);
     protected:
-        std::vector<geometry_msgs::PoseStamped> calcPath(geometry_msgs::PoseStamped source,geometry_msgs::PoseStamped target);
-        std::vector<geometry_msgs::PoseStamped> interpolate(tf2::Transform diff);
-
-    private:
-        double time_step_;
+        virtual std::vector<geometry_msgs::PoseStamped> calcPath(geometry_msgs::PoseStamped source,geometry_msgs::PoseStamped target);
+        virtual std::vector<geometry_msgs::PoseStamped> interpolate(tf2::Transform diff);
         tf2_ros::TransformListener listener_;
         tf2_ros::Buffer buffer_;
         ros::NodeHandle nh_;
-        actionlib::SimpleActionServer<cartesian_move::CartesianInterpolationAction> as_;
-        void executeCallback(const cartesian_move::CartesianInterpolationGoalConstPtr &goal);
-       
-        std::vector<geometry_msgs::PoseStamped> path_;
-        double time_;
-        double max_vel_;
         std::string base_frame_;
         std::string ee_frame_;
+    private:
+        double time_step_;
+        double time_;
+        double max_vel_;
+
+        actionlib::SimpleActionServer<cartesian_move::CartesianInterpolationAction> as_;
+        void executeCallback(const cartesian_move::CartesianInterpolationGoalConstPtr &goal);       
+        std::vector<geometry_msgs::PoseStamped> path_;
+     
+     
         ros::Publisher pose_publisher_;
     
    

@@ -130,6 +130,9 @@ add_library(cartesian_move
   include/${PROJECT_NAME}/cartesian_interpolator.h
   src/cartesian_interpolator.cpp
 
+  include/${PROJECT_NAME}/cartesian_relative_interpolator.h
+  src/cartesian_relative_interpolator.cpp
+
   include/${PROJECT_NAME}/move_base.h
   src/move_base.cpp
   include/${PROJECT_NAME}/relative_move.h
@@ -147,7 +150,7 @@ add_dependencies(cartesian_move ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(relative_move_node nodes/relative_move_node.cpp)
 add_executable(cartesian_interpolator nodes/pose_interpolator_node.cpp)
-
+add_executable(cartesian_relative_interpolator nodes/pose_relative_interpolator_node.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -166,7 +169,10 @@ target_link_libraries(cartesian_interpolator
   cartesian_move
   ${catkin_LIBRARIES}
 )
-
+target_link_libraries(cartesian_relative_interpolator
+  cartesian_move
+  ${catkin_LIBRARIES}
+)
 
 target_link_libraries(relative_move_node
   cartesian_move

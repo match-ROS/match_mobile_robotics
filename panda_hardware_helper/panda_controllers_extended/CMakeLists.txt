@@ -95,6 +95,7 @@ find_package(
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
 generate_dynamic_reconfigure_options(
     cfg/stiffness.cfg
+    cfg/intertia.cfg
 )
 
 ###################################
@@ -139,6 +140,23 @@ target_link_libraries(${PROJECT_NAME}
 )
 add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
 add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+
+
+
+
+add_library(manipulator_dynamics
+    include/${PROJECT_NAME}/manipulator_dynamics/ee_dynamics.h
+    src/manipulator_dynamics/ee_dynamics.cpp
+    include/${PROJECT_NAME}/manipulator_dynamics/ee_dynamics_config.h
+    src/manipulator_dynamics/ee_dynamics_config.cpp
+
+)
+target_link_libraries(manipulator_dynamics
+  ${catkin_LIBRARIES}
+  ${eigen3_LIBRARIES}
+)
+add_dependencies(manipulator_dynamics ${catkin_EXPORTED_TARGETS})
+add_dependencies(manipulator_dynamics ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -147,8 +165,12 @@ add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/panda_controllers_extended_node.cpp)
-
+add_executable(manipulator_dynamic_config nodes/manipulator_dynamic_config_node.cpp)
+target_link_libraries(manipulator_dynamic_config
+  manipulator_dynamics
+  ${catkin_LIBRARIES}
+  ${eigen3_LIBRARIES}
+)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use

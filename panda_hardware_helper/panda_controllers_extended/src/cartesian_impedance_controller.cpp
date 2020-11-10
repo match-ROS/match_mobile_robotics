@@ -101,7 +101,7 @@ bool CartesianImpedanceController::init(hardware_interface::RobotHW* robot_hw,
       ros::NodeHandle("dynamic_reconfigure_compliance_param_node");
 
   dynamic_server_compliance_param_ = std::make_unique<
-      dynamic_reconfigure::Server<multi_robot_controller::StiffnessConfig>>(
+      dynamic_reconfigure::Server<panda_controllers_extended::StiffnessConfig>>(
       node_handle);
   dynamic_server_compliance_param_->setCallback(
       boost::bind(&CartesianImpedanceController::complianceParamCallback, this, _1, _2));
@@ -176,7 +176,7 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
  
   // compute control
   // allocate variables
-  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7);
+  Eigen::VectorXd tau_task(7), tau_nullspace(7), tau_d(7),tau_dyn(7);
 
   // pseudoinverse for nullspace handling
   // kinematic pseuoinverse
@@ -187,16 +187,20 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
   // Cartesian PD control with damping 
   tau_task << jacobian.transpose() *
               (-cartesian_stiffness_ * error 
-               - cartesian_damping_ * (jacobian * dq))
-              +mass*jacobian.transpose()*acceleration_d_;
+               - cartesian_damping_ * (jacobian * dq));
+
+  //Dynamik ff         
+  tau_dyn<< jacobian.transpose()*jacobian_transpose_pinv*acceleration_d_;
+  ROS_INFO_STREAM(std::endl<<"Torque:"<<std::endl<<tau_dyn);
   
   // nullspace PD control with damping 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
                         nullspace_damping_* (dq_d_nullspace_-dq));
+ 
   // Desired torque
-  tau_d << tau_task + tau_nullspace + coriolis ;
+  tau_d << tau_task + tau_nullspace + coriolis +tau_dyn ;
   // Saturate torque rate to avoid discontinuities
   tau_d_ << saturateTorqueRate(tau_d, tau_J_d);
 }
@@ -238,7 +242,7 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
 }
 
 void CartesianImpedanceController::complianceParamCallback(
-    multi_robot_controller::StiffnessConfig& config,
+    panda_controllers_extended::StiffnessConfig& config,
     uint32_t /*level*/) 
   {        
   //Alloc cartesian stiffnes
@@ -292,16 +296,16 @@ void CartesianImpedanceController::equilibriumPoseCallback(
 }
 
 
-void CartesianImpedanceController::accelerationCallback(const geometry_msgs::Accel& msg)
+void CartesianImpedanceController::accelerationCallback(const geometry_msgs::TwistStamped& msg)
 {
   if(this->enable_acc_)
   {
-    this->acceleration_d_target_<<msg.linear.x,
-                                  msg.linear.y,
-                                  msg.linear.z,
-                                  msg.angular.x,
-                                  msg.angular.y,
-                                  msg.angular.z;
+    this->acceleration_d_target_<<msg.twist.linear.x,
+                                  msg.twist.linear.y,
+                                  msg.twist.linear.z,
+                                  msg.twist.angular.x,
+                                  msg.twist.angular.y,
+                                  msg.twist.angular.z;
   }
 }
 

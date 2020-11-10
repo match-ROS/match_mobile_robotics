@@ -1,0 +1,8 @@
+<launch>
+
+    <node name="manipulator_dynamic_config" pkg="panda_controllers_extended" type="manipulator_dynamic_config">
+        <param name="rate" value="10"/>
+    </node>
+
+
+</launch>

@@ -9,7 +9,7 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <geometry_msgs/Accel.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
@@ -95,7 +95,7 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   
   Eigen::Affine3d transform_;
 
-  std::unique_ptr<dynamic_reconfigure::Server<multi_robot_controller::StiffnessConfig>>dynamic_server_compliance_param_;
+  std::unique_ptr<dynamic_reconfigure::Server<panda_controllers_extended::StiffnessConfig>>dynamic_server_compliance_param_;
   ros::NodeHandle dynamic_reconfigure_compliance_param_node_;
  
   // Equilibrium pose subscriber
@@ -107,13 +107,13 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   void computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation);
   // Dynamic reconfigure
  
-  void complianceParamCallback(multi_robot_controller::StiffnessConfig& config,
+  void complianceParamCallback(panda_controllers_extended::StiffnessConfig& config,
                                uint32_t level);
 
 
   void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
-  void accelerationCallback(const geometry_msgs::Accel& msg);
+  void accelerationCallback(const geometry_msgs::TwistStamped& msg);
 };
 
 }  // namespace panda_controllers_extended

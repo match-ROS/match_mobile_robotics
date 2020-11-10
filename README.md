@@ -11,6 +11,9 @@
 ### Install dependencies
 ```
 git clone https://github.com/ibMH/Helper_Tools.git
+```
+Browse into catkin_ws/src/Helper_Tools and execute
+```
 git submodule init
 git submodule update
 rosdep update

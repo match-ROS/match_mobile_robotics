@@ -1,12 +1,10 @@
 <launch>
-    <arg name="tf_prefix" default="miranda"/>
-    
-    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="mir" pass_all_args="true">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
-    </include>
+    <arg name="robot_name" default="miranda"/>      
+    <arg name="controllers_started" default="franka_state_controller"/>
+    <arg name="controllers_stopped" default=""/>
+    <arg name="pose_filename" default="$(find miranda_hardware_helper)/poses/my_poses.yaml"/>
 
-    <!-- Add a Transformation from Mir to panda for closed tf tree -->
-    <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 
-         args="0.29 0.11 0.35 0 0 0 1 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/panda/panda_link0" />
-        
+    <include file="$(find miranda_hardware_helper)/launch/miranda_base_common.launch" ns="$(arg robot_name)" pass_all_args="true">
+        <arg name="tf_prefix" value="$(arg robot_name)"/>
+    </include>
 </launch>

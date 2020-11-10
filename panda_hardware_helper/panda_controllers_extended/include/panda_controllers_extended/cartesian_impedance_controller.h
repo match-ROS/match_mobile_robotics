@@ -9,7 +9,7 @@
 #include <controller_interface/multi_interface_controller.h>
 #include <dynamic_reconfigure/server.h>
 #include <geometry_msgs/PoseStamped.h>
-#include <sensor_msgs/Imu.h>
+#include <geometry_msgs/Accel.h>
 #include <hardware_interface/joint_command_interface.h>
 #include <hardware_interface/robot_hw.h>
 #include <ros/node_handle.h>
@@ -80,6 +80,7 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
   Eigen::Matrix<double, 6, 6> cartesian_damping_;
   Eigen::Matrix<double, 6, 6> cartesian_damping_target_;
   Eigen::Matrix<double, 7, 1> q_d_nullspace_;
+  Eigen::Matrix<double, 7, 1> dq_d_nullspace_;
   Eigen::VectorXd tau_d_;
 
   bool enable_acc_;
@@ -112,7 +113,7 @@ class CartesianImpedanceController : public controller_interface::MultiInterface
 
   void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 
-  void accelerationCallback(const sensor_msgs::ImuConstPtr& msg);
+  void accelerationCallback(const geometry_msgs::Accel& msg);
 };
 
 }  // namespace panda_controllers_extended

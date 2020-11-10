@@ -5,7 +5,7 @@
                 args="load cartesian_controller $(find panda_hardware_helper)/config/impedance_dyn.yaml" />
 
     <include file="$(find panda_hardware_helper)/launch/panda.launch" pass_all_args="true">
-        <arg name="controllers_started" default="franka_state_controller cartesian_impedance_controller"/>       
+        <arg name="controllers_started" default="franka_state_controller compliance_controller"/>       
     </include>
 
 </launch>

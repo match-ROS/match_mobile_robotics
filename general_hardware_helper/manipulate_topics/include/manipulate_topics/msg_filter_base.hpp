@@ -1,6 +1,7 @@
 #pragma once
 #include <boost/accumulators/accumulators.hpp>
 #include <boost/circular_buffer.hpp>
+#include <manipulate_topics/msg_operators.hpp>
 #include <ros/ros.h>
 
 
@@ -43,5 +44,6 @@ class MessageFilterBase{
         ros::NodeHandle nh_;
         ros::Subscriber input_;
         ros::Publisher output_; 
+        
 };
 #include "../src/msg_filter_base.cpp"

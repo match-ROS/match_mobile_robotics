@@ -119,11 +119,25 @@ include_directories(
 )
 
 ## Declare a C++ library
+add_library(message_operators
+  include/${PROJECT_NAME}/msg_operators.hpp
+  include/${PROJECT_NAME}/operators/vector3.hpp
+  include/${PROJECT_NAME}/operators/joint_state.hpp
+  include/${PROJECT_NAME}/operators/twist.hpp
+  include/${PROJECT_NAME}/operators/twist_stamped.hpp 
+  include/${PROJECT_NAME}/operators/wrench.hpp
+  include/${PROJECT_NAME}/operators/wrench_stamped.hpp
+)
+set_target_properties(message_operators PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(message_operators
+  ${catkin_LIBRARIES}
+)
+
 add_library(message_convolution_filters
   include/${PROJECT_NAME}/msg_filters.hpp
 
-  include/${PROJECT_NAME}/msg_operators.hpp
-
+  include/${PROJECT_NAME}/msg_diff_filter.hpp
+  
   include/${PROJECT_NAME}/msg_filter_base.hpp
 
   include/${PROJECT_NAME}/msg_mean_filter.hpp
@@ -131,6 +145,7 @@ add_library(message_convolution_filters
 )
 set_target_properties(message_convolution_filters PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(message_convolution_filters
+  message_operators
   ${catkin_LIBRARIES}
 )
 add_dependencies(message_convolution_filters ${PROJECT_NAME}_gencfg)
@@ -153,10 +168,21 @@ function(generate_mean_filter message_type)
 endfunction()
 
 
+function(generate_diff_filter message_type)
+  add_executable(${message_type}_diff_filter nodes/diff_filter_${message_type}.cpp)
+    
+  target_link_libraries(${message_type}_diff_filter
+    message_convolution_filters
+    ${catkin_LIBRARIES}
+  )
+endfunction()
+
+
 
 generate_mean_filter(wrench_stamped)
 generate_mean_filter(joint_state)
 generate_mean_filter(twist_stamped)
+generate_diff_filter(twist_stamped)
 
 
 #############

@@ -1,0 +1,5 @@
+geometry_msgs/PoseStamped target
+---
+geometry_msgs/PoseStamped pose_reached
+---
+float64 time_left

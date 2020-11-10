@@ -154,13 +154,14 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
   std::array<double, 49> mass_array= this->model_handle_->getMass();
 
   // convert to Eigen
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());
-  Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());
-  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(  // NOLINT (readability-identifier-naming)  
-                                                    robot_state.tau_J_d.data());  
-  Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data());
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> coriolis(coriolis_array.data());  //Coriolis vector
+  Eigen::Map<Eigen::Matrix<double, 6, 7>> jacobian(jacobian_array.data()); //Jacobian matrix
+  Eigen::Map<Eigen::Matrix<double, 7, 7>> mass(mass_array.data());  //Mass matrix
+
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> q(robot_state.q.data());  //Positions
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> dq(robot_state.dq.data());  //Velocity
+  Eigen::Map<Eigen::Matrix<double, 7, 1>> tau_J_d(robot_state.tau_J_d.data()); //Torque_desired 
+  
 
   transform_=Eigen::Affine3d(Eigen::Matrix4d::Map(robot_state.O_T_EE.data()));
   
@@ -185,20 +186,22 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
   
   // Cartesian PD control with damping 
   tau_task << jacobian.transpose() *
-                  (-cartesian_stiffness_ * error - cartesian_damping_ * (jacobian * dq))+mass*jacobian.transpose()*acceleration_d_;
+              (-cartesian_stiffness_ * error 
+               - cartesian_damping_ * (jacobian * dq))
+              +mass*jacobian.transpose()*acceleration_d_;
+  
   // nullspace PD control with damping 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
                        (nullspace_stiffness_ * (q_d_nullspace_ - q) -
-                        nullspace_damping_* dq);
+                        nullspace_damping_* (dq_d_nullspace_-dq));
   // Desired torque
-  tau_d << tau_task + tau_nullspace + coriolis;
+  tau_d << tau_task + tau_nullspace + coriolis ;
   // Saturate torque rate to avoid discontinuities
   tau_d_ << saturateTorqueRate(tau_d, tau_J_d);
 }
 void CartesianImpedanceController::update(const ros::Time& /*time*/,
                                                  const ros::Duration& /*period*/) {
- 
 
   for (size_t i = 0; i < 7; ++i) 
   {
@@ -236,20 +239,23 @@ Eigen::Matrix<double, 7, 1> CartesianImpedanceController::saturateTorqueRate(
 
 void CartesianImpedanceController::complianceParamCallback(
     multi_robot_controller::StiffnessConfig& config,
-    uint32_t /*level*/) {
-        
+    uint32_t /*level*/) 
+  {        
+  //Alloc cartesian stiffnes
   cartesian_stiffness_target_.setIdentity();
   cartesian_stiffness_target_.topLeftCorner(3, 3)
       << config.Kx,0.0,0.0,0.0,config.Ky,0.0,0.0,0.0,config.Kz;
   cartesian_stiffness_target_.bottomRightCorner(3, 3)
       << config.Kroll,0.0,0.0,0.0,config.Kpitch,0.0,0.0,0.0,config.Kyaw;
   
+  //Alloc cartesian damping
   cartesian_damping_target_.setIdentity();
   cartesian_damping_target_.topLeftCorner(3, 3)
        << config.Dx,0.0,0.0,0.0,config.Dy,0.0,0.0,0.0,config.Dz;
   cartesian_damping_target_.bottomRightCorner(3, 3)
       << config.Droll,0.0,0.0,0.0,config.Dpitch,0.0,0.0,0.0,config.Dyaw;
-
+  
+  //Alloc nullspace stiffness and damping
   nullspace_stiffness_target_ = config.nullspace_stiffness;
   nullspace_damping_target_= config.nullspace_damping;
 }
@@ -280,13 +286,23 @@ void CartesianImpedanceController::equilibriumPoseCallback(
   pseudoInverse(jacobian, jacobian_pinv);  
   Eigen::Matrix<double, 6, 1> error;
   computeError(error,position_d_target_,orientation_d_target_);
-  this->q_d_nullspace_=this->q_d_nullspace_+jacobian_pinv*error;
+  this->dq_d_nullspace_=jacobian_pinv*error;
+  this->q_d_nullspace_=this->q_d_nullspace_+this->dq_d_nullspace_;
+
 }
 
 
-void CartesianImpedanceController::accelerationCallback(const sensor_msgs::ImuConstPtr& msg)
+void CartesianImpedanceController::accelerationCallback(const geometry_msgs::Accel& msg)
 {
-  return;
+  if(this->enable_acc_)
+  {
+    this->acceleration_d_target_<<msg.linear.x,
+                                  msg.linear.y,
+                                  msg.linear.z,
+                                  msg.angular.x,
+                                  msg.angular.y,
+                                  msg.angular.z;
+  }
 }
 
 void CartesianImpedanceController::computeError(Eigen::Matrix<double, 6, 1> &error, Eigen::Vector3d position,Eigen::Quaterniond orientation)

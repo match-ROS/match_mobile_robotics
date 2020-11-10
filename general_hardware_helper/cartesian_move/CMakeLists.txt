@@ -10,10 +10,11 @@ project(cartesian_move)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   message_generation
+  actionlib_msgs
 
   geometry_msgs
-  tf2_ros
   tf2
+  tf2_ros  
   tf2_geometry_msgs
 )
 
@@ -65,16 +66,16 @@ add_service_files(
 )
 
 ## Generate actions in the 'action' folder
-# add_action_files(
-#   FILES
-#   Action1.action
-#   Action2.action
-# )
+add_action_files(
+  FILES
+  CartesianInterpolation.action
+)
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-  geometry_msgs  # Or other packages containing msgs
+  actionlib_msgs geometry_msgs 
+  # Or other packages containing msgs
 )
 
 ################################################
@@ -109,7 +110,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES cartesian_move
-  CATKIN_DEPENDS roscpp 
+  CATKIN_DEPENDS roscpp actionlib_msgs
 #  DEPENDS Eigen3
 )
 
@@ -126,6 +127,12 @@ include_directories(
 
 ## Declare a C++ library
 add_library(cartesian_move
+  include/${PROJECT_NAME}/cartesian_interpolator.h
+  src/cartesian_interpolator.cpp
+
+  include/${PROJECT_NAME}/cartesian_relative_interpolator.h
+  src/cartesian_relative_interpolator.cpp
+
   include/${PROJECT_NAME}/move_base.h
   src/move_base.cpp
   include/${PROJECT_NAME}/relative_move.h
@@ -142,7 +149,8 @@ add_dependencies(cartesian_move ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXP
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(relative_move_node nodes/relative_move_node.cpp)
-
+add_executable(cartesian_interpolator nodes/pose_interpolator_node.cpp)
+add_executable(cartesian_relative_interpolator nodes/pose_relative_interpolator_node.cpp)
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -155,6 +163,14 @@ add_executable(relative_move_node nodes/relative_move_node.cpp)
 
 ## Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(cartesian_interpolator
+  cartesian_move
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(cartesian_relative_interpolator
+  cartesian_move
   ${catkin_LIBRARIES}
 )
 

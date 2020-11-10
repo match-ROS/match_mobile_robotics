@@ -13,6 +13,5 @@ T MessageDiffFilter<T>::filter()
     T ret=this->buffer_->at(1)-this->buffer_->at(0);   
     ret.header.stamp=ros::Time::now();
     ret=ret/(this->buffer_->at(1).header.stamp-this->buffer_->at(0).header.stamp).toSec();
-    ROS_INFO_STREAM(this->buffer_->at(1).header.stamp.toSec()<<"\t"<<this->buffer_->at(0).header.stamp.toSec()<<"\t"<<(this->buffer_->at(1).header.stamp-this->buffer_->at(0).header.stamp).toSec());
     return ret;
 }

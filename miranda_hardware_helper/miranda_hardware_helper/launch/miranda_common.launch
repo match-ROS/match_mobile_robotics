@@ -7,7 +7,7 @@
    
    
     <!-- Bringup   the miranda base  -->
-    <include file="$(find miranda_hardware_helper)/launch/miranda_base.launch" pass_all_args="true"/>
+    <include file="$(find miranda_hardware_helper)/launch/miranda_base_common.launch" pass_all_args="true"/>
 
     <!-- Bringup the panda and configure it for working in combination with mir -->
     <include file="$(find panda_hardware_helper)/launch/panda.launch" ns="panda" pass_all_args="true">        

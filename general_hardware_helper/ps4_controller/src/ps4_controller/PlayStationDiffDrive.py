@@ -64,6 +64,7 @@ class PlayStationDiffDrive(PlayStationHandler):
 
     def __publishTwistStamped__(self):
         msg=TwistStamped()
+        msg.header.stamp=rospy.Time.now()
         msg.twist.linear.x=self.__translation
         msg.twist.angular.z=self.__rotation
         

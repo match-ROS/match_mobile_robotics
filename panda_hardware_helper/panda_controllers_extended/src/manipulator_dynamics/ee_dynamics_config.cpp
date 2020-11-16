@@ -9,6 +9,7 @@ EEDynamicsConfig::EEDynamicsConfig(ros::NodeHandle &nh):EEDynamics(nh)
 
     this->dynamic_server_-> setCallback(
                             boost::bind(&EEDynamicsConfig::inertiaParamCallback, this, _1, _2));
+    this->config_=panda_controllers_extended::InertiaConfig();
 }
 
 void EEDynamicsConfig::inertiaParamCallback(panda_controllers_extended::InertiaConfig& config,
@@ -32,10 +33,10 @@ EEDynamics::CartesianMatrix EEDynamicsConfig::updateInertia()
     inertia_matrix.setZero();
     inertia_matrix.topLeftCorner(3,3) =   mass;
     inertia_matrix.bottomRightCorner(3,3)=inertia;
-           
-    return this->inertia_;
+    ROS_INFO_STREAM(inertia_matrix);
+    return inertia_matrix;
 }
 EEDynamics::CartesianVector EEDynamicsConfig::updateForce()  
 {
-    return this->force_;
+    return this->inertia_*this->accel_;
 }

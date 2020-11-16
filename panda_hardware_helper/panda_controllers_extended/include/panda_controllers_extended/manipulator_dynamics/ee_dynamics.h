@@ -8,7 +8,7 @@ class EEDynamics{
         EEDynamics(ros::NodeHandle &nh);
 
     protected:
-        typedef Eigen::Matrix3d CartesianMatrix;
+        typedef Eigen::Matrix<double,6,6> CartesianMatrix;
         typedef Eigen::Matrix<double,6,1> CartesianVector;
 
         CartesianMatrix inertia_;

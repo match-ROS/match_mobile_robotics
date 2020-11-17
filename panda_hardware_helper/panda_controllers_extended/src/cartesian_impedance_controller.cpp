@@ -190,8 +190,8 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
                - cartesian_damping_ * (jacobian * dq));
 
   //Dynamik ff         
-  tau_dyn<< jacobian.transpose()*jacobian_transpose_pinv*acceleration_d_;
-  ROS_INFO_STREAM(std::endl<<"Torque:"<<std::endl<<tau_dyn);
+  // tau_dyn<< jacobian.transpose()*jacobian_transpose_pinv*acceleration_d_;
+  // ROS_INFO_STREAM(std::endl<<"Torque:"<<std::endl<<tau_dyn);
   
   // nullspace PD control with damping 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
@@ -200,7 +200,8 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
                         nullspace_damping_* (dq_d_nullspace_-dq));
  
   // Desired torque
-  tau_d << tau_task + tau_nullspace + coriolis +tau_dyn ;
+  // tau_d << tau_task + tau_nullspace + coriolis +tau_dyn ;
+  tau_d << tau_task + tau_nullspace + coriolis;
   // Saturate torque rate to avoid discontinuities
   tau_d_ << saturateTorqueRate(tau_d, tau_J_d);
 }

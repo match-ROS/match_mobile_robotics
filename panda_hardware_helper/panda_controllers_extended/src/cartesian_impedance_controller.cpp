@@ -196,7 +196,7 @@ void CartesianImpedanceController::myUpdate(const ros::TimerEvent &)
   // nullspace PD control with damping 
   tau_nullspace << (Eigen::MatrixXd::Identity(7, 7) -
                     jacobian.transpose() * jacobian_transpose_pinv) *
-                       (nullspace_stiffness_ * (q_d_nullspace_ - q) -
+                       (nullspace_stiffness_ * (q_d_nullspace_ - q) +
                         nullspace_damping_* (dq_d_nullspace_-dq));
  
   // Desired torque

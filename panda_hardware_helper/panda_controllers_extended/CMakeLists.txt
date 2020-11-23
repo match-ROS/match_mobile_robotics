@@ -131,6 +131,8 @@ include_directories(
 add_library(${PROJECT_NAME}
     include/${PROJECT_NAME}/cartesian_impedance_controller.h
     src/cartesian_impedance_controller.cpp
+    include/${PROJECT_NAME}/six_dof_cartesian_impedance.h
+    src/six_dof_cartesian_impedance.cpp
     include/${PROJECT_NAME}/cartesian_controller.h
     src/cartesian_controller.cpp
 )

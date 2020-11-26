@@ -50,15 +50,11 @@ class ForceWatchDog:
         current=np.array([msg.wrench.force.x,msg.wrench.force.y,msg.wrench.force.z,
                          msg.wrench.torque.x,msg.wrench.torque.y,msg.wrench.torque.z])
 
-        lower=np.where(current<np.array(self.__limits_low))
-        upper=np.where(current>np.array(self.__limits_high))
+        lower=current<np.array(self.__limits_low)
+        upper=current>np.array(self.__limits_high)
 
         if np.any(lower) or np.any(upper):
-            rospy.logwarn("Watchdog realised overshooting!")
-            rospy.logwarn("Lower:")
-            rospy.logwarn(lower)
-            rospy.logwarn("Upper:")
-            rospy.logwarn(upper)
+            self.display(lower,upper)
             self.bark()
             
 
@@ -74,4 +70,9 @@ class ForceWatchDog:
         
         for service in self.__services:
             service.call(EmptyRequest())
-        
+    
+    def display(self,lower,upper):
+        rospy.logwarn("Upper: ")
+        rospy.logwarn(str(upper[0])+" "+str(upper[1])+" "+str(upper[2])+" "+str(upper[3])+" "+str(upper[4])+" "+str(upper[5]))
+        rospy.logwarn("Lower: ")
+        rospy.logwarn(str(lower[0])+" "+str(lower[1])+" "+str(lower[2])+" "+str(lower[3])+" "+str(lower[4])+" "+str(lower[5]))

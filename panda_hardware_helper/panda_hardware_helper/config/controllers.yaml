@@ -33,14 +33,36 @@ franka_state_controller:
   joint_names: *joints
   arm_id: panda
 
+# compliance_controller:
+#   type: panda_controllers_extended/CartesianImpedanceController
+#   arm_id: panda
+#   joint_names: *joints
+#   rate: 400
+#   enable_accelaration: false
+
 compliance_controller:
+  type: panda_controllers_extended/SixDofCartesianImpedanceController
+  arm_id: panda
+  joint_names_impedance: 
+    - panda_joint1
+    - panda_joint2
+    - panda_joint3
+    - panda_joint4
+    - panda_joint5
+    - panda_joint6
+  joint_name_free: panda_joint7
+  rate: 400
+  enable_accelaration: false
+
+
+cartesian_controller:
   type: panda_controllers_extended/CartesianImpedanceController
   arm_id: panda
   joint_names: *joints
   rate: 400
   enable_accelaration: false
 
-cartesian_controller:
+cartesian_impedance_controller:
   type: panda_controllers_extended/CartesianImpedanceController
   arm_id: panda
   joint_names: *joints

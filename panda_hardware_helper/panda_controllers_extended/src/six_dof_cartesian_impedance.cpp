@@ -120,6 +120,8 @@ bool SixDofCartesianImpedanceController::init(hardware_interface::RobotHW* robot
         return false;
     }
 
+
+
     this->calculation_scope_timer_=node_handle.createTimer( ros::Rate(rate),
                                                 &SixDofCartesianImpedanceController::calculationScope,this);
 
@@ -129,9 +131,28 @@ bool SixDofCartesianImpedanceController::init(hardware_interface::RobotHW* robot
                                             (node_handle);
     dyn_compliance_server_->setCallback(
         boost::bind(&SixDofCartesianImpedanceController::complianceParamCallback, this, _1, _2));
+
+    this->equi_sub_=node_handle.subscribe("target_pose",1,&SixDofCartesianImpedanceController::equilibriumPoseCallback,this);
     
     return true;
 
+}
+
+void SixDofCartesianImpedanceController::starting(const ros::Time&)
+{
+    std::array<double,16> pose=this->model_handle_->getPose(franka::Frame::kJoint6);
+    ee_start_= Eigen::Affine3d(Eigen::Matrix4d::Map(pose.data()));
+    ee_target_=ee_start_;
+    return;
+}
+
+void SixDofCartesianImpedanceController::update(const ros::Time&, const ros::Duration& period)
+{
+    for(int i=0;i<this->joint_handles_impedance_.size();i++)
+    {
+        this->joint_handles_impedance_[i].setCommand(this->tau_d_(i));
+    }
+    this->joint_handle_free_.setCommand(0.0);
 }
 
 void SixDofCartesianImpedanceController::calculationScope(const ros::TimerEvent &)
@@ -186,22 +207,33 @@ void SixDofCartesianImpedanceController::calculationScope(const ros::TimerEvent 
 
 }
 
-void SixDofCartesianImpedanceController::starting(const ros::Time&)
-{
-    std::array<double,16> pose=this->model_handle_->getPose(franka::Frame::kJoint6);
-    ee_start_= Eigen::Affine3d(Eigen::Matrix4d::Map(pose.data()));
-    return;
-}
 
-void SixDofCartesianImpedanceController::update(const ros::Time&, const ros::Duration& period)
+
+
+
+void SixDofCartesianImpedanceController::equilibriumPoseCallback(
+    const geometry_msgs::PoseStampedConstPtr& msg) 
 {
-    for(int i=0;i<this->joint_handles_impedance_.size();i++)
-    {
-        this->joint_handles_impedance_[i].setCommand(this->tau_d_(i));
+    //Set desired position
+    this->ee_target_.translation() << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    
+    //Set desired orientation
+    Eigen::Quaterniond quat,last_quat;
+    quat.coeffs()<< msg->pose.orientation.x, 
+                    msg->pose.orientation.y,
+                    msg->pose.orientation.z,
+                    msg->pose.orientation.w;    
+    last_quat=this->last_ee_target_.linear();
+    //Flip orientation if nescessary                                  
+    if (last_quat.coeffs().dot(quat.coeffs()) < 0.0) {
+        quat.coeffs() << -quat.coeffs();
     }
-    this->joint_handle_free_.setCommand(0.0);
+    this->ee_target_.linear()<<quat.matrix();
 }
 
+
+//#################################################
+//HELPER
 
 Eigen::Matrix<double, 6, 1> SixDofCartesianImpedanceController::saturateTorqueRate(
     const Eigen::Matrix<double, 6, 1>& tau_d_calculated)
@@ -227,10 +259,10 @@ Eigen::Matrix<double, 6, 1> SixDofCartesianImpedanceController::computeError(Eig
     Eigen::Quaterniond orientation;
     Eigen::Quaterniond orientation_d;
 
-    position_d=this->ee_start_.translation();
+    position_d=this->ee_target_.translation();
     position=current.translation();
 
-    orientation_d=this->ee_start_.linear();
+    orientation_d=this->ee_target_.linear();
     orientation=current.linear();
 
     Eigen::Matrix<double, 6, 1> error;
@@ -244,7 +276,7 @@ Eigen::Matrix<double, 6, 1> SixDofCartesianImpedanceController::computeError(Eig
     Eigen::Quaterniond error_quaternion(orientation_d.inverse() * orientation);
     error.tail(3) << error_quaternion.x(), error_quaternion.y(), error_quaternion.z();
     // Transform to base frame
-    error.tail(3) << -ee_start_.linear() * error.tail(3);
+    error.tail(3) << -ee_target_.linear() * error.tail(3);
 
     return error;
 }

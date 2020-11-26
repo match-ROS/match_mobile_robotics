@@ -10,6 +10,10 @@
 
 #include <dynamic_reconfigure/server.h>
 #include <panda_controllers_extended/StiffnessConfig.h>
+
+#include <geometry_msgs/PoseStamped.h>
+
+
 namespace panda_controllers_extended {
 
 class SixDofCartesianImpedanceController : public controller_interface::MultiInterfaceController<
@@ -33,6 +37,7 @@ class SixDofCartesianImpedanceController : public controller_interface::MultiInt
         std::vector<hardware_interface::JointHandle> joint_handles_impedance_;
         hardware_interface::JointHandle joint_handle_free_;
 
+        ros::Subscriber equi_sub_;
         ros::Timer calculation_scope_timer_;
         std::unique_ptr<dynamic_reconfigure::Server
                         <panda_controllers_extended::StiffnessConfig>>
@@ -44,8 +49,11 @@ class SixDofCartesianImpedanceController : public controller_interface::MultiInt
         Eigen::Matrix<double, 6, 6> cartesian_damping_;  
 
         Eigen::Affine3d ee_start_;  
+        Eigen::Affine3d ee_target_;
+        Eigen::Affine3d last_ee_target_;
 
         Eigen::Matrix<double, 6, 1> computeError(Eigen::Affine3d current);
         Eigen::Matrix<double, 6, 1> saturateTorqueRate(const Eigen::Matrix<double, 6, 1>& tau_d_calculated);
+        void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 };
 }// end panda_controllers_extended

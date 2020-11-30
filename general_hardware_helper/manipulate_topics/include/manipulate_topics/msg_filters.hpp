@@ -1,6 +1,7 @@
 #include<manipulate_topics/msg_filter_base.hpp>
 #include<manipulate_topics/msg_mean_filter.hpp>
 #include<manipulate_topics/msg_diff_filter.hpp>
+#include<manipulate_topics/msg_static_transformer.hpp>
 
 #include<geometry_msgs/Wrench.h>
 #include<geometry_msgs/WrenchStamped.h>
@@ -19,7 +20,11 @@ namespace message_filters\
 {\
     typedef MessageDiffFilter<message_ns::message_type> DiffFilter##message_type ;\
 }
-
+#define ADD_STATIC_TRANSFORMER(message_ns,message_type)\
+namespace message_filters\
+{\
+    typedef MessageStaticTransformer<message_ns::message_type> MessageStaticTransformer##message_type ;\
+}
 
 
 ADD_MEAN_FILTER(geometry_msgs,WrenchStamped)
@@ -30,3 +35,5 @@ ADD_MEAN_FILTER(sensor_msgs,JointState)
 
 
 ADD_DIFF_FILTER(geometry_msgs,TwistStamped)
+
+ADD_STATIC_TRANSFORMER(geometry_msgs,WrenchStamped)

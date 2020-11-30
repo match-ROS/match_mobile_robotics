@@ -10,6 +10,7 @@ project(manipulate_topics)
 find_package(catkin REQUIRED COMPONENTS
               roscpp
               dynamic_reconfigure
+              tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -141,7 +142,6 @@ add_library(message_convolution_filters
   include/${PROJECT_NAME}/msg_filter_base.hpp
 
   include/${PROJECT_NAME}/msg_mean_filter.hpp
-
 )
 set_target_properties(message_convolution_filters PROPERTIES LINKER_LANGUAGE CXX)
 target_link_libraries(message_convolution_filters
@@ -149,6 +149,17 @@ target_link_libraries(message_convolution_filters
   ${catkin_LIBRARIES}
 )
 add_dependencies(message_convolution_filters ${PROJECT_NAME}_gencfg)
+
+
+add_library(msg_transformations
+  include/${PROJECT_NAME}/msg_static_transformer.hpp
+)
+set_target_properties(msg_transformations PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(msg_transformations
+  message_operators
+  ${catkin_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -178,11 +189,22 @@ function(generate_diff_filter message_type)
 endfunction()
 
 
+function(generate_static_transformer message_type)
+  add_executable(${message_type}_static_transformer nodes/static_transformer_${message_type}.cpp)
+    
+  target_link_libraries(${message_type}_static_transformer
+    msg_transformations
+    ${catkin_LIBRARIES}
+  )
+endfunction()
+
 
 generate_mean_filter(wrench_stamped)
 generate_mean_filter(joint_state)
 generate_mean_filter(twist_stamped)
 generate_diff_filter(twist_stamped)
+
+generate_static_transformer(wrench_stamped)
 
 
 #############

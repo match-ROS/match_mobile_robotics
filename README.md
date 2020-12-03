@@ -9,6 +9,7 @@
 
 # 2. Installation
 ### Install dependencies
+Navigate into src folder of your catkin workspace (e.g. catkin_ws) and execute
 ```
 git clone https://github.com/ibMH/Helper_Tools.git
 ```

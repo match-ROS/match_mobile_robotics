@@ -1,0 +1,5 @@
+<launch>
+<node name="cartesian_interpolator" type="cartesian_interpolator" pkg="cartesian_move" output="screen">
+    <rosparam command="load" file="$(find cartesian_move)/config/interpolator.yaml"/>
+</node>
+</launch>

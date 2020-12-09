@@ -26,14 +26,22 @@ class CartesianController
   void update(const ros::Time&, const ros::Duration& period) override;
 
  private:
+  ros::Subscriber target_pose_sub_;
+
+  double filter_params_{0.005};
+
   Eigen::Vector3d position_d_target_;
+  Eigen::Vector3d position_d_;
   Eigen::Quaterniond orientation_d_target_;
+  Eigen::Quaterniond orientation_d_;
+
   franka_hw::FrankaPoseCartesianInterface* cartesian_pose_interface_;
   std::unique_ptr<franka_hw::FrankaCartesianPoseHandle> cartesian_pose_handle_;
-  ros::Duration elapsed_time_;
+
   std::array<double, 16> initial_pose_{};
   std::array<double, 16> desired_pose_{};
-  void equilibriumPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
+
+  void targetPoseCallback(const geometry_msgs::PoseStampedConstPtr& msg);
 };
 
 }  // namespace panda_controllers_extended

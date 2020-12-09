@@ -1,0 +1,31 @@
+
+##Parallel front
+drive:
+  panda_joint1: 0.0
+  panda_joint2: -1.57
+  panda_joint3: 0.0
+  panda_joint4: -2.35619
+  panda_joint5: 0
+  panda_joint6: 0.78
+  panda_joint7: 0.78
+
+##Front 
+# grip:
+#   panda_joint1: 0.0
+#   panda_joint2: 0.27079139359792076
+#   panda_joint3: 0.0
+#   panda_joint4: -2.3397709703278124
+#   panda_joint5: 0.0
+#   panda_joint6: 2.5941756415896946
+#   panda_joint7: -0.785398163
+
+
+##Above rotation axis
+grip:
+  panda_joint1: -1.2423
+  panda_joint2: -1.4395
+  panda_joint3: -0.5126
+  panda_joint4: -2.3681
+  panda_joint5: -0.6007
+  panda_joint6: 1.0357
+  panda_joint7: 0.715584993

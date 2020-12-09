@@ -7,7 +7,7 @@ PlannerBase::PlannerBase(ros::NodeHandle &nh):nh(nh)
 {
     this->frame_name="/map";
 
-    this->tim_sampling=this->nh.createTimer(ros::Duration(0.05),&PlannerBase::plan,this);
+    this->tim_sampling=this->nh.createTimer(ros::Duration(0.01),&PlannerBase::plan,this);
 
     this->pub_current_odometry=nh.advertise<nav_msgs::Odometry>("trajectory_odom",10);
     this->pub_current_vel=nh.advertise<geometry_msgs::Twist>("trajectory_vel",10);

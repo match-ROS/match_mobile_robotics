@@ -1,0 +1,6 @@
+<launch>
+    <node name="path_parser" type="parse_csv.py" pkg="manipulate_topics">
+        <param name="file_name" value="/home/rosmatch/Downloads/SplineTest.csv"/>
+        <param name="time_incr" value="0.01"/>
+    </node>
+</launch>

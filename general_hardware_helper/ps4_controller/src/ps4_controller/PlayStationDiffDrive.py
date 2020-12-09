@@ -5,7 +5,7 @@ import rospy
 class PlayStationDiffDrive(PlayStationHandler):
     def __init__(self,message_type):
         PlayStationHandler.__init__(self)
-        self.__rate=rospy.Rate(10)
+        self.__rate=rospy.Rate(rospy.get_param("~rate",10))
 
         self.__speed_translation = rospy.get_param("~translation",0.1)
         self.__speed_rotation =  rospy.get_param("~rotation",0.2)
@@ -64,6 +64,7 @@ class PlayStationDiffDrive(PlayStationHandler):
 
     def __publishTwistStamped__(self):
         msg=TwistStamped()
+        msg.header.stamp=rospy.Time.now()
         msg.twist.linear.x=self.__translation
         msg.twist.angular.z=self.__rotation
         

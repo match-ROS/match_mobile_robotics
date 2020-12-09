@@ -9,6 +9,6 @@ Follow the instructions of the overall [repository](https://github.com/ibMH/Help
 
 ### Build packages
 Use your standard build system to build the downloaded packages
-```bash
+```
 catkin_make
 ```

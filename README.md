@@ -11,9 +11,8 @@
 Start by changeing directory to your catkin workspace!
 ### Clone package
 ```
-git clone https://github.com/ibMH/Helper_Tools.git src
+git clone https://github.com/ibMH/Helper_Tools.git src/Helper_Tools
 ```
-
 ### Install dependencies
 ```
 cd src/Helper_Tools

@@ -4,7 +4,7 @@
         <node pkg="tf2_ros" type="static_transform_publisher" name="ft_ee_transformer" 
             args="0.0 0.0 0.0  0.098174771  0 0  $(arg tf_prefix)ft_sensor_link $(arg tf_prefix)my_tool_link"/>
 
-        <node  name="ft_sensor" pkg="net_box_hardware_helper" type="driver.py">
-            <rosparam command="load" file="$(find ur_hardware_helper)/config/net_box_ft.yaml" subst_value="true"/>
+        <node  name="ft_sensor" pkg="net_box_hardware_helper" type="driver.py" output="screen">
+            <rosparam command="load" file="$(find net_box_hardware_helper)/config/net_box_ft.yaml" subst_value="true"/>
         </node>
 </launch>

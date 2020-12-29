@@ -42,8 +42,8 @@ class NetBoxSocket:
 
     def __scope__(self):
         while self.__streaming:            
-            self.__data=self.getSingleSample()
-            if self.__receiveCb:
+            self.__data=self.getSingleSample()    
+            if self.__receiveCb:                
                 self.__receiveCb(self.__data)
         
 

@@ -1,0 +1,10 @@
+<launch>
+    <arg name="filter_type" value="mean"/>
+    <arg name="message_type" value="wrench_stamped"/>
+
+    <node name="$(arg message_type)_$(arg filter_type)_filter" type="$(arg message_type)_$(arg filter_type)_filter" pkg="manipulate_topics">
+        <rosparam command="load" file="$(find manipulate_topics)/config/$(arg message_type)_$(arg filter_type)_filter.yaml"/>
+        <remap from="input" to="wrench"/>
+        <remap from="output" to="test_out"/>
+    </node>
+</launch>

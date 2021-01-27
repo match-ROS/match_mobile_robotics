@@ -1,0 +1,13 @@
+<launch>
+    <arg name="tf_prefix" default="miranda"/>
+    <arg name="pose_filename" default="poses/test.yaml"/>
+
+    <include file="$(find miranda_hardware_helper)/launch/miranda_cartesian.launch" pass_all_args="true"/>
+
+   
+    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py" ns="miranda/panda">
+        <remap from="pose" to="cartesian_controller/target_pose"/>
+        <param name="base_frame" value="$(arg tf_prefix)/panda/panda_link0"/>
+        <param name="ee_frame" value="$(arg tf_prefix)/panda/panda_EE"/>
+    </node>
+</launch>

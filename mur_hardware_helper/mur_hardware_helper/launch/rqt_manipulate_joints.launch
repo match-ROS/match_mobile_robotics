@@ -1,0 +1,5 @@
+<launch>
+    <remap from="/controller_manager/load_controller" to="/mur/ur/controller_manager/load_controller"/>
+    <node name="joint_manipulator" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" ns="mur/ur">
+    </node>
+</launch>

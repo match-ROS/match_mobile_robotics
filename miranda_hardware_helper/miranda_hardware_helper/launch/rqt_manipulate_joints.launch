@@ -1,0 +1,3 @@
+<launch>
+    <node name="joint_manipulator" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" ns="miranda/panda"/>
+</launch>

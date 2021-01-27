@@ -1,0 +1,87 @@
+<launch>
+  <arg name="tf_prefix" default="" doc="TF prefix to use for all of MiR's TF frames"/>
+
+  <arg name="mir_hostname" default="192.168.12.20" />
+
+ <param name="tf_prefix" type="string" value="$(arg tf_prefix)"/>
+
+
+
+  <!-- URDF -->
+  <include file="$(find mir_description)/launch/upload_mir_urdf.launch" />
+
+  <!-- Robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+    <remap from="/tf"        to="tf_rss" />
+    <remap from="/tf_static" to="tf_static_rss" />
+  </node>
+
+  <!-- remove those TFs that are also published by the MiR to avoid conflicts -->
+  <node name="tf_remove_state_publisher_frames" pkg="mir_driver" type="tf_remove_child_frames.py" output="screen">
+    <remap from="tf_in"         to="tf_rss" />
+    <remap from="tf_out"        to="/tf" />
+    <remap from="tf_static_in"  to="tf_static_rss" />
+    <remap from="tf_static_out" to="/tf_static" />
+    <rosparam param="remove_frames" subst_value="true">
+      <!-- -  $(arg tf_prefix)/front_laser_link
+      -  $(arg tf_prefix)/back_laser_link -->
+      -  $(arg tf_prefix)/camera_top_link
+      -  $(arg tf_prefix)/camera_top_depth_optical_frame
+      -  $(arg tf_prefix)/camera_floor_link
+      -  $(arg tf_prefix)/camera_floor_depth_optical_frame
+    </rosparam>
+  </node>
+
+  <!-- Disable the map topic and the localisation by mir-->
+  <node name="mir_bridge" pkg="mir_driver" type="mir_bridge.py" output="screen">
+    <param name="hostname" value="$(arg mir_hostname)" />
+    <param name="tf_prefix" value="$(arg tf_prefix)" />
+    <remap from="map" to="/map" />
+    <remap from="map_metadata" to="/map_metadata" />
+    <remap from="rosout" to="/rosout" />
+    <remap from="rosout_agg" to="/rosout_agg" />
+    <remap from="tf" to="tf_mir" />
+    <remap from="tf_static" to="tf_static_mir" />
+  </node>
+
+  <node name="map_link_dummie" pkg="mir_helper" type="map_odom_broadcaster">
+    <param name="tf_prefix" value="$(arg tf_prefix)"/>
+  </node>
+
+  <!-- Remove unused or bugged frames from the mir -->
+  <node name="tf_remove_mir__frames" pkg="mir_driver" type="tf_remove_child_frames.py" output="screen">
+    <remap from="tf_in"         to="tf_mir" />  
+    <remap from="tf_static_in"  to="tf_static_mir" />
+    <remap from="tf_static_out" to="/tf_static" />
+    <remap from="tf_out"        to="/tf" />
+    <rosparam param="remove_frames" subst_value="true">
+      -  $(arg tf_prefix)/odom_comb     # on MiR software 1.9, the frame is called odom_comb
+      -  $(arg tf_prefix)/odom          # on MiR software 2.0, the frame is called odom
+      -  $(arg tf_prefix)/base_link
+    </rosparam>
+  </node>
+
+  <node name="b_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
+    <remap from="scan" to="b_scan" />
+    <remap from="scan_filtered" to="b_scan_rep117" />
+  </node>
+
+  <node name="f_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
+    <remap from="scan" to="f_scan" />
+    <remap from="scan_filtered" to="f_scan_rep117" />
+  </node>
+
+  <node name="fake_mir_joint_publisher" pkg="mir_driver" type="fake_mir_joint_publisher.py" output="screen" />
+
+  <!-- Stamp the published robot pose which is of type Pose not PoseStamped -->
+  <node name="pose_stamper" pkg="mir_helper" type="pose_stamper">
+    <remap from="pose_in" to="robot_pose"/>
+    <remap from="pose_out" to="robot_pose_stamped"/>
+  </node>
+  
+  <node name="twist_stamper" pkg="mir_helper" type="twist_stamper">
+    <remap from="twist_in" to="cmd_vel_mir"/>
+    <remap from="twist_out" to="cmd_vel"/>
+  </node>
+
+</launch>

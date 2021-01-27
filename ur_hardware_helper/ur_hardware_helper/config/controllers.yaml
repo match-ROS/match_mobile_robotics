@@ -1,0 +1,105 @@
+# Settings for ros_control control loop
+hardware_control_loop:
+   loop_hz: &loop_hz 125
+
+# Settings for ros_control hardware interface
+ur_hardware_interface:
+   joints: &robot_joints
+   - shoulder_pan_joint
+   - shoulder_lift_joint
+   - elbow_joint
+   - wrist_1_joint
+   - wrist_2_joint
+   - wrist_3_joint
+
+# Publish all joint states ----------------------------------
+joint_state_controller:
+   type:         joint_state_controller/JointStateController
+   publish_rate: *loop_hz
+
+# Publish wrench ----------------------------------
+force_torque_sensor_controller:
+   type:         force_torque_sensor_controller/ForceTorqueSensorController
+   publish_rate: *loop_hz
+
+# Control robot state----------------------------------
+robot_status_controller:
+   type: industrial_robot_status_controller/IndustrialRobotStatusController
+   handle_name: industrial_robot_status_handle
+   publish_rate: 10
+
+
+position_joint_controller:
+  type: position_controllers/JointTrajectoryController
+  joints: *robot_joints
+  constraints:
+    goal_time: 0.5
+    panda_joint1:
+      goal: 0.05
+    panda_joint2:
+      goal: 0.05
+    panda_joint3:
+      goal: 0.05
+    panda_joint4:
+      goal: 0.05
+    panda_joint5:
+      goal: 0.05
+    panda_joint6:
+      goal: 0.05
+    panda_joint7:
+      goal: 0.05
+
+
+compliant_axis_controller:
+  type: "ur_controllers_extended/CompliantAxisController"
+  joints: *robot_joints
+  d_gain: 5
+  joint_stiffness: 5 #Nm/rad
+  topic_name: wrench
+  direction: z
+
+compliant_axis_vel_controller:
+  type: "ur_controllers_extended/CompliantAxisVelController"
+  joints: *robot_joints
+  p_gain: 1.4
+  d_gain: 0.3
+  theta: 0.0
+  joint_stiffness: 5 #Nm/rad
+  topic_name: wrench
+  direction: z
+
+
+cartesian_controller:
+  type: "position_controllers/CartesianMotionController"
+  end_effector_link: "tool0"
+  robot_base_link: "base_link"  #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
+  target_frame_topic: "target_pose_adjusted" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
+  joints: *robot_joints
+
+
+  pd_gains:    
+    trans_x: {p: 5.0}
+    trans_y: {p: 5.0}
+    trans_z: {p: 5.0}
+    rot_x: {p: 1.3}
+    rot_y: {p: 1.3}
+    rot_z: {p: 1.3}
+
+
+    
+cartesian_impedance_controller:
+  type: "position_controllers/CartesianMotionController"
+  end_effector_link: "tool0"
+  robot_base_link: "base_link"  #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
+  target_frame_topic: "target_pose_adjusted" #Careful this are urdf parsed frames. So if any sofware solution adds tf_prefixes this leads to errors
+  joints: *robot_joints
+
+
+  pd_gains:    
+    trans_x: {p: 5.0}
+    trans_y: {p: 5.0}
+    trans_z: {p: 5.0}
+    rot_x: {p: 1.3}
+    rot_y: {p: 1.3}
+    rot_z: {p: 1.3}
+

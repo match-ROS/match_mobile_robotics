@@ -6,7 +6,6 @@ find_package(catkin REQUIRED COMPONENTS
   diagnostic_msgs
   dynamic_reconfigure
   geometry_msgs
-  mir_actions
   mir_msgs
   move_base_msgs
   nav_msgs
@@ -31,7 +30,6 @@ catkin_package(
     diagnostic_msgs
     dynamic_reconfigure
     geometry_msgs
-    mir_actions
     mir_msgs
     move_base_msgs
     nav_msgs

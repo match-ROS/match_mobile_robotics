@@ -4,6 +4,8 @@ project(mir_msgs)
 find_package(catkin REQUIRED COMPONENTS
   message_generation
   geometry_msgs
+  actionlib    
+  nav_msgs
 )
 
 ################################################
@@ -30,10 +32,17 @@ add_message_files(
     Trolley.msg
 )
 
+add_action_files(
+  FILES
+    MirMoveBase.action
+    RelativeMove.action
+)
+
 # Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES
-    geometry_msgs
+    geometry_msgs    
+    nav_msgs
 )
 
 ###################################
@@ -41,6 +50,8 @@ generate_messages(
 ###################################
 catkin_package(
   CATKIN_DEPENDS
-    message_runtime
-    geometry_msgs
+    message_runtime    
+    actionlib
+    geometry_msgs    
+    nav_msgs
 )

@@ -2,6 +2,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(mir_driver)
 
 find_package(catkin REQUIRED COMPONENTS
+  roscpp  
+  tf2
+  tf2_ros
+  tf2_geometry_msgs 
   actionlib_msgs
   diagnostic_msgs
   dynamic_reconfigure
@@ -40,6 +44,36 @@ catkin_package(
     tf
     visualization_msgs
 )
+
+
+## Declare a C++ executable
+## With catkin_make all packages are built within a single CMake context
+## The recommended prefix ensures that target names across packages don't collide
+add_executable(map_odom_broadcaster nodes/helper/map_odom_broadcaster.cpp)
+add_executable(map_base_broadcaster nodes/helper/map_base_broadcaster.cpp)
+add_executable(pose_stamper nodes/helper/pose_stamper.cpp)
+add_executable(twist_stamper nodes/helper/twist_stamper.cpp)
+
+
+## Specify libraries to link a library or executable target against
+target_link_libraries(map_odom_broadcaster
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(map_base_broadcaster
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(pose_stamper
+  ${catkin_LIBRARIES}
+)
+target_link_libraries(twist_stamper
+  ${catkin_LIBRARIES}
+)
+
+
+
+
+
+
 
 #############
 ## Install ##

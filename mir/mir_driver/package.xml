@@ -28,6 +28,7 @@
   <depend>python-websocket</depend>
   <depend>rosgraph_msgs</depend>
   <depend>rospy</depend>
+  <depend>roscpp</depend>
   <depend>rospy_message_converter</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>

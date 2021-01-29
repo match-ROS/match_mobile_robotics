@@ -1,15 +1,47 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:macro name="controller_plugin_gazebo" params="robot_namespace">
+		<gazebo>
+			<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+				<xacro:unless value="${robot_namespace == ''}">
+					<robotNamespace>($robot_namespace)</robotNamespace>
+				</xacro:unless>
+				<controlPeriod>0.001</controlPeriod>
+				<legacyModeNS>true</legacyModeNS>
+			</plugin>
+		</gazebo>
+	</xacro:macro>
 
-  <xacro:macro name="controller_plugin_gazebo" params="robot_namespace">
-    <gazebo>
-      <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-        <xacro:unless value="${robot_namespace == ''}">
-          <robotNamespace>($robot_namespace)</robotNamespace>
-        </xacro:unless>
-        <controlPeriod>0.001</controlPeriod>
-        <legacyModeNS>true</legacyModeNS>
-      </plugin>
-    </gazebo>
-  </xacro:macro>
+	<xacro:macro name="p3d_base_controller" params="prefix">
+		<gazebo>
+		<plugin name="p3d_base_controller" filename="libgazebo_ros_p3d.so">
+			<alwaysOn>true</alwaysOn>
+			<updateRate>50.0</updateRate>
+			<bodyName>${prefix}base_footprint</bodyName>
+			<topicName>base_pose_ground_truth</topicName>
+			<gaussianNoise>0.01</gaussianNoise>
+			<frameName>map</frameName>
+			<xyzOffsets>0 0 0</xyzOffsets>
+			<rpyOffsets>0 0 0</rpyOffsets>
+		</plugin>
+		</gazebo>
+	</xacro:macro>
+
+	<!-- <xacro:macro name="set_wheel_friction" params="link friction">
+		<gazebo reference="${link}">
+			<mu1 value="${friction}"/>
+			<mu2 value="${friction}"/>
+			<kp value="10000000.0"/>
+			<kd value="1.0"/>
+		</gazebo>
+	</xacro:macro>
+
+	<xacro:macro name="set_all_wheel_frictions" params="prefix">
+		<xacro:set_wheel_friction link="${prefix}left_wheel_link" friction="200"/>
+		<xacro:set_wheel_friction link="${prefix}right_wheel_link" friction="200"/>
+		<xacro:set_wheel_friction link="${prefix}fl_caster_wheel_link" friction="1"/>
+		<xacro:set_wheel_friction link="${prefix}fr_caster_wheel_link" friction="1"/>
+		<xacro:set_wheel_friction link="${prefix}bl_caster_wheel_link" friction="1"/>
+		<xacro:set_wheel_friction link="${prefix}br_caster_wheel_link" friction="1"/>
+	</xacro:macro> -->
 </robot>

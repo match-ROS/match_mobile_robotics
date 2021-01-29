@@ -44,7 +44,7 @@ DWBLocalPlanner:
   # stateful: true
 
   # Critics (trajectory scoring)
-  #default_critic_namespaces: [dwb_critics, mir_dwb_critics]
+
   critics: [RotateToGoal, Oscillation, ObstacleFootprint, PathAlign, PathDist, PathProgress]
   RotateToGoal:
     scale: 1.0

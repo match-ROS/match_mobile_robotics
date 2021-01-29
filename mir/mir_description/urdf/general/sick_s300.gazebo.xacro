@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-	<xacro:include filename="$(find mir_description)/urdf/include/common_properties.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 
-	<!-- <xacro:macro name="sick_s300_gazebo" params="link topic tf_prefix"> -->
+	<xacro:macro name="sick_s300_gazebo" params="link topic tf_prefix">
 		<gazebo reference="${tf_prefix}${link}">
 			<xacro:insert_block name="material_black" />
 
@@ -41,5 +41,5 @@
 				</plugin>
 			</sensor>
 		</gazebo>
-	<!-- </xacro:macro> -->
+	</xacro:macro>
 </robot>

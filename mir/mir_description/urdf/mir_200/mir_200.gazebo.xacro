@@ -1,9 +1,6 @@
 <?xml version="1.0"?>
-<robot xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
-		xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
-		xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
-		xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.urdf.xacro" />
+<robot xmlns:xacro="http://wiki.ros.org/xacro">
+	<!-- <xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.urdf.xacro" /> -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200_wheels.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/imu.gazebo.xacro" />
@@ -13,7 +10,7 @@
 	<xacro:macro name="mir_200_gazebo" params="tf_prefix">
 
 		<!-- Call MiR200 xacro to get base robot model loaded-->
-		<xacro:mir_200 tf_prefix="${tf_prefix}">
+		<!-- <xacro:mir_200 tf_prefix="${tf_prefix}"> -->
 
 		<!-- Settings for the camera of the robot to work in the simulation environment-->
 		<gazebo reference="camera_link">  
@@ -45,15 +42,15 @@
 		</gazebo>
 
 		<!-- Set gazebo material for the wheels -->
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationtf_prefix="left" locationright="-1"/>
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationtf_prefix="right" locationright="1"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="fl" locationright="-1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="fr" locationright="1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="bl" locationright="-1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="br" locationright="1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
+		<xacro:actuated_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="left"/>
+		<xacro:actuated_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="right"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fl"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fr"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="bl"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="br"/>
 
 		<!-- Settings for the IMU of the robot to work in the simulation environment-->
-		<xacro:imu_gazebo link="${tf_prefix}imu_link" imu_topic="imu_data" update_rate="50.0" stdev="${imu_standard_deviation}" />
+		<xacro:imu_gazebo link="${tf_prefix}imu_link" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
 
 		<!-- -->
 		<p3d_base_controller tf_prefix="${tf_prefix}" />
@@ -111,5 +108,5 @@
 			<xacro:set_wheel_friction link="${prefix}bl_caster_wheel_link" friction="1"/>
 			<xacro:set_wheel_friction link="${prefix}br_caster_wheel_link" friction="1"/>
 		</xacro:macro> -->
-	<xacro:macro>
+	</xacro:macro>
 </robot>

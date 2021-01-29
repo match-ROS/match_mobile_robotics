@@ -106,12 +106,12 @@
 		<link name="${tf_prefix}us_2_frame" />
 
 		<!-- wheels -->
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationtf_prefix="left" locationright="-1"/>
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationtf_prefix="right" locationright="1"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="fl" locationright="-1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="fr" locationright="1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="bl" locationright="-1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationtf_prefix="br" locationright="1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
+		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationprefix="left" locationright="-1"/>
+		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationprefix="right" locationright="1"/>
+		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="fl" locationright="-1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="fr" locationright="1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="bl" locationright="-1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="br" locationright="1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
 
 		<joint name="${tf_prefix}base_link_surface_joint" type="fixed">
 			<origin xyz="${mir_200_act_wheel_dx} 0 0.352" rpy="0 0 0" />

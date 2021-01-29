@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
-	<xacro:include filename="$(find mir_description)/urdf/include/common_properties.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 
 	<xacro:property name="laser_x" value="0.156" />
 	<xacro:property name="laser_y" value="0.155" />

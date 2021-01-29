@@ -3,7 +3,6 @@
 This package came originally from (mir_robot)[https://github.com/dfki-ric/mir_robot].
 
 ## 1. Package overview
-* `mir_actions`: Action definitions for the MiR robot
 * `mir_description`: URDF description of the MiR robot
 * `mir_dwb_critics`: Plugins for the dwb_local_planner used in Gazebo
 * `mir_driver`: A reverse ROS bridge for the MiR robot

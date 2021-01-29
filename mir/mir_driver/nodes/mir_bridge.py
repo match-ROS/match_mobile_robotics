@@ -12,7 +12,6 @@ from actionlib_msgs.msg import GoalID, GoalStatusArray
 from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus
 from dynamic_reconfigure.msg import Config, ConfigDescription
 from geometry_msgs.msg import PolygonStamped, Pose, PoseArray, PoseStamped, PoseWithCovarianceStamped, Twist , TwistStamped
-from mir_actions.msg import *
 from mir_msgs.msg import *
 from move_base_msgs.msg import MoveBaseActionFeedback, MoveBaseActionGoal, MoveBaseActionResult, MoveBaseFeedback, MoveBaseResult
 from nav_msgs.msg import GridCells, MapMetaData, OccupancyGrid, Odometry, Path
@@ -32,7 +31,7 @@ class TopicConfig(object):
         self.latch = latch
         self.dict_filter = dict_filter
 
-# remap mir_actions/MirMoveBaseAction => move_base_msgs/MoveBaseAction
+# remap mir_msgs/MirMoveBaseAction => move_base_msgs/MoveBaseAction
 def _move_base_feedback_dict_filter(msg_dict):
     # filter out slots from the dict that are not in our message definition
     # e.g., MiRMoveBaseFeedback has the field "state", which MoveBaseFeedback doesn't

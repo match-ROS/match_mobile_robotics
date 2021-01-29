@@ -1,6 +1,6 @@
 <launch>
     <arg name="tf_prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
-     <arg name="global_planner" default="GlobalPlanner"  />
+    <arg name="global_planner" default="GlobalPlanner"  />
     <arg name="local_planner"   default="DWAPlannerROS" />
 
     <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
@@ -26,8 +26,8 @@
         <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params.yaml" command="load" subst_value="true" />
         <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params_plugins.yaml" command="load"/>
 
-        <!-- Remappings -->
-        <remap from="map" to="/map" />
-        <remap from="cmd_vel" to="cmd_vel_mir"/>
+        <!-- Remappings -->        
+        <remap from="cmd_vel" to="mobile_base_controller/cmd_vel"/>
+        <remap from="odom" to="mobile_base_controller/odom"/>
     </node>
 </launch>

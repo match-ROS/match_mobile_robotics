@@ -51,6 +51,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <depend>roscpp</depend>
   <depend>controller_interface</depend>
+  <depend>franka_hw</depend>
   <depend>pluginlib</depend>
 
   <!-- The export tag contains other, unspecified, tags -->

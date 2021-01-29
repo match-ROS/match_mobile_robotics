@@ -1,0 +1,6 @@
+<launch>
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="true"/>
+        <arg name="world_name" value="worlds/cafe.world"/>
+    </include>
+</launch>

@@ -14,8 +14,8 @@
 
   
   <!-- Start the controllers -->
-  <rosparam file="$(find mir_gazebo)/config/gazebo_joint_state_controller.yaml" command="load" />
-  <rosparam file="$(find mir_gazebo)/config/gazebo_diffdrive_controller.yaml" command="load"/>
+  <rosparam file="$(find mir_gazebo)/config/gazebo_joint_state_controller.yaml" command="load"/>
+  <rosparam file="$(find mir_gazebo)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
   <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
     args="joint_state_controller mobile_base_controller">
   </node>
@@ -23,6 +23,9 @@
 
   <!-- Robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" />
+
+  <node pkg="topic_tools" type="relay" name="b_scan_relay" args="b_scan scan"/>
+  <node pkg="topic_tools" type="relay" name="f_scan_relay" args="f_scan scan"/>
 
 
   <node name="b_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
@@ -34,4 +37,5 @@
     <remap from="scan" to="f_scan" />
     <remap from="scan_filtered" to="f_scan_rep117" />
   </node>
+
 </launch>

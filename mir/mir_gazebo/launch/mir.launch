@@ -3,13 +3,18 @@
   <arg name="robot_x"   default="0.0" />
   <arg name="robot_y"   default="0.0" />
   <arg name="robot_yaw" default="0.0" />
-  <arg name="prefix"    default="" />
+  <arg name="tf_prefix"    default="" />
+  <arg name="model_name" default="mir"/>
+
+  <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
+  <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
+   
 
   <!-- Load URDF -->
   <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mir_description)/urdf/mir.urdf.xacro" />
 
   <!-- Spawn the robot into Gazebo -->
-  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model mir
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg model_name)
     -x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) " />
 
   
@@ -22,7 +27,9 @@
 
 
   <!-- Robot state publisher -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen" />
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+    <param name="tf_prefix" value="$(arg tf_prefix)"/>
+  </node>
 
   <node pkg="topic_tools" type="relay" name="b_scan_relay" args="b_scan scan"/>
   <node pkg="topic_tools" type="relay" name="f_scan_relay" args="f_scan scan"/>

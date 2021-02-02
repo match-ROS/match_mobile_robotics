@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://wiki.ros.org/xacro">
-	<!-- <xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.urdf.xacro" /> -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200_wheels.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/imu.gazebo.xacro" />
@@ -8,10 +7,6 @@
 	<xacro:property name="imu_standard_deviation" value="0.00017" />
 
 	<xacro:macro name="mir_200_gazebo" params="tf_prefix">
-
-		<!-- Call MiR200 xacro to get base robot model loaded-->
-		<!-- <xacro:mir_200 tf_prefix="${tf_prefix}"> -->
-
 		<!-- Settings for the camera of the robot to work in the simulation environment-->
 		<gazebo reference="camera_link">  
 			<sensor type="depth" name="camera">

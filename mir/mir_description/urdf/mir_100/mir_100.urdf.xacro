@@ -39,27 +39,24 @@
 		</joint>
 
 		<link name="${prefix}base_link">
-		<xacro:box_inertial mass="${mir_100_base_mass}" x="0.9" y="0.58" z="0.3">
-			<origin xyz="${mir_100_act_wheel_dx} 0 0.20" rpy="0 0 0" />
-		</xacro:box_inertial>
-		<visual>
-			<origin xyz="${mir_100_act_wheel_dx} 0 0" rpy="0 0 0" />
-			<geometry>
-				<mesh filename="package://mir_description/meshes/visual/mir_100_base.stl" />
-			</geometry>
-			<xacro:insert_block name="material_white" />
-		</visual>
-		<collision>
-			<origin xyz="${mir_100_act_wheel_dx} 0 0" rpy="0 0 0" />
-			<geometry>
-				<mesh filename="package://mir_description/meshes/collision/mir_100_base.stl" />
-			</geometry>
-		</collision>
+			<xacro:box_inertial mass="${mir_100_base_mass}" x="0.9" y="0.58" z="0.3">
+				<origin xyz="${mir_100_act_wheel_dx} 0 0.20" rpy="0 0 0" />
+			</xacro:box_inertial>
+			<visual>
+				<origin xyz="${mir_100_act_wheel_dx} 0 0" rpy="0 0 0" />
+				<geometry>
+					<mesh filename="package://mir_description/meshes/visual/mir_100_base.stl" />
+				</geometry>
+				<xacro:insert_block name="material_white" />
+			</visual>
+			<collision>
+				<origin xyz="${mir_100_act_wheel_dx} 0 0" rpy="0 0 0" />
+				<geometry>
+					<mesh filename="package://mir_description/meshes/collision/mir_100_base.stl" />
+				</geometry>
+			</collision>
 		</link>
-			<gazebo reference="${prefix}base_link">
-			<material>Gazebo/White</material>
-		</gazebo>
-
+		
 		<!-- IMU -->
 		<joint name="${prefix}base_link_to_imu_joint" type="fixed">
 			<parent link="${prefix}base_link" />
@@ -68,8 +65,6 @@
 		</joint>
 
 		<link name="${prefix}imu_link" />
-
-		<xacro:imu_gazebo link="${prefix}imu_link" imu_topic="imu_data" update_rate="50.0" stdev="${imu_stdev}" />
 
 		<!-- Create an alias for imu_link. This is necessary because the real MiR's
 			TF has imu_link, but the imu_data topic is published in the imu_frame

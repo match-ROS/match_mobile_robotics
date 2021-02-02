@@ -1,10 +1,12 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="test" >
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mir200" >
+
+	<xacro:arg name="tf_prefix" default=''/>
 
 	<!-- MiR200 base -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.gazebo.xacro" />
 
-	<xacro:mir_200 tf_prefix=""/>
-	<xacro:mir_200_gazebo tf_prefix=""/>
+	<xacro:mir_200 tf_prefix="$(arg tf_prefix)"/>
+	<xacro:mir_200_gazebo tf_prefix="$(arg tf_prefix)"/>
 </robot>

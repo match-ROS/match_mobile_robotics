@@ -8,6 +8,11 @@
 * `mur_hardware_helper`: Contains helper packages that can be used for the combination of ur and mir
 
 # 2. Installation
+Start by changeing directory to your catkin workspace!
+### Clone package
+```
+git clone https://github.com/ibMH/Helper_Tools.git src/Helper_Tools
+```
 ### Install dependencies
 ```
 git clone https://github.com/ibMH/Helper_Tools.git
@@ -21,8 +26,14 @@ rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```
 ### Build packages
-Use your standard build system to build the downloaded packages
-
+Use your standard build tools to build the downloaded packages e.g. : 
+```
+catkin_make
+```
+or
+```
+catkin build
+```
 ## 3. External doc:
 [Ur dashboard](https://s3-eu-west-1.amazonaws.com/ur-support-site/15690/Dashboard_Server_CB-Series.pdf)  
 [UR Ros driver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/tree/64ab483b550a1c079c70162d2d3c2eb21ecde76e)  

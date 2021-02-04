@@ -53,7 +53,7 @@
   <depend>controller_interface</depend>
   <depend>franka_hw</depend>
   <depend>pluginlib</depend>
-
+  <depend>franka_hw</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <controller_interface plugin="${prefix}/panda_controllers_extended.xml"/>

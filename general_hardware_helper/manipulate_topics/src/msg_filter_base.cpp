@@ -1,6 +1,4 @@
-#include <manipulate_topics/msg_filter_base.h>
-
-
+//Directly included within the hpp
 template<class T>
 MessageFilterBase<T>::MessageFilterBase(ros::NodeHandle &nh):
                                     nh_(nh),

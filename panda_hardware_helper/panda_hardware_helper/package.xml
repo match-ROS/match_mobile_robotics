@@ -51,6 +51,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>ros_controllers</exec_depend>
   <build_depend>combined_robot_hw</build_depend>
+  <depend>sensor_msgs</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

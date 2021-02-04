@@ -49,43 +49,45 @@ bool CartesianController::init(hardware_interface::RobotHW* robot_hardware,
   try {
     auto state_handle = state_interface->getHandle(arm_id + "_robot");
 
-    std::array<double, 7> q_start{{0, -M_PI_4, 0, -3 * M_PI_4, 0, M_PI_2, M_PI_4}};
-    for (size_t i = 0; i < q_start.size(); i++) {
-      if (std::abs(state_handle.getRobotState().q_d[i] - q_start[i]) > 0.1) {
-        ROS_ERROR_STREAM(
-            "CartesianController: Robot is not in the expected starting position for "
-            "running this example. Run `roslaunch franka_example_controllers move_to_start.launch "
-            "robot_ip:=<robot-ip> load_gripper:=<has-attached-gripper>` first.");
-        return false;
-      }
-    }
   } catch (const hardware_interface::HardwareInterfaceException& e) {
     ROS_ERROR_STREAM(
         "CartesianController: Exception getting state handle: " << e.what());
     return false;
   }
 
+  this->target_pose_sub_=node_handle.subscribe("target_pose",1,&CartesianController::targetPoseCallback,this);
+  this->position_d_target_.setZero();
+  this->orientation_d_target_.setIdentity();
   return true;
 }
 
 void CartesianController::starting(const ros::Time& /* time */) {
   initial_pose_ = cartesian_pose_handle_->getRobotState().O_T_EE_d;
-  elapsed_time_ = ros::Duration(0.0);
-  desired_pose_ = initial_pose_;
+  Eigen::Affine3d transform(Eigen::Matrix4d::Map(initial_pose_.data()));
+  
+  this->position_d_target_=transform.translation();
+  this->orientation_d_target_ =transform.linear();
 }
 
 void CartesianController::update(const ros::Time& /* time */,
-                                            const ros::Duration& period) {
-  elapsed_time_ += period;
+                                            const ros::Duration& period) 
+{
+  Eigen::Transform<double,3,Eigen::Affine> O_T_EE_d;
+  O_T_EE_d.linear()<<this->orientation_d_target_.toRotationMatrix();
+  O_T_EE_d.translation()<<this->position_d_target_;  
 
-  
-  std::array<double, 16> new_pose = initial_pose_;
-
+  // ROS_INFO_STREAM(O_T_EE_d.matrix());
+  std::array<double, 16> new_pose;
+  Eigen::Map<Eigen::Matrix4d,Eigen::RowMajor>(new_pose.data())=O_T_EE_d.matrix();
   cartesian_pose_handle_->setCommand(new_pose);
+  
+  position_d_ = filter_params_ * position_d_target_ + (1.0 - filter_params_) * position_d_;
+  orientation_d_ = orientation_d_.slerp(filter_params_, orientation_d_target_);  
 }
 
-void CartesianController::equilibriumPoseCallback(
-    const geometry_msgs::PoseStampedConstPtr& msg) {
+void CartesianController::targetPoseCallback(
+    const geometry_msgs::PoseStampedConstPtr& msg) 
+{      
   position_d_target_ << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
   Eigen::Quaterniond last_orientation_d_target(orientation_d_target_);
   orientation_d_target_.coeffs() << msg->pose.orientation.x, msg->pose.orientation.y,

@@ -20,7 +20,6 @@ class NetBoxRosWrapper:
         self.__publisher=rospy.Publisher("wrench",WrenchStamped,queue_size=10)
         self.__set_zero_srv=rospy.Service("~set_zero",Trigger,self.__setZeroCallback__)        
        
-
         self.__socket=NetBoxSocket(ip_adress,port)
         self.__socket.startStreaming()          
         sample=self.__socket.getSingleSample()       

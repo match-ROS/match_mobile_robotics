@@ -51,6 +51,9 @@
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>ros_controllers</exec_depend>
   <exec_depend>cartesian_compliance_controller</exec_depend>
+  <exec_depend>ur_controllers_extended</exec_depend>
+  <exec_depend>ur_robot_driver</exec_depend>
+  <exec_depend>universal_robot</exec_depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

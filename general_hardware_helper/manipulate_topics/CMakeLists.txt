@@ -9,6 +9,8 @@ project(manipulate_topics)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
               roscpp
+              dynamic_reconfigure
+              tf2_ros
 )
 
 ## System dependencies are found with CMake's conventions
@@ -86,10 +88,9 @@ catkin_python_setup()
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
-#   cfg/DynReconf2.cfg
-# )
+generate_dynamic_reconfigure_options(
+  cfg/mean.cfg
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -119,19 +120,46 @@ include_directories(
 )
 
 ## Declare a C++ library
+add_library(message_operators
+  include/${PROJECT_NAME}/msg_operators.hpp
+  include/${PROJECT_NAME}/operators/vector3.hpp
+  include/${PROJECT_NAME}/operators/joint_state.hpp
+  include/${PROJECT_NAME}/operators/twist.hpp
+  include/${PROJECT_NAME}/operators/twist_stamped.hpp 
+  include/${PROJECT_NAME}/operators/wrench.hpp
+  include/${PROJECT_NAME}/operators/wrench_stamped.hpp
+)
+set_target_properties(message_operators PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(message_operators
+  ${catkin_LIBRARIES}
+)
+
 add_library(message_convolution_filters
   include/${PROJECT_NAME}/msg_filters.hpp
 
-  include/${PROJECT_NAME}/msg_operators.hpp
+  include/${PROJECT_NAME}/msg_diff_filter.hpp
+  
+  include/${PROJECT_NAME}/msg_filter_base.hpp
 
-  include/${PROJECT_NAME}/msg_filter_base.h
-  src/msg_filter_base.cpp
-
-  include/${PROJECT_NAME}/msg_mean_filter.h
-  src/msg_mean_filter.cpp
-
+  include/${PROJECT_NAME}/msg_mean_filter.hpp
 )
 set_target_properties(message_convolution_filters PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(message_convolution_filters
+  message_operators
+  ${catkin_LIBRARIES}
+)
+add_dependencies(message_convolution_filters ${PROJECT_NAME}_gencfg)
+
+
+add_library(msg_transformations
+  include/${PROJECT_NAME}/msg_static_transformer.hpp
+)
+set_target_properties(msg_transformations PROPERTIES LINKER_LANGUAGE CXX)
+target_link_libraries(msg_transformations
+  message_operators
+  ${catkin_LIBRARIES}
+)
+
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -140,32 +168,44 @@ set_target_properties(message_convolution_filters PROPERTIES LINKER_LANGUAGE CXX
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(wrench_stamped_mean_filter nodes/wrench_stamped_mean_filter.cpp)
-add_executable(joints_mean_filter nodes/joints_mean_filter.cpp)
 
-## Rename C++ executable without prefix
-## The above recommended prefix causes long target names, the following renames the
-## target back to the shorter version for ease of user use
-## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+function(generate_mean_filter message_type)
+  add_executable(${message_type}_mean_filter nodes/mean_filter_${message_type}.cpp)
+    
+  target_link_libraries(${message_type}_mean_filter
+    message_convolution_filters
+    ${catkin_LIBRARIES}
+  )
+endfunction()
 
-## Add cmake target dependencies of the executable
-## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-## Specify libraries to link a library or executable target against
-target_link_libraries(message_convolution_filters
-  ${catkin_LIBRARIES}
-)
+function(generate_diff_filter message_type)
+  add_executable(${message_type}_diff_filter nodes/diff_filter_${message_type}.cpp)
+    
+  target_link_libraries(${message_type}_diff_filter
+    message_convolution_filters
+    ${catkin_LIBRARIES}
+  )
+endfunction()
 
-target_link_libraries(wrench_stamped_mean_filter
-  message_convolution_filters
-  ${catkin_LIBRARIES}
-)
-target_link_libraries(joints_mean_filter
-  message_convolution_filters
-  ${catkin_LIBRARIES}
-)
+
+function(generate_static_transformer message_type)
+  add_executable(${message_type}_static_transformer nodes/static_transformer_${message_type}.cpp)
+    
+  target_link_libraries(${message_type}_static_transformer
+    msg_transformations
+    ${catkin_LIBRARIES}
+  )
+endfunction()
+
+
+generate_mean_filter(wrench_stamped)
+generate_mean_filter(joint_state)
+generate_mean_filter(twist_stamped)
+generate_diff_filter(twist_stamped)
+
+generate_static_transformer(wrench_stamped)
+
 
 #############
 ## Install ##

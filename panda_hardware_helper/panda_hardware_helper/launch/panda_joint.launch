@@ -1,0 +1,9 @@
+<launch>
+    <arg name="tf_prefix" default=""/>   
+
+    <include file="$(find panda_hardware_helper)/launch/panda.launch" pass_all_args="true">
+        <arg name="controllers_started" default="franka_state_controller position_joint_controller"/>       
+        <arg name="pose_filename" value="$(find panda_hardware_helper)/poses/panda_poses.yaml"/>
+   </include>
+
+</launch>

@@ -2,21 +2,27 @@
 import rospy
 from std_srvs.srv import SetBool
 import actionlib
-from control_msgs.msg import GripperCommandAction,GripperCommandGoal
+from franka_gripper.msg import GraspAction,GraspGoal
 
-client=actionlib.ActionClient("franka_gripper/gripper_action",GripperCommandAction)
+client=actionlib.ActionClient("franka_gripper/grasp",GraspAction)
 
 def gripCallback(req):
     global client
-    goal=GripperCommandGoal()
+    goal=GraspGoal()
   
     if not req.data:
-        goal.command.position=0.035
-        goal.command.max_effort=20
+        goal.width=0.05        
+        goal.force=10
+        goal.speed=0.1
+        goal.epsilon.outer=0.05
+        goal.epsilon.inner=0.05      
         msg="Released"
     else :
-        goal.command.position=0.0
-        goal.command.max_effort=20
+        goal.width=0.00
+        goal.force=10
+        goal.speed=0.1
+        goal.epsilon.outer=0.05
+        goal.epsilon.inner=0.05        
         msg="Gripped"
     
     client.send_goal(goal)

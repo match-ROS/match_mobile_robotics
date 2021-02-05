@@ -1,11 +1,12 @@
 <launch>
     <arg name="tf_prefix" default=""/>
-    <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
-    <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
+    <arg name="controllers_started" default="joint_state_controller"/>
+    <arg name="controllers_stopped" default="empty"/>
     <arg name="pose_filename" default=""/>
     <arg name="has_ft_sensor" default="true"/>
     <arg name="has_ft_watchdog" default="true"/>
 
+    <remap from="compliance_controller/wrench" to="wrench_filtered"/>
 
     <!-- Bringup the enabeling procdeure for the ur -->
     <node pkg="ur_hardware_helper" type="enable_ur.py" name="enable_ur" output="screen" />
@@ -40,7 +41,7 @@
     <!-- Add a ft sensor if there is one-->    
     <include if="$(eval has_ft_sensor)" file="$(find ur_hardware_helper)/launch/ft_sensor.launch"/>
 
-    <node name="joint_state_filter" type="joints_mean_filter" pkg="manipulate_topics" output="screen">
+    <node name="joint_state_filter" type="joint_state_mean_filter" pkg="manipulate_topics" output="screen">
         <rosparam command="load" file="$(find ur_hardware_helper)/config/ft_filter.yaml"/>
         <remap from="input" to="joint_states"/>
         <remap from="output" to="joint_states_filtered"/>

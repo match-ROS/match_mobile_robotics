@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from robot_teacher.PoseTeacher import TeachedPoseHandler
+from robot_teacher.JointTeacher import TeachedPoseHandler
 import rospy
 if __name__=="__main__":
     try:

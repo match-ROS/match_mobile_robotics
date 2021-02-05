@@ -12,3 +12,7 @@
 	path = panda_hardware_helper/franka_ros
 	url = https://github.com/frankaemika/franka_ros.git
 	branch = melodic-devel
+[submodule "panda_hardware_helper/panda_moveit_config"]
+	path = panda_hardware_helper/panda_moveit_config
+	url = https://github.com/ros-planning/panda_moveit_config.git
+	branch = melodic-devel

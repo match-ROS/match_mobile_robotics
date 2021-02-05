@@ -25,8 +25,6 @@
 	<xacro:property name="mir_200_caster_wheel_base_dy" value="0.203" />
 	<xacro:property name="mir_200_caster_wheel_base_dz" value="${mir_200_caster_wheel_radius-mir_200_caster_wheel_dz}" />
 
-	
-
 	<xacro:macro name="mir_200" params="tf_prefix">
 		<link name="${tf_prefix}base_footprint" />
 

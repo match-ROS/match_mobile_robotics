@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-	
+	<xacro:include filename="$(find mir_description)/urdf/general/imu.gazebo.xacro" />
+
+	<xacro:property name="imu_standard_deviation" value="0.00017" />
+
 	<xacro:macro name="mir_100_gazebo" params="tf_prefix">
 
 		<!-- Set Gazebo material for the base -->
@@ -9,10 +12,24 @@
 		</gazebo>
 
 		<!-- Settings for the IMU of the robot to work in the simulation environment-->
-		<xacro:imu_gazebo link="${prefix}imu_link" imu_topic="imu_data" update_rate="50.0" stdev="${imu_stdev}" />
+		<xacro:imu_gazebo link="${tf_prefix}imu_link" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
+
+		<p3d_base_controller prefix="${prefix}" />
+
+		<!-- wheels -->
+		<xacro:actuated_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="left"/>
+		<xacro:actuated_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="right"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fl"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fr"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="bl"/>
+		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="br"/>
 
 		<!-- This part of the file looks like it is not necessary for the correct function of the urdf files.-->
 		<!-- Remove this part in a second iteration when all functions are working like they are supposed to be-->
+
+		<!-- disabled, because it doesn't make a difference in Gazebo: -->
+		<!-- <xacro:set_all_wheel_frictions prefix="${prefix}"/> -->
+
 		<!-- <xacro:macro name="diff_controller_plugin_gazebo" params="prefix left_wheel_joint right_wheel_joint wheel_separation wheel_radius">
 			<gazebo>
 				<plugin name="diff_drive_controller" filename="libgazebo_ros_diff_drive.so">

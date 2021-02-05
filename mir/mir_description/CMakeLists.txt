@@ -17,7 +17,7 @@ catkin_package()
 # Mark other files for installation (e.g. launch and bag files, etc.)
 install(DIRECTORY
   config
-  launch
+#   launch
   meshes
   rviz
   urdf
@@ -28,4 +28,4 @@ install(DIRECTORY
 ## Testing ##
 #############
 
-roslaunch_add_file_check(launch)
+# roslaunch_add_file_check(launch)

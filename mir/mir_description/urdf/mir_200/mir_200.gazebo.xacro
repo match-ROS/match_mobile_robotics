@@ -50,7 +50,10 @@
 		<!-- -->
 		<p3d_base_controller tf_prefix="${tf_prefix}" />
 
-
+		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo-->
+		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
+		<xacro:macro name="sick_s300_gazebo" link="front_laser_link" topic="f_scan" tf_prefix="${tf_prefix}"/>
+		<xacro:macro name="sick_s300_gazebo" link="back_laser_link" topic="b_scan" tf_prefix="${tf_prefix}"/>
 
 
 

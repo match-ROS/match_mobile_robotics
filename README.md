@@ -22,6 +22,11 @@ cd ../..
 rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```
+If the last `rosdep install` command is not working, please try the following:
+```
+rosdep install --from-paths src --ignore-src -r -y
+```
+
 ### Build packages
 Use your standard build tools to build the downloaded packages e.g. : 
 ```

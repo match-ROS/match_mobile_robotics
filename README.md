@@ -1,5 +1,6 @@
 # Helper Tools
 ## 1. Repository overview
+This will be updated shortly
 * `general_hardware_helper`: Contains helper packages that can be used for generic robots
 * `mir_hardware_helper`: Contains helper packages that can be used for Mir100/Mir200
 * `ur_hardware_helper`: Contains helper packages that can be used for Ur5
@@ -11,26 +12,18 @@
 Start by changeing directory to your catkin workspace!
 ### Clone package
 ```
-git clone https://github.com/ibMH/Helper_Tools.git src/Helper_Tools
+git clone https://github.com/matchRos/Match_Mobile_Robotics.git
 ```
 ### Install dependencies
+Browse into catkin_ws/src/Match_Mobile_Robotics and execute
 ```
-git clone https://github.com/ibMH/Helper_Tools.git
-```
-Browse into catkin_ws/src/Helper_Tools and execute
-```
-git submodule init
-git submodule update
+git submodule update --init --recursive
 cd ../..
 rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 ```
 ### Build packages
 Use your standard build tools to build the downloaded packages e.g. : 
-```
-catkin_make
-```
-or
 ```
 catkin build
 ```

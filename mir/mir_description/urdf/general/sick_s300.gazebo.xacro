@@ -3,7 +3,7 @@
 
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 
-	<xacro:macro name="sick_s300_gazebo" params="link topic tf_prefix">
+	<xacro:macro name="sick_s300_gazebo" params="tf_prefix link topic">
 		<gazebo reference="${tf_prefix}${link}">
 			<xacro:insert_block name="material_black" />
 

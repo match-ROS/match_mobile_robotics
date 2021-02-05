@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:include filename="$(find mir_description)/urdf/general/imu.gazebo.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.gazebo.xacro" />
 
 	<xacro:property name="imu_standard_deviation" value="0.00017" />
 
@@ -23,6 +24,11 @@
 		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fr"/>
 		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="bl"/>
 		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="br"/>
+
+		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo-->
+		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
+		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="front_laser_link" topic="f_scan"/>
+		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="back_laser_link" topic="b_scan"/>
 
 		<!-- This part of the file looks like it is not necessary for the correct function of the urdf files.-->
 		<!-- Remove this part in a second iteration when all functions are working like they are supposed to be-->

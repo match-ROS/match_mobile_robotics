@@ -1,5 +1,10 @@
 <launch>
-    <include file="$(find ur_hardware_helper)/launch/ur_cartesian_control.launch"/>
+
+    <include file="$(find ur_launch_hardware)/launch/ur.launch">
+        <arg name="controllers_started" value="joint_state_controller cartesian_controller"/> 
+        <arg name="pose_filename" value="poses/ur_teached_poses.yaml"/>
+    </include>
+    
     <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
         <remap from="pose" to="cartesian_controller/target_pose"/>
         <param name="base_frame" value="base_link"/>

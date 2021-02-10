@@ -1,5 +1,5 @@
 <launch>
-    <include file="$(find ur_hardware_helper)/launch/ur.launch">
+    <include file="$(find ur_launch_hardware)/launch/ur.launch">
         <arg name="controllers_started" default="joint_state_controller position_joint_controller"/>       
     </include>
 </launch>

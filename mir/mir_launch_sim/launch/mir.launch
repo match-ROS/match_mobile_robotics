@@ -19,8 +19,8 @@
 
   
   <!-- Start the controllers -->
-  <rosparam file="$(find mir_gazebo)/config/gazebo_joint_state_controller.yaml" command="load"/>
-  <rosparam file="$(find mir_gazebo)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
+  <rosparam file="$(find mir_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
+  <rosparam file="$(find mir_launch_sim)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
   <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
     args="joint_state_controller mobile_base_controller">
   </node>

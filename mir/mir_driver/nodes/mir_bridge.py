@@ -144,7 +144,7 @@ PUB_TOPICS = [
             #   TopicConfig('mir_serial_button', Serial),
             #   TopicConfig('mir_sound', String),
             #   TopicConfig('mir_status', MirStatus),
-               TopicConfig('mir_status_msg', String),
+            #   TopicConfig('mir_status_msg', String),
             #   TopicConfig('mirwebapp/grid_map_metadata', LocalMapStat),
             #   TopicConfig('mirwebapp/laser_map_metadata', LocalMapStat),
               TopicConfig('odom', Odometry),   
@@ -175,8 +175,7 @@ PUB_TOPICS = [
 # topics we want to subscribe to from ROS (and publish to the MiR)
 SUB_TOPICS = [TopicConfig('cmd_vel', TwistStamped),
               TopicConfig('initialpose', PoseWithCovarianceStamped),
-              TopicConfig('light_cmd', String),
-            #  TopicConfig('mir_sound', String)
+            #   TopicConfig('light_cmd', String),
             #   TopicConfig('mir_cmd', String),
             #   TopicConfig('move_base_simple/goal', PoseStamped),
             #   TopicConfig('relative_move_action/cancel', GoalID),

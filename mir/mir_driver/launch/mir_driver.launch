@@ -44,7 +44,7 @@
     <remap from="tf_static" to="tf_static_mir" />
   </node>
 
-  <node name="map_link_dummie" pkg="mir_drive" type="map_odom_broadcaster">
+  <node name="map_link_dummie" pkg="mir_driver" type="map_odom_broadcaster">
     <param name="tf_prefix" value="$(arg tf_prefix)"/>
   </node>
 

@@ -96,22 +96,4 @@
 			</collision>
 		</link>
 	</xacro:macro>
-
-	<xacro:macro name="mir_200_wheel_transmission" params="tf_prefix locationprefix">
-		<transmission name="${tf_prefix}${locationprefix}_wheel_trans">
-		<type>transmission_interface/SimpleTransmission</type>
-		<joint name="${tf_prefix}${locationprefix}_wheel_joint">
-			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-		</joint>
-		<actuator name="${tf_prefix}${locationprefix}_wheel_motor">
-			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
-			<mechanicalReduction>1</mechanicalReduction>
-		</actuator>
-		</transmission>
-	</xacro:macro>
-
-	<xacro:macro name="mir_200_wheel_transmissions" params="tf_prefix">
-		<xacro:mir_200_wheel_transmission tf_prefix="${tf_prefix}" locationprefix="left"/>
-		<xacro:mir_200_wheel_transmission tf_prefix="${tf_prefix}" locationprefix="right"/>
-	</xacro:macro>
 </robot>

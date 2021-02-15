@@ -3,6 +3,7 @@
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200_wheels.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/imu.gazebo.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
 
 	<xacro:property name="imu_standard_deviation" value="0.00017" />
 
@@ -47,16 +48,16 @@
 		<!-- Settings for the IMU of the robot to work in the simulation environment-->
 		<xacro:imu_gazebo link="${tf_prefix}imu_link" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
 
-		<!-- -->
-		<p3d_base_controller tf_prefix="${tf_prefix}" />
+		<!--  -->
+		<!-- <p3d_base_controller tf_prefix="${tf_prefix}" /> -->
 
 		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo-->
 		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
 		<xacro:macro name="sick_s300_gazebo" link="front_laser_link" topic="f_scan" tf_prefix="${tf_prefix}"/>
 		<xacro:macro name="sick_s300_gazebo" link="back_laser_link" topic="b_scan" tf_prefix="${tf_prefix}"/>
 
-
-
+		<!-- Add transmissions to wheels -->
+		<xacro:mir_200_wheel_transmissions tf_prefix="${tf_prefix}"/>
 
 		<!-- disabled, because it doesn't make a difference in Gazebo: -->
 		<!-- <xacro:set_all_wheel_frictions tf_prefix="${tf_prefix}"/> -->

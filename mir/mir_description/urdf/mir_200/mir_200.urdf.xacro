@@ -120,8 +120,6 @@
 
 		<link name="${tf_prefix}surface"/>
 
-		<xacro:mir_200_wheel_transmissions tf_prefix="${tf_prefix}"/>
-
 		<!-- Camera -->
 		<link name="camera_link">
 		<collision>

@@ -1,6 +1,6 @@
 <launch>
     <arg name="tf_prefix" default="miranda"/>
-    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="mir" pass_all_args="true">
+    <include file="$(find mir_launch_hardware)/launch/mir.launch" ns="mir" pass_all_args="true">
         <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
     </include>
 

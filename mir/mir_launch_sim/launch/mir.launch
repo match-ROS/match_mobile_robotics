@@ -1,9 +1,9 @@
 <?xml version="1.0" ?>
 <launch>
+  <arg name="tf_prefix"    default="" />
   <arg name="robot_x"   default="0.0" />
   <arg name="robot_y"   default="0.0" />
-  <arg name="robot_yaw" default="0.0" />
-  <arg name="tf_prefix"    default="" />
+  <arg name="robot_yaw" default="0.0" />  
   <arg name="model_name" default="mir"/>
 
   <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->

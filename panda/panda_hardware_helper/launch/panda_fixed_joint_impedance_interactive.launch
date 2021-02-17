@@ -1,0 +1,13 @@
+<launch>
+    <arg name="tf_prefix" default=""/>
+
+    <include file="$(find panda_hardware_helper)/launch/panda_fixed_joint_impedance.launch" pass_all_args="true"/>
+
+    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
+        <remap from="pose" to="fixed_joint_impedance_controller/target_pose"/>
+        <param unless="$(eval tf_prefix =='')" name="base_frame" value="$(arg tf_prefix)/panda_link0"/>
+        <param unless="$(eval tf_prefix =='')" name="ee_frame" value="$(arg tf_prefix)/panda_EE"/>
+        <param if="$(eval tf_prefix =='')" name="base_frame" value="panda_link0"/>
+        <param if="$(eval tf_prefix =='')" name="ee_frame" value="panda_EE"/>
+    </node>
+</launch>

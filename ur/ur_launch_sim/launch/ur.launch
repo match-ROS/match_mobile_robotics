@@ -13,11 +13,18 @@
     <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
 
     <param name="robot_description" 
-        command="$(find xacro)/xacro $(find ur_description)/urdf/ur5_robot.urdf.xacro transmission_hw_interface:=$(arg transmission_hw_interface)  tf_prefix:=$(arg tf_prefix)" /> 
+        command="$(find xacro)/xacro $(find ur_description)/urdf/ur5_robot.urdf.xacro transmission_hw_interface:=$(arg transmission_hw_interface)  tf_prefix:=$(arg tf_prefix)"/> 
     
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
             args="-urdf -param robot_description -model $(arg robot_name) $(arg init_pose)" 
             respawn="false" output="screen"/>          
+
+     <!-- Start the controllers -->
+    <rosparam file="$(find ur_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
+    <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+        args="joint_state_controller">
+    </node>
+
 
      <!-- Robot state publisher -->
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">

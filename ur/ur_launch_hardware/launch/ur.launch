@@ -1,7 +1,7 @@
 <launch>
     <arg name="tf_prefix" default=""/>
-    <arg name="controllers_started" default="joint_state_controller force_torque_sensor_controller"/>
-    <arg name="controllers_stopped" default="force_torque_sensor_controller"/>
+    <arg name="controllers_started" default="joint_state_controller"/>
+    <arg name="controllers_stopped" default="position_joint_controller"/>
     <arg name="pose_filename" default=""/>
     <arg name="has_ft_sensor" default="true"/>
     <arg name="has_ft_watchdog" default="true"/>
@@ -9,15 +9,7 @@
 
     <!-- Bringup the enabeling procdeure for the ur -->
     <node pkg="ur_launch_hardware" type="enable_ur.py" name="enable_ur" output="screen" />
-    <!-- Make sure the controllers topic dont contain tf prefixes since they may be checked against urdf files -->
-    <node pkg="manipulate_topics" type="remove_pose_tf_prefix.py" name="cartesian_controller_tf_prefix_remover">
-        <remap from="topic_in" to="cartesian_controller/target_pose"/>
-        <remap from="topic_out" to="cartesian_controller/target_pose_adjusted"/>
-    </node>
-    <node pkg="manipulate_topics" type="remove_pose_tf_prefix.py" name="cartesian_impedance_tf_prefix_remover">
-        <remap from="topic_in" to="cartesian_impedance_controller/target_pose"/>
-        <remap from="topic_out" to="cartesian_impedance_controller/target_pose_adjusted"/>
-    </node>
+     
     <!-- Bringup an sevice for calling the gripper by ros (mostly for constency to other robot hardware) -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
 
@@ -30,19 +22,5 @@
         <arg name="kinematics_config" value="$(find ur_launch_hardware)/config/calibration.yaml"/>
         <arg name="robot_ip" value="ur"/>        
     </include>
-    
-    <!-- Node for easily teaching robot poses -->
-    <node unless="$(eval pose_filename=='')" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" >
-       <rosparam command="load" file="$(find ur_launch_hardware)/config/robot_teacher.yaml"/>
-       <param name="file_name" value="$(arg pose_filename)"/>
-    </node>
 
-    <!-- Add a ft sensor if there is one-->    
-    <include if="$(eval has_ft_sensor)" file="$(find ur_launch_hardware)/launch/ft_sensor.launch"/>
-
-    <node name="joint_state_filter" type="joints_mean_filter" pkg="manipulate_topics" output="screen">
-        <rosparam command="load" file="$(find ur_launch_hardware)/config/ft_filter.yaml"/>
-        <remap from="input" to="joint_states"/>
-        <remap from="output" to="joint_states_filtered"/>
-    </node>
 </launch>

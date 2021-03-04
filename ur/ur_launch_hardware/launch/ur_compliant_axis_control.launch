@@ -1,7 +1,0 @@
-<launch>
-    <remap from="compliant_axis_vel_controller/wrench" to="wrench_filtered"/>
-    <include file="$(find ur_launch_hardware)/launch/ur.launch">
-        <arg name="controllers_started" default="joint_state_controller"/>       
-        <arg name="controllers_stopped" default="compliant_axis_vel_controller"/>       
-    </include>
-</launch>

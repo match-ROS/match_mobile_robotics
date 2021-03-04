@@ -15,15 +15,6 @@
 
     <node name="gripper_interface" type="grip_service_interface.py" pkg="panda_hardware_helper" output="screen"/>
     
-
-    <!-- Careful Walkaround!!! -->
-    <!-- <node unless="$(eval tf_prefix =='')" pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper1" 
-        args="0.0 0.0 0.0 0 0 0 1 $(arg tf_prefix)/panda_link8 panda_link8" />
-    
-    <node unless="$(eval tf_prefix =='')" pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper2" 
-        args="0.0 0.0 0.0 0 0 0 1 panda_EE $(arg tf_prefix)/panda_EE "/> -->
-    <!-- Walkaround end -->
-
     <include file="$(find franka_gripper)/launch/franka_gripper.launch" if="$(arg load_gripper)">
         <arg name="robot_ip" value="$(arg robot_ip)" />
     </include>

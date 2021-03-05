@@ -21,8 +21,8 @@
 
      <!-- Start the controllers -->
     <rosparam file="$(find ur_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
-    <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-        args="joint_state_controller">
+    <node name="controller_spawner" pkg="controller_manager" type="controller_manager" output="screen"
+        args="spawn joint_state_controller">
     </node>
 
 

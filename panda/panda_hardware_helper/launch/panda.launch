@@ -4,25 +4,14 @@
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
     <arg name="tf_prefix" default=""/>
-    <arg name="pose_filename" default=""/>
-
+ 
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
 
-    <remap from="compliance_controller/equilibrium_pose" to="compliance_controller/target_pose"/>
-    <remap from="cartesian_controller/equilibrium_pose" to="cartesian_controller/target_pose"/>
 
-
+    <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="panda_hardware_helper" output="screen"/>
     
-
-    <!-- Careful Walkaround!!! -->
-    <!-- <node unless="$(eval tf_prefix =='')" pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper1" 
-        args="0.0 0.0 0.0 0 0 0 1 $(arg tf_prefix)/panda_link8 panda_link8" />
-    
-    <node unless="$(eval tf_prefix =='')" pkg="tf2_ros" type="static_transform_publisher" name="miranda_state_remapper2" 
-        args="0.0 0.0 0.0 0 0 0 1 panda_EE $(arg tf_prefix)/panda_EE "/> -->
-    <!-- Walkaround end -->
 
     <include file="$(find franka_gripper)/launch/franka_gripper.launch" if="$(arg load_gripper)">
         <arg name="robot_ip" value="$(arg robot_ip)" />
@@ -34,8 +23,8 @@
     </node>
     
     <rosparam command="load" file="$(find panda_hardware_helper)/config/controllers.yaml" subst_value="true"/>
-    <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="$(arg controllers_started)"/>
-    <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
+    <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="spawn franka_state_controller"/>
+    <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped position_joint_controller"/>
     
     
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
@@ -47,12 +36,5 @@
         <rosparam unless="$(arg load_gripper)" param="source_list">[franka_state_controller/joint_states] </rosparam>
         <param name="rate" value="30"/>
     </node>
-
-    <node unless="$(eval pose_filename=='')" name="move_teached" type="pose_teacher_node.py" pkg="robot_teacher"  output="screen" >
-       <rosparam command="load" file="$(find panda_hardware_helper)/config/robot_teacher.yaml"/>
-       <param name="file_name" value="$(arg pose_filename)"/>
-    </node>
-
-
   
 </launch>

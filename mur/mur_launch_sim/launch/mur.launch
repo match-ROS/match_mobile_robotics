@@ -17,7 +17,10 @@
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg model_name)
     -x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) "/>
 
-   <!-- Start the controllers -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+      <param name="tf_prefix" value="$(arg tf_prefix)"/>
+  </node>
+  <!-- Start the controllers -->
   <group ns="mir">
     <param name="robot_description"  command="$(find xacro)/xacro  $(find mir_description)/urdf/mir_200/mir_200.gazebo.urdf tf_prefix:=$(arg tf_prefix)mir/"/>
  
@@ -25,11 +28,7 @@
     <rosparam file="$(find mur_launch_sim)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
     <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
       args="joint_state_controller mobile_base_controller">
-    </node>
-    <!-- Robot state publisher -->
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
-      <param name="tf_prefix" value="$(arg tf_prefix)"/>
-    </node>
+    </node>   
   </group>
 
   <group ns="ur">
@@ -37,9 +36,7 @@
     <param name="robot_description" 
           command="$(find xacro)/xacro $(find mur_description)/urdf/ur_robot.gazebo.urdf transmission_hw_interface:=$(arg transmission_hw_interface)"/> 
       
-    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
-      <param name="tf_prefix" value="$(arg tf_prefix)"/>
-    </node>
+   
     <rosparam file="$(find ur_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
     <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
         args="joint_state_controller">

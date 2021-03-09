@@ -23,8 +23,8 @@ mobile_base_controller:
   cmd_vel_timeout: 0.5
 
   # frame_ids (same as real MiR platform)
-  base_frame_id: $(arg tf_prefix_slashed)base_footprint # default: base_link
-  odom_frame_id: $(arg tf_prefix_slashed)odom      # default: odom
+  base_frame_id: $(arg tf_prefix_slashed)mir/base_footprint # default: base_link
+  odom_frame_id: $(arg tf_prefix_slashed)mir/odom      # default: odom
 
   enable_odom_tf: true
 

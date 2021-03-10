@@ -1,9 +1,1 @@
 *.pyc   #No python bytecode
-general_hardware_helper/ps4_controller/src/ps4_controller/PlayStationDiffDrive.pyc
-general_hardware_helper/ps4_controller/src/ps4_controller/PlayStationDiffDriveServices.pyc
-general_hardware_helper/ps4_controller/src/ps4_controller/PlaystationHandler.pyc
-general_hardware_helper/watchdogs/src/watchdogs/ForceWatchDog.pyc
-general_hardware_helper/ps4_controller/src/ps4_controller/PlayStationDiffDrive.pyc
-general_hardware_helper/ps4_controller/src/ps4_controller/PlayStationDiffDriveServices.pyc
-general_hardware_helper/ps4_controller/src/ps4_controller/PlaystationHandler.pyc
-general_hardware_helper/watchdogs/src/watchdogs/ForceWatchDog.pyc

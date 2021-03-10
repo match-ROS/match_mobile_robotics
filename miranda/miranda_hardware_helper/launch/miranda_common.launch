@@ -1,8 +1,5 @@
 <launch>
     <!-- Defining arguments for the panda launch -->    
-    <arg name="controllers_started" default="franka_state_controller"/>
-    <arg name="controllers_stopped" default=""/>
-    <arg name="pose_filename" default="$(find miranda_hardware_helper)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="miranda"/>
    
    

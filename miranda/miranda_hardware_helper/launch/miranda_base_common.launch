@@ -5,10 +5,6 @@
     </include>
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="mir_panda_transformer" 
-         args="0.20405 -0.10528 0.35 0 0 0.0084647 0.9999 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/panda/panda_link0" />
-      -->
-
     <node name="base_robot_broadcaster" type="static_tf_yaml_parser.py"  pkg="manipulate_topics">
         <rosparam command="load" file="$(find miranda_hardware_helper)/config/$(arg tf_prefix)_base_robot_transform.yaml"/>
     </node>    

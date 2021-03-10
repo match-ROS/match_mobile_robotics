@@ -1,8 +1,0 @@
-<launch>
-    <include file="$(find ur_hardware_helper)/launch/ur_cartesian_control.launch"/>
-    <node name="ee_pose_marker" pkg="cartesian_move" type="ee_pose_marker.py">
-        <remap from="pose" to="cartesian_controller/target_pose"/>
-        <param name="base_frame" value="base_link"/>
-        <param name="ee_frame" value="tool0"/>
-    </node>
-</launch>

@@ -1,0 +1,60 @@
+<?xml version="1.0" ?>
+<launch>
+  <arg name="tf_prefix"    default="" />
+  <arg name="robot_x"   default="0.0" />
+  <arg name="robot_y"   default="0.0" />
+  <arg name="robot_yaw" default="0.0" />  
+  <arg name="model_name" default="mir"/>
+
+  <arg name="move_base" default="true"/>
+
+  <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
+  <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
+   
+
+  <!-- Load URDF -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mir_description)/urdf/mir.urdf.xacro" />
+
+  <!-- Spawn the robot into Gazebo -->
+  <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg model_name)
+    -x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) " />
+
+  
+  <!-- Start the controllers -->
+  <rosparam file="$(find mir_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
+  <rosparam file="$(find mir_launch_sim)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
+  <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+    args="joint_state_controller mobile_base_controller">
+  </node>
+
+  <include file="$(find mir_navigation)/launch/amcl.launch">
+    <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+  </include>
+  
+  <group if="$(eval move_base)">
+    <include file="$(find mir_navigation)/launch/move_base.launch" pass_all_args="true">
+      <arg name="global_planner" value="GlobalPlanner"/>
+      <arg name="local_planner" value="DWAPlannerROS"/>
+    </include>
+  </group>
+
+  <!-- Robot state publisher -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">
+    <param name="tf_prefix" value="$(arg tf_prefix)"/>
+  </node>
+
+  <node pkg="topic_tools" type="relay" name="b_scan_relay" args="b_scan scan"/>
+  <node pkg="topic_tools" type="relay" name="f_scan_relay" args="f_scan scan"/>
+
+
+  <node name="b_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
+    <remap from="scan" to="b_scan" />
+    <remap from="scan_filtered" to="b_scan_rep117" />
+  </node>
+
+  <node name="f_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
+    <remap from="scan" to="f_scan" />
+    <remap from="scan_filtered" to="f_scan_rep117" />
+  </node>
+
+</launch>

@@ -1,0 +1,15 @@
+<launch>
+    <arg name="launch_driver" default="false"/> <!--Flag if the robot hardware driver should be launched or not-->
+
+    <remap from="/follow_joint_trajectory" to="/pos_traj_controller/follow_joint_trajectory"/>
+    
+    <include if="$(arg launch_driver)" file="$(find ur_launch_hardware)/launch/ur.launch"/>
+
+    <include file="$(find ur5_moveit_config)/launch/move_group.launch">     
+    </include>
+
+    <include file="$(find ur5_moveit_config)/launch/moveit_rviz.launch">
+        <arg name="config" value="true"/>
+    </include>
+
+</launch>

@@ -1,0 +1,19 @@
+<launch>
+        <arg name="tf_prefix" default=""/>
+
+        <node pkg="tf2_ros" type="static_transform_publisher" name="ur_ft_transformer" 
+            args="0.035 0.0 0.0 -1.5707 0.0 1.5707  $(arg tf_prefix)ee_link $(arg tf_prefix)ft_sensor_link"/>
+        <node pkg="tf2_ros" type="static_transform_publisher" name="ft_ee_transformer" 
+            args="0.0 0.0 -0.04 0 0  3.14159  $(arg tf_prefix)ft_sensor_link $(arg tf_prefix)my_tool_link"/>
+
+        <node  name="ft_sensor" pkg="net_box_hardware_helper" type="driver.py">
+            <rosparam command="load" file="$(find ur_launch_hardware)/config/net_box_ft.yaml" subst_value="true"/>
+        </node>
+
+        <node name="ft_filter" type="wrench_stamped_mean_filter" pkg="manipulate_topics">
+            <rosparam command="load" file="$(find ur_launch_hardware)/config/ft_filter.yaml"/>
+            <remap from="input" to="wrench"/>
+            <remap from="output" to="wrench_filtered"/>
+        </node>
+
+</launch>

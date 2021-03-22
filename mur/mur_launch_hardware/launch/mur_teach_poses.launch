@@ -2,7 +2,7 @@
     <arg name="tf_prefix" default="mur"/>
     <arg name="pose_filename" default="poses/test.yaml"/>
 
-    <include file="$(find mur_hardware_helper)/launch/mur.launch" pass_all_args="true">
+    <include file="$(find mur_launch_hardware)/launch/mur.launch" pass_all_args="true">
         <arg name="controllers_started" value="franka_state_controller cartesian_controller"/> 
         <arg name="pose_filename" value="poses/mur_teached_poses.yaml"/>
     </include>

@@ -3,7 +3,7 @@
        name="mir_100" >
 
   <!-- MiR100 base -->
-  <xacro:include filename="$(find mir_description)/urdf/include/mir_100_v1.urdf.xacro" />
+  <xacro:include filename="$(find mir_description)/urdf/include/mir100.urdf.xacro" />
   <xacro:include filename="$(find mir_description)/urdf/include/common.gazebo.xacro" />
 
   <xacro:mir_100 prefix=""/>

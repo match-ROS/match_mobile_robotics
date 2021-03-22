@@ -80,8 +80,9 @@
   </node>
   
   <node name="twist_stamper" pkg="mir_driver" type="twist_stamper">
-    <remap from="twist_in" to="cmd_vel_mir"/>
+    <remap from="twist_in" to="mobile_base_controller/cmd_vel"/>
     <remap from="twist_out" to="cmd_vel"/>
   </node>
+  
 
 </launch>

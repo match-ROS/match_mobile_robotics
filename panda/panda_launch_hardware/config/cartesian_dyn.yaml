@@ -1,0 +1,43 @@
+!!python/object/new:dynamic_reconfigure.encoding.Config
+dictitems:
+  Dpitch: 0.0
+  Droll: 0.0
+  Dx: 0.1
+  Dy: 0.1
+  Dyaw: 0.0
+  Dz: 30.0
+  Kpitch: 12.0
+  Kroll: 12.0
+  Kx: 200.0
+  Ky: 200.0
+  Kyaw: 12.0
+  Kz: 1200.0
+  groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+    dictitems:
+      Dpitch: 0.0
+      Droll: 0.0
+      Dx: 0.1
+      Dy: 0.1
+      Dyaw: 0.0
+      Dz: 30.0
+      Kpitch: 12.0
+      Kroll: 12.0
+      Kx: 200.0
+      Ky: 200.0
+      Kyaw: 12.0
+      Kz: 1200.0
+      groups: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      id: 0
+      name: Default
+      nullspace_damping: 0.0
+      nullspace_stiffness: 6.0
+      parameters: !!python/object/new:dynamic_reconfigure.encoding.Config
+        state: []
+      parent: 0
+      state: true
+      type: ''
+    state: []
+  nullspace_damping: 0.0
+  nullspace_stiffness: 6.0
+state: []

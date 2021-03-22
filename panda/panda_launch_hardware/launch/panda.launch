@@ -4,7 +4,8 @@
     <arg name="controllers_started" default="franka_state_controller"/>
     <arg name="controllers_stopped" default=""/>
     <arg name="tf_prefix" default=""/>
- 
+    <arg name="pose_filename" default=""/>
+
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
 
@@ -20,8 +21,8 @@
     </node>
     
     <rosparam command="load" file="$(find panda_hardware_helper)/config/controllers.yaml" subst_value="true"/>
-    <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="spawn franka_state_controller"/>
-    <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped position_joint_controller"/>
+    <node if="$(eval arg('controllers_started')!='')" name="controller_starter" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="$(arg controllers_started)"/>
+    <node if="$(eval arg('controllers_stopped')!='')" name="controller_stopper" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="--stopped $(arg controllers_stopped)"/>
     
     
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">

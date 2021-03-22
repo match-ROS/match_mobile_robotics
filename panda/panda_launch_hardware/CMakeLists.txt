@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(panda_controllers_extended)
+project(panda_hardware_helper)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -7,17 +7,8 @@ project(panda_controllers_extended)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(
-  catkin REQUIRED COMPONENTS 
-  roscpp
-  pluginlib
-  controller_interface
-  dynamic_reconfigure
-  eigen_conversions
-  franka_hw    
-  hardware_interface
-  sensor_msgs
-)
+find_package(catkin REQUIRED)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -93,10 +84,10 @@ find_package(
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-generate_dynamic_reconfigure_options(
-    cfg/stiffness.cfg
-    cfg/intertia.cfg
-)
+# generate_dynamic_reconfigure_options(
+#   cfg/DynReconf1.cfg
+#   cfg/DynReconf2.cfg
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -108,10 +99,10 @@ generate_dynamic_reconfigure_options(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
- INCLUDE_DIRS include
- LIBRARIES panda_controllers_extended
-# CATKIN_DEPENDS geometry_msgs sensor_msgs
-# DEPENDS tf
+#  INCLUDE_DIRS include
+#  LIBRARIES panda_hardware_helper
+#  CATKIN_DEPENDS other_catkin_pkg
+#  DEPENDS system_lib
 )
 
 ###########
@@ -121,46 +112,15 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-    include
-    ${catkin_INCLUDE_DIRS}
-    ${Eigen_INCLUDE_DIRS}
-    ${Franka_INCLUDE_DIRS}
+# include
+# ${catkin_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}
-    include/${PROJECT_NAME}/cartesian_impedance_controller.h
-    src/cartesian_impedance_controller.cpp
-    include/${PROJECT_NAME}/six_dof_cartesian_impedance.h
-    src/six_dof_cartesian_impedance.cpp
-    include/${PROJECT_NAME}/cartesian_controller.h
-    src/cartesian_controller.cpp
-    include/${PROJECT_NAME}/six_dof_cartesian_impedance_fixed_joint.h
-    src/six_dof_cartesian_impedance_fixed_joint.cpp
-)
-target_link_libraries(${PROJECT_NAME}
-  ${catkin_LIBRARIES}
-  ${eigen3_LIBRARIES}
-)
-add_dependencies(${PROJECT_NAME} ${catkin_EXPORTED_TARGETS})
-add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_gencfg)
+# add_library(${PROJECT_NAME}
+#   src/${PROJECT_NAME}/panda_hardware_helper.cpp
+# )
 
-
-
-
-add_library(manipulator_dynamics
-    include/${PROJECT_NAME}/manipulator_dynamics/ee_dynamics.h
-    src/manipulator_dynamics/ee_dynamics.cpp
-    include/${PROJECT_NAME}/manipulator_dynamics/ee_dynamics_config.h
-    src/manipulator_dynamics/ee_dynamics_config.cpp
-
-)
-target_link_libraries(manipulator_dynamics
-  ${catkin_LIBRARIES}
-  ${eigen3_LIBRARIES}
-)
-add_dependencies(manipulator_dynamics ${catkin_EXPORTED_TARGETS})
-add_dependencies(manipulator_dynamics ${PROJECT_NAME}_gencfg)
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
@@ -169,12 +129,8 @@ add_dependencies(manipulator_dynamics ${PROJECT_NAME}_gencfg)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(manipulator_dynamic_config nodes/manipulator_dynamic_config_node.cpp)
-target_link_libraries(manipulator_dynamic_config
-  manipulator_dynamics
-  ${catkin_LIBRARIES}
-  ${eigen3_LIBRARIES}
-)
+# add_executable(${PROJECT_NAME}_node src/panda_hardware_helper_node.cpp)
+
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
@@ -237,7 +193,7 @@ target_link_libraries(manipulator_dynamic_config
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_panda_controllers_extended.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_panda_hardware_helper.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

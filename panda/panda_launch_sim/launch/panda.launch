@@ -7,7 +7,8 @@
     <arg name="robot_name" default="ur"/>
     <arg name="tf_prefix"    default="" />    
  
-   
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="panda_hardware_helper" output="screen"/>
+    
     <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
     <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
 

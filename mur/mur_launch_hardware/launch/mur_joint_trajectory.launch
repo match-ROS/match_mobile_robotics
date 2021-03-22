@@ -1,5 +1,0 @@
-<launch>
-    <include file="$(find mur_launch_hardware)/launch/mur.launch">
-        <arg name="controllers_started" value="joint_state_controller robot_status_controller position_joint_controller"/>
-    </include>    
-</launch>

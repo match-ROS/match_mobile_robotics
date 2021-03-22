@@ -1,5 +1,0 @@
-<launch>
-    <include file="$(find miranda_hardware_helper)/launch/miranda.launch">
-        <arg name="controllers_started" value="franka_state_controller position_joint_controller"/>
-    </include>    
-</launch>

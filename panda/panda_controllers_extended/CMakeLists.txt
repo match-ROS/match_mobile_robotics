@@ -135,6 +135,8 @@ add_library(${PROJECT_NAME}
     src/six_dof_cartesian_impedance.cpp
     include/${PROJECT_NAME}/cartesian_controller.h
     src/cartesian_controller.cpp
+    include/${PROJECT_NAME}/six_dof_cartesian_impedance_fixed_joint.h
+    src/six_dof_cartesian_impedance_fixed_joint.cpp
 )
 target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES}

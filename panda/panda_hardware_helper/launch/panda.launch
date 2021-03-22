@@ -8,11 +8,8 @@
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm_hand.urdf.xacro'" if="$(arg load_gripper)" />
     <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find franka_description)/robots/panda_arm.urdf.xacro'" unless="$(arg load_gripper)" />
 
-
-    <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="panda_hardware_helper" output="screen"/>
     
-
     <include file="$(find franka_gripper)/launch/franka_gripper.launch" if="$(arg load_gripper)">
         <arg name="robot_ip" value="$(arg robot_ip)" />
     </include>

@@ -12,6 +12,12 @@
         A controller that executes cartesian control
     </description>
     </class>
+
+    <class name="panda_controllers_extended/SixDofCartesianImpedanceFixedJointController" type="panda_controllers_extended::SixDofCartesianImpedanceFixedJointController" base_class_type="controller_interface::ControllerBase">
+    <description>
+        A controller that executes cartesian control
+    </description>
+    </class>
     
     
     <class name="panda_controllers_extended/CartesianController" type="panda_controllers_extended::CartesianController" base_class_type="controller_interface::ControllerBase">

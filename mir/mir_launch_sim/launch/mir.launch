@@ -6,6 +6,8 @@
   <arg name="robot_yaw" default="0.0" />  
   <arg name="model_name" default="mir"/>
 
+  <arg name="move_base" default="true"/>
+
   <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
   <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
    
@@ -25,6 +27,16 @@
     args="joint_state_controller mobile_base_controller">
   </node>
 
+  <include file="$(find mir_navigation)/launch/amcl.launch">
+    <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+  </include>
+  
+  <group if="$(eval move_base)">
+    <include file="$(find mir_navigation)/launch/move_base.launch" pass_all_args="true">
+      <arg name="global_planner" value="GlobalPlanner"/>
+      <arg name="local_planner" value="DWAPlannerROS"/>
+    </include>
+  </group>
 
   <!-- Robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">

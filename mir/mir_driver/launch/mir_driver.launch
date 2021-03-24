@@ -7,8 +7,8 @@
 
 
 
-  <!-- URDF -->
-  <include file="$(find mir_description)/launch/upload_mir_urdf.launch" />
+  <!-- Load URDF -->
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mir_description)/urdf/mir_200/mir_200.urdf" />
 
   <!-- Robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">

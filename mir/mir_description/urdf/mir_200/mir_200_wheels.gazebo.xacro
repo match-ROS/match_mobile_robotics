@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">	
+	<xacro:macro name="actuated_wheel_gazebo" params="tf_prefix locationprefix">
+		<gazebo reference="${tf_prefix}${locationprefix}_wheel_link">
+			<material>Gazebo/DarkGrey</material>
+		</gazebo>
+	</xacro:macro>
+
+	<xacro:macro name="caster_wheel_gazebo" params="tf_prefix locationprefix">
+		<gazebo reference="${tf_prefix}${locationprefix}_caster_rotation_link">
+			<material>Gazebo/Grey</material>
+		</gazebo>
+
+		<gazebo reference="${tf_prefix}${locationprefix}_caster_wheel_link">
+			<material>Gazebo/DarkGrey</material>
+		</gazebo>
+	</xacro:macro>
+
+	<xacro:macro name="mir_200_wheel_transmission" params="tf_prefix locationprefix">
+		<transmission name="${tf_prefix}${locationprefix}_wheel_trans">
+		<type>transmission_interface/SimpleTransmission</type>
+		<joint name="${tf_prefix}${locationprefix}_wheel_joint">
+			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+		</joint>
+		<actuator name="${tf_prefix}${locationprefix}_wheel_motor">
+			<hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+			<mechanicalReduction>1</mechanicalReduction>
+		</actuator>
+		</transmission>
+	</xacro:macro>
+
+	<xacro:macro name="mir_200_wheel_transmissions" params="tf_prefix">
+		<xacro:mir_200_wheel_transmission tf_prefix="${tf_prefix}" locationprefix="left"/>
+		<xacro:mir_200_wheel_transmission tf_prefix="${tf_prefix}" locationprefix="right"/>
+	</xacro:macro>
+</robot>

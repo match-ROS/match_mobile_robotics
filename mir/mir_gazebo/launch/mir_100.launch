@@ -1,19 +1,17 @@
 <?xml version="1.0" ?>
 <launch>
-  <arg name="tf_prefix"    default="" />
   <arg name="robot_x"   default="0.0" />
   <arg name="robot_y"   default="0.0" />
-  <arg name="robot_yaw" default="0.0" />  
+  <arg name="robot_yaw" default="0.0" />
+  <arg name="tf_prefix"    default="" />
   <arg name="model_name" default="mir"/>
-
-  <arg name="move_base" default="true"/>
 
   <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
   <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
    
 
   <!-- Load URDF -->
-  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mir_description)/urdf/mir_200/mir_200.gazebo.urdf" />
+  <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mir_description)/urdf/mir_100/mir_100.gazebo.urdf" />
 
   <!-- Spawn the robot into Gazebo -->
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg model_name)
@@ -21,22 +19,12 @@
 
   
   <!-- Start the controllers -->
-  <rosparam file="$(find mir_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
-  <rosparam file="$(find mir_launch_sim)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
+  <rosparam file="$(find mir_gazebo)/config/gazebo_joint_state_controller.yaml" command="load"/>
+  <rosparam file="$(find mir_gazebo)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
   <node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
     args="joint_state_controller mobile_base_controller">
   </node>
 
-  <include file="$(find mir_navigation)/launch/amcl.launch">
-    <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-  </include>
-  
-  <group if="$(eval move_base)">
-    <include file="$(find mir_navigation)/launch/move_base.launch" pass_all_args="true">
-      <arg name="global_planner" value="GlobalPlanner"/>
-      <arg name="local_planner" value="DWAPlannerROS"/>
-    </include>
-  </group>
 
   <!-- Robot state publisher -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">

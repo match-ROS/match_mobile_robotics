@@ -6,7 +6,7 @@ This will be updated shortly
 * `ur_hardware_helper`: Contains helper packages that can be used for Ur5
 * `panda_hardware_helper`: Contains helper packages that can be used for panda robot
 * `miranda_hardware_helper`: Contains helper packages that can be used for the combination of panda and mir
-* `mur_hardware_helper`: Contains helper packages that can be used for the combination of ur and mir
+* `mur_launch_hardware`: Contains helper packages that can be used for the combination of ur and mir
 
 # 2. Installation
 Start by changeing directory to your catkin workspace!

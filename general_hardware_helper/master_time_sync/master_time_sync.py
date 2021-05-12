@@ -19,8 +19,8 @@ robot_time: str = header["Date"]
 time: datetime = datetime.strptime(robot_time, "%a, %d %b %Y %H:%M:%S %Z")
 new_time = time + timedelta(hours=2)
 
-print("Current time of MiR in GMT: " + time)
-print("Current time of MiR in MESZ: " + new_time)
+print("Current time of MiR in GMT: " + str(time))
+print("Current time of MiR in MESZ: " + str(new_time))
 
 str_time:str = new_time.strftime("%d %b %Y %H:%M:%S")
 

@@ -53,8 +53,8 @@
 
 		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo-->
 		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
-		<xacro:macro name="sick_s300_gazebo" link="front_laser_link" topic="f_scan" tf_prefix="${tf_prefix}"/>
-		<xacro:macro name="sick_s300_gazebo" link="back_laser_link" topic="b_scan" tf_prefix="${tf_prefix}"/>
+		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="front_laser_link" topic="f_scan" />
+		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="back_laser_link" topic="b_scan" />
 
 		<!-- Add transmissions to wheels -->
 		<xacro:mir_200_wheel_transmissions tf_prefix="${tf_prefix}"/>

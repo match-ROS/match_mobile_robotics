@@ -27,7 +27,7 @@ position_joint_controller:
       goal: 0.05
 
 franka_state_controller:
-  tf_prefix: $(arg tf_prefix)/
+#  tf_prefix: $(arg tf_prefix)/
   type: franka_control/FrankaStateController
   publish_rate: 30  # [Hz]
   joint_names: *joints

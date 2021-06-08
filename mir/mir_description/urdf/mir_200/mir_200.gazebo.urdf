@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://wiki.ros.org/xacro" name="mir200" >
 
-	<xacro:arg name="robot_namespace" default='thisisatest'/>
+	<xacro:arg name="robot_namespace" default=''/>
 	<xacro:arg name="tf_prefix" default=''/>
 
 	<!-- MiR200 base -->

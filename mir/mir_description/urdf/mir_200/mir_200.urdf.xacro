@@ -3,6 +3,7 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200_wheels.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/_d435.urdf.xacro" />
 
 	<xacro:property name="deg_to_rad" value="${(1 / 360) * (2 * pi)}" />
 
@@ -121,7 +122,7 @@
 		<link name="${tf_prefix}surface"/>
 
 		<!-- Camera -->
-		<link name="camera_link">
+		<!--link name="camera_link">
 		<collision>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
@@ -143,22 +144,28 @@
 
 		<joint name="camera_joint" type="fixed">
 			<axis xyz="0 1 0" />
-			<origin xyz="0.42 0 0.27" rpy="0 0.2 0"/> <!--set the position of the realsense-->
-			<parent link="${tf_prefix}base_link"/>
+			<origin xyz="0.42 0 0.27" rpy="0 0.2 0"/--> <!--set the position of the realsense-->
+			<!--parent link="${tf_prefix}base_link"/>
 			<child link="camera_link"/>
-		</joint>
+		</joint-->
 
 		<!-- generate an optical frame http://www.ros.org/reps/rep-0103.html#suffix-frames
 			so that ros and opencv can operate on the camera frame correctly -->
-		<joint name="camera_optical_joint" type="fixed">
+		<!--joint name="camera_optical_joint" type="fixed"-->
 			<!-- these values have to be these values otherwise the gazebo camera image
 				won't be aligned properly with the frame it is supposedly originating from -->
-			<origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
+			<!--origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
 			<parent link="camera_link"/>
 			<child link="camera_link_optical"/>
 		</joint>
 
-		<link name="camera_link_optical">
-		</link>
+		<link name="camera_link_optical"-->
+		<!--/link-->
+
+		<!--Realsense_Intel_D435_Camera-->
+		<xacro:sensor_d435 name="camera" topics_ns="camera" parent="${tf_prefix}base_link" publish_pointcloud="true">
+    		<origin xyz="0.42 0 0.27" rpy="0 0 0" />
+  		</xacro:sensor_d435>	
+	
 	</xacro:macro>
 </robot>

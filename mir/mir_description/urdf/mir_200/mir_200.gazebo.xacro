@@ -4,12 +4,13 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/imu.gazebo.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/_d435.gazebo.xacro" />
 
 	<xacro:property name="imu_standard_deviation" value="0.00017" />
 
 	<xacro:macro name="mir_200_gazebo" params="tf_prefix robot_namespace">
 		<!-- Settings for the camera of the robot to work in the simulation environment-->
-		<gazebo reference="camera_link">  
+		<!--gazebo reference="camera_link">  
 			<sensor type="depth" name="camera">
 			<plugin name="kinect_camera_controller" filename="libgazebo_ros_openni_kinect.so">
 				<cameraName>camera</cameraName>
@@ -30,7 +31,11 @@
 				<pointCloudCutoff>0.4</pointCloudCutoff>
 			</plugin>
 			</sensor>
-		</gazebo>
+		</gazebo-->
+
+		<!-- Settings for the camera of the robot to work in the simulation environment-->
+    	<xacro:gazebo_d435 camera_name="camera" reference_link="camera_link" tf_prefix="${tf_prefix}" robot_namespace="${robot_namespace}" topics_ns="camera" depth_optical_frame="camera_depth_optical_frame" color_optical_frame="camera_color_optical_frame" infrared1_optical_frame="camera_left_ir_optical_frame" infrared2_optical_frame="camera_right_ir_optical_frame" publish_pointcloud="true"/>
+
 
 		<!-- Set Gazebo material for the base -->
 		<gazebo reference="${tf_prefix}base_link">
@@ -51,7 +56,7 @@
 		<!--  -->
 		<!-- <p3d_base_controller tf_prefix="${tf_prefix}" /> -->
 
-		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo-->
+		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo -->
 		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
 		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="front_laser_link" robot_namespace="${robot_namespace}" topic="f_scan" />
 		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="back_laser_link" robot_namespace="${robot_namespace}" topic="b_scan" />

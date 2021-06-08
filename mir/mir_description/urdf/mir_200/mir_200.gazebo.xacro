@@ -7,7 +7,7 @@
 
 	<xacro:property name="imu_standard_deviation" value="0.00017" />
 
-	<xacro:macro name="mir_200_gazebo" params="tf_prefix">
+	<xacro:macro name="mir_200_gazebo" params="tf_prefix robot_namespace">
 		<!-- Settings for the camera of the robot to work in the simulation environment-->
 		<gazebo reference="camera_link">  
 			<sensor type="depth" name="camera">
@@ -46,15 +46,15 @@
 		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="br"/>
 
 		<!-- Settings for the IMU of the robot to work in the simulation environment-->
-		<xacro:imu_gazebo link="${tf_prefix}imu_link" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
+		<xacro:imu_gazebo link="${tf_prefix}imu_link" robot_namespace="${robot_namespace}" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
 
 		<!--  -->
 		<!-- <p3d_base_controller tf_prefix="${tf_prefix}" /> -->
 
 		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo-->
 		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
-		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="front_laser_link" topic="f_scan" />
-		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="back_laser_link" topic="b_scan" />
+		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="front_laser_link" robot_namespace="${robot_namespace}" topic="f_scan" />
+		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="back_laser_link" robot_namespace="${robot_namespace}" topic="b_scan" />
 
 		<!-- Add transmissions to wheels -->
 		<xacro:mir_200_wheel_transmissions tf_prefix="${tf_prefix}"/>

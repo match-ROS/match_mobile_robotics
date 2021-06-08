@@ -16,3 +16,6 @@
 	path = panda/panda_moveit_config
 	url = https://github.com/ros-planning/panda_moveit_config.git
 	branch = melodic-devel
+[submodule "mir/mir_description/realsense-ros"]
+	path = mir/mir_description/realsense-ros
+	url = https://github.com/IntelRealSense/realsense-ros.git

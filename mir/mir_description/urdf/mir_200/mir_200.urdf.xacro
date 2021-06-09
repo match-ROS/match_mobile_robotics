@@ -26,7 +26,7 @@
 	<xacro:property name="mir_200_caster_wheel_base_dy" value="0.203" />
 	<xacro:property name="mir_200_caster_wheel_base_dz" value="${mir_200_caster_wheel_radius-mir_200_caster_wheel_dz}" />
 
-	<xacro:macro name="mir_200" params="tf_prefix">
+	<xacro:macro name="mir_200">
 		<link name="base_footprint" />
 
 		<joint name="base_joint" type="fixed">
@@ -80,14 +80,14 @@
 			<child link="front_laser_link" />
 			<origin xyz="0.4288 0.2358 0.1914" rpy="0.0 0.0 ${0.25 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
-		<xacro:sick_s300 tf_prefix="${tf_prefix}" link="front_laser_link" topic="f_scan" />
+		<xacro:sick_s300 link="front_laser_link" topic="f_scan" />
 
 		<joint name="base_link_to_back_laser_joint" type="fixed">
 			<parent link="base_link" />
 			<child link="back_laser_link" />
 			<origin xyz="-0.3548 -0.2352 0.1914" rpy="0.0 0.0 ${-0.75 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
-		<xacro:sick_s300 tf_prefix="${tf_prefix}" link="back_laser_link" topic="b_scan" />
+		<xacro:sick_s300 link="back_laser_link" topic="b_scan" />
 
 		<!-- Ultrasound sensors -->
 		<joint name="us_1_joint" type="fixed">   <!-- right ultrasound -->
@@ -105,12 +105,12 @@
 		<link name="us_2_frame" />
 
 		<!-- wheels -->
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationprefix="left" locationright="-1"/>
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationprefix="right" locationright="1"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="fl" locationright="-1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="fr" locationright="1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="bl" locationright="-1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="br" locationright="1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
+		<xacro:actuated_wheel locationprefix="left" locationright="-1"/>
+		<xacro:actuated_wheel locationprefix="right" locationright="1"/>
+		<xacro:caster_wheel locationprefix="fl" locationright="-1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel locationprefix="fr" locationright="1" wheel_base_dx="${mir_200_front_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel locationprefix="bl" locationright="-1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel locationprefix="br" locationright="1" wheel_base_dx="${mir_200_back_caster_wheel_base_dx}"/>
 
 		<joint name="base_link_surface_joint" type="fixed">
 			<origin xyz="${mir_200_act_wheel_dx} 0 0.352" rpy="0 0 0" />

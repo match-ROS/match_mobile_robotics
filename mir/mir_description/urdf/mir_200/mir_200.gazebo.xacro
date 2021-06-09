@@ -38,31 +38,31 @@
 
 
 		<!-- Set Gazebo material for the base -->
-		<gazebo reference="${tf_prefix}base_link">
+		<gazebo reference="base_link">
 			<material>Gazebo/LightGrey</material>
 		</gazebo>
 
 		<!-- Set gazebo material for the wheels -->
-		<xacro:actuated_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="left"/>
-		<xacro:actuated_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="right"/>
-		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fl"/>
-		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="fr"/>
-		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="bl"/>
-		<xacro:caster_wheel_gazebo tf_prefix="${tf_prefix}" locationprefix="br"/>
+		<xacro:actuated_wheel_gazebo locationprefix="left"/>
+		<xacro:actuated_wheel_gazebo locationprefix="right"/>
+		<xacro:caster_wheel_gazebo locationprefix="fl"/>
+		<xacro:caster_wheel_gazebo locationprefix="fr"/>
+		<xacro:caster_wheel_gazebo locationprefix="bl"/>
+		<xacro:caster_wheel_gazebo locationprefix="br"/>
 
 		<!-- Settings for the IMU of the robot to work in the simulation environment-->
-		<xacro:imu_gazebo link="${tf_prefix}imu_link" robot_namespace="${robot_namespace}" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
+		<xacro:imu_gazebo link="imu_link" robot_namespace="${robot_namespace}" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
 
 		<!--  -->
 		<!-- <p3d_base_controller tf_prefix="${tf_prefix}" /> -->
 
 		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo -->
 		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
-		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="front_laser_link" robot_namespace="${robot_namespace}" topic="f_scan" />
-		<xacro:sick_s300_gazebo tf_prefix="${tf_prefix}" link="back_laser_link" robot_namespace="${robot_namespace}" topic="b_scan" />
+		<xacro:sick_s300_gazebo link="front_laser_link" robot_namespace="${robot_namespace}" topic="f_scan" />
+		<xacro:sick_s300_gazebo link="back_laser_link" robot_namespace="${robot_namespace}" topic="b_scan" />
 
 		<!-- Add transmissions to wheels -->
-		<xacro:mir_200_wheel_transmissions tf_prefix="${tf_prefix}"/>
+		<xacro:mir_200_wheel_transmissions/>
 
 		<!-- disabled, because it doesn't make a difference in Gazebo: -->
 		<!-- <xacro:set_all_wheel_frictions tf_prefix="${tf_prefix}"/> -->

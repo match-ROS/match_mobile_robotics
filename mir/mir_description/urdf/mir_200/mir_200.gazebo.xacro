@@ -34,7 +34,7 @@
 		</gazebo-->
 
 		<!-- Settings for the camera of the robot to work in the simulation environment-->
-    	<xacro:gazebo_d435 camera_name="camera" reference_link="camera_link" tf_prefix="${tf_prefix}" robot_namespace="${robot_namespace}" topics_ns="camera" depth_optical_frame="camera_depth_optical_frame" color_optical_frame="camera_color_optical_frame" infrared1_optical_frame="camera_left_ir_optical_frame" infrared2_optical_frame="camera_right_ir_optical_frame" publish_pointcloud="true"/>
+    	<xacro:gazebo_d435 camera_name="${robot_namespace}_camera" reference_link="camera_link" topics_ns="${robot_namespace}/camera" depth_optical_frame="${tf_prefix}/camera_depth_optical_frame" color_optical_frame="${tf_prefix}/camera_color_optical_frame" infrared1_optical_frame="${tf_prefix}/camera_left_ir_optical_frame" infrared2_optical_frame="${tf_prefix}/camera_right_ir_optical_frame" publish_pointcloud="true"/>
 
 
 		<!-- Set Gazebo material for the base -->

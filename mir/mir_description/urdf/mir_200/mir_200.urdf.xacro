@@ -3,7 +3,7 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200_wheels.urdf.xacro" />
-	<xacro:include filename="$(find mir_description)/urdf/general/_d435.urdf.xacro" />
+	<xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
 
 	<xacro:property name="deg_to_rad" value="${(1 / 360) * (2 * pi)}" />
 
@@ -121,6 +121,11 @@
 
 		<link name="surface"/>
 
+		<!--Realsense_Intel_D435_Camera-->
+		<xacro:sensor_d435 name="camera" parent="base_link" use_nominal_extrinsics="true">
+    		<origin xyz="0.42 0 0.27" rpy="0 0 0" />
+  		</xacro:sensor_d435>	
+
 		<!-- Camera -->
 		<!--link name="camera_link">
 		<collision>
@@ -161,11 +166,5 @@
 
 		<link name="camera_link_optical"-->
 		<!--/link-->
-
-		<!--Realsense_Intel_D435_Camera-->
-		<xacro:sensor_d435 name="camera" topics_ns="camera" parent="base_link" publish_pointcloud="true">
-    		<origin xyz="0.42 0 0.27" rpy="0 0 0" />
-  		</xacro:sensor_d435>	
-	
 	</xacro:macro>
 </robot>

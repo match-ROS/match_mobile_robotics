@@ -16,6 +16,10 @@
 	path = panda/panda_moveit_config
 	url = https://github.com/ros-planning/panda_moveit_config.git
 	branch = melodic-devel
-[submodule "mir/mir_description/realsense-ros"]
-	path = mir/mir_description/realsense-ros
+[submodule "mir/mir_submodules/realsense-ros"]
+	path = mir/mir_submodules/realsense-ros
 	url = https://github.com/IntelRealSense/realsense-ros.git
+[submodule "mir/mir_submodules/realsense_gazebo_plugin"]
+	path = mir/mir_submodules/realsense_gazebo_plugin
+	url = https://github.com/pal-robotics/realsense_gazebo_plugin.git
+	branch = melodic-devel

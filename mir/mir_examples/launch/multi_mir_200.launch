@@ -9,7 +9,7 @@
   <arg name="robot1_name"  default="mir1"/>
   <arg name="robot2_name"  default="mir2"/>
   
-  <include file="$(find mir_launch_sim)/launch/mir.launch" ns="$(arg robot1_name)" pass_all_args="true">
+  <include file="$(find mir_launch_sim)/launch/mir_200.launch" ns="$(arg robot1_name)" pass_all_args="true">
       <arg name="robot_x"     default="0.0" />
       <arg name="robot_y"     default="0.5" />
       <arg name="robot_yaw"   default="0.0" /> 
@@ -17,7 +17,7 @@
       <arg name="model_name"  default="$(arg robot1_name)"/>
   </include>
     
-  <include file="$(find mir_launch_sim)/launch/mir.launch" ns="$(arg robot2_name)" pass_all_args="true">
+  <include file="$(find mir_launch_sim)/launch/mir_200.launch" ns="$(arg robot2_name)" pass_all_args="true">
       <arg name="robot_x"     default="0.0" />
       <arg name="robot_y"     default="-0.5" />
       <arg name="robot_yaw"   default="0.0" /> 

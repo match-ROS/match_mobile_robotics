@@ -32,13 +32,9 @@
 				<xacro:property name="robot_namespace_underscored" value="${robot_namespace}_" />
 		</xacro:unless>
 
-		<!-- Settings for the camera of the robot to work in the simulation environment-->
-    	<xacro:gazebo_d435 camera_name="${robot_namespace_underscored}camera" reference_link="camera_link" topics_ns="${robot_namespace_slashed}camera" depth_optical_frame="${tf_prefix_slashed}camera_depth_optical_frame" color_optical_frame="${tf_prefix_slashed}camera_color_optical_frame" infrared1_optical_frame="${tf_prefix_slashed}camera_left_ir_optical_frame" infrared2_optical_frame="${tf_prefix_slashed}camera_right_ir_optical_frame" publish_pointcloud="true"/>
-
-
 		<!-- Set Gazebo material for the base -->
 		<gazebo reference="base_link">
-			<material>Gazebo/LightGrey</material>
+			<material>Gazebo/Grey</material>
 		</gazebo>
 
 		<!-- Set gazebo material for the wheels -->
@@ -49,6 +45,9 @@
 		<xacro:caster_wheel_gazebo locationprefix="bl"/>
 		<xacro:caster_wheel_gazebo locationprefix="br"/>
 
+		<!-- Add transmissions to wheels -->
+		<xacro:mir_200_wheel_transmissions/>
+
 		<!-- Settings for the IMU of the robot to work in the simulation environment-->
 		<xacro:imu_gazebo link="imu_link" robot_namespace="${robot_namespace_slashed}" imu_topic="imu_data" update_rate="50.0" standard_deviation="${imu_standard_deviation}" />
 
@@ -57,8 +56,9 @@
 		<xacro:sick_s300_gazebo link="front_laser_link" robot_namespace="${robot_namespace_slashed}" topic="f_scan" />
 		<xacro:sick_s300_gazebo link="back_laser_link" robot_namespace="${robot_namespace_slashed}" topic="b_scan" />
 
-		<!-- Add transmissions to wheels -->
-		<xacro:mir_200_wheel_transmissions/>
+		<!-- Settings for the camera of the robot to work in the simulation environment-->
+    	<xacro:gazebo_d435 camera_name="${robot_namespace_underscored}camera" reference_link="camera_link" topics_ns="${robot_namespace_slashed}camera" depth_optical_frame="${tf_prefix_slashed}camera_depth_optical_frame" color_optical_frame="${tf_prefix_slashed}camera_color_optical_frame" infrared1_optical_frame="${tf_prefix_slashed}camera_left_ir_optical_frame" infrared2_optical_frame="${tf_prefix_slashed}camera_right_ir_optical_frame" publish_pointcloud="true"/>
+
 
 		<!-- disabled, because it doesn't make a difference in Gazebo: -->
 		<!-- <xacro:set_all_wheel_frictions tf_prefix="${tf_prefix}"/> -->

@@ -47,14 +47,14 @@
 			<visual>
 				<origin xyz="${mir_200_act_wheel_dx} 0 0" rpy="0 0 0" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/MIR200_base.stl" />
+					<mesh filename="package://mir_description/meshes/visual/mir_200_base.stl" />
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
 				<origin xyz="${mir_200_act_wheel_dx} 0 0" rpy="0 0 0" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/collision/MIR200_base.stl" />
+					<mesh filename="package://mir_description/meshes/collision/mir_200_base.stl" />
 				</geometry>
 			</collision>
 		</link>
@@ -92,6 +92,7 @@
 			<child link="back_laser_link" />
 			<origin xyz="-0.3548 -0.2352 0.1914" rpy="0.0 0.0 ${-0.75 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
+
 		<xacro:sick_s300 link="back_laser_link" topic="b_scan" />
 
 		<!-- Ultrasound sensors -->
@@ -100,6 +101,7 @@
 			<child link="us_1_frame" />
 			<origin xyz="0.45 -0.12 0.16 " rpy="0 0 0" />  <!-- from visually matching to the mesh of the MiR -->
 		</joint>
+
 		<link name="us_1_frame" />
 
 		<joint name="us_2_joint" type="fixed">   <!-- left ultrasound -->
@@ -107,6 +109,7 @@
 			<child link="us_2_frame" />
 			<origin xyz="0.45 0.12 0.16 " rpy="0 0 0" />  <!-- from visually matching to the mesh of the MiR -->
 		</joint>
+		
 		<link name="us_2_frame" />
 
 		<!-- wheels -->

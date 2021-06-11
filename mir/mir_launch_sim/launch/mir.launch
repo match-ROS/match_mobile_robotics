@@ -4,7 +4,11 @@
 	<arg name="robot_x"   default="0.0" />
 	<arg name="robot_y"   default="0.0" />
 	<arg name="robot_yaw" default="0.0" />  
-	<arg name="model_name" default="mir"/>
+	<arg name="model_name" default=""/>
+
+	<!-- The model name of the robot_description cannot be empty when using no namespace. So use a default model name instead-->
+	<arg if="$(eval model_name=='')" name="robot_description_model_name" value="mir" />
+	<arg unless="$(eval model_name=='')" name="robot_description_model_name" value="$(arg model_name)" /> 
 
 	<arg name="move_base" default="true"/>
 
@@ -13,10 +17,10 @@
 	 
 
 	<!-- Load URDF -->
-	<param name="robot_description" command="$(find xacro)/xacro $(find mir_description)/urdf/mir_200/mir_200.gazebo.urdf robot_namespace:=$(arg model_name) tf_prefix:=$(arg model_name)" />
+	<param name="robot_description" command="$(find xacro)/xacro $(find mir_description)/urdf/mir_200/mir_200.gazebo.urdf robot_namespace:=$(arg model_name) tf_prefix:=$(arg tf_prefix)" />
 
 	<!-- Spawn the robot into Gazebo -->
-	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg model_name)
+	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg robot_description_model_name)
 		-x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) " />
 
 	

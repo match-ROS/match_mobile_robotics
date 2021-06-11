@@ -7,10 +7,15 @@ Panels:
         - /Grid1/Offset1
         - /TF1/Frames1
         - /TF1/Tree1
-        - /Global Map - MiR11/Potential Planner1/Autocompute Value Bounds1
-        - /Local Map - MiR11/DWB Markers1/Namespaces1
-      Splitter Ratio: 0.5690866708755493
-    Tree Height: 793
+        - /Global Planner Info - MiR11
+        - /Global Planner Info - MiR11/Potential Planner1/Autocompute Value Bounds1
+        - /Global Planner Info - MiR21
+        - /Local Planner Info - MiR11
+        - /Local Planner Info - MiR11/DWB Markers1/Namespaces1
+        - /Local Planner Info - MiR21
+        - /Camera Info1
+      Splitter Ratio: 0.6042154431343079
+    Tree Height: 820
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -29,7 +34,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: LaserScan - Mir2
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -54,6 +59,23 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 100
       Reference Frame: <Fixed Frame>
+      Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /map
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
+    - Class: rviz/Axes
+      Enabled: true
+      Length: 0.5
+      Name: Map Coordinate System
+      Radius: 0.05000000074505806
+      Reference Frame: map
       Value: true
     - Alpha: 1
       Class: rviz/RobotModel
@@ -119,11 +141,19 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        camera_left_ir_frame:
+        camera_infra1_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        camera_left_ir_optical_frame:
+        camera_infra1_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_infra2_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_infra2_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -132,14 +162,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_right_ir_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_right_ir_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         fl_caster_rotation_link:
           Alpha: 1
           Show Axes: false
@@ -173,7 +195,27 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        left_match_logo_background:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_match_logo_font:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_match_logo_background:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_match_logo_font:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -195,7 +237,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-      Name: RobotModel
+      Name: RobotModel - Mir1
       Robot Description: mir1/robot_description
       TF Prefix: mir1
       Update Interval: 0
@@ -265,11 +307,19 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        camera_left_ir_frame:
+        camera_infra1_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        camera_left_ir_optical_frame:
+        camera_infra1_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_infra2_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        camera_infra2_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -278,14 +328,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        camera_right_ir_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        camera_right_ir_optical_frame:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
         fl_caster_rotation_link:
           Alpha: 1
           Show Axes: false
@@ -319,7 +361,27 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        left_match_logo_background:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        left_match_logo_font:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         left_wheel_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_match_logo_background:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_match_logo_font:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -341,7 +403,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-      Name: RobotModel
+      Name: RobotModel - Mir2
       Robot Description: mir2/robot_description
       TF Prefix: mir2
       Update Interval: 0
@@ -379,14 +441,14 @@ Visualization Manager:
       Max Intensity: 0
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: LaserScan
+      Name: LaserScan - Mir1
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
       Size (m): 0.05000000074505806
       Style: Squares
-      Topic: /mir2/scan
+      Topic: /mir1/scan
       Unreliable: true
       Use Fixed Frame: true
       Use rainbow: true
@@ -399,37 +461,27 @@ Visualization Manager:
         Value: true
       Axis: Z
       Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 85; 170; 255
+      Class: rviz/LaserScan
+      Color: 255; 0; 0
       Color Transformer: FlatColor
       Decay Time: 0
-      Enabled: false
+      Enabled: true
       Invert Rainbow: false
       Max Color: 255; 255; 255
-      Max Intensity: 4096
+      Max Intensity: 0
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: Bumper Hit
+      Name: LaserScan - Mir2
       Position Transformer: XYZ
       Queue Size: 10
       Selectable: true
       Size (Pixels): 3
-      Size (m): 0.07999999821186066
-      Style: Spheres
-      Topic: /move_base_node/DWAPlannerROS/trajectory_cloud
-      Unreliable: false
+      Size (m): 0.05000000074505806
+      Style: Squares
+      Topic: /mir2/scan
+      Unreliable: true
       Use Fixed Frame: true
       Use rainbow: true
-      Value: false
-    - Alpha: 0.699999988079071
-      Class: rviz/Map
-      Color Scheme: map
-      Draw Behind: false
-      Enabled: true
-      Name: Map
-      Topic: /map
-      Unreliable: false
-      Use Timestamp: false
       Value: true
     - Class: rviz/Group
       Displays:
@@ -465,7 +517,7 @@ Visualization Manager:
           Color: 255; 170; 0
           Color Transformer: AxisColor
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 16881.79296875
@@ -482,12 +534,12 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
           Color: 170; 255; 0
-          Enabled: false
+          Enabled: true
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.30000001192092896
@@ -503,14 +555,14 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /move_base_node/DWAPlannerROS/global_plan
+          Topic: /mir1/move_base_node/DWAPlannerROS/global_plan
           Unreliable: false
-          Value: false
+          Value: true
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
           Color: 255; 255; 0
-          Enabled: true
+          Enabled: false
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.30000001192092896
@@ -526,19 +578,144 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /move_base_node/NavfnROS/plan
+          Topic: /mir1/move_base_node/NavfnROS/plan
           Unreliable: false
-          Value: true
+          Value: false
         - Alpha: 1
           Class: rviz/Polygon
           Color: 255; 0; 0
           Enabled: false
           Name: Footprint
-          Topic: /move_base_node/global_costmap/footprint
+          Topic: /mir1/move_base_node/global_costmap/footprint
           Unreliable: false
           Value: false
       Enabled: true
-      Name: Global Map - MiR1
+      Name: Global Planner Info - MiR1
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 0.699999988079071
+          Class: rviz/Map
+          Color Scheme: costmap
+          Draw Behind: true
+          Enabled: true
+          Name: Costmap
+          Topic: /mir2/move_base_node/global_costmap/costmap
+          Unreliable: false
+          Use Timestamp: false
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 20.797779083251953
+            Min Value: 0
+            Value: true
+          Axis: Z
+          Channel Name: pot_value
+          Class: rviz/PointCloud2
+          Color: 255; 170; 0
+          Color Transformer: AxisColor
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 16881.79296875
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Potential Planner
+          Position Transformer: XYZ
+          Queue Size: 30
+          Selectable: true
+          Size (Pixels): 2.299999952316284
+          Size (m): 0.03500000014901161
+          Style: Points
+          Topic: /move_base_node/NavfnROS/potential
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: false
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 170; 255; 0
+          Enabled: true
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
+          Line Style: Billboards
+          Line Width: 0.05000000074505806
+          Name: Planner
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Potential Map:
+            Alpha: 1
+            Class: rviz/Map
+            Color Scheme: costmap
+            Draw Behind: false
+            Enabled: false
+            Name: Potential Map
+            Topic: /map
+            Unreliable: false
+            Use Timestamp: false
+            Value: false
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
+          Topic: /mir2/move_base_node/DWAPlannerROS/global_plan
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 255; 255; 0
+          Enabled: false
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
+          Line Style: Billboards
+          Line Width: 0.05000000074505806
+          Name: Full Plan
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
+          Topic: /mir2/move_base_node/NavfnROS/plan
+          Unreliable: false
+          Value: false
+        - Alpha: 1
+          Class: rviz/Polygon
+          Color: 255; 0; 0
+          Enabled: false
+          Name: Footprint
+          Topic: /mir2/move_base_node/global_costmap/footprint
+          Unreliable: false
+          Value: false
+        - Alpha: 1
+          Arrow Length: 0.20000000298023224
+          Axes Length: 0.30000001192092896
+          Axes Radius: 0.009999999776482582
+          Class: rviz/PoseArray
+          Color: 255; 170; 0
+          Enabled: true
+          Head Length: 0.07000000029802322
+          Head Radius: 0.029999999329447746
+          Name: Amcl Particle Swarm - Mir1
+          Shaft Length: 0.23000000417232513
+          Shaft Radius: 0.009999999776482582
+          Shape: Arrow (Flat)
+          Topic: /mir1/particlecloud
+          Unreliable: false
+          Value: true
+      Enabled: true
+      Name: Global Planner Info - MiR2
     - Class: rviz/Group
       Displays:
         - Alpha: 0.699999988079071
@@ -555,7 +732,7 @@ Visualization Manager:
           Buffer Length: 1
           Class: rviz/Path
           Color: 170; 0; 255
-          Enabled: false
+          Enabled: true
           Head Diameter: 0.30000001192092896
           Head Length: 0.20000000298023224
           Length: 0.30000001192092896
@@ -571,15 +748,15 @@ Visualization Manager:
           Radius: 0.029999999329447746
           Shaft Diameter: 0.10000000149011612
           Shaft Length: 0.10000000149011612
-          Topic: /move_base_node/DWAPlannerROS/local_plan
+          Topic: /mir1/move_base_node/DWAPlannerROS/local_plan
           Unreliable: false
-          Value: false
+          Value: true
         - Alpha: 1
           Class: rviz/Polygon
           Color: 25; 255; 0
           Enabled: false
           Name: Footprint
-          Topic: /move_base_node/local_costmap/footprint
+          Topic: /mir1/move_base_node/local_costmap/footprint
           Unreliable: false
           Value: false
         - Alpha: 1
@@ -594,7 +771,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: Intensity
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Max Intensity: 40
@@ -607,11 +784,11 @@ Visualization Manager:
           Size (Pixels): 2
           Size (m): 0.03999999910593033
           Style: Points
-          Topic: /move_base_node/DWAPlannerROS/cost_cloud
+          Topic: /mir1/move_base_node/DWAPlannerROS/cost_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Class: rviz/MarkerArray
           Enabled: false
           Marker Topic: move_base_node/DWBLocalPlanner/markers
@@ -621,7 +798,154 @@ Visualization Manager:
           Queue Size: 100
           Value: false
       Enabled: true
-      Name: Local Map - MiR1
+      Name: Local Planner Info - MiR1
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 0.699999988079071
+          Class: rviz/Map
+          Color Scheme: costmap
+          Draw Behind: false
+          Enabled: true
+          Name: Costmap
+          Topic: /mir2/move_base_node/local_costmap/costmap
+          Unreliable: false
+          Use Timestamp: false
+          Value: true
+        - Alpha: 1
+          Buffer Length: 1
+          Class: rviz/Path
+          Color: 170; 0; 255
+          Enabled: true
+          Head Diameter: 0.30000001192092896
+          Head Length: 0.20000000298023224
+          Length: 0.30000001192092896
+          Line Style: Billboards
+          Line Width: 0.05000000074505806
+          Name: Planner
+          Offset:
+            X: 0
+            Y: 0
+            Z: 0
+          Pose Color: 255; 85; 255
+          Pose Style: None
+          Radius: 0.029999999329447746
+          Shaft Diameter: 0.10000000149011612
+          Shaft Length: 0.10000000149011612
+          Topic: /mir2/move_base_node/DWAPlannerROS/local_plan
+          Unreliable: false
+          Value: true
+        - Alpha: 1
+          Class: rviz/Polygon
+          Color: 25; 255; 0
+          Enabled: false
+          Name: Footprint
+          Topic: /mir2/move_base_node/local_costmap/footprint
+          Unreliable: false
+          Value: false
+        - Alpha: 1
+          Autocompute Intensity Bounds: false
+          Autocompute Value Bounds:
+            Max Value: 0
+            Min Value: 0
+            Value: true
+          Axis: Z
+          Channel Name: total_cost
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: Intensity
+          Decay Time: 0
+          Enabled: false
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 40
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: Cost Cloud
+          Position Transformer: XYZ
+          Queue Size: 20
+          Selectable: false
+          Size (Pixels): 2
+          Size (m): 0.03999999910593033
+          Style: Points
+          Topic: /mir2/move_base_node/DWAPlannerROS/cost_cloud
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: false
+        - Class: rviz/MarkerArray
+          Enabled: false
+          Marker Topic: move_base_node/DWBLocalPlanner/markers
+          Name: DWB Markers
+          Namespaces:
+            {}
+          Queue Size: 100
+          Value: false
+      Enabled: true
+      Name: Local Planner Info - MiR2
+    - Class: rviz/Group
+      Displays:
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: RGB8
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: PointCloud - Mir1
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic: /mir1/camera/depth/color/points
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+        - Alpha: 1
+          Autocompute Intensity Bounds: true
+          Autocompute Value Bounds:
+            Max Value: 10
+            Min Value: -10
+            Value: true
+          Axis: Z
+          Channel Name: intensity
+          Class: rviz/PointCloud2
+          Color: 255; 255; 255
+          Color Transformer: RGB8
+          Decay Time: 0
+          Enabled: true
+          Invert Rainbow: false
+          Max Color: 255; 255; 255
+          Max Intensity: 4096
+          Min Color: 0; 0; 0
+          Min Intensity: 0
+          Name: PointCloud - Mir2
+          Position Transformer: XYZ
+          Queue Size: 10
+          Selectable: true
+          Size (Pixels): 3
+          Size (m): 0.009999999776482582
+          Style: Flat Squares
+          Topic: /mir2/camera/depth/color/points
+          Unreliable: false
+          Use Fixed Frame: true
+          Use rainbow: true
+          Value: true
+      Enabled: false
+      Name: Camera Info
     - Alpha: 1
       Arrow Length: 0.20000000298023224
       Axes Length: 0.30000001192092896
@@ -631,79 +955,28 @@ Visualization Manager:
       Enabled: true
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
-      Name: Amcl Particle Swarm
+      Name: Amcl Particle Swarm - Mir1
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Arrow (Flat)
-      Topic: /particlecloud
+      Topic: /mir1/particlecloud
       Unreliable: false
-      Value: true
-    - Class: rviz/Axes
-      Enabled: true
-      Length: 1
-      Name: Axes
-      Radius: 0.10000000149011612
-      Reference Frame: map
       Value: true
     - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: RGB8
-      Decay Time: 0
+      Arrow Length: 0.20000000298023224
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 170; 0
       Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: PointCloud2
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
-      Topic: /mir1/camera/depth/color/points
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: Amcl Particle Swarm - Mir2
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /mir2/particlecloud
       Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
-      Value: true
-    - Alpha: 1
-      Autocompute Intensity Bounds: true
-      Autocompute Value Bounds:
-        Max Value: 10
-        Min Value: -10
-        Value: true
-      Axis: Z
-      Channel Name: intensity
-      Class: rviz/PointCloud2
-      Color: 255; 255; 255
-      Color Transformer: RGB8
-      Decay Time: 0
-      Enabled: true
-      Invert Rainbow: false
-      Max Color: 255; 255; 255
-      Max Intensity: 4096
-      Min Color: 0; 0; 0
-      Min Intensity: 0
-      Name: PointCloud2
-      Position Transformer: XYZ
-      Queue Size: 10
-      Selectable: true
-      Size (Pixels): 3
-      Size (m): 0.009999999776482582
-      Style: Flat Squares
-      Topic: /mir2/camera/depth/color/points
-      Unreliable: false
-      Use Fixed Frame: true
-      Use rainbow: true
       Value: true
   Enabled: true
   Global Options:
@@ -734,33 +1007,33 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 10.416491508483887
+      Distance: 9.687795639038086
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -2.6706395149230957
-        Y: -3.0786337852478027
-        Z: 1.9073486328125e-6
+        X: -1.1132726669311523
+        Y: -1.39369797706604
+        Z: 9.5367431640625e-7
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9203979969024658
+      Pitch: 0.5447973012924194
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 2.9353976249694824
+      Yaw: 3.740407943725586
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1025
+  Height: 1052
   Hide Left Dock: false
   Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001ad000003a7fc0200000005fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000003a7000000c900ffffff0000000100000132000003a5fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003a5000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a0000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000058a000003a700000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000001ad000003c2fc0200000005fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000003c2000000c900ffffff0000000100000132000003a5fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000003a5000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004a00000003efc0100000002fb0000000800540069006d00650000000000000004a0000004f300fffffffb0000000800540069006d006501000000000000045000000000000000000000058a000003c200000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -770,5 +1043,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1853
-  X: 67
-  Y: 27
+  X: 1987
+  Y: 0

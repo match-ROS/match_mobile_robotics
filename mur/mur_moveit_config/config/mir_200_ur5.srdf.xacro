@@ -3,7 +3,7 @@
     This is a format for representing semantic information about the robot structure.
     A URDF file must exist for this robot as well, where the joints and the links that are referenced are defined
 -->
-<robot name="mir_200_ur5"
+<robot name="mur_205"
         xmlns:xacro="http://www.ros.org/wiki/xacro">
     <xacro:arg name="prefix" default=""/>
 
@@ -37,8 +37,6 @@
     </group_state>
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="empty_endeffector" parent_link="$(arg prefix)tool0" group="empty_endeffector_group"/>
-    <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
-    <!-- <virtual_joint name="fixed_base" type="fixed" parent_frame="base_link" child_link="$(arg prefix)base_link" /> -->
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
     <passive_joint name="bl_caster_rotation_joint" />
     <passive_joint name="bl_caster_wheel_joint" />
@@ -55,7 +53,7 @@
     <disable_collisions link1="back_laser_link" link2="bl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="back_laser_link" link2="br_caster_rotation_link" reason="Never" />
     <disable_collisions link1="back_laser_link" link2="br_caster_wheel_link" reason="Never" />
-    <disable_collisions link1="back_laser_link" link2="camera_link" reason="Never" />
+    <!-- <disable_collisions link1="back_laser_link" link2="camera_link" reason="Never" /> -->
     <disable_collisions link1="back_laser_link" link2="$(arg prefix)tool0" reason="Never" />
     <disable_collisions link1="back_laser_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="back_laser_link" link2="fl_caster_wheel_link" reason="Never" />
@@ -71,7 +69,7 @@
     <disable_collisions link1="base_link" link2="bl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="base_link" link2="br_caster_rotation_link" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="br_caster_wheel_link" reason="Never" />
-    <disable_collisions link1="base_link" link2="camera_link" reason="Adjacent" />
+    <!-- <disable_collisions link1="base_link" link2="camera_link" reason="Adjacent" /> -->
     <disable_collisions link1="base_link" link2="fl_caster_rotation_link" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="fl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="base_link" link2="fr_caster_rotation_link" reason="Adjacent" />
@@ -84,7 +82,7 @@
     <disable_collisions link1="$(arg prefix)base_link" link2="bl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="$(arg prefix)base_link" link2="br_caster_rotation_link" reason="Never" />
     <disable_collisions link1="$(arg prefix)base_link" link2="br_caster_wheel_link" reason="Never" />
-    <disable_collisions link1="$(arg prefix)base_link" link2="camera_link" reason="Never" />
+    <!-- <disable_collisions link1="$(arg prefix)base_link" link2="camera_link" reason="Never" /> -->
     <disable_collisions link1="$(arg prefix)base_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="$(arg prefix)base_link" link2="fl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="$(arg prefix)base_link" link2="fr_caster_rotation_link" reason="Never" />
@@ -96,7 +94,7 @@
     <disable_collisions link1="bl_caster_rotation_link" link2="bl_caster_wheel_link" reason="Adjacent" />
     <disable_collisions link1="bl_caster_rotation_link" link2="br_caster_rotation_link" reason="Never" />
     <disable_collisions link1="bl_caster_rotation_link" link2="br_caster_wheel_link" reason="Never" />
-    <disable_collisions link1="bl_caster_rotation_link" link2="camera_link" reason="Never" />
+    <!-- <disable_collisions link1="bl_caster_rotation_link" link2="camera_link" reason="Never" /> -->
     <disable_collisions link1="bl_caster_rotation_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="bl_caster_rotation_link" link2="fl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="bl_caster_rotation_link" link2="fr_caster_rotation_link" reason="Never" />
@@ -108,7 +106,7 @@
     <disable_collisions link1="bl_caster_rotation_link" link2="$(arg prefix)upper_arm_link" reason="Never" />
     <disable_collisions link1="bl_caster_wheel_link" link2="br_caster_rotation_link" reason="Never" />
     <disable_collisions link1="bl_caster_wheel_link" link2="br_caster_wheel_link" reason="Never" />
-    <disable_collisions link1="bl_caster_wheel_link" link2="camera_link" reason="Never" />
+    <!-- <disable_collisions link1="bl_caster_wheel_link" link2="camera_link" reason="Never" /> -->
     <disable_collisions link1="bl_caster_wheel_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="bl_caster_wheel_link" link2="fl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="bl_caster_wheel_link" link2="fr_caster_rotation_link" reason="Never" />
@@ -119,7 +117,7 @@
     <disable_collisions link1="bl_caster_wheel_link" link2="$(arg prefix)shoulder_link" reason="Never" />
     <disable_collisions link1="bl_caster_wheel_link" link2="$(arg prefix)upper_arm_link" reason="Never" />
     <disable_collisions link1="br_caster_rotation_link" link2="br_caster_wheel_link" reason="Adjacent" />
-    <disable_collisions link1="br_caster_rotation_link" link2="camera_link" reason="Never" />
+    <!-- <disable_collisions link1="br_caster_rotation_link" link2="camera_link" reason="Never" /> -->
     <disable_collisions link1="br_caster_rotation_link" link2="$(arg prefix)tool0" reason="Never" />
     <disable_collisions link1="br_caster_rotation_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="br_caster_rotation_link" link2="fl_caster_wheel_link" reason="Never" />
@@ -130,7 +128,7 @@
     <disable_collisions link1="br_caster_rotation_link" link2="right_wheel_link" reason="Never" />
     <disable_collisions link1="br_caster_rotation_link" link2="$(arg prefix)shoulder_link" reason="Never" />
     <disable_collisions link1="br_caster_rotation_link" link2="$(arg prefix)upper_arm_link" reason="Never" />
-    <disable_collisions link1="br_caster_wheel_link" link2="camera_link" reason="Never" />
+    <!-- <disable_collisions link1="br_caster_wheel_link" link2="camera_link" reason="Never" /> -->
     <disable_collisions link1="br_caster_wheel_link" link2="$(arg prefix)tool0" reason="Never" />
     <disable_collisions link1="br_caster_wheel_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="br_caster_wheel_link" link2="fl_caster_wheel_link" reason="Never" />
@@ -141,14 +139,14 @@
     <disable_collisions link1="br_caster_wheel_link" link2="right_wheel_link" reason="Never" />
     <disable_collisions link1="br_caster_wheel_link" link2="$(arg prefix)shoulder_link" reason="Never" />
     <disable_collisions link1="br_caster_wheel_link" link2="$(arg prefix)upper_arm_link" reason="Never" />
-    <disable_collisions link1="camera_link" link2="fl_caster_rotation_link" reason="Never" />
+    <!-- <disable_collisions link1="camera_link" link2="fl_caster_rotation_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="fl_caster_wheel_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="fr_caster_rotation_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="fr_caster_wheel_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="front_laser_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="left_wheel_link" reason="Never" />
     <disable_collisions link1="camera_link" link2="right_wheel_link" reason="Never" />
-    <disable_collisions link1="camera_link" link2="$(arg prefix)shoulder_link" reason="Never" />
+    <disable_collisions link1="camera_link" link2="$(arg prefix)shoulder_link" reason="Never" /> -->
     <disable_collisions link1="$(arg prefix)tool0" link2="$(arg prefix)wrist_1_link" reason="Never" />
     <disable_collisions link1="$(arg prefix)tool0" link2="$(arg prefix)wrist_2_link" reason="Never" />
     <disable_collisions link1="$(arg prefix)tool0" link2="$(arg prefix)wrist_3_link" reason="Adjacent" />

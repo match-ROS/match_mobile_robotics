@@ -50,6 +50,9 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
 
+  <depend>mir_description</depend>
+  <depend>ur_description</depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -42,14 +42,14 @@
   <!-- Trajectory Execution Functionality -->
   <include ns="move_group" file="$(find mur_moveit_config)/launch/trajectory_execution.launch" if="$(arg allow_trajectory_execution)">
     <arg name="moveit_manage_controllers" value="true" />
-    <arg name="moveit_controller_manager" value="MiR200_UR5" unless="$(arg fake_execution)"/>
+    <arg name="moveit_controller_manager" value="mur_205" unless="$(arg fake_execution)"/>
     <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
     <arg name="prefix" value="$(arg prefix)"/>
   </include>
 
   <!-- Sensors Functionality -->
   <include ns="move_group" file="$(find mur_moveit_config)/launch/sensor_manager.launch" if="$(arg allow_trajectory_execution)">
-    <arg name="moveit_sensor_manager" value="MiR200_UR5" />
+    <arg name="moveit_sensor_manager" value="mur_205" />
   </include>
 
   <!-- Start the actual move_group node/action server -->

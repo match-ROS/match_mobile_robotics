@@ -6,7 +6,7 @@
   <arg name="pipeline" default="ompl" />
   <arg name="prefix"/>
 
-  <include file="$(find mur_moveit_config)/launch/$(arg pipeline)_planning_pipeline.launch.xml">
+  <include file="$(find mur_moveit_config)/launch/$(arg pipeline)_planning_pipeline.launch">
     <arg name="prefix" value="$(arg prefix)" />
   </include>
 

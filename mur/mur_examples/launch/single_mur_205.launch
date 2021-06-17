@@ -4,5 +4,5 @@
 
 	<include file="$(find mur_launch_sim)/launch/mur_205.launch"/>
 
-	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find mur_examples)/rviz/single_mur_200_visualization.rviz" /><!--2D Navigation-->
+	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find mur_examples)/rviz/single_mur_205_visualization.rviz" /><!--2D Navigation-->
 </launch>

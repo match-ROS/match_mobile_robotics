@@ -1,0 +1,12 @@
+<package>
+  <description brief="keyence">
+
+     keyence
+
+  </description>
+  <author>rosmatch</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/keyence</url>
+
+</package>

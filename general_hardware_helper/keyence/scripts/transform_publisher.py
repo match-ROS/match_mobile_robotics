@@ -7,12 +7,24 @@ import tf_conversions
 
 from geometry_msgs.msg import PoseStamped
 from franka_msgs.msg import FrankaState
+from tf2_sensor_msgs.tf2_sensor_msgs import do_transform_cloud
+from sensor_msgs.msg import PointCloud2
+from sensor_msgs.msg import PointCloud
+from std_msgs.msg import Header
+
+import roslib; roslib.load_manifest('laser_assembler')
 
 
 class keyence_transform():
     def __init__(self):
         rospy.init_node('keyence_transform_node')
+
         rospy.Subscriber("/franka_state_controller/franka_states",FrankaState, self.pose_cb)   
+        rospy.sleep(1)
+        rospy.Subscriber("/profiles",PointCloud2, self.pointcloud_cb)   
+        self.cloud_pub = rospy.Publisher("/cloud_out",PointCloud2, queue_size = 10)
+        self.cloud_out = PointCloud2()
+        rospy.loginfo("Transform publisher running")
         rospy.spin()
 
         
@@ -21,6 +33,7 @@ class keyence_transform():
         br = tf2_ros.TransformBroadcaster()
         t = geometry_msgs.msg.TransformStamped()
 
+        # calculate transformation from world to EE
         t.header.stamp = rospy.Time.now()
         t.header.frame_id = "map"
         t.child_frame_id = "sensor_optical_frame"
@@ -38,8 +51,21 @@ class keyence_transform():
         t.transform.rotation.y = q[1]
         t.transform.rotation.z = q[2]
         t.transform.rotation.w = q[3]
+        self.transform = t
 
         br.sendTransform(t)
+
+    def pointcloud_cb(self,cloud):
+        self.cloud_out = do_transform_cloud(cloud, self.transform)
+        self.cloud_pub.publish(self.cloud_out)
+
+        
+        
+                
+                
+
+
+
 
 
 if __name__=="__main__":

@@ -49,7 +49,9 @@ class keyence_transform():
 
         q1 = tf_conversions.transformations.quaternion_from_matrix(T) #Type= 
         q2 = tf_conversions.transformations.quaternion_about_axis(math.pi, (1,0,0))
-        q = tf_conversions.transformations.quaternion_multiply(q1,q2)
+        q3 = tf_conversions.transformations.quaternion_about_axis(math.pi/2, (0,0,1))
+        q_temp = tf_conversions.transformations.quaternion_multiply(q1,q2)
+        q = tf_conversions.transformations.quaternion_multiply(q_temp,q3)
 
 
         t.transform.rotation.x = q[0]

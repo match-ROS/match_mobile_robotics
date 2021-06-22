@@ -16,7 +16,7 @@
   <param name="trajectory_execution/allowed_start_tolerance" value="0.01"/> <!-- default 0.01 -->
 
   <!-- Load the robot specific controller manager; this sets the moveit_controller_manager ROS parameter -->
-  <arg name="moveit_controller_manager" default="mur205" />
+  <arg name="moveit_controller_manager" default="miranda" />
   <include file="$(find miranda_moveit)/launch/$(arg moveit_controller_manager)_moveit_controller_manager.launch.xml">
     <!-- <arg name="execution_type" value="$(arg execution_type)" /> -->
   </include>

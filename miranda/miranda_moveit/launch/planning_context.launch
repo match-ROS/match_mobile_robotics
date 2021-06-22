@@ -9,7 +9,7 @@
   <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro  '$(find miranda_description)/urdf/miranda.gazebo.xacro'"/>
 
   <!-- The semantic description that corresponds to the URDF -->
-  <param name="$(arg robot_description)_semantic" textfile="$(find miranda_moveit)/config/mur205.srdf" />
+  <param name="$(arg robot_description)_semantic" textfile="$(find miranda_moveit)/config/miranda.srdf" />
 
   <!-- Load updated joint limits (override information from URDF) -->
   <group ns="$(arg robot_description)_planning">

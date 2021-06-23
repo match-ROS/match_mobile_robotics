@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="robot_description" command="cat '$(find keyence_scanner)/urdf/7200.urdf'" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="sensor_transform" args="0 0 0.1 1.57079632679 0 0 sensor_optical_frame sensor_frame" output="screen"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="world_transform" args="0 0 0 0 0 0 map world" output="screen"/>
+  <node pkg="rviz" type="rviz" name="rviz" args="-s '' -d $(find keyence_scanner)/config/v7200.rviz" output="screen" required="true"/>
+</launch>

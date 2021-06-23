@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /Status1
         - /PointCloud21
+        - /RobotModel1
       Splitter Ratio: 0.5
     Tree Height: 549
   - Class: rviz/Selection
@@ -56,8 +57,8 @@ Visualization Manager:
     - Alpha: 1
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
-        Max Value: -0.16967278718948364
-        Min Value: -0.18007215857505798
+        Max Value: -0.25812289118766785
+        Min Value: -0.2662144601345062
         Value: true
       Axis: Z
       Channel Name: intensity
@@ -94,9 +95,9 @@ Visualization Manager:
       Unreliable: false
       Value: false
       Visibility:
-        "": true
         Grid: true
         PointCloud2: true
+        RobotModel: true
         Value: true
       Zoom Factor: 1
     - Alpha: 1
@@ -115,7 +116,7 @@ Visualization Manager:
           Show Trail: false
           Value: true
       Name: RobotModel
-      Robot Description: robot_description
+      Robot Description: lj_v7200
       TF Prefix: ""
       Update Interval: 0
       Value: true
@@ -187,4 +188,4 @@ Window Geometry:
     collapsed: false
   Width: 1267
   X: 884
-  Y: 317
+  Y: 287

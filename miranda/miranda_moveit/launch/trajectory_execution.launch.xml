@@ -20,5 +20,4 @@
   <include file="$(find miranda_moveit)/launch/$(arg moveit_controller_manager)_moveit_controller_manager.launch.xml">
     <!-- <arg name="execution_type" value="$(arg execution_type)" /> -->
   </include>
-
 </launch>

@@ -7,7 +7,8 @@
 	<xacro:arg name="robot_arm_name" default="panda"/>
 	<xacro:arg name="load_gazebo" default="true"/>
 	<xacro:arg name="load_gripper" default="true"/>
-	<xacro:arg name="use_gazebo_control" default="true"/>
+	<!-- Set use_gazebo_control to false for panda_transmission as this would start a second libgazebo_ros_control service that is not in the correct namespace-->
+	<xacro:arg name="use_gazebo_control" default="false"/>
 
 
 

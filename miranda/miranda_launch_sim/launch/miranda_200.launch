@@ -41,7 +41,7 @@
 	<rosparam file="$(find miranda_launch_sim)/config/panda_sim_controllers.yaml" command="load" subst_value="true"/>
 
 	<node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-		args="joint_state_controller mobile_base_controller panda_simulator/position_joint_position_controller">
+		args="joint_state_controller mobile_base_controller position_joint_position_controller">
 	</node>
 
 	<!-- -->

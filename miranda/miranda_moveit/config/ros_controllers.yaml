@@ -26,7 +26,35 @@ joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50
 controller_list:
-  []
+  - name: position_joint_position_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    joints:
+      - panda_joint1
+      - panda_joint2
+      - panda_joint3
+      - panda_joint4
+      - panda_joint5
+      - panda_joint6
+      - panda_joint7
+
+# action_ns: "follow_joint_trajectory"
+#     type: FollowJointTrajectory
+
+  # [ position_joint_position_controller ]
+  # - name: position_joint_position_controller
+  #   # action_ns: "effort_controllers"
+  #   type: effort_controllers/JointTrajectoryController
+  #   joints:
+  #     - panda_joint1
+  #     - panda_joint2
+  #     - panda_joint3
+  #     - panda_joint4
+  #     - panda_joint5
+  #     - panda_joint6
+  #     - panda_joint7
+
+  # [panda_simulator/position_joint_position_controller]
   # - name: position_joint_trajectory_controller
   #   action_ns: follow_joint_trajectory
   #   type: FollowJointTrajectory

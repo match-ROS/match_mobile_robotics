@@ -79,7 +79,7 @@ robot_config:
 #     outer: 0.005 # [m]
 
 controllers_config:
-    position_controller: "panda_simulator/position_joint_position_controller"
+    position_controller: "position_joint_position_controller"
     torque_controller: "panda_simulator/effort_joint_torque_controller"
     velocity_controller: "panda_simulator/velocity_joint_velocity_controller"
     default_controller: "panda_simulator/position_joint_position_controller" 

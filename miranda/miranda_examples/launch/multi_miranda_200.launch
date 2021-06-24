@@ -23,5 +23,7 @@
         <arg name="model_name"  default="$(arg robot2_name)"/>
     </include>
 
-	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find miranda_examples)/rviz/single_miranda_visualization.rviz" />
+	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find miranda_examples)/rviz/multi_miranda_200_visualization.rviz" />
+    <node type="rviz" name="rviz_miranda1_moveit" pkg="rviz" args="-d $(find miranda_examples)/rviz/miranda1_moveit_visualization.rviz" />
+    <node type="rviz" name="rviz_miranda2_moveit" pkg="rviz" args="-d $(find miranda_examples)/rviz/miranda2_moveit_visualization.rviz" />
 </launch>

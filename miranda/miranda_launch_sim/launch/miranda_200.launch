@@ -81,6 +81,7 @@
 
 	<!-- Start all necessary moveit files -->
 	<include file="$(find miranda_moveit)/launch/move_group.launch">
+		<arg name="load_robot_description" value="false" />
 		<!-- <arg name="model_name" value="$(arg model_name)"/>-->
 		<!-- <arg name="prefix" value="$(arg prefix)"/> -->
 	</include>

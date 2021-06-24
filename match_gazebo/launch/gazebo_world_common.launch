@@ -1,7 +1,9 @@
 <launch>
+    <arg name="paused" default="false"/>
     <arg name="world_name" default="cafe"/>
     <arg name="use_map_sim" default="true"/>
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="paused" value="$(arg paused)"/>
         <arg name="gui" value="true"/>
         <arg name="world_name" value="worlds/$(arg world_name).world"/>
     </include>

@@ -82,7 +82,7 @@ Visualization Manager:
           Draw Behind: false
           Enabled: true
           Name: Local Costmap - miranda1
-          Topic: /mir2/move_base_node/global_costmap/costmap
+          Topic: /mir1/move_base_node/local_costmap/costmap
           Unreliable: false
           Use Timestamp: false
           Value: true

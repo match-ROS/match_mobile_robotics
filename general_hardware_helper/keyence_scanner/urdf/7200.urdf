@@ -4,7 +4,7 @@
     <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://keyence_experimental/meshes/visual/lj_v7200.dae"/>
+          <mesh filename="package://keyence_scanner/meshes/visual/lj_v7200.dae"/>
         </geometry>
         <material name="dark grey">
           <color rgba="0.2 0.2 0.2 1"/>
@@ -13,7 +13,7 @@
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
-          <mesh filename="package://keyence_experimental/meshes/collision/lj_v7200.stl"/>
+          <mesh filename="package://keyence_scanner/meshes/collision/lj_v7200.stl"/>
         </geometry>
         <material name="dark grey">
           <color rgba="0.2 0.2 0.2 1"/>

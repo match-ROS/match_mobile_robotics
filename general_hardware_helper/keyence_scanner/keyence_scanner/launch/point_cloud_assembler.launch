@@ -1,9 +1,0 @@
-<launch>
-  <node type="point_cloud2_assembler" pkg="laser_assembler"
-        name="my_assembler">
-    <remap from="cloud" to="cloud_out"/>
-    <param name="max_clouds" type="int" value="600" />
-    <param name="fixed_frame" type="string" value="sensor_optical_frame" />
-    <param name="/use_sime_time" value="true"/>
-  </node>
-</launch>

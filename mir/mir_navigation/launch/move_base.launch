@@ -1,12 +1,11 @@
 <launch>
     <arg name="tf_prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
-    <arg name="global_planner" default="GlobalPlanner"  />
-    <arg name="local_planner"   default="DWAPlannerROS" />
+    <arg name="global_planner" default="GlobalPlanner" />
+    <arg name="local_planner" default="DWAPlannerROS" />
 
     <arg if="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
     <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
    
-
     <node pkg="move_base" type="move_base" respawn="false" name="move_base_node" output="screen" clear_params="true">
         
         <!-- general move_base param -->

@@ -1,4 +1,9 @@
 robot_base_frame: $(arg tf_prefix_slashed)base_footprint
+
+### footprint
+footprint: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
+footprint_padding: 0.0
+
 transform_tolerance: 3.0 #0.4   changed by Malte Heinrich
 update_frequency: 5.0
 publish_frequency: 1.0

@@ -1,28 +1,31 @@
+# move_base definition for which planner to use 
 base_local_planner: dwa_local_planner/DWAPlannerROS
+
+# move_base_flex defition for adding planner to controller list. Controller can then be selected during planning.
+
+
 DWAPlannerROS:
-  # Robot configuration
+  acc_lim_x: 1.5
+  acc_lim_y: 0.0 # diff drive robot
+  acc_lim_theta: 2.0
+  acc_lim_trans: 1.5  
+
   max_vel_x:  0.8
   min_vel_x: -0.2
 
   max_vel_y: 0.0  # diff drive robot
   min_vel_y: 0.0  # diff drive robot
 
+  # Warning!
+  #   do not set min_vel_trans to 0.0 otherwise dwa will always think translational velocities
+  #   are non-negligible and small in place rotational velocities will be created.
   max_vel_trans: 0.8  # choose slightly less than the base's capability
   min_vel_trans: 0.1  # this is the min trans velocity when there is negligible rotational velocity
   trans_stopped_vel: 0.03
 
-  # Warning!
-  #   do not set min_vel_trans to 0.0 otherwise dwa will always think translational velocities
-  #   are non-negligible and small in place rotational velocities will be created.
-
   max_vel_theta: 1.0  # choose slightly less than the base's capability
   min_vel_theta: 0.1  # this is the min angular velocity when there is negligible translational velocity
-  theta_stopped_vel: 0.1
-  
-  acc_lim_x: 1.5
-  acc_lim_y: 0.0      # diff drive robot
-  acc_lim_trans: 1.5
-  acc_lim_theta: 2.0
+  theta_stopped_vel: 0.03
 
   # Goal tolerance
   yaw_goal_tolerance: 0.03  # yaw_goal_tolerance > (sim_time * min_vel_theta) / 2 (from Navigation Tuning Guide)
@@ -36,9 +39,9 @@ DWAPlannerROS:
   vtheta_samples: 20
 
   # Trajectory scoring
-  path_distance_bias: 64.0      # default: 32.0  mir: 32.0  - weighting for how much it should stick to the global path plan
-  goal_distance_bias: 12.0      # default: 24.0  mir: 48.0  - weighting for how much it should attempt to reach its goal
-  occdist_scale: 0.5            # default: 0.01  mir: 0.01  - weighting for how much the controller should avoid obstacles
+  path_distance_bias: 32.0      # default: 32.0  mir: 32.0  - weighting for how much it should stick to the global path plan
+  goal_distance_bias: 48.0      # default: 24.0  mir: 48.0  - weighting for how much it should attempt to reach its goal
+  occdist_scale: 0.01            # default: 0.01  mir: 0.01  - weighting for how much the controller should avoid obstacles
   forward_point_distance: 0.325 # default: 0.325 mir: 0.325 - how far along to place an additional scoring point
   stop_time_buffer: 0.2         # default: 0.2   mir: 0.2   - amount of time a robot must stop before colliding for a valid traj.
   scaling_speed: 0.25           # default: 0.25  mir: 0.25  - absolute velocity at which to start scaling the robot's footprint

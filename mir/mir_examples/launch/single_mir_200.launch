@@ -6,4 +6,3 @@
 
 	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_navigation)/rviz/navigation.rviz" /><!--2D Navigation-->
 </launch>
-

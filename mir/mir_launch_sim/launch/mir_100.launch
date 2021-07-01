@@ -5,14 +5,22 @@
 	<arg name="robot_y"   default="0.0" />
 	<arg name="robot_yaw" default="0.0" />  
 	<arg name="model_name" default=""/>
-    <arg name="robot_urdf_path" value="$(find mir_description)/urdf/mir_100/mir_100.gazebo.urdf"/>
+	<arg name="robot_urdf_path" value="$(find mir_description)/urdf/mir_100/mir_100.gazebo.urdf"/>
 
-    <include file="$(find mir_launch_sim)/launch/utils/general_mir.launch">
-        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-        <arg name="robot_x"  value="$(arg robot_x)"/>
-        <arg name="robot_y"  value="$(arg robot_y)"/>
-        <arg name="robot_yaw"  value="$(arg robot_yaw)"/>
+	<arg name="move_base_selector" default="move_base" />
+	<arg name="global_planner" default="GlobalPlanner" />
+	<arg name="local_planner" default="DWAPlannerROS" />
+
+	<include file="$(find mir_launch_sim)/launch/utils/general_mir.launch">
+		<arg name="tf_prefix" value="$(arg tf_prefix)"/>
+		<arg name="robot_x"  value="$(arg robot_x)"/>
+		<arg name="robot_y"  value="$(arg robot_y)"/>
+		<arg name="robot_yaw"  value="$(arg robot_yaw)"/>
 		<arg name="model_name" value="$(arg model_name)"/>
-        <arg name="robot_urdf_path" value="$(arg robot_urdf_path)"/>
-    </include>
+		<arg name="robot_urdf_path" value="$(arg robot_urdf_path)"/>
+
+		<arg name="move_base_selector" value="$(arg move_base_selector)"/>
+		<arg name="global_planner" value="$(arg global_planner)" />
+		<arg name="local_planner" value="$(arg local_planner)" />
+	</include>
 </launch>

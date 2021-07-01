@@ -1,4 +1,4 @@
-base_local_planner: ebad_local_planner/EBandPlannerROS
+base_local_planner: eband_local_planner/EBandPlannerROS
 EBandPlannerROS:
   # Robot configuration
   max_vel_lin: 0.8                                  # choose slightly less than the base's capability

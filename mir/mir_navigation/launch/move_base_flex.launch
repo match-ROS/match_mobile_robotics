@@ -32,20 +32,14 @@
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="local_costmap" subst_value="true" />
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_local_params.yaml" command="load" subst_value="true" />
 
-        <!-- <rosparam file="$(find mur205_navigation)/config/move_base_flex_common_params.yaml" command="load" subst_value="true"/> -->
-        <!-- <rosparam file="$(find mir_navigation)/config/global_planner_params.yaml" command="load" /> -->
-        <!-- <rosparam file="$(find mur205_navigation)/config/local_planner_params.yaml" command="load" subst_value="true"/> -->
-        
-        <!-- <rosparam file="$(find mur205_navigation)/config/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true"/> -->
-        <!-- <rosparam file="$(find mur205_navigation)/config/costmap_common_params.yaml" command="load" ns="local_costmap" subst_value="true"/> -->
-        <!-- <rosparam file="$(find mir_navigation)/config/global_costmap_params.yaml" command="load" /> -->
-        <!-- <rosparam file="$(find mur205_navigation)/config/local_costmap_params.yaml" command="load" subst_value="true"/> -->
-  
-        
-        
-
         <remap from="cmd_vel" to="mobile_base_controller/cmd_vel"/>
         <remap from="odom" to="mobile_base_controller/odom"/>
-        <!-- <remap from="map" to="/map" /> -->
+        <remap from="map" to="/map" />
+    </node>
+
+    <!-- This relay allows the usage of the old simple_goal topic from move_base -->
+    <node pkg="mir_navigation" type="move_base_simple_relay.py" name="move_base_simple_relay" output="screen">
+        <param name="global_planner_name" value="$(arg global_planner)"/>
+        <param name="local_planner_name" value="$(arg local_planner)"/>
     </node>
 </launch>

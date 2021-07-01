@@ -6,10 +6,10 @@
 planners:
   - name: 'GlobalPlanner'
     type: 'global_planner/GlobalPlanner'
-  # mprim file cannot be loaded
-  # - name: 'SBPLLatticePlanner'
-  #   type: 'SBPLLatticePlanner'
   - name: 'NavfnROS'
     type: 'navfn/NavfnROS'
   - name: 'CarrotPlanner'
     type: 'carrot_planner/CarrotPlanner'
+  # mprim file cannot be loaded
+  # - name: 'SBPLLatticePlanner'
+  #   type: 'SBPLLatticePlanner'

@@ -51,6 +51,7 @@
 		<include file="$(find mir_navigation)/launch/move_base_flex.launch" >
 			<arg name="global_planner" value="$(arg global_planner)"/>
 			<arg name="local_planner" value="$(arg local_planner)"/>
+			<arg name="tf_prefix" value="$(arg tf_prefix)"/>
 		</include>
 	</group>
 

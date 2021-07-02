@@ -4,6 +4,5 @@
 
 	<include file="$(find mir_launch_sim)/launch/mir_100.launch"/>
 
-	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_navigation)/rviz/navigation.rviz" /><!--2D Navigation-->
+	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_examples)/rviz/single_mir_visualization.rviz" /><!--2D Navigation-->
 </launch>
-

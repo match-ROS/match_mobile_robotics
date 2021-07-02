@@ -7,15 +7,19 @@
   <arg name="robot1_name"  default="mir1"/>
   <arg name="robot2_name"  default="mir2"/>
   
-  <include file="$(find mir_launch_sim)/launch/mir_100.launch" ns="$(arg robot1_name)" pass_all_args="true">
-      <arg name="robot_x"     default="0.0" />
-      <arg name="robot_y"     default="0.5" />
-      <arg name="robot_yaw"   default="0.0" /> 
-      <arg name="tf_prefix"   default="$(arg robot1_name)" />       
-      <arg name="model_name"  default="$(arg robot1_name)"/>
-  </include>
-    
-  <include file="$(find mir_launch_sim)/launch/mir_100.launch" ns="$(arg robot2_name)" pass_all_args="true">
+  <!-- Choose group for creating a namespace environment if you want to add multiple nodes/includes to that namespace easily -->
+  <group ns="$(arg robot1_name)">
+    <include file="$(find mir_launch_sim)/launch/mir_100.launch">
+        <arg name="robot_x"     default="0.0" />
+        <arg name="robot_y"     default="0.5" />
+        <arg name="robot_yaw"   default="0.0" /> 
+        <arg name="tf_prefix"   default="$(arg robot1_name)" />       
+        <arg name="model_name"  default="$(arg robot1_name)"/>
+    </include>
+  </group>
+  
+  <!-- Just add the ns parameter to the tag to insert this one node/include in the namespace -->
+  <include file="$(find mir_launch_sim)/launch/mir_100.launch" ns="$(arg robot2_name)">
       <arg name="robot_x"     default="0.0" />
       <arg name="robot_y"     default="-0.5" />
       <arg name="robot_yaw"   default="0.0" /> 
@@ -23,5 +27,5 @@
       <arg name="model_name"  default="$(arg robot2_name)"/>
   </include>
   
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_navigation)/rviz/multi_mir.rviz" /><!--2D Navigation-->
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_examples)/rviz/multi_mir_visualization.rviz" /><!--2D Navigation-->
 </launch>

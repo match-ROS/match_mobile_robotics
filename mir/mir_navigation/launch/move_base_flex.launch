@@ -14,7 +14,7 @@
         <param name="planner_max_retries" value="$(arg planner_max_retries)"/>
 
         <!-- general move_base param -->
-        <rosparam file="$(find mir_navigation)/config/Planner/move_base_flex_common_params.yaml" command="load" />
+        <rosparam file="$(find mir_navigation)/config/Planner/move_base_flex_common_params.yaml" command="load" subst_value="true"/>
         <rosparam file="$(find mir_navigation)/config/Planner/recovery_behaviors.yaml" command="load" />
 
         <!-- planner params -->

@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+  <param name="lj_v7200" command="cat '$(find keyence_scanner)/urdf/7200.urdf'" />
+  <node pkg="tf2_ros" type="static_transform_publisher" name="sensor_transform" args="0 0 0.1 0 0 0 sensor_optical_frame sensor_frame" output="screen"/>
+  <node pkg="tf2_ros" type="static_transform_publisher" name="world_transform" args="0 0 0 0 0 0 map world" output="screen"/>
+  <node pkg="rviz" type="rviz" name="rviz" args="-s '' -d $(find keyence_scanner)/config/v7200.rviz" output="screen" required="true"/>
+
+  <node pkg="keyence_scanner" type="transform_publisher.py" name="transform_publisher"  /> <!--2D Navigation-->
+  <node pkg="keyence_scanner" type="keyence_driver_node" name="keyence_driver_node" >
+    <param name="controller_ip" value="10.110.130.49" />
+  </node>
+
+</launch>
+
+

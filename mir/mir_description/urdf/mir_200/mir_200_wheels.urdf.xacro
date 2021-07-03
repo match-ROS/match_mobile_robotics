@@ -2,16 +2,16 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 
-	<xacro:macro name="actuated_wheel" params="tf_prefix locationprefix locationright">
-		<joint name="${tf_prefix}${locationprefix}_wheel_joint" type="continuous">
+	<xacro:macro name="actuated_wheel" params="locationprefix locationright">
+		<joint name="${locationprefix}_wheel_joint" type="continuous">
 			<origin xyz="0.0 ${-mir_200_act_wheel_dy * locationright} ${mir_200_act_wheel_radius}" rpy="0 0 0" />
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}${locationprefix}_wheel_link" />
+			<parent link="base_link" />
+			<child link="${locationprefix}_wheel_link" />
 			<axis xyz="0 1 0" />
 			<limit effort="200" velocity="20.0" />
 		</joint>
 
-		<link name="${tf_prefix}${locationprefix}_wheel_link">
+		<link name="${locationprefix}_wheel_link">
 			<xacro:cylinder_inertial mass="${mir_200_act_wheel_mass}" radius="${mir_200_act_wheel_radius}" length="${mir_200_act_wheel_width}">
 				<origin xyz="0 0 0" rpy="${0.5 * pi} 0 0" />
 			</xacro:cylinder_inertial>
@@ -31,17 +31,17 @@
 		</link>
 	</xacro:macro>
 
-	<xacro:macro name="caster_wheel" params="tf_prefix locationprefix locationright wheel_base_dx">
+	<xacro:macro name="caster_wheel" params="locationprefix locationright wheel_base_dx">
 		<!-- caster hub -->
-		<joint name="${tf_prefix}${locationprefix}_caster_rotation_joint" type="continuous">
+		<joint name="${locationprefix}_caster_rotation_joint" type="continuous">
 			<origin xyz="${wheel_base_dx} ${-mir_200_caster_wheel_base_dy * locationright} ${mir_200_caster_wheel_base_dz}" rpy="0 0 0" />
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}${locationprefix}_caster_rotation_link" />
+			<parent link="base_link" />
+			<child link="${locationprefix}_caster_rotation_link" />
 			<axis xyz="0 0 1" />
 			<dynamics damping="0.01" friction="0.0"/>
 		</joint>
 
-		<link name="${tf_prefix}${locationprefix}_caster_rotation_link">
+		<link name="${locationprefix}_caster_rotation_link">
 		<inertial>
 			<!-- <origin xyz="0 0 -0.042500000044" rpy="${0.5 * pi} ${24 * deg_to_rad} ${1.5 * pi}" /> -->
 			<origin xyz="0 0 -0.042500000044" rpy="${24 * deg_to_rad} 0 ${0.5 * pi} " />
@@ -70,14 +70,14 @@
 		</link>
 
 		<!-- caster wheel -->
-		<joint name="${tf_prefix}${locationprefix}_caster_wheel_joint" type="continuous">
+		<joint name="${locationprefix}_caster_wheel_joint" type="continuous">
 			<origin xyz="${mir_200_caster_wheel_dx} ${-mir_200_caster_wheel_dy * locationright} ${mir_200_caster_wheel_dz}" rpy="0 0 0" />
-			<parent link="${tf_prefix}${locationprefix}_caster_rotation_link" />
-			<child link="${tf_prefix}${locationprefix}_caster_wheel_link" />
+			<parent link="${locationprefix}_caster_rotation_link" />
+			<child link="${locationprefix}_caster_wheel_link" />
 			<axis xyz="0 1 0" />
 		</joint>
 
-		<link name="${tf_prefix}${locationprefix}_caster_wheel_link">
+		<link name="${locationprefix}_caster_wheel_link">
 			<xacro:cylinder_inertial mass="${mir_200_caster_wheel_mass}" radius="${mir_200_caster_wheel_radius}" length="${mir_200_caster_wheel_width}">
 				<origin xyz="0 0 0" rpy="${0.5 * pi} 0 0" />
 			</xacro:cylinder_inertial>

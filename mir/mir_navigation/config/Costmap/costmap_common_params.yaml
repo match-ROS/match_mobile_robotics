@@ -1,4 +1,9 @@
 robot_base_frame: $(arg tf_prefix_slashed)base_footprint
+
+### footprint
+footprint: [[0.506,-0.32],[0.506,0.32],[-0.454,0.32],[-0.454,-0.32]]
+footprint_padding: 0.0
+
 transform_tolerance: 3.0 #0.4   changed by Malte Heinrich
 update_frequency: 5.0
 publish_frequency: 1.0
@@ -6,7 +11,7 @@ obstacle_range: 3.0
 #mark_threshold: 1
 publish_voxel_map: true
 navigation_map:
-  map_topic: map
+  map_topic: /map
 obstacles:
   observation_sources: b_scan_marking b_scan_clearing f_scan_marking f_scan_clearing
   b_scan_marking:

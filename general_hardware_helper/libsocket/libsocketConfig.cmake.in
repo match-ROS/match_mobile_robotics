@@ -1,0 +1,7 @@
+set(libsocket_INCLUDE_DIRS "@CONF_INCLUDE_DIRS@")
+
+set(libsocket_BINARY_DIR "@PROJECT_BINARY_DIR@")
+
+include(${libsocket_BINARY_DIR}/libsocketTargets.cmake)
+
+set(libsocket_LIBRARIES socket++)

@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
-	<xacro:include filename="$(find mir_description)/urdf/mir_100/mir_100_wheels.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/mir_100/mir_100_wheels.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/match_logo.urdf.xacro" />
+	<xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
 
 	<xacro:property name="deg_to_rad" value="${(1 / 360) * (2 * pi)}" />
 
@@ -25,16 +27,20 @@
 	<xacro:property name="mir_100_caster_wheel_base_dy" value="0.203" />
 	<xacro:property name="mir_100_caster_wheel_base_dz" value="${mir_100_caster_wheel_radius-mir_100_caster_wheel_dz}" />
 
-	<xacro:macro name="mir_100" params="tf_prefix">
-		<link name="${tf_prefix}base_footprint" />
+	<xacro:property name="mir_100_match_logo_dx" value="0.0" />
+	<xacro:property name="mir_100_match_logo_dy" value="0.2724435" />
+	<xacro:property name="mir_100_match_logo_dz" value="0.27" />
 
-		<joint name="${tf_prefix}base_joint" type="fixed">
-			<parent link="${tf_prefix}base_footprint" />
-			<child link="${tf_prefix}base_link" />
+	<xacro:macro name="mir_100">
+		<link name="base_footprint" />
+
+		<joint name="base_joint" type="fixed">
+			<parent link="base_footprint" />
+			<child link="base_link" />
 			<origin xyz="0 0 0" rpy="0 0 0" />
 		</joint>
 
-		<link name="${tf_prefix}base_link">
+		<link name="base_link">
 			<xacro:box_inertial mass="${mir_100_base_mass}" x="0.9" y="0.58" z="0.3">
 				<origin xyz="${mir_100_act_wheel_dx} 0 0.20" rpy="0 0 0" />
 			</xacro:box_inertial>
@@ -54,75 +60,82 @@
 		</link>
 		
 		<!-- IMU -->
-		<joint name="${tf_prefix}base_link_to_imu_joint" type="fixed">
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}imu_link" />
+		<joint name="base_link_to_imu_joint" type="fixed">
+			<parent link="base_link" />
+			<child link="imu_link" />
 			<origin xyz="0.0 0.0 0.25" rpy="0 0 0" />  <!-- same as real MiR -->
 		</joint>
 
-		<link name="${tf_prefix}imu_link" />
+		<link name="imu_link" />
 
 		<!-- Create an alias for imu_link. This is necessary because the real MiR's
 			TF has imu_link, but the imu_data topic is published in the imu_frame
 			frame. -->
-		<joint name="${tf_prefix}imu_link_to_imu_frame_joint" type="fixed">
-			<parent link="${tf_prefix}imu_link" />
-			<child link="${tf_prefix}imu_frame" />
+		<joint name="imu_link_to_imu_frame_joint" type="fixed">
+			<parent link="imu_link" />
+			<child link="imu_frame" />
 			<origin xyz="0 0 0" rpy="0 0 0" />
 		</joint>
 
-		<link name="${tf_prefix}imu_frame" />
+		<link name="imu_frame" />
 
 		<!-- Laser scanners -->
-		<joint name="${tf_prefix}base_link_to_front_laser_joint" type="fixed">
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}front_laser_link" />
+		<joint name="base_link_to_front_laser_joint" type="fixed">
+			<parent link="base_link" />
+			<child link="front_laser_link" />
 			<origin xyz="0.4288 0.2358 0.1914" rpy="0.0 0.0 ${0.25 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
-		<xacro:sick_s300 tf_prefix="${tf_prefix}" link="front_laser_link" topic="f_scan" />
+		<xacro:sick_s300 link="front_laser_link" topic="f_scan" />
 
-		<joint name="${tf_prefix}base_link_to_back_laser_joint" type="fixed">
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}back_laser_link" />
+		<joint name="base_link_to_back_laser_joint" type="fixed">
+			<parent link="base_link" />
+			<child link="back_laser_link" />
 			<origin xyz="-0.3548 -0.2352 0.1914" rpy="0.0 0.0 ${-0.75 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
 
-		<xacro:sick_s300 tf_prefix="${tf_prefix}" link="back_laser_link" topic="b_scan" />
+		<xacro:sick_s300 link="back_laser_link" topic="b_scan" />
 
 		<!-- Ultrasound sensors -->
-		<joint name="${tf_prefix}us_1_joint" type="fixed">   <!-- right ultrasound -->
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}us_1_frame" />
+		<joint name="us_1_joint" type="fixed">   <!-- right ultrasound -->
+			<parent link="base_link" />
+			<child link="us_1_frame" />
 			<origin xyz="0.45 -0.12 0.16 " rpy="0 0 0" />  <!-- from visually matching to the mesh of the MiR -->
 		</joint>
 
-		<link name="${tf_prefix}us_1_frame" />
+		<link name="us_1_frame" />
 
-		<joint name="${tf_prefix}us_2_joint" type="fixed">   <!-- left ultrasound -->
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}us_2_frame" />
+		<joint name="us_2_joint" type="fixed">   <!-- left ultrasound -->
+			<parent link="base_link" />
+			<child link="us_2_frame" />
 			<origin xyz="0.45 0.12 0.16 " rpy="0 0 0" />  <!-- from visually matching to the mesh of the MiR -->
 		</joint>
 
-		<link name="${tf_prefix}us_2_frame" />
+		<link name="us_2_frame" />
 
 		<!-- wheels -->
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationprefix="left" locationright="-1"/>
-		<xacro:actuated_wheel tf_prefix="${tf_prefix}" locationprefix="right" locationright="1"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="fl" locationright="-1" wheel_base_dx="${mir_100_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="fr" locationright="1" wheel_base_dx="${mir_100_front_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="bl" locationright="-1" wheel_base_dx="${mir_100_back_caster_wheel_base_dx}"/>
-		<xacro:caster_wheel tf_prefix="${tf_prefix}" locationprefix="br" locationright="1" wheel_base_dx="${mir_100_back_caster_wheel_base_dx}"/>
+		<xacro:actuated_wheel locationprefix="left" locationright="-1"/>
+		<xacro:actuated_wheel locationprefix="right" locationright="1"/>
+		<xacro:caster_wheel locationprefix="fl" locationright="-1" wheel_base_dx="${mir_100_front_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel locationprefix="fr" locationright="1" wheel_base_dx="${mir_100_front_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel locationprefix="bl" locationright="-1" wheel_base_dx="${mir_100_back_caster_wheel_base_dx}"/>
+		<xacro:caster_wheel locationprefix="br" locationright="1" wheel_base_dx="${mir_100_back_caster_wheel_base_dx}"/>
 
-		<joint name="${tf_prefix}base_link_surface_joint" type="fixed">
+		<joint name="base_link_surface_joint" type="fixed">
 			<origin xyz="${mir_100_act_wheel_dx} 0 0.352" rpy="0 0 0" />
-			<parent link="${tf_prefix}base_link" />
-			<child link="${tf_prefix}surface" />
+			<parent link="base_link" />
+			<child link="surface" />
 			<axis xyz="0 0 1" />
 		</joint>
 
-		<link name="${tf_prefix}surface"/>
+		<link name="surface"/>
 
-		<xacro:mir_100_wheel_transmissions tf_prefix="${tf_prefix}"/>
+		<!--Realsense_Intel_D435_Camera-->
+		<xacro:sensor_d435 name="camera" parent="base_link" use_nominal_extrinsics="true">
+    		<origin xyz="0.42 0 0.27" rpy="0 0 0" />
+  		</xacro:sensor_d435>
+
+		<!-- Insert a match logo on both sides of the mobile robot -->
+		<xacro:match_logo parent="base_link" locationprefix="left" location_dx="${mir_100_match_logo_dx}" location_dy="${mir_100_match_logo_dy}" location_dz="${mir_100_match_logo_dz}"/>
+		<xacro:match_logo parent="base_link" locationprefix="right" location_dx="${mir_100_match_logo_dx}" location_dy="${-1 * mir_100_match_logo_dy}" location_dz="${mir_100_match_logo_dz}" orientation="${pi}"/>
 	</xacro:macro>
 </robot>

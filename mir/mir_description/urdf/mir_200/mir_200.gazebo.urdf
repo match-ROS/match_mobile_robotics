@@ -12,9 +12,11 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
 
 	<!-- Init the MiR200 marco that is also used for the hardware -->
-	<xacro:mir_200 tf_prefix="$(arg tf_prefix)"/>
+	<xacro:mir_200/>
 	<!-- Init the MiR200 macro that includes all infos that Gazebo need to function -->
-	<xacro:mir_200_gazebo tf_prefix="$(arg tf_prefix)"/>
+	<xacro:mir_200_gazebo tf_prefix="$(arg tf_prefix)" robot_namespace="$(arg robot_namespace)"/>
 	<!-- Init the plugins that run the MiR in Gazebo -->
 	<xacro:controller_plugin_gazebo robot_namespace="$(arg robot_namespace)"/>
+	<xacro:p3d_base_controller robot_namespace="$(arg robot_namespace)"/>
+
 </robot>

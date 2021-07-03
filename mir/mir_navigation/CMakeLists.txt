@@ -19,7 +19,15 @@ catkin_package()
 
 # Mark executable scripts (Python etc.) for installation
 # in contrast to setup.py, you can choose the destination
-install(PROGRAMS
+# install(PROGRAMS
+#   nodes/acc_finder.py
+#   nodes/min_max_finder.py
+#   scripts/plot_mprim.py
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+
+catkin_install_python(PROGRAMS 
+  nodes/move_base_simple_relay.py
   nodes/acc_finder.py
   nodes/min_max_finder.py
   scripts/plot_mprim.py

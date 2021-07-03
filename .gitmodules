@@ -16,3 +16,13 @@
 	path = panda/panda_moveit_config
 	url = https://github.com/ros-planning/panda_moveit_config.git
 	branch = melodic-devel
+[submodule "mir/mir_submodules/realsense-ros"]
+	path = mir/mir_submodules/realsense-ros
+	url = https://github.com/IntelRealSense/realsense-ros.git
+[submodule "mir/mir_submodules/realsense_gazebo_plugin"]
+	path = mir/mir_submodules/realsense_gazebo_plugin
+	url = https://github.com/pal-robotics/realsense_gazebo_plugin.git
+	branch = melodic-devel
+[submodule "panda/franka_panda_description"]
+	path = panda/franka_panda_description
+	url = https://github.com/justagist/franka_panda_description.git

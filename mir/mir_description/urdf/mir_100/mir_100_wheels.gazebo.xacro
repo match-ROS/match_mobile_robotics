@@ -1,17 +1,17 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:macro name="actuated_wheel_gazebo" params="tf_prefix locationprefix">	
-		<gazebo reference="${tf_prefix}${locationprefix}_wheel_link">
+	<xacro:macro name="actuated_wheel_gazebo" params="locationprefix">	
+		<gazebo reference="${locationprefix}_wheel_link">
 			<material>Gazebo/DarkGrey</material>
 		</gazebo>
 	</xacro:macro>
 
-	<xacro:macro name="caster_wheel_gazebo" params="tf_prefix locationprefix">
-		<gazebo reference="${tf_prefix}${locationprefix}_caster_rotation_link">
+	<xacro:macro name="caster_wheel_gazebo" params="locationprefix">
+		<gazebo reference="${locationprefix}_caster_rotation_link">
 			<material>Gazebo/Grey</material>
 		</gazebo>
 
-		<gazebo reference="${tf_prefix}${locationprefix}_caster_wheel_link">
+		<gazebo reference="${locationprefix}_caster_wheel_link">
 			<material>Gazebo/DarkGrey</material>
 		</gazebo>
 	</xacro:macro>

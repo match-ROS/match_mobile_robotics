@@ -78,7 +78,6 @@ class PlayStationDiffDrive(PlayStationHandler):
         msg.angular.z=self.rotation
         
         self.publisher_stack[self.active_robot].publish(msg)
-        print(msg)
 
     def publishTwistStamped(self):
         msg=TwistStamped()

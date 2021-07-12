@@ -74,6 +74,7 @@ class PlayStationDiffDrive(PlayStationHandler):
         while not rospy.is_shutdown(): 
             for i,edge in enumerate(self._edges):
                 if edge:
+                    self._edges[i] = 0
                     try:
                         self.__callbackList[i]()
                     except Exception as ex:

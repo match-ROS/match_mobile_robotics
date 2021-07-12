@@ -11,10 +11,10 @@ class PlayStationDiffDrive(PlayStationHandler):
         self.__speed_rotation =  rospy.get_param("~rotation",0.2)
         self.__trans_incr=rospy.get_param("~trans_incr",0.1)
         self.__rot_incr=rospy.get_param("~rot_incr",0.1)
-        self.__callbackList=[   self.__increaseTrans__,
+        self.__callbackList=[   self.__decreaseTrans__,
                                 self.__increaseRot__,
                                 self.__decreaseRot__,
-                                self.__decreaseTrans__
+                                self.__increaseTrans__
                                 ]
        
         self.__translation = float()
@@ -34,22 +34,22 @@ class PlayStationDiffDrive(PlayStationHandler):
 
     def __increaseRot__(self):
         print("Increasing rot")
-        self.__speed_rotation=self.__speed_rotation+self.__rot_incr
+        self.__speed_rotation=self.__speed_rotation * (1+self.__rot_incr)
         
       
     def __increaseTrans__(self):
         print("Increasing trans")
-        self.__speed_translation=self.__speed_translation+self.__trans_incr
+        self.__speed_translation=self.__speed_translation * (1+self.__trans_incr)
     
     def __decreaseRot__(self):
         print("Decreasing rot")
-        self.__speed_rotation=self.__speed_rotation-self.__rot_incr
+        self.__speed_rotation=self.__speed_rotation* (1- self.__rot_incr) 
         if self.__speed_rotation<0.0:
             self.__speed_rotation=0.0
       
     def __decreaseTrans__(self):
         print("Decreasing trans")
-        self.__speed_translation=self.__speed_translation-self.__trans_incr
+        self.__speed_translation=self.__speed_translation * (1-self.__trans_incr)
         if  self.__speed_translation<0.0:
             self.__speed_translation=0.0
  

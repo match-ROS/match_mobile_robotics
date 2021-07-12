@@ -25,6 +25,8 @@ class PlayStationDiffDrive(PlayStationHandler):
 
         self.translation = float()
         self.rotation = float()
+        self.initialized = False
+        self.lower_position_reached = False
         
         self.publishFunction=None        
             
@@ -76,6 +78,7 @@ class PlayStationDiffDrive(PlayStationHandler):
         msg.angular.z=self.rotation
         
         self.publisher_stack[self.active_robot].publish(msg)
+        print(msg)
 
     def publishTwistStamped(self):
         msg=TwistStamped()
@@ -96,8 +99,17 @@ class PlayStationDiffDrive(PlayStationHandler):
                         print(ex)
                         pass
             
-            self.translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.speed_translation #data.axes[1] + data.axes[4]
-            self.rotation = (self._axes[0] + self._axes[3])*self.speed_rotation
-
-            self.publishFunction()
+            
+            if self.initialized == True:
+                self.translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.speed_translation #data.axes[1] + data.axes[4]
+                self.rotation = (self._axes[0] + self._axes[3])*self.speed_rotation
+                self.publishFunction()
+            else:
+                rospy.loginfo_throttle(5,"Controller is not initialized. Press and release both shoulder buttons simultaneously")
+                if self._axes[2] == -1.0 and self._axes[5] == -1.0:
+                    self.lower_position_reached = True
+                    rospy.loginfo_once("lower position reached")
+                if self.lower_position_reached == True and self._axes[2] == 1.0 and self._axes[5] == 1.0:
+                    self.initialized = True
+                    rospy.loginfo_once("initilization complete")
             self.rate.sleep()            

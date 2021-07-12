@@ -11,7 +11,7 @@ class PlayStationDiffDrive(PlayStationHandler):
         self.speed_rotation =  rospy.get_param("~rotation",0.2)
         self.trans_incr=rospy.get_param("~trans_incr",0.1)
         self.rot_incr=rospy.get_param("~rot_incr",0.1)
-        self.robotnames = rospy.get_param("~robot_names",'["mir1","mir2"')
+        self.robotnames = rospy.get_param("~robot_names","")
         self.cmd_vel_topic_prefix = rospy.get_param("~cmd_vel_topic_prefix","")
         self.callbackList=[   self.decreaseTrans,
                                 self.increaseRot,
@@ -35,9 +35,12 @@ class PlayStationDiffDrive(PlayStationHandler):
             print("Publishing as TwistStamped")
             self.publishFunction=self.publishTwistStamped
         
-        self.publisher_stack = []   
-        for i in self.robotnames: 
-            self.publisher_stack.append(rospy.Publisher(i+"/" + self.cmd_vel_topic_prefix + "/cmd_vel",message_type,queue_size= 10))
+        self.publisher_stack = []  
+        if self.robotnames == "":
+            self.publisher_stack.append(rospy.Publisher(self.cmd_vel_topic_prefix + "/cmd_vel",message_type,queue_size= 10))
+        else:
+            for i in self.robotnames: 
+                    self.publisher_stack.append(rospy.Publisher(i+"/" + self.cmd_vel_topic_prefix + "/cmd_vel",message_type,queue_size= 10))
 
     def dummy(self):
         pass

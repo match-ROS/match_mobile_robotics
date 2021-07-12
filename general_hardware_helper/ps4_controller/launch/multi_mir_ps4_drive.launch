@@ -13,7 +13,6 @@
         <rosparam command="load" file="$(find ps4_controller)/config/controller_config.yaml"/>
         <remap from="joy" to="ps4_input"/>  <!--Get data from the "ps4_input" topic-->
         <param name="cmd_vel_topic_prefix" value="$(arg cmd_vel_topic_prefix)" />
-        <remap from="cmd_vel" to="mobile_base_controller/cmd_vel"/> <!--Publish velocities to the mobile_base_controller/cmd_vel topic-->
         <rosparam param="robot_names" subst_value="True">$(arg robot_names)</rosparam>
     </node>
 </launch>

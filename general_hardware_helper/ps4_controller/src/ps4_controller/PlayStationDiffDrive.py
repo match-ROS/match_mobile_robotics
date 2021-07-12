@@ -30,11 +30,9 @@ class PlayStationDiffDrive(PlayStationHandler):
             
         if message_type==Twist:
             print("Publishing as Twist")
-            self.publisher=rospy.Publisher("cmd_vel",message_type,queue_size= 10)
             self.publishFunction=self.publishTwist
         elif  message_type==TwistStamped:
             print("Publishing as TwistStamped")
-            self.publisher=rospy.Publisher("cmd_vel",message_type,queue_size=10)
             self.publishFunction=self.publishTwistStamped
         
         self.publisher_stack = []   

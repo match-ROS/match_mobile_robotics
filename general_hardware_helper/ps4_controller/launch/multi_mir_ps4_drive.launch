@@ -1,0 +1,18 @@
+<launch>
+    <!-- Launch the driver for the ps4 controller and publish data to "ps4_input" topic -->
+    
+    <arg name="robot_names"  default='["mir1","mir2","mir3"]'/>
+    <arg name="cmd_vel_topic_prefix"  default="mobile_base_controller"/>
+    
+    <node name="ps4_controller_driver" pkg="joy" type="joy_node">
+        <remap from="joy" to="ps4_input"/>
+    </node>
+
+    <!-- Get proper velocities from the raw controller data.-->   
+    <node name="teleoperate" pkg="ps4_controller" type="ps4_diffdrive.py" output="screen">
+        <rosparam command="load" file="$(find ps4_controller)/config/controller_config.yaml"/>
+        <remap from="joy" to="ps4_input"/>  <!--Get data from the "ps4_input" topic-->
+        <param name="cmd_vel_topic_prefix" value="$(arg cmd_vel_topic_prefix)" />
+        <rosparam param="robot_names" subst_value="True">$(arg robot_names)</rosparam>
+    </node>
+</launch>

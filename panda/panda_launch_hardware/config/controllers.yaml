@@ -98,3 +98,25 @@ fixed_joint_impedance_controller:
   joint_damping: 39
   rate: 400
   enable_accelaration: false
+
+# For MoveIt:
+position_joint_trajectory_controller:
+  type: position_controllers/JointTrajectoryController
+  joints: *joints
+
+  constraints:
+    goal_time: 0.5
+    panda_joint1:
+      goal: 0.05
+    panda_joint2:
+      goal: 0.05
+    panda_joint3:
+      goal: 0.05
+    panda_joint4:
+      goal: 0.05
+    panda_joint5:
+      goal: 0.05
+    panda_joint6:
+      goal: 0.05
+    panda_joint7:
+      goal: 0.05

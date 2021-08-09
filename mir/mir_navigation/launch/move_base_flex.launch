@@ -3,6 +3,8 @@
     <arg name="global_planner" default="GlobalPlanner"  />
     <arg name="local_planner" default="DWAPlannerROS" />
 
+    <arg name="start_move_base_simple" default="true" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
+
     <arg name="tf_timeout" default="1.5" />
     <arg name="planner_max_retries" default="3" />
 
@@ -38,7 +40,7 @@
     </node>
 
     <!-- This relay allows the usage of the old simple_goal topic from move_base -->
-    <node pkg="mir_navigation" type="move_base_simple_relay.py" name="move_base_simple_relay" output="screen">
+    <node if="$(eval start_move_base_simple)" pkg="mir_navigation" type="move_base_simple_relay.py" name="move_base_simple_relay" output="screen">
         <param name="global_planner_name" value="$(arg global_planner)"/>
         <param name="local_planner_name" value="$(arg local_planner)"/>
     </node>

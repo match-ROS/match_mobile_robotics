@@ -5,83 +5,110 @@ import rospy
 class PlayStationDiffDrive(PlayStationHandler):
     def __init__(self,message_type):
         PlayStationHandler.__init__(self)
-        self.__rate=rospy.Rate(rospy.get_param("~rate",10))
-
-        self.__speed_translation = rospy.get_param("~translation",0.1)
-        self.__speed_rotation =  rospy.get_param("~rotation",0.2)
-        self.__trans_incr=rospy.get_param("~trans_incr",0.1)
-        self.__rot_incr=rospy.get_param("~rot_incr",0.1)
-        self.__callbackList=[   self.__increaseTrans__,
-                                self.__increaseRot__,
-                                self.__decreaseRot__,
-                                self.__decreaseTrans__
+        self.rate=rospy.Rate(rospy.get_param("~rate",10))
+        self.active_robot = 0
+        self.speed_translation = rospy.get_param("~translation",0.1)
+        self.speed_rotation =  rospy.get_param("~rotation",0.2)
+        self.trans_incr=rospy.get_param("~trans_incr",0.1)
+        self.rot_incr=rospy.get_param("~rot_incr",0.1)
+        self.robotnames = rospy.get_param("~robot_names","")
+        self.cmd_vel_topic_prefix = rospy.get_param("~cmd_vel_topic_prefix","")
+        self.callbackList=[   self.decreaseTrans,
+                                self.increaseRot,
+                                self.decreaseRot,
+                                self.increaseTrans,
+                                self.dummy,
+                                self.dummy,
+                                self.dummy,
+                                self.changeRobot
                                 ]
-       
-        self.__translation = float()
-        self.__rotation = float()
+
+        self.translation = float()
+        self.rotation = float()
+        self.initialized = False
+        self.lower_position_reached = False
         
-        self.__publishFunction=None        
+        self.publishFunction=None        
             
         if message_type==Twist:
             print("Publishing as Twist")
-            self.__publisher=rospy.Publisher("cmd_vel",message_type,queue_size= 10)
-            self.__publishFunction=self.__publishTwist__
+            self.publishFunction=self.publishTwist
         elif  message_type==TwistStamped:
             print("Publishing as TwistStamped")
-            self.__publisher=rospy.Publisher("cmd_vel",message_type,queue_size=10)
-            self.__publishFunction=self.__publishTwistStamped__
+            self.publishFunction=self.publishTwistStamped
+        
+        self.publisher_stack = []  
+        if self.robotnames == "":
+            self.publisher_stack.append(rospy.Publisher(self.cmd_vel_topic_prefix + "/cmd_vel",message_type,queue_size= 10))
+        else:
+            for i in self.robotnames: 
+                    self.publisher_stack.append(rospy.Publisher(i+"/" + self.cmd_vel_topic_prefix + "/cmd_vel",message_type,queue_size= 10))
 
+    def dummy(self):
+        pass
 
-    def __increaseRot__(self):
+    def increaseRot(self):
         print("Increasing rot")
-        self.__speed_rotation=self.__speed_rotation+self.__rot_incr
+        self.speed_rotation=self.speed_rotation * (1+self.rot_incr)
         
       
-    def __increaseTrans__(self):
+    def increaseTrans(self):
         print("Increasing trans")
-        self.__speed_translation=self.__speed_translation+self.__trans_incr
+        self.speed_translation=self.speed_translation * (1+self.trans_incr)
     
-    def __decreaseRot__(self):
+    def decreaseRot(self):
         print("Decreasing rot")
-        self.__speed_rotation=self.__speed_rotation-self.__rot_incr
-        if self.__speed_rotation<0.0:
-            self.__speed_rotation=0.0
+        self.speed_rotation=self.speed_rotation* (1- self.rot_incr) 
+        if self.speed_rotation<0.0:
+            self.speed_rotation=0.0
       
-    def __decreaseTrans__(self):
+    def decreaseTrans(self):
         print("Decreasing trans")
-        self.__speed_translation=self.__speed_translation-self.__trans_incr
-        if  self.__speed_translation<0.0:
-            self.__speed_translation=0.0
- 
+        self.speed_translation=self.speed_translation * (1-self.trans_incr)
+        if  self.speed_translation<0.0:
+            self.speed_translation=0.0
+    
+    def changeRobot(self):
+        self.active_robot = (self.active_robot + 1) % len(self.robotnames)
 
 
-    def __publishTwist__(self):
+    def publishTwist(self):
         msg=Twist()
-        msg.linear.x=self.__translation
-        msg.angular.z=self.__rotation
+        msg.linear.x=self.translation
+        msg.angular.z=self.rotation
         
-        self.__publisher.publish(msg)
+        self.publisher_stack[self.active_robot].publish(msg)
 
-    def __publishTwistStamped__(self):
+    def publishTwistStamped(self):
         msg=TwistStamped()
         msg.header.stamp=rospy.Time.now()
-        msg.twist.linear.x=self.__translation
-        msg.twist.angular.z=self.__rotation
+        msg.twist.linear.x=self.translation
+        msg.twist.angular.z=self.rotation
         
-        self.__publisher.publish(msg)
+        self.publisher_stack[self.active_robot].publish(msg)
 
     def run(self):
         while not rospy.is_shutdown(): 
             for i,edge in enumerate(self._edges):
                 if edge:
+                    self._edges[i] = 0
                     try:
-                        self.__callbackList[i]()
+                        self.callbackList[i]()
                     except Exception as ex:
                         print(ex)
                         pass
-
-            self.__translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.__speed_translation #data.axes[1] + data.axes[4]
-            self.__rotation = (self._axes[0] + self._axes[3])*self.__speed_rotation
-
-            self.__publishFunction()
-            self.__rate.sleep()            
+            
+            
+            if self.initialized == True:
+                self.translation = (abs(self._axes[5] - 1) - abs(self._axes[2] - 1)) *self.speed_translation #data.axes[1] + data.axes[4]
+                self.rotation = (self._axes[0] + self._axes[3])*self.speed_rotation
+                self.publishFunction()
+            else:
+                rospy.loginfo_throttle(5,"Controller is not initialized. Press and release both shoulder buttons simultaneously")
+                if self._axes[2] == -1.0 and self._axes[5] == -1.0:
+                    self.lower_position_reached = True
+                    rospy.loginfo_once("lower position reached")
+                if self.lower_position_reached == True and self._axes[2] == 1.0 and self._axes[5] == 1.0:
+                    self.initialized = True
+                    rospy.loginfo_once("initilization complete")
+            self.rate.sleep()            

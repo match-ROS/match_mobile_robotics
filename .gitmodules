@@ -28,4 +28,7 @@
 	url = https://github.com/justagist/franka_panda_description.git
 [submodule "scout_mini/src/rplidar_ros"]
 	path = scout_mini/src/rplidar_ros
-	url = https://github.com/Slamtec/rplidar_ros
+	url = https://github.com/Slamtec/rplidar_ros.git
+[submodule "scout_mini/src/scout_ros"]
+	path = scout_mini/src/scout_ros
+	url = https://github.com/agilexrobotics/scout_ros

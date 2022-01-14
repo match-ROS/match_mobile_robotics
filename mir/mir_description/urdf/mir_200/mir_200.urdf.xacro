@@ -4,7 +4,7 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200_wheels.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/match_logo.urdf.xacro" />
-	<xacro:include filename="$(find realsense2_description)/urdf/_d435.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/general/_d435.urdf.xacro" />
 	
 	<xacro:property name="deg_to_rad" value="${(1 / 360) * (2 * pi)}" />
 

@@ -32,3 +32,9 @@
 [submodule "scout_mini/src/scout_ros"]
 	path = scout_mini/src/scout_ros
 	url = https://github.com/agilexrobotics/scout_ros
+[submodule "/home/rosmatch/catkin_ws/src/Match_Mobile_Robotics/scout_mini/src/ugv_sdk"]
+	path = /home/rosmatch/catkin_ws/src/Match_Mobile_Robotics/scout_mini/src/ugv_sdk
+	url = https://github.com/agilexrobotics/ugv_sdk.git
+[submodule "/home/rosmatch/catkin_ws/src/Match_Mobile_Robotics/scout_mini/src/async_port"]
+	path = /home/rosmatch/catkin_ws/src/Match_Mobile_Robotics/scout_mini/src/async_port
+	url = https://github.com/westonrobot/async_port.git

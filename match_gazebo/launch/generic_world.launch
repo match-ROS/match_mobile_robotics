@@ -12,7 +12,7 @@
     </include>
 
     <node if="$(arg use_map_sim)" name="static_map_server" pkg="map_server" type="map_server" args="$(arg map_name)" output="screen">
-        <param name="frame_id" type="string" value="/map"/>
+        <param name="frame_id" type="string" value="map"/>
     </node>
     
 </launch>

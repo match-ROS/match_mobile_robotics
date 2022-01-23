@@ -37,3 +37,6 @@
 [submodule "univeral_robot"]
 	path = univeral_robot
 	url = https://github.com/fmauch/universal_robot.git
+[submodule "ur/univeral_robot"]
+	path = ur/univeral_robot
+	url = https://github.com/fmauch/universal_robot.git

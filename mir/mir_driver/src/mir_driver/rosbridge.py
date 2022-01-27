@@ -34,7 +34,7 @@ class RosbridgeSetup():
         for key, values in self.callbacks.iteritems():
             for value in values:
                 if callback == value:
-                    print "Found!"
+                    print("Found!")
                     values.remove(value)
                     if len(values) == 0:
                         keys_for_deletion.append(key)
@@ -114,7 +114,7 @@ class RosbridgeSetup():
                             try:
                                 callback(msg)
                             except:
-                                print "exception on callback", callback, "from", topic
+                                print("exception on callback", callback, "from", topic)
                                 traceback.print_exc()
                                 raise
                 elif option == "service_response":
@@ -126,18 +126,18 @@ class RosbridgeSetup():
                                 #print 'id:', id, 'func:', self.service_callbacks[id]
                                 self.service_callbacks[id](values)
                             except:
-                                print "exception on callback ID:", id
+                                print("exception on callback ID:", id)
                                 traceback.print_exc()
                                 raise
                     else:
-                        print "Missing ID!"
+                        print("Missing ID!")
                 else:
-                    print "Recieved unknown option - it was: ", option
+                    print("Recieved unknown option - it was: ", option)
             else:
-                print "No OP key!"
+                print("No OP key!")
         except:
-            print "exception in onMessageReceived"
-            print "message", message
+            print("exception in onMessageReceived")
+            print("message", message)
             traceback.print_exc()
             raise
 
@@ -152,23 +152,23 @@ class RosbridgeWSConnection():
         self.callbacks = []
 
     def on_open(self, ws):
-        print "### ROS bridge connected ###"
+        print("### ROS bridge connected ###")
         self.connected=True
 
     def sendString(self, message):
         if not self.connected:
-            print "Error: not connected, could not send message"
+            print ("Error: not connected, could not send message")
             # TODO: throw exception
         else:
             self.ws.send(message)
 
     def on_error(self, ws, error):
         self.errored = True
-        print "Error: %s" % error
+        print ("Error: %s" % error)
 
     def on_close(self, ws):
         self.connected = False
-        print "### ROS bridge closed ###"
+        print ("### ROS bridge closed ###")
 
     def run(self, *args):
         self.ws.run_forever()

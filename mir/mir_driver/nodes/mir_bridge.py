@@ -300,15 +300,15 @@ class MiR100Bridge(object):
 
             topics.append([topic_name, topic_type, has_publishers, has_subscribers])
 
-        print 'Publishers:'
+        print ('Publishers:')
         for (topic_name, topic_type, has_publishers, has_subscribers) in topics:
             if has_publishers:
-                print ' * %s [%s]' % (topic_name, topic_type)
+                print (' * %s [%s]' % (topic_name, topic_type))
 
-        print '\nSubscribers:'
+        print ('\nSubscribers:')
         for (topic_name, topic_type, has_publishers, has_subscribers) in topics:
             if has_subscribers:
-                print ' * %s [%s]' % (topic_name, topic_type)
+                print (' * %s [%s]' % (topic_name, topic_type))
 
         return topics
 

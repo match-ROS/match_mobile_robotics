@@ -5,6 +5,10 @@
 	path = ur/ur_robot
 	url = https://github.com/fmauch/universal_robot.git
 	branch = calibration_devel
+[submodule "ur/ur_msgs"]
+	path = ur/ur_msgs
+	url = https://github.com/ros-industrial/ur_msgs.git
+	branch = melodic-devel
 [submodule "general_hardware_helper/cartesian_controllers"]
 	path = general_hardware_helper/cartesian_controllers
 	url = https://github.com/fzi-forschungszentrum-informatik/cartesian_controllers

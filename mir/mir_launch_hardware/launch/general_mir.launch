@@ -7,8 +7,12 @@
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" doc="Path to the local config file." />
 
+    <arg name="robot_selector" doc="This variable selects the robot that is loaded. Default: MiR200. Options: MiR100, MiR200"/>
 
-    <include file="$(find mir_driver)/launch/mir_driver.launch" pass_all_args="true"/>
+    <include file="$(find mir_driver)/launch/mir_driver.launch">
+        <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+        <arg name="robot_selector" value="$(arg robot_selector)"/>
+    </include>
 
     <group if="$(eval move_base)">
         <remap from="move_base/cmd_vel" to="cmd_vel"/>

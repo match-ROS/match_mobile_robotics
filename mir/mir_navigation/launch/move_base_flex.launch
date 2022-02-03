@@ -1,8 +1,10 @@
 <launch>
     <arg name="tf_prefix" default="" doc="Prefix used for robot tf frames" /> <!-- used in the config files -->
     <arg name="global_planner" default="GlobalPlanner"  />
+    <arg name="global_planner_config" doc="Path to the global config file."/>
     <arg name="local_planner" default="DWAPlannerROS" />
-
+    <arg name="local_planner_config" doc="Path to the local config file."/> 
+    
     <arg name="start_move_base_simple" default="true" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
 
     <arg name="tf_timeout" default="1.5" />
@@ -22,9 +24,13 @@
         <!-- planner params -->
         <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/default_global_planners.yaml" command="load" />
         <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/default_local_planners.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/$(arg global_planner).yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/SBPLatticePlanner.yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" command="load" />
+        <!-- <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/$(arg global_planner).yaml" command="load" /> -->
+        <!-- Load param file for the global path planner. User must define the path to the config file. -->
+        <rosparam file="$(arg global_planner_config)" command="load"/>
+        <!-- <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/SBPLatticePlanner.yaml" command="load" /> -->
+        <!-- <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" command="load" /> -->
+        <!-- Load param file for the local path planner. User must define the path to the config file. -->
+        <rosparam file="$(arg local_planner_config)" command="load"/>
 
         <!-- global costmap params -->
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />

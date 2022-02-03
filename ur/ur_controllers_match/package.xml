@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>miranda_description</name>
+  <name>ur_controllers_match</name>
   <version>0.0.0</version>
-  <description>The miranda_description package</description>
+  <description>The ur_controllers_match package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/miranda_description</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ur_controllers_match</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,10 +49,8 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <exec_depend>ros_controllers</exec_depend>
-  <exec_depend>cartesian_compliance_controller</exec_depend>
-  <!-- <exec_depend>ur_controllers_extended</exec_depend> This controllers should not be necessary for the miranda -->
-  <!-- <exec_depend>ur_robot_driver</exec_depend> This driver should not be necessary for the miranda -->
+
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

@@ -9,7 +9,9 @@
 
 	<arg name="move_base_selector" default="move_base" />
 	<arg name="global_planner" default="GlobalPlanner" />
+	<arg name="global_planner_config" default="$(find mir_navigation)/config/Planner/GlobalPlanner/$(arg global_planner).yaml" />
 	<arg name="local_planner" default="DWAPlannerROS" />
+	<arg name="local_planner_config" default="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" />
 
 	<include file="$(find mir_launch_sim)/launch/utils/general_mir.launch">
 		<arg name="tf_prefix" value="$(arg tf_prefix)"/>
@@ -21,6 +23,8 @@
 
 		<arg name="move_base_selector" value="$(arg move_base_selector)"/>
 		<arg name="global_planner" value="$(arg global_planner)" />
+		<arg name="global_planner_config" value="$(arg global_planner_config)" />
 		<arg name="local_planner" value="$(arg local_planner)" />
+		<arg name="local_planner_config" value="$(arg local_planner_config)" />
 	</include>
 </launch>

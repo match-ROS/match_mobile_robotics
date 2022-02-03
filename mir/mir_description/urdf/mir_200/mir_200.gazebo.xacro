@@ -53,8 +53,8 @@
 
 		<!-- Add Gazebo xacro for the laser scanner to work in Gazebo -->
 		<!-- Please match there macro calls with the sick_s300 xacro calls in the mir_200.urdf.xacro file-->
-		<xacro:sick_s300_gazebo link="front_laser_link" robot_namespace="${robot_namespace_slashed}" topic="f_scan" />
-		<xacro:sick_s300_gazebo link="back_laser_link" robot_namespace="${robot_namespace_slashed}" topic="b_scan" />
+		<xacro:sick_s300_gazebo link="front_laser_link" robot_namespace="${robot_namespace_slashed}" topic="f_scan" tf_prefix="${tf_prefix_slashed}"/>
+		<xacro:sick_s300_gazebo link="back_laser_link" robot_namespace="${robot_namespace_slashed}" topic="b_scan" tf_prefix="${tf_prefix_slashed}"/>
 
 		<!-- Settings for the camera of the robot to work in the simulation environment-->
     	<xacro:gazebo_d435 camera_name="${robot_namespace_underscored}camera" reference_link="camera_link" topics_ns="${robot_namespace_slashed}camera" depth_optical_frame="${tf_prefix_slashed}camera_depth_optical_frame" color_optical_frame="${tf_prefix_slashed}camera_color_optical_frame" infrared1_optical_frame="${tf_prefix_slashed}camera_left_ir_optical_frame" infrared2_optical_frame="${tf_prefix_slashed}camera_right_ir_optical_frame" publish_pointcloud="true"/>

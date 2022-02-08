@@ -23,9 +23,17 @@ print("Current time of MiR in GMT: " + str(time))
 print("Current time of MiR in MESZ: " + str(new_time))
 
 str_time:str = new_time.strftime("%d %b %Y %H:%M:%S")
+hw_str_time:str = new_time.strftime("%Y-%m-%d %H:%M:%S")
 
 rv = os.system('sudo date -s "'+ str_time +'"')
 if rv == 0:
-   print('Time was synced')
+   print('Software clock was synced')
 else:
-   print('Error during time sync')
+   print('Error during software clock time sync')
+   
+rv = os.system('sudo hwclock --set --date="'+ str_time +'"')
+rv2 = os.system('sudo hwclock -s')
+if rv == 0 and rv2 == 0:
+   print('Hardware clock time was synced')
+else:
+   print('Error during hardware clock time sync')

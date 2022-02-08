@@ -2,7 +2,7 @@
     <arg name="tf_prefix" default=""/>
     <arg name="move_base" default="true"/>
     <arg name="move_base_selector" default="move_base" doc="move_base or move_base_flex"/>
-    <arg name="global_planner" default="GlobalPlanner" doc="Name of the global planner that should be used by the navigation stack" />
+    <arg name="start_move_base_simple" default="true" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />    <arg name="global_planner" default="GlobalPlanner" doc="Name of the global planner that should be used by the navigation stack" />
     <arg name="global_planner_config" doc="Path to the global config file." />
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" doc="Path to the local config file." />
@@ -31,6 +31,7 @@
                 <arg name="local_planner" value="$(arg local_planner)"/>
                 <arg name="local_planner_config" value="$(arg local_planner_config)" />
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+                <arg name="start_move_base_simple" value="$(arg start_move_base_simple)" />
             </include>
         </group>
     </group>

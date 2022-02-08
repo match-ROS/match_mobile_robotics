@@ -1,9 +1,0 @@
-<launch>
-  <arg name="tf_prefix" default=""/>
-  <arg name="move_base" default="true"/>
-  <arg name="ns" default="mir1"/>
-
-  <include file="$(find mir_launch_hardware)/launch/mir.launch" ns="$(arg ns)" pass_all_args="true">
-    <arg name="tf_prefix"   default="$(arg tf_prefix)" /> 
-  </include>
-</launch>

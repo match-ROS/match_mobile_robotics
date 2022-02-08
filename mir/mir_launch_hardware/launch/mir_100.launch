@@ -3,9 +3,9 @@
     <arg name="move_base" default="true"/>
     <arg name="move_base_selector" default="move_base" doc="move_base or move_base_flex"/>
     <arg name="global_planner" default="GlobalPlanner" doc="Name of the global planner that should be used by the navigation stack" />
-    <arg name="global_planner_config" doc="Path to the global config file." />
+    <arg name="global_planner_config" default="(find mir_navigation)/config/Planner/GlobalPlanner/GlobalPlanner.yaml" doc="Path to the global config file." />
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>
-    <arg name="local_planner_config" doc="Path to the local config file." />
+    <arg name="local_planner_config" default="(find mir_navigation)/config/Planner/LocalPlanner/DWAPlannerROS.yaml" doc="Path to the local config file." />
 
     <include file="$(find mir_launch_hardware)/launch/general_mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>

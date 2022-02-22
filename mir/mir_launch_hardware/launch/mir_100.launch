@@ -2,7 +2,7 @@
     <arg name="tf_prefix" default=""/>
     <arg name="move_base" default="true"/>
     <arg name="move_base_selector" default="move_base" doc="move_base or move_base_flex"/>
-    <arg name="start_move_base_simple" default="true" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
+    <arg name="start_move_base_simple" default="false" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
     <arg name="global_planner" default="GlobalPlanner" doc="Name of the global planner that should be used by the navigation stack" />
     <arg name="global_planner_config" default="(find mir_navigation)/config/Planner/GlobalPlanner/GlobalPlanner.yaml" doc="Path to the global config file." />
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>

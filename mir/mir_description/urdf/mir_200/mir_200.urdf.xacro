@@ -137,46 +137,5 @@
 		<!-- Insert a match logo on both sides of the mobile robot -->
 		<xacro:match_logo parent="base_link" locationprefix="left" location_dx="${mir_200_match_logo_dx}" location_dy="${mir_200_match_logo_dy}" location_dz="${mir_200_match_logo_dz}"/>
 		<xacro:match_logo parent="base_link" locationprefix="right" location_dx="${mir_200_match_logo_dx}" location_dy="${-1 * mir_200_match_logo_dy}" location_dz="${mir_200_match_logo_dz}" orientation="${pi}"/>
-
-		<!-- Camera -->
-		<!--link name="camera_link">
-		<collision>
-			<origin xyz="0 0 0" rpy="0 0 0"/>
-			<geometry>
-				<box size="0.1 0.1 0.1"/>
-			</geometry>
-		</collision>
-		<visual>
-			<origin xyz="0 0 0" rpy="0 0 0"/>
-			<geometry>
-				<mesh filename="package://mir_description/meshes/visual/realsense.dae" />
-			</geometry>
-		</visual>
-		<inertial>
-			<mass value="1e-5" />
-			<origin xyz="0 0 0" rpy="0 0 0"/>
-			<inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
-		</inertial>
-		</link>
-
-		<joint name="camera_joint" type="fixed">
-			<axis xyz="0 1 0" />
-			<origin xyz="0.42 0 0.27" rpy="0 0.2 0"/--> <!--set the position of the realsense-->
-			<!--parent link="${tf_prefix}base_link"/>
-			<child link="camera_link"/>
-		</joint-->
-
-		<!-- generate an optical frame http://www.ros.org/reps/rep-0103.html#suffix-frames
-			so that ros and opencv can operate on the camera frame correctly -->
-		<!--joint name="camera_optical_joint" type="fixed"-->
-			<!-- these values have to be these values otherwise the gazebo camera image
-				won't be aligned properly with the frame it is supposedly originating from -->
-			<!--origin xyz="0 0 0" rpy="-1.5708 0 -1.5708"/>
-			<parent link="camera_link"/>
-			<child link="camera_link_optical"/>
-		</joint>
-
-		<link name="camera_link_optical"-->
-		<!--/link-->
 	</xacro:macro>
 </robot>

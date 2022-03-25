@@ -87,4 +87,8 @@
 		<remap from="scan_filtered" to="f_scan_rep117" />
 	</node>
 
+	<include file="$(find amcl_type_converter)/launch/amcl_type_converter.launch" >
+		<arg name="amcl_input_topic" value="amcl_pose"/>
+		<arg name="amcl_output_topic" value="amcl_pose_converted" />
+	</include>
 </launch>

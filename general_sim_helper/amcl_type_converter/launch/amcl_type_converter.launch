@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+<launch>
+	<arg name="amcl_input_topic"/>
+	<arg name="amcl_output_topic"/>
+
+    <node name="amcl_type_converter" pkg="amcl_type_converter" type="amcl_type_converter_node.py" output="screen">
+		<param name="amcl_input_topic" value="$(arg amcl_input_topic)" />
+		<param name="amcl_output_topic" value="$(arg amcl_output_topic)" />
+	</node>
+</launch>

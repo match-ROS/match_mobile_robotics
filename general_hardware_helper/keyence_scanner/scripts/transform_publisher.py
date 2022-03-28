@@ -19,6 +19,7 @@ import roslib; roslib.load_manifest('laser_assembler')
 class keyence_transform():
     def __init__(self):
         rospy.init_node('keyence_transform_node')
+        self.transform = geometry_msgs.msg.TransformStamped()
 
         rospy.Subscriber("/franka_state_controller/franka_states",FrankaState, self.pose_cb)   
         rospy.sleep(1)

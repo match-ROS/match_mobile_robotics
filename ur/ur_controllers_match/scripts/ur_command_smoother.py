@@ -94,7 +94,7 @@ class ur_command_smoother():
             if abs(self.last_msg_timestamp-rospy.get_time()) >  self.timeout:
                 self.target_twist = Twist()   
                  
-            rospy.loginfo_throttle(0.2,self.actual_twist)
+            #rospy.loginfo_throttle(0.2,self.actual_twist)
             Rate.sleep()
                 
         
@@ -120,7 +120,7 @@ class ur_command_smoother():
     def unsmooth_twist_cb(self,Twist):
         self.last_msg_timestamp = rospy.get_time()
         self.target_twist = Twist
-        print("callback")
+        #print("callback")
         
 if __name__ == '__main__':
     exe = ur_command_smoother()

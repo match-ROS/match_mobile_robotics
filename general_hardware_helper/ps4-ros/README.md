@@ -1,3 +1,5 @@
+Based on https://github.com/solbach/ps4-ros
+
 # ps4_ros
 Sony PlayStation 4 DualShock®4 node joy_msg to twist_msg
 

@@ -10,12 +10,10 @@
  	</node>
 
 
-	<!-- PS4 ROS NODE -->
-	<node pkg="ps4_ros" type="ps4_ros" name="ps4" output="screen">
-	  	<param name="scale_linear" value="1.0"/>
-	  	<param name="scale_angular" value="0.5"/>
-	  	<param name="pub_topic" value="/searchbot/p3at/vel_cmd"/>
-	</node>
+	<include file="$(find ps4_controller)/launch/single_mir_ps4_drive.launch">
+		<arg name="cmd_vel_topic_prefix"  default="mobile_base_controller"/>
+		<arg name="twist_stamped"  default="True"/>
+	</include>
 
 </launch>
 

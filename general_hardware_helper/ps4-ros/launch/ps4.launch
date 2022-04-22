@@ -1,0 +1,20 @@
+<launch>
+	
+  	<!-- ds4drv -->
+  	<node name="ds4drv_script_call" pkg="ps4_ros" type="run_ds4drv.sh" output="screen" />
+
+  	<!-- JOY ROS NODE -->
+	<node respawn="true" pkg="joy" type="joy_node" name="ps4_joy" >
+    	<param name="dev" type="string" value="/dev/input/js0" />
+    	<param name="deadzone" value="0.12" />
+ 	</node>
+
+
+	<include file="$(find ps4_controller)/launch/single_mir_ps4_drive.launch">
+		<arg name="cmd_vel_topic_prefix"  default="mobile_base_controller"/>
+		<arg name="twist_stamped"  default="True"/>
+	</include>
+
+</launch>
+
+

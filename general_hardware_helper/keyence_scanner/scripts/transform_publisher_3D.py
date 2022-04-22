@@ -83,39 +83,39 @@ class keyence_transform():
 
         br.sendTransform(t)
 
-    def pointcloud_cb(self,cloud):
+    # def pointcloud_cb(self,cloud):
 
-        #time_diff = rospy.Time.now() - self.transform.header.stamp 
-        #y_offset = self.vel[1]*time_diff.nsecs
+    #     #time_diff = rospy.Time.now() - self.transform.header.stamp 
+    #     #y_offset = self.vel[1]*time_diff.nsecs
     
-        #t.transform.translation.y = self.transform.transform.translation.y + y_offset / 10
-        #print(y_offset, t.transform.translation.y,y )
+    #     #t.transform.translation.y = self.transform.transform.translation.y + y_offset / 10
+    #     #print(y_offset, t.transform.translation.y,y )
 
-        self.cloud_out = do_transform_cloud(cloud, self.transform)
-        self.cloud_pub.publish(self.cloud_out)
-        self.num_of_rows = self.num_of_rows + 1
+    #     self.cloud_out = do_transform_cloud(cloud, self.transform)
+    #     self.cloud_pub.publish(self.cloud_out)
+    #     self.num_of_rows = self.num_of_rows + 1
         
             
-        if self.num_of_rows > 500:
+    #     if self.num_of_rows > 500:
             
-                #print(self.cloud_data)
-                #print(self.cloud_out.height)
+    #             #print(self.cloud_data)
+    #             #print(self.cloud_out.height)
 
-                #self.cloud3D_pub.publish(self.cloud_3D)
-            try:
-                assemble_scans = rospy.ServiceProxy('assemble_scans', AssembleScans)
-                resp = assemble_scans(rospy.Time(0,0), rospy.get_rostime())
-                print "Got cloud with %u points" % len(resp.cloud.points)
+    #             #self.cloud3D_pub.publish(self.cloud_3D)
+    #         try:
+    #             assemble_scans = rospy.ServiceProxy('assemble_scans', AssembleScans)
+    #             resp = assemble_scans(rospy.Time(0,0), rospy.get_rostime())
+    #             print "Got cloud with %u points" % len(resp.cloud.points)
                 
-                self.cloud_3D = resp.cloud
-                self.cloud_3D.header= Header()
-                self.cloud_3D.header.stamp = rospy.Time.now()
-                self.cloud_3D.header.frame_id = 'sensor_optical_frame'
-                #print(self.cloud_3D.header)
-                self.cloud3D_pub.publish(self.cloud_3D)
+    #             self.cloud_3D = resp.cloud
+    #             self.cloud_3D.header= Header()
+    #             self.cloud_3D.header.stamp = rospy.Time.now()
+    #             self.cloud_3D.header.frame_id = 'sensor_optical_frame'
+    #             #print(self.cloud_3D.header)
+    #             self.cloud3D_pub.publish(self.cloud_3D)
 
-            except rospy.ServiceException, e:
-                print "Service call failed: %s"%e
+    #         except rospy.ServiceException, e:
+    #             print "Service call failed: %s"%e
                 
                 
 

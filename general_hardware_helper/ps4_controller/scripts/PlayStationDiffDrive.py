@@ -1,6 +1,6 @@
+#!/usr/bin/env python3
 from PlaystationHandler import PlayStationHandler
 from geometry_msgs.msg import Twist,TwistStamped
-from sensor_msgs.msg import LaserScan
 import rospy
 
 class PlayStationDiffDrive(PlayStationHandler):
@@ -45,8 +45,6 @@ class PlayStationDiffDrive(PlayStationHandler):
             for i in self.robotnames: 
                     self.publisher_stack.append(rospy.Publisher(i+"/" + self.cmd_vel_topic_prefix + "/cmd_vel",message_type,queue_size= 10))
 
-        rospy.Subscriber("f_scan", LaserScan, self.laser_cb)
-
     def dummy(self):
         pass
 
@@ -74,8 +72,6 @@ class PlayStationDiffDrive(PlayStationHandler):
     def changeRobot(self):
         self.active_robot = (self.active_robot + 1) % len(self.robotnames)
 
-    def laser_cb(self,data):
-        
 
     def publishTwist(self):
         msg=Twist()
@@ -117,3 +113,16 @@ class PlayStationDiffDrive(PlayStationHandler):
                     self.initialized = True
                     rospy.loginfo_once("initilization complete")
             self.rate.sleep()            
+
+if __name__=="__main__":
+    rospy.init_node("ps4_diffdrive_controller")
+    twist_stamped = rospy.get_param("~twist_stamped")
+    print(twist_stamped)
+    if twist_stamped == True:
+        ps4=PlayStationDiffDrive(TwistStamped)
+        print("stamped")
+    else:
+        ps4=PlayStationDiffDrive(Twist)
+        print("not stamped")
+    ps4.run()
+    rospy.spin()

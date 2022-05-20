@@ -1,1 +1,2 @@
 *.pyc   #No python bytecode
+*.vscode

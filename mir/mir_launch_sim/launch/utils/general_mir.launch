@@ -64,16 +64,16 @@
 		<param name="tf_prefix" value="$(arg tf_prefix)"/>
 	</node>
 	
-	<!-- Add passive + mimic joints to joint_states topic -->
-	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
-		<rosparam param="source_list" subst_value="true">[joint_states]</rosparam>
-		<param name="rate" value="200.0" />
-		<param name="use_gui" value="false"/>
+	<!-- These nodes publish the topics b_scan and f_scan to the scan topic-->
+	<!-- Noetic note: If the scan messages contain the same timespamp an error occures. Therefore change to new scan_merger.py-->
+	<!-- <node pkg="topic_tools" type="relay" name="b_scan_relay" args="b_scan scan"/>
+	<node pkg="topic_tools" type="relay" name="f_scan_relay" args="f_scan scan"/> -->
+
+	<!-- New scan_merger node that checks if time stamps are equal and then adds one nanosecond to prevent double publishing of the transformation by amcl-->
+	<node name="mir_laser_merger" pkg="mir_navigation" type="scan_merger.py" output="screen">
+		<rosparam param="scan_input_topics">[f_scan, b_scan]</rosparam>
+		<param name="scan_output_topic" value="scan"/>
 	</node>
-
-	<node pkg="topic_tools" type="relay" name="b_scan_relay" args="b_scan scan"/>
-	<node pkg="topic_tools" type="relay" name="f_scan_relay" args="f_scan scan"/>
-
 
 	<node name="b_rep117_laser_filter" pkg="mir_driver" type="rep117_filter.py" output="screen">
 		<remap from="scan" to="b_scan" />

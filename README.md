@@ -1,12 +1,16 @@
 # Helper Tools
 ## 1. Repository overview
-This will be updated shortly
-* `general_hardware_helper`: Contains helper packages that can be used for generic robots
-* `mir_hardware_helper`: Contains helper packages that can be used for Mir100/Mir200
-* `ur_hardware_helper`: Contains helper packages that can be used for Ur5
-* `panda_hardware_helper`: Contains helper packages that can be used for panda robot
-* `miranda_hardware_helper`: Contains helper packages that can be used for the combination of panda and mir
-* `mur_launch_hardware`: Contains helper packages that can be used for the combination of ur and mir
+* `general_hardware_helper`: Contains scripts and packages that help when using the hardware robots
+* `general_sim_helper`: Contains scripts and packages that help when using the simulation robots
+* `igus`: Contains all scripts and packages for the usage of the Igus robot
+* `match_gazebo`: Contains all worlds withs maps and launch files for the Gazebo simulation
+* `mir`: Contains all information (description, examples and launch files) for the MiR platform
+* `miranda`: Contains all information (description, examples and launch files) for the MiR platform with the Panda robot
+* `mur`: Contains all information (description, examples and launch files) for the MiR platform with the UR5 robot
+* `net_box_hardware_helper`: Contains all scripts and launch files for the driver of the NetBox hardware
+* `panda`: Contains the original Panda repos and additional controllers, scripts and launch files
+* `scout_mini`: Contains source and launch files for the Scout Mini plattform
+* `ur`: Contains the original UR repos and additional controllers, scripts and launch files
 
 # 2. Installation
 Start by changeing directory to your catkin workspace!

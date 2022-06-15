@@ -1,4 +1,7 @@
-# Helper Tools
+# match Mobile Robotics
+
+# Melodic is no longer the supported ROS version and therefore deprecated. Please switch to the `noetic-devel` branch!
+
 ## 1. Repository overview
 This will be updated shortly
 * `general_hardware_helper`: Contains helper packages that can be used for generic robots
@@ -8,7 +11,7 @@ This will be updated shortly
 * `miranda_hardware_helper`: Contains helper packages that can be used for the combination of panda and mir
 * `mur_launch_hardware`: Contains helper packages that can be used for the combination of ur and mir
 
-# 2. Installation
+## 2. Installation
 Start by changeing directory to your catkin workspace!
 ### Clone package
 ```

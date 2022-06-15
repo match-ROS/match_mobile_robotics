@@ -1,4 +1,4 @@
-# Helper Tools
+# match Mobile Robotics
 ## 1. Repository overview
 * `general_hardware_helper`: Contains scripts and packages that help when using the hardware robots
 * `general_sim_helper`: Contains scripts and packages that help when using the simulation robots
@@ -12,14 +12,14 @@
 * `scout_mini`: Contains source and launch files for the Scout Mini plattform
 * `ur`: Contains the original UR repos and additional controllers, scripts and launch files
 
-# 2. Installation
+## 2. Installation
 Start by changeing directory to your catkin workspace!
 ### Clone package
 ```
-git clone https://github.com/matchRos/Match_Mobile_Robotics.git
+git clone https://github.com/ROSmatch/match_mobile_robotics.git
 ```
 ### Install dependencies
-Browse into catkin_ws/src/Match_Mobile_Robotics and execute
+Browse into `your_catkin_ws_name/src/Match_Mobile_Robotics` and execute
 ```
 git submodule update --init --recursive
 cd ../..

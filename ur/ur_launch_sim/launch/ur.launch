@@ -13,7 +13,7 @@
     <arg unless="$(eval tf_prefix=='')" name="tf_prefix_slashed" value="$(arg tf_prefix)/" /> <!--Important for proper substitution (empty tf_prefix must not lead to leading slashes-->
 
     <param name="robot_description" 
-        command="$(find xacro)/xacro $(find ur_description)/urdf/ur5_robot.urdf.xacro transmission_hw_interface:=$(arg transmission_hw_interface)  tf_prefix:=$(arg tf_prefix)"/> 
+        command="$(find xacro)/xacro $(find ur_description)/urdf/ur5.xacro transmission_hw_interface:=$(arg transmission_hw_interface)  tf_prefix:=$(arg tf_prefix)"/> 
     
     <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" 
             args="-urdf -param robot_description -model $(arg robot_name) $(arg init_pose)" 

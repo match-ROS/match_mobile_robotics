@@ -17,6 +17,6 @@
         <arg name="local_planner_config" value="$(arg local_planner_config)" />
 
         <!-- This launch file will pass the MiR100 files to the mir_driver.launch-->
-        <arg name="robot_selector" default="MiR100" />
+        <arg name="mir_type" value="MiR100" />
     </include>
 </launch>

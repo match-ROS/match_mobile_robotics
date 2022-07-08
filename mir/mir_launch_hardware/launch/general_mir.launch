@@ -6,12 +6,13 @@
     <arg name="global_planner_config" doc="Path to the global config file." />
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" doc="Path to the local config file." />
+     <arg name="start_move_base_simple" default="false" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
 
-    <arg name="robot_selector" doc="This variable selects the robot that is loaded. Default: MiR200. Options: MiR100, MiR200"/>
+    <arg name="mir_type" doc="This variable selects the robot that is loaded. Default: MiR200. Options: MiR100, MiR200"/>
 
-    <include file="$(find mir_driver)/launch/mir_driver.launch">
+    <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-        <arg name="robot_selector" value="$(arg robot_selector)"/>
+        <arg name="mir_type" value="$(arg mir_type)"/>
     </include>
 
     <group if="$(eval move_base)">
@@ -31,6 +32,7 @@
                 <arg name="local_planner" value="$(arg local_planner)"/>
                 <arg name="local_planner_config" value="$(arg local_planner_config)" />
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+                <arg name="start_move_base_simple" value="$(arg start_move_base_simple"/> 
             </include>
         </group>
     </group>

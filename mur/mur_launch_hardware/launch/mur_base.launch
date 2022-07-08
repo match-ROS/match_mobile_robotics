@@ -1,13 +1,13 @@
 <launch>
     <arg name="tf_prefix" default="mur"/>
 
-    <include file="$(find mir_hardware_helper)/launch/mir.launch" ns="mur/mir">
+    <include file="$(find mir_launch_hardware)/launch/mir_200.launch" ns="mur/mir">
         <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
     </include>
 
     <!-- Add a Transformation from Mir to panda for closed tf tree -->
     <node pkg="tf2_ros" type="static_transform_publisher" name="mir_ur_transformer" 
-        args="0.35 -0.15 0.35 0 0 1 0 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/world" ns="mur" />
+        args="0.35 -0.15 0.35 0, 0, 0.7071068, 0.7071068 $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/base_link" ns="mur" />
 
 
 </launch>

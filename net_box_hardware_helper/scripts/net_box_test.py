@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from net_box_hardware_helper import NetBoxEnums as enum
 from net_box_hardware_helper import NetBoxMessageGenerator
 from net_box_hardware_helper import NetBoxSocket

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 from robot_teacher.JointTeacher import TeachedPoseHandler
 import rospy
 if __name__=="__main__":

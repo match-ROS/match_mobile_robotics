@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 from ps4_controller.PlayStationDiffDriveServices import PlayStationDiffDriveServices
 from geometry_msgs.msg import TwistStamped

@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 import rospy
 from nav_msgs.msg import Odometry   # the "nav_msgs.msg" should be changed laut the command: $rosmsg show Odometry

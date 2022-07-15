@@ -28,9 +28,6 @@ catkin_package()
 
 catkin_install_python(PROGRAMS 
   nodes/move_base_simple_relay.py
-  nodes/acc_finder.py
-  nodes/min_max_finder.py
-  scripts/plot_mprim.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

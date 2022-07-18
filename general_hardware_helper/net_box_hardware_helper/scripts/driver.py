@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import rospy
 from net_box_hardware_helper import NetBoxRosWrapper
 

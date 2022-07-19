@@ -45,15 +45,16 @@ joint_group_vel_controller:
     - $(arg prefix)wrist_3_joint
 
 
-# controller_list:
-#  - name: arm_controller
-#    action_ns: follow_joint_trajectory
-#    type: FollowJointTrajectory
-#    default: true
-#    joints:
-#     - $(arg prefix)shoulder_pan_joint
-#     - $(arg prefix)shoulder_lift_joint
-#     - $(arg prefix)elbow_joint
-#     - $(arg prefix)wrist_1_joint
-#     - $(arg prefix)wrist_2_joint
-#     - $(arg prefix)wrist_3_joint
+move_group/controller_list:
+ - name: arm_controller
+   action_ns: follow_joint_trajectory
+   type: FollowJointTrajectory
+   default: True
+   joints:
+    - $(arg prefix)shoulder_pan_joint
+    - $(arg prefix)shoulder_lift_joint
+    - $(arg prefix)elbow_joint
+    - $(arg prefix)wrist_1_joint
+    - $(arg prefix)wrist_2_joint
+    - $(arg prefix)wrist_3_joint
+

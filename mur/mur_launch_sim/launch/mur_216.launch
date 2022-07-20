@@ -40,8 +40,9 @@
 		</node>
 
 		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="--stopped joint_group_vel_controller joint_group_pos_controller">
+			args="--stopped joint_group_vel_controller">
 		</node>
+		
 	</group> 
 
 </launch>

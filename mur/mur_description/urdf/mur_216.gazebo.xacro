@@ -18,7 +18,7 @@
 	<xacro:mir_200_gazebo tf_prefix="$(arg tf_prefix)" robot_namespace="$(arg robot_namespace)"/>
 
 	<!-- Init the UR5 robot arm macro -->
-	<xacro:ur16e_robot prefix="UR16/"/>
+	<xacro:ur16e_robot prefix="UR16/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
 	
 	<!-- Init the plugins that run the MiR in Gazebo -->
 	<xacro:controller_plugin_gazebo robot_namespace="$(arg robot_namespace)"/>

@@ -35,11 +35,11 @@
 			<arg name="prefix" value="$(arg prefix)"/>
 		</include>
 
-		<node name="mur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="arm_controller pos_joint_traj_controller ">
+		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+			args="arm_controller">
 		</node>
 
-		<node name="mur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
+		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
 			args="--stopped joint_group_vel_controller joint_group_pos_controller">
 		</node>
 	</group> 

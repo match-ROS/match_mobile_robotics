@@ -36,7 +36,7 @@
 #   []
 
 arm_controller:
-  type: position_controllers/JointTrajectoryController
+  type: velocity_controllers/JointTrajectoryController
   joints:
     - $(arg prefix)shoulder_pan_joint
     - $(arg prefix)shoulder_lift_joint
@@ -44,6 +44,13 @@ arm_controller:
     - $(arg prefix)wrist_1_joint
     - $(arg prefix)wrist_2_joint
     - $(arg prefix)wrist_3_joint
+  gains:
+    /mur216/arm_controller/gains/UR16/shoulder_pan_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/shoulder_lift_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/elbow_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/wrist_1_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/wrist_2_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/wrist_3_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
   constraints:
     goal_time: 0.6
     stopped_velocity_tolerance: 0.05
@@ -56,3 +63,4 @@ arm_controller:
   stop_trajectory_duration: 0.5
   state_publish_rate:  25
   action_monitor_rate: 10
+

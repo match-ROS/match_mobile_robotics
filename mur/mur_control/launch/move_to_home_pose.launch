@@ -1,0 +1,11 @@
+<launch>
+
+    <arg name="model_name" default="mur216"/>
+
+    <group ns = "$(arg model_name)">
+            <node name="move_to_home_pose" pkg="mur_control" type="move_to_home_pose.py" output="screen"
+                args="arm_controller">
+            </node>
+    </group> 
+
+</launch>

@@ -11,6 +11,7 @@
   	<xacro:include filename="$(find ur_description)/urdf/inc/ur16e_macro.xacro"/>
 	<!-- Include plugin xacros -->
 	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
+	<xacro:p3d_base_controller robot_namespace="$(arg robot_namespace)"/>
 
 	<!-- Init the MiR200 marco that is also used for the hardware -->
 	<xacro:mir_200 />

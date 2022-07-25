@@ -5,7 +5,7 @@
 	<arg name="robot_y"   default="0.0" />
 	<arg name="robot_yaw" default="0.0" />  
 	<arg name="model_name" default=""/>
-    <arg name="robot_urdf_path" value="$(find mir_description)/urdf/mir_200/mir_200.gazebo.urdf"/>
+    <arg name="robot_urdf_path" default="$(find mir_description)/urdf/mir_200/mir_200.gazebo.urdf"/>
 
     <arg name="move_base_selector" default="move_base" />
 	<arg name="global_planner" default="GlobalPlanner" />

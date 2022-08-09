@@ -6,16 +6,14 @@ import os
 
 import _clockkit
 
-argc = len(sys.argv)
-if argc != 3:
-    sys.exit("Usage: %s configfile seconds" % sys.argv[0])
-# 0 seconds means infinity.
-sec_remaining = float(sys.argv[2])
+
+sec_remaining = 5.0
 terminate = sec_remaining > 0.0
 if not terminate:
     sec_remaining = 1.0
 
-_clockkit.ckInitialize(sys.argv[1])
+
+_clockkit.ckInitialize('match-clockkit.conf')
 
 # Trap ^C's SIGINT and pkill's SIGTERM,
 # and pass the signal to clockkit.cpp's atexit(), which calls Clockkit.ckTerminate.
@@ -40,7 +38,6 @@ while sec_remaining > 0.0:
             ns += int(num_str[-3])*1000
             ns += int(num_str[-2])*100
             ns += int(num_str[-1])*10
-           
             bashCommand = "sudo date +%s.%N -s @" + str(int(t/1000000)) + "." + str(ns)
             os.system(bashCommand)
             break

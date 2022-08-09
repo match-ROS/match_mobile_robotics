@@ -22,7 +22,7 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
 
-sec_remaining = float(sys.argv[2]) if terminate else 1.0
+sec_remaining = float(5) if terminate else 1.0
 while sec_remaining > 0.0:
     if _clockkit.ckInSync():
         offset = _clockkit.ckOffset()

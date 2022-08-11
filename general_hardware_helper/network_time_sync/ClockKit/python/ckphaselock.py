@@ -5,15 +5,21 @@ import time
 import os
 
 import _clockkit
+import rospy
 
+rospy.init_node('clock_server')
+config_file_path = rospy.get_param('~config_file_path', "1")
+
+if config_file_path == "":
+    rospy.logerr("No config file path provided")
+    sys.exit(1)
 
 sec_remaining = 5.0
 terminate = sec_remaining > 0.0
 if not terminate:
     sec_remaining = 1.0
 
-
-_clockkit.ckInitialize('match-clockkit.conf')
+_clockkit.ckInitialize(config_file_path)
 
 # Trap ^C's SIGINT and pkill's SIGTERM,
 # and pass the signal to clockkit.cpp's atexit(), which calls Clockkit.ckTerminate.

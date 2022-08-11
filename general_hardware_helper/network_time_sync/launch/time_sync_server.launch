@@ -1,0 +1,17 @@
+<launch>
+    <!-- Launch the driver for the ps4 controller and publish data to "ps4_input" topic -->
+    
+    <arg name="server_ip"  default="10.145.4.14"/>
+    <arg name="server_port"  default="4567"/>
+
+    <node name="time_sync_server" pkg="network_time_sync" type="ckserver.py" output="screen">
+        <param name="server_ip" value="$(arg server_ip)"/>
+        <param name="server_port" value="$(arg server_port)"/>
+    </node>
+
+     <!-- <node name="time_sync_server" pkg="network_time_sync" type="ckserver" output="screen" launch-prefix="bash -c" args="$(arg server_ip) $(arg server_port) ">
+        <arg name="server_ip" value="$(arg server_ip)"/>
+    </node> -->
+
+
+</launch>

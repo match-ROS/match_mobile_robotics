@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-import signal
-import sys
-import time
-import os
-import subprocess
+from subprocess import Popen, PIPE
+from os.path import abspath, dirname, join
+import rospy
+
+rospy.init_node('clock_server')
+server_ip = rospy.get_param('~server_ip', 'localhost')
+server_port = rospy.get_param('~server_port', '4567')
+
+rospy.loginfo("running clock server on: " + server_ip + " port: " + str(server_port))
+
+path = abspath(join(dirname(__file__), 'ckserver'))
+output_string = Popen([path,server_ip, str(server_port)], stdout=PIPE, stderr=PIPE).communicate()
 
 
-
-output_string = subprocess.Popen(["./ckserver", "10.145.8.32", "4567"], 
-                          stdout=subprocess.PIPE).communicate()[0].decode("utf-8")
-
-print(output_string)
 

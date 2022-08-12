@@ -1,6 +1,0 @@
-<map id="mean_filter_joint_state.cpp" name="mean_filter_joint_state.cpp">
-<area shape="rect" id="node2" href="$msg__filters_8hpp.html" title="manipulate_topics/msg\l_filters.hpp" alt="" coords="1371,80,1527,121"/>
-<area shape="rect" id="node3" href="$msg__mean__filter_8hpp.html" title="manipulate_topics/msg\l_mean_filter.hpp" alt="" coords="888,169,1044,211"/>
-<area shape="rect" id="node4" href="$msg__filter__base_8hpp.html" title="manipulate_topics/msg\l_filter_base.hpp" alt="" coords="112,259,268,300"/>
-<area shape="rect" id="node11" href="$msg__operators_8hpp.html" title="manipulate_topics/msg\l_operators.hpp" alt="" coords="1255,259,1411,300"/>
-</map>

@@ -1,6 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$classPlannerBase.html" title="A generic planner class that provides general interface functions and architecture. " alt="" coords="5,56,101,83"/>
-<area shape="rect" id="node2" href="$classLissajousPlanner.html" title="LissajousPlanner" alt="" coords="149,5,271,32"/>
-<area shape="rect" id="node3" href="$classPrimitivePlanner.html" title="PrimitivePlanner" alt="" coords="151,56,269,83"/>
-<area shape="rect" id="node4" href="$classSpiralplanner.html" title="Spiralplanner" alt="" coords="161,107,259,133"/>
-</map>

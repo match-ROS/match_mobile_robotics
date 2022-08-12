@@ -1,6 +1,0 @@
-<map id="msg_mean_filter.hpp" name="msg_mean_filter.hpp">
-<area shape="rect" id="node2" href="$msg__filters_8hpp.html" title="msg_filters.hpp" alt="" coords="254,80,365,107"/>
-<area shape="rect" id="node3" href="$mean__filter__joint__state_8cpp.html" title="mean_filter_joint_state.cpp" alt="" coords="5,162,184,189"/>
-<area shape="rect" id="node4" href="$mean__filter__twist__stamped_8cpp.html" title="mean_filter_twist_stamped.cpp" alt="" coords="208,162,411,189"/>
-<area shape="rect" id="node5" href="$mean__filter__wrench__stamped_8cpp.html" title="mean_filter_wrench\l_stamped.cpp" alt="" coords="435,155,570,196"/>
-</map>

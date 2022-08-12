@@ -1,6 +1,0 @@
-<launch>
-    <node name="base_teacher" type="pose_teacher_base_node.py" pkg="robot_teacher" output="screen">
-        <param name="file_name" value="$(find robot_teacher)/poses/base_poses.yaml"/>
-        <remap from="pose" to="/miranda/mir/robot_pose_stamped"/>
-    </node>
-</launch>

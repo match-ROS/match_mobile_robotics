@@ -1,3 +1,0 @@
-ip_adress:  192.168.12.69
-port: 49152
-frame_id: $(arg tf_prefix)ft_sensor_link

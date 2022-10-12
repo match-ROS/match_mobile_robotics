@@ -22,4 +22,14 @@
 
     <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/>
 
+
+    <!-- <node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+        args="arm_controller">
+    </node> -->
+
+    <arg name="node_start_delay" default="20.0" />
+    <node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "
+        args="joint_group_vel_controller">
+    </node>
+
 </launch>

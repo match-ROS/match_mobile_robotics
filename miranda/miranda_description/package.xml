@@ -50,7 +50,7 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <exec_depend>ros_controllers</exec_depend>
-  <exec_depend>cartesian_compliance_controller</exec_depend>
+  <!--exec_depend>cartesian_compliance_controller</exec_depend-->
   <!-- <exec_depend>ur_controllers_extended</exec_depend> This controllers should not be necessary for the miranda -->
   <!-- <exec_depend>ur_robot_driver</exec_depend> This driver should not be necessary for the miranda -->
   <!-- The export tag contains other, unspecified, tags -->

@@ -1,7 +1,9 @@
 <launch>
     <arg name="tf_prefix" default="mur"/>
+    <arg name="mir_type" doc="This variable selects the robot that is loaded. Default: mir_200. Options: mir_100, mir_200" default="mir_200"/>
 
-    <include file="$(find mir_launch_hardware)/launch/mir_200.launch" ns="mur/mir">
+    <!-- TODO: include robot_name in ns?  -->
+    <include file="$(find mir_launch_hardware)/launch/$(arg mir_type).launch" ns="mur/mir">
         <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
     </include>
 

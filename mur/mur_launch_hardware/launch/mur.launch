@@ -15,6 +15,7 @@
 
     <include file="$(find ur_launch_hardware)/launch/ur.launch" ns="mur/ur" pass_all_args="true">
         <arg name="tf_prefix" value="$(arg tf_prefix)/ur/"/>
+        <arg name="ur_version" value="ur16e"/>
     </include> 
 
 

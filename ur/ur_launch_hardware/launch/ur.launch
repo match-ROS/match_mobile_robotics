@@ -1,6 +1,7 @@
 <launch>
     <arg name="tf_prefix" default=""/>
     <arg name="ur_version" default="ur5"/>
+    <arg name="kinematics_config" default="$(find ur_launch_hardware)/config/calibration.yaml"/>
     <arg name="moveit_config_pkg" value="$(arg ur_version)_moveit_config"/>
 
 
@@ -16,7 +17,7 @@
     <include file="$(find ur_robot_driver)/launch/$(arg ur_version)_bringup.launch" pass_all_args="true">
         <arg name="controllers" value="joint_state_controller"/>
         <arg name="stopped_controllers" value="position_joint_controller"/>      
-        <arg name="kinematics_config" value="$(find ur_launch_hardware)/config/calibration.yaml"/>
+        <arg name="kinematics_config" value="$(arg kinematics_config)"/>
         <arg name="robot_ip" value="ur"/>        
     </include>
 

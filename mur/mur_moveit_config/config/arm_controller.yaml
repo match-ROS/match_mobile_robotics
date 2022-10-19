@@ -44,13 +44,21 @@ arm_controller:
     - $(arg prefix)wrist_1_joint
     - $(arg prefix)wrist_2_joint
     - $(arg prefix)wrist_3_joint
+  # gains:
+  #   /mur216/arm_controller/gains/UR16/shoulder_pan_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+  #   /mur216/arm_controller/gains/UR16/shoulder_lift_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+  #   /mur216/arm_controller/gains/UR16/elbow_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+  #   /mur216/arm_controller/gains/UR16/wrist_1_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+  #   /mur216/arm_controller/gains/UR16/wrist_2_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+  #   /mur216/arm_controller/gains/UR16/wrist_3_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
   gains:
-    /mur216/arm_controller/gains/UR16/shoulder_pan_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
-    /mur216/arm_controller/gains/UR16/shoulder_lift_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
-    /mur216/arm_controller/gains/UR16/elbow_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
-    /mur216/arm_controller/gains/UR16/wrist_1_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
-    /mur216/arm_controller/gains/UR16/wrist_2_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
-    /mur216/arm_controller/gains/UR16/wrist_3_joint: {p: 1000,  d: 1, i: 1, i_clamp: 1}
+    #!!These values have not been optimized!!
+    /mur216/arm_controller/gains/UR16/shoulder_pan_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/shoulder_lift_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/elbow_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/wrist_1_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/wrist_2_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+    /mur216/arm_controller/gains/UR16/wrist_3_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
   constraints:
     goal_time: 0.6
     stopped_velocity_tolerance: 0.05

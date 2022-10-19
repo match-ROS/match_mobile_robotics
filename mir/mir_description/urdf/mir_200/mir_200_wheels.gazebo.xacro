@@ -3,6 +3,22 @@
 	<xacro:macro name="actuated_wheel_gazebo" params="locationprefix">
 		<gazebo reference="${locationprefix}_wheel_link">
 			<material>Gazebo/DarkGrey</material>
+			<collision>
+				<surface>
+				<contact>
+				<ode>
+					<kp>1000.0</kp>
+    				<kd>5.0</kd>
+				</ode>
+				</contact>
+				<friction>
+				<ode>
+					<mu>10000.0</mu>
+    				<mu2>100.0</mu2>
+				</ode>
+				</friction>
+				</surface>
+			</collision>
 		</gazebo>
 	</xacro:macro>
 
@@ -13,6 +29,23 @@
 
 		<gazebo reference="${locationprefix}_caster_wheel_link">
 			<material>Gazebo/DarkGrey</material>
+			<collision>
+				<surface>
+				<contact>
+				<ode>
+					<kp>1000000.0</kp>
+    				<kd>0.0</kd>
+					<!-- <min_depth>0.001</min_depth> -->
+				</ode>
+				</contact>
+				<friction>
+				<ode>
+					<mu>0.0</mu>
+    				<mu2>0.0</mu2>
+				</ode>
+				</friction>
+				</surface>
+			</collision>
 		</gazebo>
 	</xacro:macro>
 

@@ -22,8 +22,8 @@
 	<xacro:property name="mir_600_caster_wheel_dx" value="-0.0382" />
 	<xacro:property name="mir_600_caster_wheel_dy" value="0" />
 	<xacro:property name="mir_600_caster_wheel_dz" value="-0.05" />
-	<xacro:property name="mir_600_front_caster_wheel_base_dx" value="0.5865" />
-	<xacro:property name="mir_600_back_caster_wheel_base_dx" value="-0.270154" />
+	<xacro:property name="mir_600_front_caster_wheel_base_dx" value="0.4915" />
+	<xacro:property name="mir_600_back_caster_wheel_base_dx" value="-0.4885" />
 	<xacro:property name="mir_600_caster_wheel_base_dy" value="0.3215" />
 	<xacro:property name="mir_600_caster_wheel_base_dz" value="${mir_600_caster_wheel_radius-mir_600_caster_wheel_dz}" />
 
@@ -47,14 +47,14 @@
 			<visual>
 				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="${pi * 0.5} 0 ${pi * 0.5}" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/mir_600_base.stl" scale="0.001 0.001 0.001"/>
+					<mesh filename="package://mir_description/meshes/visual/mir_600_base.stl"/>
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
 				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="0 0 0" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/collision/mir_600_base.stl" scale="0.001 0.001 0.001" />
+					<mesh filename="package://mir_description/meshes/collision/mir_600_base.stl"/>
 				</geometry>
 			</collision>
 		</link>

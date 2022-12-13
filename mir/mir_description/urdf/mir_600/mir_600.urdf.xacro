@@ -13,7 +13,7 @@
 	<xacro:property name="mir_600_act_wheel_radius" value="0.1" />
 	<xacro:property name="mir_600_act_wheel_width" value="0.05" />
 	<xacro:property name="mir_600_act_wheel_mass" value="1.0" />
-	<xacro:property name="mir_600_act_wheel_dx" value="0.037646" />
+	<xacro:property name="mir_600_act_wheel_dx" value="0.0" />
 	<xacro:property name="mir_600_act_wheel_dy" value="0.330" />
 
 	<xacro:property name="mir_600_caster_wheel_radius" value="0.05" />
@@ -21,7 +21,7 @@
 	<xacro:property name="mir_600_caster_wheel_mass" value="${mir_600_act_wheel_mass}" />
 	<xacro:property name="mir_600_caster_wheel_dx" value="-0.0382" />
 	<xacro:property name="mir_600_caster_wheel_dy" value="0" />
-	<xacro:property name="mir_600_caster_wheel_dz" value="-0.05" />
+	<xacro:property name="mir_600_caster_wheel_dz" value="-0.1" />
 	<xacro:property name="mir_600_front_caster_wheel_base_dx" value="0.4915" />
 	<xacro:property name="mir_600_back_caster_wheel_base_dx" value="-0.4885" />
 	<xacro:property name="mir_600_caster_wheel_base_dy" value="0.3215" />
@@ -52,7 +52,7 @@
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
-				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="0 0 0" />
+				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="${pi * 0.5} 0 ${pi * 0.5}" />
 				<geometry>
 					<mesh filename="package://mir_description/meshes/collision/mir_600_base.stl"/>
 				</geometry>
@@ -83,14 +83,14 @@
 		<joint name="base_link_to_front_laser_joint" type="fixed">
 			<parent link="base_link" />
 			<child link="front_laser_link" />
-			<origin xyz="0.4288 0.2358 0.1914" rpy="0.0 0.0 ${0.25 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
+			<origin xyz="0.58985 0.370 0.1914" rpy="0.0 0.0 ${0.25 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
 		<xacro:sick_s300 link="front_laser_link" topic="f_scan" />
 
 		<joint name="base_link_to_back_laser_joint" type="fixed">
 			<parent link="base_link" />
 			<child link="back_laser_link" />
-			<origin xyz="-0.3548 -0.2352 0.1914" rpy="0.0 0.0 ${-0.75 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
+			<origin xyz="-0.58985 -0.370 0.1914" rpy="0.0 0.0 ${-0.75 * pi}" />  <!-- from visually matching up the meshes of the MiR and the laser scanner -->
 		</joint>
 
 		<xacro:sick_s300 link="back_laser_link" topic="b_scan" />
@@ -131,7 +131,7 @@
 
 		<!--Realsense_Intel_D435_Camera-->
 		<xacro:sensor_d435 name="camera" parent="base_link" use_nominal_extrinsics="true">
-    		<origin xyz="0.42 0 0.27" rpy="0 0 0" />
+    		<origin xyz="0.62335 0 0.24" rpy="0 0 0" />
   		</xacro:sensor_d435>
 
 		<!-- Insert a match logo on both sides of the mobile robot -->

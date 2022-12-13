@@ -25,7 +25,7 @@
 			<collision>
 				<origin xyz="0 0 0" rpy="${pi * 0.5} 0 ${pi * -1}" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/wheel.stl" />
+					<mesh filename="package://mir_description/meshes/visual/mir_600_wheel.stl" />
 				</geometry>
 			</collision>
 		</link>
@@ -82,16 +82,16 @@
 				<origin xyz="0 0 0" rpy="${0.5 * pi} 0 0" />
 			</xacro:cylinder_inertial>
 			<visual>
-				<origin xyz="0 0 0" rpy="0 0 0" />
+				<origin xyz="0 0 0" rpy="${pi * 0.5} 0 0" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/wheel.stl" />
+					<mesh filename="package://mir_description/meshes/visual/mir_600_caster_wheel.stl" />
 				</geometry>
 				<xacro:insert_block name="material_dark_grey" />
 			</visual>
 			<collision>
-				<origin xyz="0 0 0" rpy="0 0 0" />
+				<origin xyz="0 0 0" rpy="${pi * 0.5} 0 0" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/wheel.stl" />
+					<mesh filename="package://mir_description/meshes/visual/mir_600_caster_wheel.stl" />
 				</geometry>
 			</collision>
 		</link>

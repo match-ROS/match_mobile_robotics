@@ -25,7 +25,7 @@
 			<collision>
 				<origin xyz="0 0 0" rpy="${pi * 0.5} 0 ${pi * -1}" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/mir_600_wheel.stl" />
+					<cylinder radius="${mir_600_act_wheel_radius}" length="${mir_600_act_wheel_width}"/>
 				</geometry>
 			</collision>
 		</link>

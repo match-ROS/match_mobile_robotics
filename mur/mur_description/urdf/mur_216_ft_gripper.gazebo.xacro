@@ -34,6 +34,7 @@
 	 <!-- robotiq 85 gripper -->
   <xacro:if value="$(arg load_gripper)">
     <xacro:include filename="$(find ur_launch_sim)/urdf/robotiq_85_gripper.urdf.xacro" />
+	<xacro:gripper parent="UR16/tool0" ft_joint="UR16/wrist_3_joint" />
   </xacro:if>
 
 

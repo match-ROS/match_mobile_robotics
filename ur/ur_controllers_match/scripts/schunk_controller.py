@@ -37,10 +37,7 @@ class SchunkController():
     def config(self):
         self.srv = rospy.ServiceProxy(self.prefix_ur+'ur_hardware_interface/set_io', SetIO)
         self.srv.wait_for_service()
-        self.srv(1 ,self.pin_magnet, False) # fun, pin, state (fun=1: digital out)
-        self.srv(1 ,self.pin_demagnet, False) # fun, pin, state (fun=1: digital out)
-        self.srv(1 ,self.pin_force_a, False) # fun, pin, state (fun=1: digital out)
-        self.srv(1 ,self.pin_force_b, False) # fun, pin, state (fun=1: digital out)
+        self.set_pins()
         
         rospy.Service(self.prefix_ur+'schunk/grasp', Trigger, self.cb_grasp_srv)
         rospy.Service(self.prefix_ur+'schunk/release', Trigger, self.cb_release_srv)
@@ -123,7 +120,7 @@ class SchunkController():
         force_b = int(force%2)
         self.set_pins([self.pin_force_a, self.pin_force_b, self.pin_demagnet], [force_a, force_b, False])
         rospy.sleep(0.001) # wait for the signal to be set
-        self.srv(1, self.pin_magnet, True)
+        self.set_pins([self.pin_magnet], [True])
         rospy.sleep(0.006) # wait for the magnet to be set
         self.set_pins() # reset all pins
         
@@ -149,7 +146,10 @@ class SchunkController():
         if states is None:
             states = [False]*len(pins)
         for pin, state in zip(pins, states):
-            self.srv(fun, pin, state)
+            if pin is not None and isinstance(state, bool):
+                self.srv(fun, pin, state)   #fun=1: digital out)
+            else:
+                rospy.lodebug(f"pin {pin} or state {state} is not valid")
         
 if __name__ == '__main__':
     #DI 7 ist input pick

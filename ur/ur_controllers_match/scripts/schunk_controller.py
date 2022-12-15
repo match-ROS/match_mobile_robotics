@@ -45,14 +45,12 @@ class SchunkController():
         
         
     def cb_grasp_srv(self, req: Trigger):
-        self.grasp()
-        if self.is_picked():
+        if self.grasp():
             return TriggerResponse(True, "Grasp successfull")
         return TriggerResponse(False, "Grasp NOT successfull")
     
     def cb_release_srv(self, req: Trigger):
-        self.release()
-        if not self.is_picked():
+        if self.release():
             return TriggerResponse(True, "Release successfull")
         return TriggerResponse(False, "Release NOT successfull")
     
@@ -124,12 +122,12 @@ class SchunkController():
         rospy.sleep(0.006) # wait for the magnet to be set
         self.set_pins() # reset all pins
         
-        return True # get from io input
+        return self.is_picked() # get from io input
         
     def release(self):
         self.set_pins() # reset all pins
         self.set_pins([self.pin_demagnet], [True])
-        return True # get from io input
+        return not self.is_picked() # get from io input
     
     def set_pins(self, pins:Optional[List[int]] = None, states:Optional[List[bool]] = None, fun=1):
         """Set pins

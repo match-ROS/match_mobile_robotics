@@ -76,10 +76,12 @@
 			</collision>
 		</link>
 
-		<joint name="left_lift_joint" type="fixed">
+		<joint name="left_lift_joint" type="prismatic">
 			<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
 			<parent link="left_lift_bottom" />
 			<child link="left_lift_top" />
+			<dynamics damping="1.0" friction="1.0"/>
+			<limit lower="0.0" upper="0.5" effort="1000000" velocity="1.0"/>
 			<axis xyz="0 0 1" />
 		</joint>
 
@@ -128,14 +130,36 @@
 			</collision>
 		</link>
 
-		<joint name="right_lift_joint" type="fixed">
+		<joint name="right_lift_joint" type="prismatic">
 			<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
 			<parent link="right_lift_bottom" />
 			<child link="right_lift_top" />
+			<dynamics damping="1.0" friction="1.0"/>
+			<limit lower="0.0" upper="0.5" effort="1000000" velocity="1.0"/>
 			<axis xyz="0 0 1" />
 		</joint>
 
+		<transmission name="left_lift_transmission">
+			<type>transmission_interface/SimpleTransmission</type>
+			<joint name="left_lift_joint">
+			  <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+			</joint>
+			<actuator name="left_lift_joint_motor">
+			  <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+			  <mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+		</transmission>
 
+		<transmission name="right_lift_transmission">
+			<type>transmission_interface/SimpleTransmission</type>
+			<joint name="right_lift_joint">
+			  <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+			</joint>
+			<actuator name="right_lift_joint_motor">
+			  <hardwareInterface>hardware_interface/VelocityJointInterface</hardwareInterface>
+			  <mechanicalReduction>1</mechanicalReduction>
+			</actuator>
+		</transmission>
 
 		
 	</xacro:macro>

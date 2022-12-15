@@ -36,7 +36,7 @@
 		</include> -->
 
 		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="joint_group_vel_controller_l joint_group_vel_controller_r">
+			args="joint_group_vel_controller_l joint_group_vel_controller_r lift_controller_l lift_controller_r">
 		</node>
 
 		

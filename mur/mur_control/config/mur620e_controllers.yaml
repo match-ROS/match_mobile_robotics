@@ -43,6 +43,7 @@ joint_group_vel_controller_l:
     - $(arg prefix)l/wrist_1_joint
     - $(arg prefix)l/wrist_2_joint
     - $(arg prefix)l/wrist_3_joint
+  pid: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}
 
 joint_group_vel_controller_r:
   type: velocity_controllers/JointGroupVelocityController
@@ -53,6 +54,24 @@ joint_group_vel_controller_r:
     - $(arg prefix)r/wrist_1_joint
     - $(arg prefix)r/wrist_2_joint
     - $(arg prefix)r/wrist_3_joint
+
+
+gains:
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/shoulder_pan_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}    
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/shoulder_lift_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/elbow_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_1_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_2_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_3_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/shoulder_pan_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}    
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/shoulder_lift_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/elbow_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_1_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_2_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_3_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0} 
+
+
+  
 
 
 move_group/controller_list:
@@ -68,3 +87,22 @@ move_group/controller_list:
     - $(arg prefix)wrist_2_joint
     - $(arg prefix)wrist_3_joint
 
+lift_controller_r: 
+  type: velocity_controllers/JointVelocityController
+  joint: right_lift_joint
+  pid:
+    p: 5.0
+    i: 20.0
+    i_clamp: 100.0
+
+
+lift_controller_l: 
+  type: velocity_controllers/JointVelocityController
+  joint: left_lift_joint
+  pid:
+    p: 5.0
+    i: 20.0
+    i_clamp: 100.0
+
+
+  

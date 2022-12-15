@@ -15,7 +15,7 @@
 
 	<xacro:property name="mir_600_act_wheel_radius" value="0.1" />
 	<xacro:property name="mir_600_act_wheel_width" value="0.05" />
-	<xacro:property name="mir_600_act_wheel_mass" value="1.0" />
+	<xacro:property name="mir_600_act_wheel_mass" value="10.0" /> <!-- the robot starts drifting if the wheels are to light -->
 	<xacro:property name="mir_600_act_wheel_dx" value="0.0" />
 	<xacro:property name="mir_600_act_wheel_dy" value="0.330" />
 

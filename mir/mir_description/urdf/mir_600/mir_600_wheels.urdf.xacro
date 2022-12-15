@@ -91,7 +91,7 @@
 			<collision>
 				<origin xyz="0 0 0" rpy="${pi * 0.5} 0 0" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/mir_600_caster_wheel.stl" />
+					<cylinder radius="${mir_600_caster_wheel_radius}" length="${mir_600_caster_wheel_width}"/>
 				</geometry>
 			</collision>
 		</link>

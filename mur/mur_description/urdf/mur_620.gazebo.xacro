@@ -28,13 +28,13 @@
 	<joint name="plattform_manipulator_joint_l" type="fixed">
 			<parent link="base_link" />
 			<child link="UR10l/base_link" />
-			<origin xyz="0.549 0.318 0.832" rpy="0 0 0" />
+			<origin xyz="0.549 0.318 0.892" rpy="0 0 0" />
 	</joint>
 
 	<joint name="plattform_manipulator_joint_r" type="fixed">
 			<parent link="base_link" />
 			<child link="UR10r/base_link" />
-			<origin xyz="0.549 -0.318 0.832" rpy="0 0 0" />
+			<origin xyz="0.549 -0.318 0.892" rpy="0 0 0" />
 	</joint>
 
 	<!-- <gazebo>

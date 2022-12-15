@@ -114,19 +114,20 @@ class SchunkController():
         # force = bin(force)
         # force_a = bool(int(force[-2]))
         # force_b = bool(int(force[-1]))
-        force_a = int(force/2)
-        force_b = int(force%2)
+        force_a = bool(int(force/2))
+        force_b = bool(int(force%2))
         self.set_pins([self.pin_force_a, self.pin_force_b, self.pin_demagnet], [force_a, force_b, False])
         rospy.sleep(0.001) # wait for the signal to be set
         self.set_pins([self.pin_magnet], [True])
         rospy.sleep(0.006) # wait for the magnet to be set
         self.set_pins() # reset all pins
-        
+        rospy.sleep(0.5) # wait for the signal to be set
         return self.is_picked() # get from io input
         
     def release(self):
         self.set_pins() # reset all pins
         self.set_pins([self.pin_demagnet], [True])
+        rospy.sleep(0.8) # wait for the signal to be set
         return not self.is_picked() # get from io input
     
     def set_pins(self, pins:Optional[List[int]] = None, states:Optional[List[bool]] = None, fun=1):
@@ -147,7 +148,7 @@ class SchunkController():
             if pin is not None and isinstance(state, bool):
                 self.srv(fun, pin, state)   #fun=1: digital out)
             else:
-                rospy.lodebug(f"pin {pin} or state {state} is not valid")
+                rospy.logdebug(f"pin {pin} or state {state} is not valid")
         
 if __name__ == '__main__':
     #DI 7 ist input pick

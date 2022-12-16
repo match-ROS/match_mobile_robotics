@@ -37,52 +37,53 @@ joint_group_pos_controller:
 joint_group_vel_controller_l:
   type: velocity_controllers/JointGroupVelocityController
   joints: 
-    - $(arg prefix)l/shoulder_pan_joint
-    - $(arg prefix)l/shoulder_lift_joint
-    - $(arg prefix)l/elbow_joint
-    - $(arg prefix)l/wrist_1_joint
-    - $(arg prefix)l/wrist_2_joint
-    - $(arg prefix)l/wrist_3_joint
+    - $(arg prefix)_l/shoulder_pan_joint
+    - $(arg prefix)_l/shoulder_lift_joint
+    - $(arg prefix)_l/elbow_joint
+    - $(arg prefix)_l/wrist_1_joint
+    - $(arg prefix)_l/wrist_2_joint
+    - $(arg prefix)_l/wrist_3_joint
 
 joint_group_vel_controller_r:
   type: velocity_controllers/JointGroupVelocityController
   joints: 
-    - $(arg prefix)r/shoulder_pan_joint
-    - $(arg prefix)r/shoulder_lift_joint
-    - $(arg prefix)r/elbow_joint
-    - $(arg prefix)r/wrist_1_joint
-    - $(arg prefix)r/wrist_2_joint
-    - $(arg prefix)r/wrist_3_joint
+    - $(arg prefix)_r/shoulder_pan_joint
+    - $(arg prefix)_r/shoulder_lift_joint
+    - $(arg prefix)_r/elbow_joint
+    - $(arg prefix)_r/wrist_1_joint
+    - $(arg prefix)_r/wrist_2_joint
+    - $(arg prefix)_r/wrist_3_joint
 
 
 gains:
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/shoulder_pan_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}    
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/shoulder_lift_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/elbow_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_1_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_2_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_3_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/shoulder_pan_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}    
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/shoulder_lift_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/elbow_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_1_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_2_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
-  /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_3_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0} 
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/shoulder_pan_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}    
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/shoulder_lift_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/elbow_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_1_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_2_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)r/wrist_3_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/shoulder_lift_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/elbow_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_1_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_2_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0}  
+  # /$(arg tf_prefix)/gazebo_ros_control/pid_gains/$(arg prefix)l/wrist_3_joint: {p: 5.0, i: 1, d: 10, i_clamp: 100.0} 
 
-  /mur620/arm_controller_l/gains/UR10l/shoulder_pan_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_l/gains/UR10l/shoulder_lift_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_l/gains/UR10l/elbow_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_l/gains/UR10l/wrist_1_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_l/gains/UR10l/wrist_2_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_l/gains/UR10l/wrist_3_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_l/gains/UR10_l/shoulder_pan_joint: {p: 5000.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_l/gains/UR10_l/shoulder_lift_joint: {p: 5000.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_l/gains/UR10_l/elbow_joint: {p: 5000.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_l/gains/UR10_l/wrist_1_joint: {p: 5000.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_l/gains/UR10_l/wrist_2_joint: {p: 5000.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_l/gains/UR10_l/wrist_3_joint: {p: 5000.0,  i: 0.05, d: 0.1, i_clamp: 1}
 
-  /mur620/arm_controller_r/gains/UR10r/shoulder_pan_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_r/gains/UR10r/shoulder_lift_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_r/gains/UR10r/elbow_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_r/gains/UR10r/wrist_1_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_r/gains/UR10r/wrist_2_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
-  /mur620/arm_controller_r/gains/UR10r/wrist_3_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_r/gains/UR10_r/shoulder_pan_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_r/gains/UR10_r/shoulder_lift_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_r/gains/UR10_r/elbow_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_r/gains/UR10_r/wrist_1_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_r/gains/UR10_r/wrist_2_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
+  /mur620/arm_controller_r/gains/UR10_r/wrist_3_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
 
+  /mur620/gazebo_ros_control/pid_gains/right_lift_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1} # P = 10000
+  /mur620/gazebo_ros_control/pid_gains/left_lift_joint: {p: 5.0,  i: 0.05, d: 0.1, i_clamp: 1}
 
   
 
@@ -121,12 +122,12 @@ lift_controller_l:
 arm_controller_l:
   type: velocity_controllers/JointTrajectoryController
   joints:
-    - $(arg prefix)l/shoulder_pan_joint
-    - $(arg prefix)l/shoulder_lift_joint
-    - $(arg prefix)l/elbow_joint
-    - $(arg prefix)l/wrist_1_joint
-    - $(arg prefix)l/wrist_2_joint
-    - $(arg prefix)l/wrist_3_joint
+    - $(arg prefix)_l/shoulder_pan_joint
+    - $(arg prefix)_l/shoulder_lift_joint
+    - $(arg prefix)_l/elbow_joint
+    - $(arg prefix)_l/wrist_1_joint
+    - $(arg prefix)_l/wrist_2_joint
+    - $(arg prefix)_l/wrist_3_joint
   constraints:
     goal_time: 0.6
     stopped_velocity_tolerance: 0.05
@@ -144,12 +145,12 @@ arm_controller_l:
 arm_controller_r:
   type: velocity_controllers/JointTrajectoryController
   joints:
-    - $(arg prefix)r/shoulder_pan_joint
-    - $(arg prefix)r/shoulder_lift_joint
-    - $(arg prefix)r/elbow_joint
-    - $(arg prefix)r/wrist_1_joint
-    - $(arg prefix)r/wrist_2_joint
-    - $(arg prefix)r/wrist_3_joint
+    - $(arg prefix)_r/shoulder_pan_joint
+    - $(arg prefix)_r/shoulder_lift_joint
+    - $(arg prefix)_r/elbow_joint
+    - $(arg prefix)_r/wrist_1_joint
+    - $(arg prefix)_r/wrist_2_joint
+    - $(arg prefix)_r/wrist_3_joint
   constraints:
     goal_time: 0.6
     stopped_velocity_tolerance: 0.05

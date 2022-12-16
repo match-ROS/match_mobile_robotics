@@ -3,7 +3,7 @@
 
 	<xacro:arg name="tf_prefix" default=''/>
 
-	<!-- MiR200 base -->
+	<!-- MiR600 base -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_600/mir_600.urdf.xacro" />
 
 	<xacro:mir_600/>

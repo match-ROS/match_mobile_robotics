@@ -9,6 +9,7 @@
 	<xacro:include filename="$(find mir_description)/urdf/mir_600/mir_600.gazebo.xacro" />
 	<!-- UR5 robot arm -->
   	<xacro:include filename="$(find ur_description)/urdf/inc/ur16e_macro.xacro"/>
+	<xacro:include filename="$(find ur_description)/urdf/inc/ur10e_macro.xacro"/>
 	<!-- Include plugin xacros -->
 	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
 	<xacro:p3d_base_controller robot_namespace="$(arg robot_namespace)"/>
@@ -19,21 +20,20 @@
 	<xacro:mir_600_gazebo tf_prefix="$(arg tf_prefix)" robot_namespace="$(arg robot_namespace)"/>
 
 	<!-- Init the UR5 robot arm macro -->
-	<xacro:ur16e_robot prefix="UR10l/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
-	<xacro:ur16e_robot prefix="UR10r/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
-	
+	<xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
+	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
 	<!-- Init the plugins that run the MiR in Gazebo -->
 	<xacro:controller_plugin_gazebo robot_namespace="$(arg robot_namespace)"/>
 
 	<joint name="plattform_manipulator_joint_l" type="fixed">
 			<parent link="left_lift_top" />
-			<child link="UR10l/base_link" />
+			<child link="UR10_l/base_link" />
 			<origin xyz="0.0 0.0 0.555" rpy="0 0 0" />
 	</joint>
 
 	<joint name="plattform_manipulator_joint_r" type="fixed">
 			<parent link="right_lift_top" />
-			<child link="UR10r/base_link" />
+			<child link="UR10_r/base_link" />
 			<origin xyz="0.0 0.0 0.555" rpy="0 0 0" />
 	</joint>
 

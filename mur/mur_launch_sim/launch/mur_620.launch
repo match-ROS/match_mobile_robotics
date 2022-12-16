@@ -11,7 +11,7 @@
 	<arg name="prefix" value="UR10" doc="Prefix for the UR16 links"/>
 
 	<group ns = "$(arg model_name)">
-		<rosparam file="$(find mur_moveit_config)/config/arm_controller.yaml" command="load" subst_value="true"/> 
+		<!-- <rosparam file="$(find mur_moveit_config)/config/arm_controller.yaml" command="load" subst_value="true"/>  -->
 		<rosparam file="$(find mur_control)/config/mur620e_controllers.yaml" command="load" subst_value="true"/> 
 	
 	
@@ -32,15 +32,15 @@
 			<!-- Start all necessary moveit files -->
 		<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
 			<arg name="model_name" value="$(arg model_name)"/>
-			<arg name="prefix" value="$(arg prefix)l/"/>
+			<arg name="prefix" value="$(arg prefix)_l/"/>
 		</include>
 
 		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="lift_controller_l lift_controller_r  arm_controller_l arm_controller_r">
+			args="lift_controller_l lift_controller_r  joint_group_vel_controller_l ">
 		</node>
 
 		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="--stopped joint_group_vel_controller_l joint_group_vel_controller_r">
+			args="--stopped arm_controller_l">
 		</node>
 
 		

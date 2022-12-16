@@ -12,7 +12,7 @@
 
 	<xacro:property name="mir_200_act_wheel_radius" value="0.0625" />
 	<xacro:property name="mir_200_act_wheel_width" value="0.032" />
-	<xacro:property name="mir_200_act_wheel_mass" value="1.0" />
+	<xacro:property name="mir_200_act_wheel_mass" value="20.0" />
 	<xacro:property name="mir_200_act_wheel_dx" value="0.037646" />
 	<xacro:property name="mir_200_act_wheel_dy" value="0.222604" />
 

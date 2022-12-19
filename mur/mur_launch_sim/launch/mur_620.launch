@@ -32,11 +32,11 @@
 			<!-- Start all necessary moveit files -->
 		<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
 			<arg name="model_name" value="$(arg model_name)"/>
-			<arg name="prefix" value="$(arg prefix)_l/"/>
+			<arg name="prefix" value="$(arg prefix)_r/"/>
 		</include>
 
 		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="lift_controller_l lift_controller_r  joint_group_vel_controller_l ">
+			args="lift_controller_l lift_controller_r  joint_group_vel_controller_l arm_controller">
 		</node>
 
 		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"

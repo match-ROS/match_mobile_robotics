@@ -31,7 +31,7 @@
 	<xacro:property name="mir_600_caster_wheel_base_dz" value="${mir_600_caster_wheel_radius-mir_600_caster_wheel_dz}" />
 
 	<xacro:property name="mir_600_match_logo_dx" value="0.0" />
-	<xacro:property name="mir_600_match_logo_dy" value="0.2724435" />
+	<xacro:property name="mir_600_match_logo_dy" value="0.330" />
 	<xacro:property name="mir_600_match_logo_dz" value="0.27" />
 
 	<xacro:macro name="mir_600">
@@ -138,8 +138,8 @@
   		</xacro:sensor_d435>
 
 		<!-- Insert a match logo on both sides of the mobile robot -->
-		<xacro:match_logo parent="base_link" locationprefix="left" location_dx="${mir_600_match_logo_dx}" location_dy="${mir_600_match_logo_dy}" location_dz="${mir_600_match_logo_dz}"/>
-		<xacro:match_logo parent="base_link" locationprefix="right" location_dx="${mir_600_match_logo_dx}" location_dy="${-1 * mir_600_match_logo_dy}" location_dz="${mir_600_match_logo_dz}" orientation="${pi}"/>
+		<!-- <xacro:match_logo parent="base_link" locationprefix="left" location_dx="${mir_600_match_logo_dx}" location_dy="${mir_600_match_logo_dy}" location_dz="${mir_600_match_logo_dz}"/>
+		<xacro:match_logo parent="base_link" locationprefix="right" location_dx="${mir_600_match_logo_dx}" location_dy="${-1 * mir_600_match_logo_dy}" location_dz="${mir_600_match_logo_dz}" orientation="${pi}"/> -->
 
 		<xacro:top_module/>
 		

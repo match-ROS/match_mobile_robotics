@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mur216" >
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mur620" >
 
 	<xacro:arg name="robot_namespace" default=''/>
 	<xacro:arg name="tf_prefix" default=''/>

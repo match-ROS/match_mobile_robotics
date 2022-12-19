@@ -9,15 +9,16 @@ from std_msgs.msg import Bool, Int8
 from typing import Optional, List
 
 class SchunkController():
-    def __init__(self, prefix_ur="ur/", pin_magnet=0, pin_demagnet=1, pin_picked=7, pin_force_a=2, pin_force_b=3):
+    def __init__(self, prefix_ur="ur/", pin_magnet=16, pin_demagnet=17, pin_picked=17, pin_force_a: Optional[int]=None, pin_force_b: Optional[int]=None):
         """To control the Schunk gripper
 
         Args:
             prefix_ur (str, optional): prefrix of service. Defaults to "ur/".
-            pin_magnet (int, optional): Magnetization ON. Defaults to 0.
-            pin_demagnet (int, optional): Magnetization OFF. Defaults to 1.
-            pin_force_a (int, optional): Force signal A. Defaults to 2.
-            pin_force_b (int, optional): Force signal B. Defaults to 3.
+            pin_magnet (int, optional): Magnetization ON. Defaults to TO0=16.
+            pin_demagnet (int, optional): Magnetization OFF. Defaults to TO1=17.
+            pin_picked (int, optional): Picked signal. Defaults to TI1=17.
+            pin_force_a (int, optional): Force signal A. Defaults to None.
+            pin_force_b (int, optional): Force signal B. Defaults to None.
             
         TODO Iniput:
             Message "Workpiece available"
@@ -151,7 +152,8 @@ class SchunkController():
                 rospy.logdebug(f"pin {pin} or state {state} is not valid")
         
 if __name__ == '__main__':
-    #DI 7 ist input pick
+    # gripper=SchunkController(prefix_ur="mur/ur/", pin_magnet=0, pin_demagnet=1, pin_picked=7, pin_force_a=2, pin_force_b=3)
+    #Tool: Pins 16/17 are tool in/outputs. -> 16 magnet, 17 demagnet, DI17 picked 
     gripper=SchunkController(prefix_ur="mur/ur/")
     rospy.spin()
     # gripper.test()

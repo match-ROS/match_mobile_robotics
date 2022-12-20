@@ -31,6 +31,7 @@
   <!-- load URDF, SRDF and joint_limits configuration -->
   <include file="$(find mur_moveit_config)/launch/planning_context.launch">
     <arg name="prefix" value="$(arg prefix)"/>
+    <arg name="model_name" value="$(arg model_name)"/>
   </include>
 
   <!-- Planning Functionality -->

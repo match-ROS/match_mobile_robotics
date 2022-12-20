@@ -30,17 +30,31 @@
 	
 
 			<!-- Start all necessary moveit files -->
-		<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
-			<arg name="model_name" value="$(arg model_name)"/>
-			<arg name="prefix" value="$(arg prefix)_r/"/>
-		</include>
+		<group ns = "$(arg prefix)_l">
+			<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
+				<arg name="model_name" value="$(arg model_name)"/>
+				<arg name="prefix" value="$(arg prefix)_l/"/>
+			</include>
+		</group>
+
+		<group ns = "$(arg prefix)_r">
+			<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
+				<arg name="model_name" value="$(arg model_name)"/>
+				<arg name="prefix" value="$(arg prefix)_r/"/>
+			</include>
+		</group>
+
+		<node name="ur_controller_spawner_r" pkg="controller_manager" type="spawner" output="screen"
+				args="$(arg prefix)_r/arm_controller $(arg prefix)_l/arm_controller">
+		</node>
+
 
 		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="lift_controller_l lift_controller_r  joint_group_vel_controller_l arm_controller">
+			args="lift_controller_l lift_controller_r   ">
 		</node>
 
 		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="--stopped arm_controller_l">
+			args="--stopped joint_group_vel_controller_l">
 		</node>
 
 		

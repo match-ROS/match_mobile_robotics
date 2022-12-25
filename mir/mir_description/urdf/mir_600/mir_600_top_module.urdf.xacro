@@ -10,16 +10,16 @@
 				<origin xyz="${mir_600_act_wheel_dx} 0 0.25" rpy="0 0 0" />
 			</xacro:box_inertial>
 			<visual>
-				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="${pi * 0.5} 0 ${pi * 0.5}" />
+				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="0 0 ${-pi * 0.5}" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/visual/mir_600_top_module.stl"/>
+					<mesh filename="package://mir_description/meshes/visual/mir_600_top_module.stl" scale="0.001 0.001 0.001"/>
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
-				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="${pi * 0.5} 0 ${pi * 0.5}" />
+				<origin xyz="${mir_600_act_wheel_dx} 0 0" rpy="0 0 ${-pi * 0.5}" />
 				<geometry>
-					<mesh filename="package://mir_description/meshes/collision/mir_600_top_module.stl"/>
+					<mesh filename="package://mir_description/meshes/collision/mir_600_top_module.stl" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 		</link>

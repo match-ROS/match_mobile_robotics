@@ -15,7 +15,7 @@
 		<rosparam file="$(find mur_control)/config/mur620e_controllers.yaml" command="load" subst_value="true"/> 
 	
 	
-		<include file="$(find mir_launch_sim)/launch/utils/general_mir.launch">
+		<include file="$(find mir_launch_sim)/launch/mir_600.launch">
 			<arg name="tf_prefix" value="$(arg tf_prefix)"/>
 			<arg name="robot_x"  value="$(arg robot_x)"/>
 			<arg name="robot_y"  value="$(arg robot_y)"/>
@@ -37,10 +37,11 @@
 			</include>
 		</group>
 
+		
 		<group ns = "$(arg prefix)_r">
 			<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
 				<arg name="model_name" value="$(arg model_name)"/>
-				<arg name="prefix" value="$(arg prefix)_r/"/>
+				<arg name="prefix" value="$(arg prefix)_r/"/>	
 			</include>
 		</group>
 

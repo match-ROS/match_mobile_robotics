@@ -58,7 +58,11 @@
 			args="--stopped joint_group_vel_controller_l">
 		</node>
 
-		
+		<node name="copy_robot_description" pkg="mur_description" type="copy_robot_description.py" output="screen">
+			<param name="mur_ns" value="$(arg model_name)"/>
+			<param name="ur_prefix" value="$(arg prefix)"/>
+		</node>
+	
 	</group> 
 
 </launch>

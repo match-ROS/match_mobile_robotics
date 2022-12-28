@@ -6,6 +6,7 @@
     <!-- Launch of the moveit package for the robot arm -->
 
     <remap from="/follow_joint_trajectory" to="/arm_controller/follow_joint_trajectory"/>
+    <remap to="/$(arg model_name)/joint_states" from="/$(arg model_name)/$(arg prefix)joint_states" />
 
     <include file="$(find mur_moveit_config)/launch/move_group.launch">
         <arg name="allow_trajectory_execution" value="true"/>

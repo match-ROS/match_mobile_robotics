@@ -2,6 +2,7 @@
 <launch>
     <arg name="model_name"/>
     <arg name="prefix"/>
+    <arg name="set_global_robot_description" default="false"/>
 
     <!-- Launch of the moveit package for the robot arm -->
 
@@ -12,7 +13,8 @@
         <arg name="allow_trajectory_execution" value="true"/>
         <arg name="fake_execution" value="false"/>
         <arg name="model_name" value="$(arg model_name)"/>
-        <arg name="prefix" value="$(arg prefix)"/>    
+        <arg name="prefix" value="$(arg prefix)"/>
+        <arg name="set_global_robot_description" value="$(arg set_global_robot_description)"/>
     </include>
 
     <!-- Run Rviz and load the default config to see the state of the move_group node -->

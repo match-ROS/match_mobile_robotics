@@ -21,7 +21,7 @@
 			<arg name="robot_x"  value="$(arg robot_x)"/>
 			<arg name="robot_y"  value="$(arg robot_y)"/>
 			<arg name="robot_yaw"  value="$(arg robot_yaw)"/>
-			<arg name="model_name" value="$(arg model_name)"/>
+			<arg name="model_name" value="$(arg mur_ns)"/>
 			<arg name="robot_urdf_path" value="$(arg robot_urdf_path)"/>
 
 			<arg name="move_base_selector" value="$(arg move_base_selector)"/>
@@ -33,7 +33,8 @@
 			<!-- Start all necessary moveit files -->
 		<group ns = "$(arg prefix)_l">
 			<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
-				<arg name="model_name" value="$(arg mur_ns)"/>
+				<arg name="model_name" value="$(arg model_name)"/>
+				<arg name="mur_ns" value="$(arg mur_ns)"/>
 				<arg name="prefix" value="$(arg prefix)_l/"/>
 				<arg name="set_global_robot_description" value="true"/> <!-- the semantic robot description should only be set once -->
 			</include>
@@ -46,7 +47,8 @@
 		
 		<group ns = "$(arg prefix)_r">
 			<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
-				<arg name="model_name" value="$(arg mur_ns)"/>
+				<arg name="model_name" value="$(arg model_name)"/>
+				<arg name="mur_ns" value="$(arg mur_ns)"/>
 				<arg name="prefix" value="$(arg prefix)_r/"/>	
 				<arg name="set_global_robot_description" value="false"/>
 			</include>

@@ -35,6 +35,10 @@
 				<arg name="model_name" value="$(arg model_name)"/>
 				<arg name="prefix" value="$(arg prefix)_l/"/>
 			</include>
+			<include file="$(find mur_control)/launch/move_to_home_pose.launch">
+				<arg name="mur_ns" value="$(arg model_name)"/>
+				<arg name="ur_prefix" value="$(arg prefix)_l"/>
+			</include>
 		</group>
 
 		
@@ -42,6 +46,10 @@
 			<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
 				<arg name="model_name" value="$(arg model_name)"/>
 				<arg name="prefix" value="$(arg prefix)_r/"/>	
+			</include>
+			<include file="$(find mur_control)/launch/move_to_home_pose.launch">
+				<arg name="mur_ns" value="$(arg model_name)"/>
+				<arg name="ur_prefix" value="$(arg prefix)_r"/>
 			</include>
 		</group>
 

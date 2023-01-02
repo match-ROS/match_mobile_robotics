@@ -50,7 +50,7 @@
 				<arg name="model_name" value="$(arg model_name)"/>
 				<arg name="mur_ns" value="$(arg mur_ns)"/>
 				<arg name="prefix" value="$(arg prefix)_r/"/>	
-				<arg name="set_global_robot_description" value="false"/>
+				<arg name="set_global_robot_description" value="true"/>
 			</include>
 			<include file="$(find mur_control)/launch/move_to_home_pose.launch">
 				<arg name="mur_ns" value="$(arg mur_ns)"/>

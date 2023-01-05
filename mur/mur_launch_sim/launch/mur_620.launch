@@ -11,6 +11,10 @@
 	<arg name="robot_urdf_path" value="$(find mur_description)/urdf/mur_620.gazebo.xacro"/>
 	<arg name="prefix" value="UR10" doc="Prefix for the UR16 links"/>
 
+	<!-- if an object should be grasped configure its model and joint names here -->
+	<arg name="object_name" default="object01" />
+	<arg name="object_link" default="link01" />
+
 	<group ns = "$(arg mur_ns)">
 		<!-- <rosparam file="$(find mur_moveit_config)/config/arm_controller.yaml" command="load" subst_value="true"/>  -->
 		<rosparam file="$(find mur_control)/config/mur620e_controllers.yaml" command="load" subst_value="true"/> 
@@ -42,6 +46,12 @@
 				<arg name="mur_ns" value="$(arg mur_ns)"/>
 				<arg name="ur_prefix" value="$(arg prefix)_l"/>
 			</include>
+			<node name="grasp_server" pkg="schunk_emh_rp_45" type="grasp_server.py" output="screen">
+				<param name="object_name" value="$(arg object_name)" />
+				<param name="object_link" value="$(arg object_link)" />
+				<param name="robot_name" value="$(arg model_name)" />
+				<param name="gripper_link" value="$(arg prefix)_l/wrist_3_link" />
+			</node>
 		</group>
 
 		
@@ -56,6 +66,12 @@
 				<arg name="mur_ns" value="$(arg mur_ns)"/>
 				<arg name="ur_prefix" value="$(arg prefix)_r"/>
 			</include>
+			<node name="grasp_server" pkg="schunk_emh_rp_45" type="grasp_server.py" output="screen">
+				<param name="object_name" value="$(arg object_name)" />
+				<param name="object_link" value="$(arg object_link)" />
+				<param name="robot_name" value="$(arg model_name)" />
+				<param name="gripper_link" value="$(arg prefix)_r/wrist_3_link" />
+			</node>
 		</group>
 
 		<node name="ur_controller_spawner_r" pkg="controller_manager" type="spawner" output="screen"

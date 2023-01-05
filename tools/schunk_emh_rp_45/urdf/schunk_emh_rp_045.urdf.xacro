@@ -12,14 +12,14 @@
 			<visual>
 				<origin xyz="0 0 0.128" rpy="${-pi * 0.5} 0 0" />
 				<geometry>
-					<mesh filename="package://mur_description/meshes/visual/schunk_emh_rp_045.stl" scale="0.001 0.001 0.001"/>
+					<mesh filename="package://schunk_emh_rp_45/meshes/visual/schunk_emh_rp_045.stl" scale="0.001 0.001 0.001"/>
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
 				<origin xyz="0 0 0" rpy="0 0 0" />
 				<geometry>
-					<mesh filename="package://mur_description/meshes/collision/schunk_emh_rp_045.stl" scale="0.001 0.001 0.001" />
+					<mesh filename="package://schunk_emh_rp_45/meshes/collision/schunk_emh_rp_045.stl" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 		</link>

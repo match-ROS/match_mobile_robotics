@@ -14,7 +14,7 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
 	<xacro:p3d_base_controller robot_namespace="$(arg robot_namespace)"/>
 	<!-- include gripper -->
-	<xacro:include filename="$(find mur_description)/urdf/inc/schunk_emh_rp_045.urdf.xacro"/>
+	<xacro:include filename="$(find schunk_emh_rp_45)/urdf/schunk_emh_rp_045.urdf.xacro"/>
 	<!-- Init the MiR200 marco that is also used for the hardware -->
 	<xacro:mir_600 />
 	<!-- Init the MiR200 macro that includes all infos that Gazebo need to function -->

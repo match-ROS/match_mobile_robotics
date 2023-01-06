@@ -29,7 +29,28 @@
 			<parent link="${tool_link}" />
 			<child link="${tf_prefix}/gripper" />
 			<axis xyz="0 0 1" />
+			<sensor name="force_torque" type="force_torque">
+          		<update_rate>30</update_rate>
+        	</sensor>
 		</joint>
+
+		<gazebo reference="${tf_prefix}/wrist_3_joint">
+   			<provideFeedback>true</provideFeedback>
+  		</gazebo>
+
+		<!-- The ft_sensor plugin  -->
+		<gazebo>
+			<plugin name="UR_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+			<updateRate>1000.0</updateRate>
+			<topicName>${tf_prefix}/ft_sensor_topic</topicName> 
+			<jointName>${tf_prefix}/wrist_3_joint</jointName>
+			<noise>
+			<type>gaussian</type>
+			<mean>0.0</mean>
+			<stddev>0.0</stddev> <!-- change this to simulate noise --> 
+			</noise>
+			</plugin>
+		</gazebo>
 		
 	</xacro:macro>
 

@@ -49,7 +49,7 @@
 			<node name="grasp_server" pkg="schunk_emh_rp_45" type="grasp_server.py" output="screen">
 				<param name="object_name" value="$(arg object_name)" />
 				<param name="object_link" value="$(arg object_link)" />
-				<param name="robot_name" value="$(arg model_name)" />
+				<param name="robot_name" value="$(arg mur_ns)" />
 				<param name="gripper_link" value="$(arg prefix)_l/wrist_3_link" />
 			</node>
 		</group>
@@ -69,7 +69,7 @@
 			<node name="grasp_server" pkg="schunk_emh_rp_45" type="grasp_server.py" output="screen">
 				<param name="object_name" value="$(arg object_name)" />
 				<param name="object_link" value="$(arg object_link)" />
-				<param name="robot_name" value="$(arg model_name)" />
+				<param name="robot_name" value="$(arg mur_ns)" />
 				<param name="gripper_link" value="$(arg prefix)_r/wrist_3_link" />
 			</node>
 		</group>

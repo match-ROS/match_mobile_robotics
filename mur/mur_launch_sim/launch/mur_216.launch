@@ -8,8 +8,7 @@
 	<arg name="global_planner" default="GlobalPlanner" />
 	<arg name="local_planner" default="DWAPlannerROS" />
 	<arg name="load_gripper" default="false"/>
-	<arg unless="$(arg load_gripper)" name="robot_urdf_path" value="$(find mur_description)/urdf/mur_216.gazebo.xacro"/>
-	<arg if="$(arg load_gripper)" name="robot_urdf_path" value="$(find mur_description)/urdf/mur_216_ft_gripper.gazebo.xacro"/>
+	<arg name="robot_urdf_path" value="$(find mur_description)/urdf/mur_216.gazebo.xacro"/>
 	<arg name="prefix" value="UR16/" doc="Prefix for the UR16 links"/>
 
 	<group ns = "$(arg model_name)">

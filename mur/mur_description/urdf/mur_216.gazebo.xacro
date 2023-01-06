@@ -3,6 +3,7 @@
 
 	<xacro:arg name="robot_namespace" default=''/>
 	<xacro:arg name="tf_prefix" default=''/>
+	<xacro:arg name="load_gripper" default="true"/>
 
 	<!-- MiR200 base -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.urdf.xacro" />
@@ -29,6 +30,13 @@
 			<child link="UR16/base_link" />
 			<origin xyz="0.215 0.1 0.35" rpy="0 0 0" />
 	</joint>
+
+	<!-- robotiq 85 gripper -->
+  	<xacro:if value="$(arg load_gripper)">
+		<xacro:include filename="$(find ur_launch_sim)/urdf/robotiq_85_gripper.urdf.xacro" />
+		<xacro:gripper parent="UR16/tool0" ft_joint="UR16/wrist_3_joint" />
+  	</xacro:if>
+
 
 	<!-- <gazebo>
 		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">		

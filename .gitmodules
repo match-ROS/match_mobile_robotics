@@ -32,3 +32,6 @@
 [submodule "mir/mir_submodules/mir_robot"]
 	path = mir/mir_submodules/mir_robot
 	url = https://github.com/match-ROS/mir_robot
+[submodule "ur/robotiq"]
+	path = ur/robotiq
+	url = https://github.com/pumablattlaus/robotiq.git

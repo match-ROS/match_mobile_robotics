@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mur216" >
+
+	<xacro:arg name="robot_namespace" default=''/>
+	<xacro:arg name="tf_prefix" default=''/>
+	<xacro:arg name="load_gripper" default="true"/>
+
+	<!-- MiR200 base -->
+	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.urdf.xacro" />
+	<xacro:include filename="$(find mir_description)/urdf/mir_200/mir_200.gazebo.xacro" />
+	<!-- UR5 robot arm -->
+  	<xacro:include filename="$(find ur_description)/urdf/inc/ur16e_macro.xacro"/>
+	<!-- Include plugin xacros -->
+	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
+	<xacro:p3d_base_controller robot_namespace="$(arg robot_namespace)"/>
+
+	<!-- Init the MiR200 marco that is also used for the hardware -->
+	<xacro:mir_200 />
+	<!-- Init the MiR200 macro that includes all infos that Gazebo need to function -->
+	<xacro:mir_200_gazebo tf_prefix="$(arg tf_prefix)" robot_namespace="$(arg robot_namespace)"/>
+
+	<!-- Init the UR5 robot arm macro -->
+	<xacro:ur16e_robot prefix="UR16/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
+	
+	<!-- Init the plugins that run the MiR in Gazebo -->
+	<xacro:controller_plugin_gazebo robot_namespace="$(arg robot_namespace)"/>
+
+	<joint name="plattform_manipulator_joint" type="fixed">
+			<parent link="base_link" />
+			<child link="UR16/base_link" />
+			<origin xyz="0.215 0.1 0.35" rpy="0 0 0" />
+	</joint>
+
+	 <!-- robotiq 85 gripper -->
+  <xacro:if value="$(arg load_gripper)">
+    <xacro:include filename="$(find ur_launch_sim)/urdf/robotiq_85_gripper.urdf.xacro" />
+	<xacro:gripper parent="UR16/tool0" ft_joint="UR16/wrist_3_joint" />
+  </xacro:if>
+
+
+</robot>

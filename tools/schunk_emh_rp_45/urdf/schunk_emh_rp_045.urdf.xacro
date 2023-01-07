@@ -9,6 +9,20 @@
 			<xacro:cylinder_inertial mass="1.5" radius="0.32" length="0.128">
 				<origin xyz="0 0 0.06" rpy="0 0 0" />
 			</xacro:cylinder_inertial>
+		</link>
+
+		<joint name="${tf_prefix}/gripper_joint" type="fixed">
+			<origin xyz="0 0 0.0" rpy="0 0 0" />
+			<parent link="${tool_link}" />
+			<child link="${tf_prefix}/gripper" />
+			<axis xyz="0 0 1" />
+			<limit effort="1000" lower="-0.0001" upper="0.0001" velocity="10"/>
+		</joint>
+
+		<link name="${tf_prefix}/tcp">
+			<xacro:cylinder_inertial mass="0.01" radius="0.32" length="0.128">
+				<origin xyz="0 0 0.06" rpy="0 0 0" />
+			</xacro:cylinder_inertial>
 			<visual>
 				<origin xyz="0 0 0.128" rpy="${-pi * 0.5} 0 0" />
 				<geometry>
@@ -17,33 +31,33 @@
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
-				<origin xyz="0 0 0" rpy="0 0 0" />
+				<origin xyz="0 0 0.128" rpy="${-pi * 0.5} 0 0" />
 				<geometry>
 					<mesh filename="package://schunk_emh_rp_45/meshes/collision/schunk_emh_rp_045.stl" scale="0.001 0.001 0.001" />
 				</geometry>
 			</collision>
 		</link>
 
-		<joint name="${tf_prefix}/gripper_joint" type="fixed">
+		<!-- the ft_sensor plugin will not work with fixed joints. This is why a prismatic joint with very small limits is added -->
+		<joint name="${tf_prefix}/tcp_joint" type="prismatic">
 			<origin xyz="0 0 0.0" rpy="0 0 0" />
-			<parent link="${tool_link}" />
-			<child link="${tf_prefix}/gripper" />
+			<parent link="${tf_prefix}/gripper" />
+			<child link="${tf_prefix}/tcp" />
 			<axis xyz="0 0 1" />
-			<sensor name="force_torque" type="force_torque">
-          		<update_rate>30</update_rate>
-        	</sensor>
+   			<limit effort="1000" lower="-0.0001" upper="0.0001" velocity="10"/>
 		</joint>
+		
 
-		<gazebo reference="${tf_prefix}/wrist_3_joint">
+		<gazebo reference="${tf_prefix}/tcp_joint">
    			<provideFeedback>true</provideFeedback>
   		</gazebo>
 
 		<!-- The ft_sensor plugin  -->
 		<gazebo>
-			<plugin name="UR_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-			<updateRate>1000.0</updateRate>
+			<plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+			<updateRate>500.0</updateRate>
 			<topicName>${tf_prefix}/ft_sensor_topic</topicName> 
-			<jointName>${tf_prefix}/wrist_3_joint</jointName>
+			<jointName>${tf_prefix}/tcp_joint</jointName>
 			<noise>
 			<type>gaussian</type>
 			<mean>0.0</mean>

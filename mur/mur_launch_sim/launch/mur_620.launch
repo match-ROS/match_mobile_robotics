@@ -52,6 +52,10 @@
 				<param name="robot_name" value="$(arg mur_ns)" />
 				<param name="gripper_link" value="$(arg prefix)_l/tcp" />
 			</node>
+			<node name="direct_kinematics_publisher" pkg="ur_controllers_match" type="direct_kinematics_publisher.py" output="screen">
+				<param name="ur_prefix" value="$(arg prefix)_l/" />
+				<remap from="joint_states" to="/$(arg mur_ns)/joint_states" />
+			</node>
 		</group>
 
 		
@@ -71,6 +75,10 @@
 				<param name="object_link" value="$(arg object_link)" />
 				<param name="robot_name" value="$(arg mur_ns)" />
 				<param name="gripper_link" value="$(arg prefix)_r/tcp" />
+			</node>
+			<node name="direct_kinematics_publisher" pkg="ur_controllers_match" type="direct_kinematics_publisher.py" output="screen">
+				<param name="ur_prefix" value="$(arg prefix)_r/" />
+				<remap from="joint_states" to="/$(arg mur_ns)/joint_states" />
 			</node>
 		</group>
 

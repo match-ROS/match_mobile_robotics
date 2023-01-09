@@ -7,13 +7,12 @@ import numpy as np
 from geometry_msgs.msg import Pose
 import tf
 
-class Direct_kinematics():
+class Direct_kinematics_publisher():
 
     def __init__(self):
         # Initialize the node
-        rospy.init_node('direct_kinematics', anonymous=True)
-        # Set the rate of the loop
-        self.ur_prefix = rospy.get_param('~ur_prefix', 'ur')
+        rospy.init_node('direct_kinematics_publisher', anonymous=True)
+        self.load_params()
         self.joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
         self.DH_params = [[0,0,0.1807,pi/2],[0,-0.6127,0,0],[0,-0.57155,0,0],[0,0,0.17415,pi/2],[0,0,0.11985,-pi/2],[0,0,0.11655,0]]
         self.q = [0,0,0,0,0,0]
@@ -24,7 +23,6 @@ class Direct_kinematics():
 
 
     def joint_state_callback(self,JointState):
-        # self.joint_state = JointState
         for i in range(0,6):
             for idx in range(0,len(JointState.name)):
                 if JointState.name[idx] == self.ur_prefix + self.joint_names[i]:
@@ -53,12 +51,19 @@ class Direct_kinematics():
              [0,0,1,0],
              [0,0,0,1]]
         for i in range(0,6):
-            T = np.dot(T,self.compute_DH_matrix(self.q[i],self.DH_params[i][2],self.DH_params[i][1],self.DH_params[i][3]))
+            T = np.dot(T,self.compute_DH_matrix(self.q[i] + self.delta_theta[i], self.DH_params[i][2] + self.delta_d[i] 
+            ,self.DH_params[i][1] + self.delta_a[i], self.DH_params[i][3] + self.delta_alpha[i]))
         return T
 
+    def load_params(self):
+        self.ur_prefix = rospy.get_param('~ur_prefix', 'ur')
+        self.delta_theta = rospy.get_param('~delta_theta', [0,0,0,0,0,0])
+        self.delta_a = rospy.get_param('~delta_a', [0,0,0,0,0,0])
+        self.delta_d = rospy.get_param('~delta_d', [0,0,0,0,0,0])
+        self.delta_alpha = rospy.get_param('~delta_alpha', [0,0,0,0,0,0])
 
 if __name__ == '__main__':
     try:
-        Direct_kinematics()
+        Direct_kinematics_publisher()
     except rospy.ROSInterruptException:
         pass

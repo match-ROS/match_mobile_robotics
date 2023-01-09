@@ -1,13 +1,19 @@
 <launch>
 
     <group ns="mur620/UR10_r">
-        <arg name="wrench_topic" default="/mur1/UR10_r/wrench"/>
+        <arg name="target_wrench_topic" default="/mur620/UR10_r/wrench"/>
+        <arg name="actual_wrench_topic" default="/target_wrench"/>
         <arg name="target_pose_topic" default="target_pose"/>
+        <arg name="actual_pose_topic" default="/mur620/UR10_r/tcp_pose"/>
 
+        <rosparam file="$(find mur_control)/config/admittance_control.yaml" command="load" subst_value="true"/> 
 
         <node name="admittance_control" pkg="mur_control" type="admittance_control.py" output="screen">
-            <param name="wrench_topic" value="$(arg wrench_topic)" />
+            <param name="actual_wrench_topic" value="$(arg actual_wrench_topic)" />
+            <param name="target_wrench_topic" value="$(arg target_wrench_topic)" />
             <param name="target_pose_topic" value="$(arg target_pose_topic)" />
+            <param name="actual_pose_topic" value="$(arg actual_pose_topic)" />
+
         </node>
     </group>
 

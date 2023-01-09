@@ -1,0 +1,11 @@
+<launch>
+	<arg name="ur_prefix"    default="UR10_l/" />
+
+    <group ns="mur620">
+		<node name="direct_kinematics" pkg="ur_controllers_match" type="direct_kinematics.py" output="screen">
+				<param name="ur_prefix" value="$(arg ur_prefix)" />
+		</node>
+	</group>
+
+
+</launch>

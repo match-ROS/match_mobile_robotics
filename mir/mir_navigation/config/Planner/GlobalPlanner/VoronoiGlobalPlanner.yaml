@@ -1,0 +1,16 @@
+planners:
+  - name: 'VoronoiGlobalPlanner'
+    type: 'voronoi_planner/VoronoiGlobalPlanner'
+
+VoronoiGlobalPlanner:
+  free_cell_threshold: 0
+  angle_threshold: 0.0 # 0.3927 # PI / 8; 22,5°
+  min_distance_control_points: 1.25
+  max_distance_for_interpolation: 1.0
+  plan_resolution: 50 # pt / m
+  max_curvature: 1.0
+  curvature_safety_margin: 0.02
+  min_facet_area: 10.0
+  use_as_standalone: true
+  optimize_lengths: true
+  max_optimization_time: 4.0

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import rospy
-from geometry_msgs.msg import WrenchStamped, Pose, Wrench
+from geometry_msgs.msg import WrenchStamped, Pose, Wrench, Twist
 from std_msgs.msg import Float64MultiArray
+from sensor_msgs.msg import JointState
 import moveit_commander
 import moveit_msgs.msg
 import sys
@@ -18,12 +19,18 @@ class Admittance_control():
         self.target_wrench = Wrench()
         self.target_pose = Pose()
         self.actual_pose = Pose()
-        
+        self.feed_forward_velocity_cartesian = Twist()
+        self.timestamp_old = rospy.get_rostime()
+        self.q = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        group_name = "UR_arm"
+        self.move_group = moveit_commander.MoveGroupCommander(group_name)
 
         rospy.Subscriber(self.wrench_topic, WrenchStamped, self.wrench_callback)
         rospy.Subscriber(self.target_pose_topic, Pose, self.target_pose_callback)
         rospy.Subscriber(self.actual_pose_topic, Pose, self.actual_pose_callback)
         rospy.Subscriber(self.target_wrench_topic, WrenchStamped, self.target_wrench_callback)
+        rospy.Subscriber(self.cartesian_ff_velocity_topic, Twist, self.cartesian_ff_velocity_callback)
+        rospy.Subscriber(self.joint_states_topic, JointState, self.joint_states_callback)
         rospy.sleep(1.0) # wait for the subscribers to be ready
         
 
@@ -32,61 +39,82 @@ class Admittance_control():
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
 
-            # Calculate the error between the current pose and the target pose
-            pose_error = self.pose_error(self.actual_pose, self.target_pose)
-
-            # Calculate the error betrween the current wrench and the target wrench
-            wrench_error = self.wrench_error(self.actual_wrench, self.target_wrench)
-
             # Calculate the desired force
-            desired_compliance = self.calculate_desired_force(pose_error, wrench_error)
+            desired_compliance = self.desired_compliance(self.target_wrench, self.actual_wrench)
+
+            # Update the target pose
+            target_pose = self.update_target_pose(self.target_pose, self.feed_forward_velocity_cartesian)
+
+            # Calculate the error between the current pose and the target pose
+            pose_error = self.pose_error(self.actual_pose, target_pose, desired_compliance)
+
+            # Calculate the target tcp velocity
+            target_tcp_velocity = self.calculate_target_tcp_velocity(pose_error, self.feed_forward_velocity_cartesian)
+
+            # Convert the target tcp velocity to joint velocity
+            target_joint_velocity = self.tcp_velocity_to_joint_velocity(target_tcp_velocity)
 
             rate.sleep()
 
-    def pose_error(self, actual_pose, target_pose):
+    def desired_compliance(self, target_wrench, current_wrench):
+        desired_compliance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        desired_compliance[0] = (target_wrench.force.x - current_wrench.force.x) * self.admittance_gain_force_x
+        desired_compliance[1] = (target_wrench.force.y - current_wrench.force.y) * self.admittance_gain_force_y
+        desired_compliance[2] = (target_wrench.force.z - current_wrench.force.z) * self.admittance_gain_force_z
+        desired_compliance[3] = (target_wrench.torque.x - current_wrench.torque.x) * self.admittance_gain_torque_x
+        desired_compliance[4] = (target_wrench.torque.y - current_wrench.torque.y) * self.admittance_gain_torque_y
+        desired_compliance[5] = (target_wrench.torque.z - current_wrench.torque.z) * self.admittance_gain_torque_z
+        return desired_compliance
+  
+    def update_target_pose(self, target_pose, feed_forward_velocity_cartesian):
+        now = rospy.get_rostime()
+        dt = (now - self.timestamp_old).to_sec()
+        target_pose.position.x = target_pose.position.x + feed_forward_velocity_cartesian.linear.x * dt
+        target_pose.position.y = target_pose.position.y + feed_forward_velocity_cartesian.linear.y * dt
+        target_pose.position.z = target_pose.position.z + feed_forward_velocity_cartesian.linear.z * dt
+        # convert quaternion to euler angles to add the feed forward velocity
+        [roll, pitch, yaw] = transformations.euler_from_quaternion([target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w])
+        roll = roll + feed_forward_velocity_cartesian.angular.x * dt
+        pitch = pitch + feed_forward_velocity_cartesian.angular.y * dt
+        yaw = yaw + feed_forward_velocity_cartesian.angular.z * dt
+        # convert euler angles to quaternion to update the target pose
+        [target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w] = transformations.quaternion_from_euler(roll, pitch, yaw)
+        self.timestamp_old = now
+        return target_pose
+
+
+    def pose_error(self, actual_pose, target_pose, desired_compliance):
         pose_error = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        pose_error[0]   = target_pose.position.x - actual_pose.position.x
-        pose_error[1]   = target_pose.position.y - actual_pose.position.y
-        pose_error[2]   = target_pose.position.z - actual_pose.position.z
+        pose_error[0]   = desired_compliance[0] + target_pose.position.x - actual_pose.position.x 
+        pose_error[1]   = desired_compliance[1] + target_pose.position.y - actual_pose.position.y
+        pose_error[2]   = desired_compliance[2] + target_pose.position.z - actual_pose.position.z
         # convert quaternion to euler angles
         [act_roll, act_pitch, act_yaw] = transformations.euler_from_quaternion([actual_pose.orientation.x, actual_pose.orientation.y, actual_pose.orientation.z, actual_pose.orientation.w])
         [tar_roll, tar_pitch, tar_yaw] = transformations.euler_from_quaternion([target_pose.orientation.x, target_pose.orientation.y, target_pose.orientation.z, target_pose.orientation.w])
-        pose_error[3]   = tar_roll - act_roll
-        pose_error[4]   = tar_pitch - act_pitch
-        pose_error[5]   = tar_yaw - act_yaw
+        pose_error[3]   = desired_compliance[3] + tar_roll - act_roll
+        pose_error[4]   = desired_compliance[4] + tar_pitch - act_pitch
+        pose_error[5]   = desired_compliance[5] + tar_yaw - act_yaw
         return pose_error
 
-    def wrench_error(self, actual_wrench, target_wrench):
-        wrench_error = Wrench()
-        wrench_error.force.x = target_wrench.force.x - actual_wrench.force.x
-        wrench_error.force.y = target_wrench.force.y - actual_wrench.force.y
-        wrench_error.force.z = target_wrench.force.z - actual_wrench.force.z
-        wrench_error.torque.x = target_wrench.torque.x - actual_wrench.torque.x
-        wrench_error.torque.y = target_wrench.torque.y - actual_wrench.torque.y
-        wrench_error.torque.z = target_wrench.torque.z - actual_wrench.torque.z    
-        return wrench_error
+    def calculate_target_tcp_velocity(self, pose_error, feed_forward_velocity_cartesian):
+        target_tcp_velocity = Twist()
+        target_tcp_velocity.linear.x = pose_error[0] * self.admittance_gain_force_x + feed_forward_velocity_cartesian.linear.x
+        target_tcp_velocity.linear.y = pose_error[1] * self.admittance_gain_force_y + feed_forward_velocity_cartesian.linear.y
+        target_tcp_velocity.linear.z = pose_error[2] * self.admittance_gain_force_z + feed_forward_velocity_cartesian.linear.z
+        target_tcp_velocity.angular.x = pose_error[3] * self.admittance_gain_torque_x + feed_forward_velocity_cartesian.angular.x
+        target_tcp_velocity.angular.y = pose_error[4] * self.admittance_gain_torque_y + feed_forward_velocity_cartesian.angular.y
+        target_tcp_velocity.angular.z = pose_error[5] * self.admittance_gain_torque_z + feed_forward_velocity_cartesian.angular.z
+        return target_tcp_velocity
 
-    def calculate_desired_force(self, pose_error, current_wrench):
-        desired_force = Wrench()
-        desired_force.force.x = pose_error[0] * self.admittance_gain_force_x
-        desired_force.force.y = pose_error[1] * self.admittance_gain_force_y
-        desired_force.force.z = pose_error[2] * self.admittance_gain_force_z
-        desired_force.torque.x = pose_error[3] * self.admittance_gain_torque_x
-        desired_force.torque.y = pose_error[4] * self.admittance_gain_torque_y
-        desired_force.torque.z = pose_error[5] * self.admittance_gain_torque_z
-        return desired_force
+    def tcp_velocity_to_joint_velocity(self, target_tcp_velocity):
+        # get jacobi matrix
+        jacobian = self.move_group.get_jacobian_matrix(self.q)
+        print(jacobian)
+        return 1.0
 
-    def desired_compliance(self, desired_force, current_wrench):
-        desired_compliance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-        
 
-        desired_compliance.force.x = desired_force.force.x - current_wrench.force.x
-        desired_compliance.force.y = desired_force.force.y - current_wrench.force.y
-        desired_compliance.force.z = desired_force.force.z - current_wrench.force.z
-        desired_compliance.torque.x = desired_force.torque.x - current_wrench.torque.x
-        desired_compliance.torque.y = desired_force.torque.y - current_wrench.torque.y
-        desired_compliance.torque.z = desired_force.torque.z - current_wrench.torque.z
-        return desired_compliance
+    def cartesian_ff_velocity_callback(self, Twist):
+        self.feed_forward_velocity_cartesian = Twist
 
 
     def wrench_callback(self, msg: WrenchStamped):
@@ -101,11 +129,20 @@ class Admittance_control():
     def target_wrench_callback(self, msg):
         self.target_wrench = msg.wrench
 
+    def joint_states_callback(self,JointState):
+        # self.joint_state = JointState
+        for i in range(0,6):
+            for idx in range(0,len(JointState.name)):
+                if JointState.name[idx] == self.ur_prefix + self.joint_names[i]:
+                    self.q[i] = JointState.position[idx]
+
     def get_params(self):
         self.wrench_topic = rospy.get_param("~actual_wrench_topic")
         self.target_pose_topic = rospy.get_param("~target_pose_topic")
         self.actual_pose_topic = rospy.get_param("~actual_pose_topic")
         self.target_wrench_topic = rospy.get_param("~target_wrench_topic")
+        self.cartesian_ff_velocity_topic = rospy.get_param("~cartesian_ff_velocity_topic")
+        self.joint_states_topic = rospy.get_param("~joint_states_topic")
         self.propotional_gain_pose_x = rospy.get_param("~propotional_gain_pose_x")
         self.propotional_gain_pose_y = rospy.get_param("~propotional_gain_pose_y")
         self.propotional_gain_pose_z = rospy.get_param("~propotional_gain_pose_z")
@@ -118,7 +155,8 @@ class Admittance_control():
         self.admittance_gain_torque_x = rospy.get_param("~admittance_gain_torque_x")
         self.admittance_gain_torque_y = rospy.get_param("~admittance_gain_torque_y")
         self.admittance_gain_torque_z = rospy.get_param("~admittance_gain_torque_z")
-
+        self.joint_names = rospy.get_param("~joint_names")
+        self.ur_prefix = rospy.get_param("~ur_prefix")
 
 
 

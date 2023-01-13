@@ -10,6 +10,8 @@ planners:
     type: 'navfn/NavfnROS'
   - name: 'CarrotPlanner'
     type: 'carrot_planner/CarrotPlanner'
+  - name: 'VoronoiGlobalPlanner'
+    type: 'voronoi_planner/VoronoiGlobalPlanner'
   # mprim file cannot be loaded
   # - name: 'SBPLLatticePlanner'
   #   type: 'SBPLLatticePlanner'

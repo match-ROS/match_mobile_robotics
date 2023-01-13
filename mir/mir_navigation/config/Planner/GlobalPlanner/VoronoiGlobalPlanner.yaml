@@ -1,7 +1,3 @@
-planners:
-  - name: 'VoronoiGlobalPlanner'
-    type: 'voronoi_planner/VoronoiGlobalPlanner'
-
 VoronoiGlobalPlanner:
   free_cell_threshold: 0
   angle_threshold: 0.0 # 0.3927 # PI / 8; 22,5°
@@ -14,3 +10,16 @@ VoronoiGlobalPlanner:
   use_as_standalone: true
   optimize_lengths: true
   max_optimization_time: 4.0
+
+  formation_config:
+    robot_names: ["/mir1", "/mir2"]
+    mir1:
+      namespace: /mir1
+      rel_x_offset: 0.0
+      rel_y_offset: 0.4
+      rel_yaw_offset: 0.0
+    mir2:
+      namespace: /mir2
+      rel_x_offset: 0.0
+      rel_y_offset: -0.4
+      rel_yaw_offset: 0.0

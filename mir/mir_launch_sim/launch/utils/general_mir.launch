@@ -58,8 +58,6 @@
 			<arg name="tf_prefix" value="$(arg tf_prefix)"/>
 		</include>
 	</group>
-	<!-- load voronoi planner  -->
-	<include file="$(find voronoi_planner)/launch/voronoi_planner.launch" />
 
 	<!-- Robot state publisher -->
 	<node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" output="screen">

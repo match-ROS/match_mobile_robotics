@@ -65,11 +65,11 @@
 	</node>
 
 	<!-- Add passive + mimic joints to joint_states topic -->
-	<node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+	<!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
 		<rosparam param="source_list" subst_value="true">[joint_states]</rosparam>
 		<param name="rate" value="200.0" />
 		<param name="use_gui" value="false"/>
-	</node>
+	</node> -->
 	
 	<!-- These nodes publish the topics b_scan and f_scan to the scan topic-->
 	<!-- Noetic note: If the scan messages contain the same timespamp an error occures. Therefore change to new scan_merger.py-->

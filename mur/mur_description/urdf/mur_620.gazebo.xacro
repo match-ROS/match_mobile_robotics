@@ -38,8 +38,8 @@
 			<origin xyz="0.0 0.0 0.555" rpy="0 0 0" />
 	</joint>
 
-	<xacro:schunk_emh_rp_045 tf_prefix="UR10_r"	tool_link="UR10_r/wrist_3_link"/>
-	<xacro:schunk_emh_rp_045 tf_prefix="UR10_l"	tool_link="UR10_l/wrist_3_link"/>
+	<xacro:schunk_emh_rp_045 tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
+	<xacro:schunk_emh_rp_045 tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
 	<!-- <gazebo>
 		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">		
 			<robotNamespace>mir</robotNamespace>

@@ -13,6 +13,9 @@
 	<arg name="local_planner" doc="Name of the local planner that should be used by the navigation stack"/>
 	<arg name="local_planner_config" doc="Path to the local config file." />
 
+	<!-- load the joint state controller config (list of passive joints) -->
+	<arg name="gazebo_joint_state_controller_config" default="$(find mir_launch_sim)/config/gazebo_joint_state_controller.yaml" />
+
 	<!-- The model name of the robot_description cannot be empty when using no namespace. So use a default model name instead-->
 	<arg if="$(eval model_name=='')" name="robot_description_model_name" value="mir" />
 	<arg unless="$(eval model_name=='')" name="robot_description_model_name" value="$(arg model_name)" /> 
@@ -27,9 +30,8 @@
 	<node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-param robot_description -urdf -model $(arg robot_description_model_name)
 		-x $(arg robot_x) -y $(arg robot_y) -Y $(arg robot_yaw) " />
 
-	
 	<!-- Start the controllers -->
-	<rosparam file="$(find mir_launch_sim)/config/gazebo_joint_state_controller.yaml" command="load"/>
+	<rosparam file="$(arg gazebo_joint_state_controller_config)" command="load" subst_value="true"/>
 	<rosparam file="$(find mir_launch_sim)/config/gazebo_diffdrive_controller.yaml" command="load" subst_value="true"/>
 	<node name="controller_spawner" pkg="controller_manager" type="spawner" output="screen"
 		args="joint_state_controller mobile_base_controller">

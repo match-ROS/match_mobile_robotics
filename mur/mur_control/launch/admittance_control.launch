@@ -6,6 +6,7 @@
         <arg name="target_pose_topic" default="target_pose"/>
         <arg name="actual_pose_topic" default="/mur620/UR10_r/tcp_pose"/>
         <arg name="cartesian_ff_velocity_topic" default="/cartesian_ff_velocity_topic"/>
+        <arg name="joint_group_vel_topic" default="/mur620/joint_group_vel_controller_l/command"/>
         <arg name="ur_prefix" default="UR10_l/"/>
         <arg name="joint_states_topic" default="/mur620/joint_states"/>
         
@@ -18,6 +19,7 @@
             <param name="target_pose_topic" value="$(arg target_pose_topic)" />
             <param name="actual_pose_topic" value="$(arg actual_pose_topic)" />
             <param name="cartesian_ff_velocity_topic" value="$(arg cartesian_ff_velocity_topic)" />
+            <param name="joint_group_vel_topic" value="$(arg joint_group_vel_topic)" />
             <param name="ur_prefix" value="$(arg ur_prefix)" />
             <param name="joint_states_topic" value="$(arg joint_states_topic)" />
             

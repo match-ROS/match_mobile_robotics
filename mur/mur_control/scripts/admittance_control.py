@@ -7,6 +7,7 @@ import moveit_commander
 import moveit_msgs.msg
 import sys
 from tf import transformations
+import numpy as np
 
 
 class Admittance_control():
@@ -32,6 +33,7 @@ class Admittance_control():
         rospy.Subscriber(self.cartesian_ff_velocity_topic, Twist, self.cartesian_ff_velocity_callback)
         rospy.Subscriber(self.joint_states_topic, JointState, self.joint_states_callback)
         rospy.sleep(1.0) # wait for the subscribers to be ready
+        self.joint_group_vel_pub = rospy.Publisher(self.joint_group_vel_topic, Float64MultiArray, queue_size=1)
         
 
     def update(self):
@@ -41,18 +43,25 @@ class Admittance_control():
 
             # Calculate the desired force
             desired_compliance = self.desired_compliance(self.target_wrench, self.actual_wrench)
+            # rospy.loginfo("Desired compliance: {}".format(desired_compliance))
 
             # Update the target pose
             target_pose = self.update_target_pose(self.target_pose, self.feed_forward_velocity_cartesian)
+            # rospy.loginfo("Target pose: {}".format(target_pose))
 
             # Calculate the error between the current pose and the target pose
             pose_error = self.pose_error(self.actual_pose, target_pose, desired_compliance)
+            #rospy.loginfo("Pose error: {}".format(pose_error))
 
             # Calculate the target tcp velocity
             target_tcp_velocity = self.calculate_target_tcp_velocity(pose_error, self.feed_forward_velocity_cartesian)
+            #rospy.loginfo("Target tcp velocity: {}".format(target_tcp_velocity))
 
             # Convert the target tcp velocity to joint velocity
             target_joint_velocity = self.tcp_velocity_to_joint_velocity(target_tcp_velocity)
+
+            # Send the target joint velocity to the robot
+            self.send_target_joint_velocity(target_joint_velocity)
 
             rate.sleep()
 
@@ -109,13 +118,31 @@ class Admittance_control():
     def tcp_velocity_to_joint_velocity(self, target_tcp_velocity):
         # get jacobi matrix
         jacobian = self.move_group.get_jacobian_matrix(self.q)
-        print(jacobian)
-        return 1.0
+        # calculate the inverse of the jacobian matrix
+        jacobian_pinv = np.linalg.pinv(jacobian)
+        # calculate the joint velocity
+        target_tcp_velocity.angular.x = 0.0
+        target_tcp_velocity.angular.y = 0.0
+        target_tcp_velocity.angular.z = 0.0
+        target_joint_velocity_unsorted = np.dot(jacobian_pinv, np.array([target_tcp_velocity.linear.x, target_tcp_velocity.linear.y, target_tcp_velocity.linear.z, target_tcp_velocity.angular.x, target_tcp_velocity.angular.y, target_tcp_velocity.angular.z]))
+        # sort the joint velocity #TODO: Do this dynamically
+        target_joint_velocity = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+        target_joint_velocity[0] = target_joint_velocity_unsorted[2]
+        target_joint_velocity[1] = target_joint_velocity_unsorted[1]
+        target_joint_velocity[2] = target_joint_velocity_unsorted[0]
+        target_joint_velocity[3] = target_joint_velocity_unsorted[3]
+        target_joint_velocity[4] = target_joint_velocity_unsorted[4]
+        target_joint_velocity[5] = target_joint_velocity_unsorted[5]
+        return target_joint_velocity_unsorted
+
+    def send_target_joint_velocity(self,target_joint_velocity):
+        command = Float64MultiArray()
+        command.data = target_joint_velocity
+        self.joint_group_vel_pub.publish(command)
 
 
     def cartesian_ff_velocity_callback(self, Twist):
         self.feed_forward_velocity_cartesian = Twist
-
 
     def wrench_callback(self, msg: WrenchStamped):
         self.actual_wrench = msg.wrench
@@ -130,7 +157,7 @@ class Admittance_control():
         self.target_wrench = msg.wrench
 
     def joint_states_callback(self,JointState):
-        # self.joint_state = JointState
+        # TODO: sort the joint states only on the first run. Save the order in a list and use it afterwards
         for i in range(0,6):
             for idx in range(0,len(JointState.name)):
                 if JointState.name[idx] == self.ur_prefix + self.joint_names[i]:
@@ -143,6 +170,7 @@ class Admittance_control():
         self.target_wrench_topic = rospy.get_param("~target_wrench_topic")
         self.cartesian_ff_velocity_topic = rospy.get_param("~cartesian_ff_velocity_topic")
         self.joint_states_topic = rospy.get_param("~joint_states_topic")
+        self.joint_group_vel_topic = rospy.get_param("~joint_group_vel_topic")
         self.propotional_gain_pose_x = rospy.get_param("~propotional_gain_pose_x")
         self.propotional_gain_pose_y = rospy.get_param("~propotional_gain_pose_y")
         self.propotional_gain_pose_z = rospy.get_param("~propotional_gain_pose_z")

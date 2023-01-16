@@ -36,6 +36,7 @@
 		<include file="$(find mur_moveit_config)/launch/start_moveit.launch">
 			<arg name="model_name" value="$(arg model_name)"/>
 			<arg name="prefix" value="$(arg prefix)"/>
+			<arg name="set_global_robot_description" value="true"/>
 		</include>
 
 		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"

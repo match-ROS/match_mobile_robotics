@@ -121,9 +121,6 @@ class Admittance_control():
         # calculate the inverse of the jacobian matrix
         jacobian_pinv = np.linalg.pinv(jacobian)
         # calculate the joint velocity
-        target_tcp_velocity.angular.x = 0.0
-        target_tcp_velocity.angular.y = 0.0
-        target_tcp_velocity.angular.z = 0.0
         target_joint_velocity_unsorted = np.dot(jacobian_pinv, np.array([target_tcp_velocity.linear.x, target_tcp_velocity.linear.y, target_tcp_velocity.linear.z, target_tcp_velocity.angular.x, target_tcp_velocity.angular.y, target_tcp_velocity.angular.z]))
         # sort the joint velocity #TODO: Do this dynamically
         target_joint_velocity = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]

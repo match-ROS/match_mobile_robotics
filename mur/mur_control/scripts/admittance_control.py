@@ -4,18 +4,18 @@ from geometry_msgs.msg import WrenchStamped, Pose, Wrench, Twist
 from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import JointState
 import moveit_commander
-import moveit_msgs.msg
 import sys
 from tf import transformations
 import numpy as np
-
+from controller_manager_msgs.srv import SwitchController
 
 class Admittance_control():
 
     def __init__(self):
-        moveit_commander.roscpp_initialize(sys.argv)
         rospy.init_node('admittance_control_node')
         self.get_params()
+        joint_state_topic = ['joint_states:=' + self.joint_states_topic]
+        moveit_commander.roscpp_initialize(joint_state_topic)
         self.actual_wrench = Wrench()
         self.target_wrench = Wrench()
         self.target_pose = Pose()
@@ -25,7 +25,6 @@ class Admittance_control():
         self.q = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         group_name = "UR_arm"
         self.move_group = moveit_commander.MoveGroupCommander(group_name)
-
         rospy.Subscriber(self.wrench_topic, WrenchStamped, self.wrench_callback)
         rospy.Subscriber(self.target_pose_topic, Pose, self.target_pose_callback)
         rospy.Subscriber(self.actual_pose_topic, Pose, self.actual_pose_callback)
@@ -38,6 +37,14 @@ class Admittance_control():
 
     def update(self):
         
+        # change the controller to joint_group_vel_controller (the controller generelly should be switched somewhere else)
+        stop = self.ur_prefix + 'arm_controller'
+        start = 'joint_group_vel_controller_l'
+        self.switch_controllers(stop, start)
+
+        # set current pose as target pose
+        self.target_pose = self.actual_pose
+
         rate = rospy.Rate(100)
         while not rospy.is_shutdown():
 
@@ -51,7 +58,7 @@ class Admittance_control():
 
             # Calculate the error between the current pose and the target pose
             pose_error = self.pose_error(self.actual_pose, target_pose, desired_compliance)
-            #rospy.loginfo("Pose error: {}".format(pose_error))
+            rospy.loginfo("Pose error: {}".format(pose_error))
 
             # Calculate the target tcp velocity
             target_tcp_velocity = self.calculate_target_tcp_velocity(pose_error, self.feed_forward_velocity_cartesian)
@@ -93,6 +100,7 @@ class Admittance_control():
 
 
     def pose_error(self, actual_pose, target_pose, desired_compliance):
+        desired_compliance = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         pose_error = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
         pose_error[0]   = desired_compliance[0] + target_pose.position.x - actual_pose.position.x 
         pose_error[1]   = desired_compliance[1] + target_pose.position.y - actual_pose.position.y
@@ -107,19 +115,28 @@ class Admittance_control():
 
     def calculate_target_tcp_velocity(self, pose_error, feed_forward_velocity_cartesian):
         target_tcp_velocity = Twist()
-        target_tcp_velocity.linear.x = pose_error[0] * self.admittance_gain_force_x + feed_forward_velocity_cartesian.linear.x
-        target_tcp_velocity.linear.y = pose_error[1] * self.admittance_gain_force_y + feed_forward_velocity_cartesian.linear.y
-        target_tcp_velocity.linear.z = pose_error[2] * self.admittance_gain_force_z + feed_forward_velocity_cartesian.linear.z
-        target_tcp_velocity.angular.x = pose_error[3] * self.admittance_gain_torque_x + feed_forward_velocity_cartesian.angular.x
-        target_tcp_velocity.angular.y = pose_error[4] * self.admittance_gain_torque_y + feed_forward_velocity_cartesian.angular.y
-        target_tcp_velocity.angular.z = pose_error[5] * self.admittance_gain_torque_z + feed_forward_velocity_cartesian.angular.z
+        target_tcp_velocity.linear.x = pose_error[0] * self.propotional_gain_pose_x + feed_forward_velocity_cartesian.linear.x
+        target_tcp_velocity.linear.y = pose_error[1] * self.propotional_gain_pose_y + feed_forward_velocity_cartesian.linear.y
+        target_tcp_velocity.linear.z = pose_error[2] * self.propotional_gain_pose_z + feed_forward_velocity_cartesian.linear.z
+        target_tcp_velocity.angular.x = pose_error[3] * self.propotional_gain_pose_roll + feed_forward_velocity_cartesian.angular.x
+        target_tcp_velocity.angular.y = pose_error[4] * self.propotional_gain_pose_pitch + feed_forward_velocity_cartesian.angular.y
+        target_tcp_velocity.angular.z = pose_error[5] * self.propotional_gain_pose_yaw + feed_forward_velocity_cartesian.angular.z
         return target_tcp_velocity
 
-    def tcp_velocity_to_joint_velocity(self, target_tcp_velocity):
+    def tcp_velocity_to_joint_velocity(self, target_tcp_velocity_base):
+        
+        # get current joint positions
+        #q = self.move_group.get_current_joint_values()
         # get jacobi matrix
         jacobian = self.move_group.get_jacobian_matrix(self.q)
+
+
+        # convert target velocity from base to tcp
+        target_tcp_velocity = self.base_to_tcp_velocity(target_tcp_velocity_base)
+        target_tcp_velocity = target_tcp_velocity_base
+
         # calculate the inverse of the jacobian matrix
-        jacobian_pinv = np.linalg.pinv(jacobian)
+        jacobian_pinv = np.linalg.inv(jacobian)
         # calculate the joint velocity
         target_joint_velocity_unsorted = np.dot(jacobian_pinv, np.array([target_tcp_velocity.linear.x, target_tcp_velocity.linear.y, target_tcp_velocity.linear.z, target_tcp_velocity.angular.x, target_tcp_velocity.angular.y, target_tcp_velocity.angular.z]))
         # sort the joint velocity #TODO: Do this dynamically
@@ -137,6 +154,24 @@ class Admittance_control():
         command.data = target_joint_velocity
         self.joint_group_vel_pub.publish(command)
 
+    def base_to_tcp_velocity(self, target_tcp_velocity_base):
+        # get transformation matrix from base to tcp
+        R = transformations.quaternion_matrix([self.actual_pose.orientation.x, self.actual_pose.orientation.y, self.actual_pose.orientation.z, self.actual_pose.orientation.w])
+        T = np.identity(4)
+        T[0:3,0:3] = R[0:3,0:3]
+        T[0,3] = self.actual_pose.position.x
+        T[1,3] = self.actual_pose.position.y
+        T[2,3] = self.actual_pose.position.z
+        T_inv = np.linalg.inv(T)
+        # convert target velocity from base to tcp
+        target_tcp_velocity = Twist()
+        target_tcp_velocity.linear.x = T_inv[0,0] * target_tcp_velocity_base.linear.x + T_inv[0,1] * target_tcp_velocity_base.linear.y + T_inv[0,2] * target_tcp_velocity_base.linear.z
+        target_tcp_velocity.linear.y = T_inv[1,0] * target_tcp_velocity_base.linear.x + T_inv[1,1] * target_tcp_velocity_base.linear.y + T_inv[1,2] * target_tcp_velocity_base.linear.z
+        target_tcp_velocity.linear.z = T_inv[2,0] * target_tcp_velocity_base.linear.x + T_inv[2,1] * target_tcp_velocity_base.linear.y + T_inv[2,2] * target_tcp_velocity_base.linear.z
+        target_tcp_velocity.angular.x = T_inv[0,0] * target_tcp_velocity_base.angular.x + T_inv[0,1] * target_tcp_velocity_base.angular.y + T_inv[0,2] * target_tcp_velocity_base.angular.z
+        target_tcp_velocity.angular.y = T_inv[1,0] * target_tcp_velocity_base.angular.x + T_inv[1,1] * target_tcp_velocity_base.angular.y + T_inv[1,2] * target_tcp_velocity_base.angular.z
+        target_tcp_velocity.angular.z = T_inv[2,0] * target_tcp_velocity_base.angular.x + T_inv[2,1] * target_tcp_velocity_base.angular.y + T_inv[2,2] * target_tcp_velocity_base.angular.z
+        return target_tcp_velocity
 
     def cartesian_ff_velocity_callback(self, Twist):
         self.feed_forward_velocity_cartesian = Twist
@@ -183,7 +218,15 @@ class Admittance_control():
         self.joint_names = rospy.get_param("~joint_names")
         self.ur_prefix = rospy.get_param("~ur_prefix")
 
-
+    def switch_controllers(self,stop, start):
+        rospy.wait_for_service('/mur620/controller_manager/switch_controller')
+        try:
+            switch_controller = rospy.ServiceProxy('/mur620/controller_manager/switch_controller', SwitchController)
+            switch_controller(start_controllers=[start], stop_controllers=[stop], strictness=2)
+            return True
+        except rospy.ServiceException as e:
+            print("Service call failed: %s"%e)
+            return False
 
 
 if __name__ == '__main__':

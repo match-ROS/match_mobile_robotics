@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import rospy
 from sensor_msgs.msg import JointState
-from math import sin, cos, pi
+from math import sin, cos, pi, sqrt
 import numpy as np
 from geometry_msgs.msg import Pose
 from copy import deepcopy
@@ -112,6 +112,12 @@ class Dual_arm_collision_avoidance():
                     #         "link"+str(i)+"_r" + str(idx),
                     #         self.tf_prefix +'/base_link')
 
+            for i in range(0,len(self.joint_pose_list_l)):
+                for j in range(0,len(self.joint_pose_list_r)):
+                    dist = sqrt((self.joint_pose_list_l[i].position.x - self.joint_pose_list_r[j].position.x)**2 + (self.joint_pose_list_l[i].position.y - self.joint_pose_list_r[j].position.y)**2 + (self.joint_pose_list_l[i].position.z - self.joint_pose_list_r[j].position.z)**2)
+                    if dist < self.dist_threshold:
+                        rospy.logerr("Collision detected between joint " + str(i) + " and joint " + str(j))
+                    
             rate.sleep()
 
 
@@ -130,6 +136,7 @@ class Dual_arm_collision_avoidance():
         self.ur_prefix_r = rospy.get_param('~ur_prefix_r')
         self.tf_prefix = rospy.get_param('~tf_prefix')
         self.collision_objects_per_link = rospy.get_param('~collision_objects_per_link')
+        self.dist_threshold = rospy.get_param('~dist_threshold')
 
     def sort_joint_states_l(self, JointState):
         for i in range(0,6):

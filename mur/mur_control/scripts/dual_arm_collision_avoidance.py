@@ -6,6 +6,7 @@ import numpy as np
 from geometry_msgs.msg import Pose
 from copy import deepcopy
 import tf
+from std_msgs.msg import Float64MultiArray
 
 class Dual_arm_collision_avoidance():
 
@@ -13,17 +14,28 @@ class Dual_arm_collision_avoidance():
         self.load_parameters()
         self.inital_run_l = True
         self.inital_run_r = True
+        self.collision = True
+        self.near_collision = True
         self.joint_pose_l = Pose()
         self.joint_pose_r = Pose()
+        self.latest_command_l = Float64MultiArray
+        self.latest_command_l.data = [0,0,0,0,0,0]
+        self.latest_command_r = Float64MultiArray
+        self.latest_command_r.data = [0,0,0,0,0,0]
         self.joints_state_index_l = [0,1,2,3,4,5]
         self.joints_state_index_r = [0,1,2,3,4,5]
         self.q_l = [0,0,0,0,0,0]
         self.q_r = [0,0,0,0,0,0]
         self.DH_params = [[0,0,0.1807,pi/2],[0,-0.6127,0,0],[0,-0.57155,0,0],[0,0,0.17415,pi/2],[0,0,0.11985,-pi/2],[0,0,0.11655,0]]
         self.tf_listener = tf.TransformListener()
+        self.command_repub_l = rospy.Publisher(self.controller_name_l + "/unsafe/command", Float64MultiArray, queue_size=1)
+        self.command_repub_r = rospy.Publisher(self.controller_name_r + "/unsafe/command", Float64MultiArray, queue_size=1)
         rospy.Subscriber(self.joint_states_topic, JointState, self.joint_states_callback_l)
         rospy.Subscriber(self.joint_states_topic, JointState, self.joint_states_callback_r)
+        rospy.Subscriber(self.controller_name_l + "/safe/command", Float64MultiArray, self.controller_callback_l)
+        rospy.Subscriber(self.controller_name_r + "/safe/command", Float64MultiArray, self.controller_callback_r)
         rospy.sleep(1)
+
         self.run()
 
     def run(self):
@@ -112,12 +124,22 @@ class Dual_arm_collision_avoidance():
                     #         "link"+str(i)+"_r" + str(idx),
                     #         self.tf_prefix +'/base_link')
 
+            collision = False
+            near_collision = False
             for i in range(0,len(self.joint_pose_list_l)):
                 for j in range(0,len(self.joint_pose_list_r)):
                     dist = sqrt((self.joint_pose_list_l[i].position.x - self.joint_pose_list_r[j].position.x)**2 + (self.joint_pose_list_l[i].position.y - self.joint_pose_list_r[j].position.y)**2 + (self.joint_pose_list_l[i].position.z - self.joint_pose_list_r[j].position.z)**2)
-                    if dist < self.dist_threshold:
-                        rospy.logerr("Collision detected between joint " + str(i) + " and joint " + str(j))
-                    
+                    if dist < self.safety_dist_threshold:
+                        collision = True
+                        self.stop_controllers()
+                        break
+                    elif dist < self.warning_dist_threshold:
+                        near_collision = True
+            self.collision = collision
+            self.near_collision = near_collision
+            if near_collision:
+                self.slow_controllers()
+
             rate.sleep()
 
 
@@ -131,12 +153,15 @@ class Dual_arm_collision_avoidance():
     def load_parameters(self):
         self.joint_states_topic = rospy.get_param('~joint_states_topic')
         self.joint_names = rospy.get_param('~joint_names')
+        self.controller_name_l = rospy.get_param('~controller_name_l')
+        self.controller_name_r = rospy.get_param('~controller_name_r')
         self.rate = rospy.get_param('~rate')
         self.ur_prefix_l = rospy.get_param('~ur_prefix_l')
         self.ur_prefix_r = rospy.get_param('~ur_prefix_r')
         self.tf_prefix = rospy.get_param('~tf_prefix')
         self.collision_objects_per_link = rospy.get_param('~collision_objects_per_link')
-        self.dist_threshold = rospy.get_param('~dist_threshold')
+        self.safety_dist_threshold = rospy.get_param('~safety_dist_threshold')
+        self.warning_dist_threshold = rospy.get_param('~warning_dist_threshold')
 
     def sort_joint_states_l(self, JointState):
         for i in range(0,6):
@@ -162,6 +187,50 @@ class Dual_arm_collision_avoidance():
             self.inital_run_r = False
         for i in range(0,6):
             self.q_r[i] = JointState.position[self.joints_state_index_l[i]]
+
+    def controller_callback_l(self, command):
+        self.latest_command_l = command
+        if self.collision == True:
+            command.data = [0,0,0,0,0,0]
+        elif self.near_collision == True:
+            command.data = tuple(0.5 * elem for elem in command.data) # reduce speed by 50%
+        else:
+            pass
+        self.command_repub_l.publish(Float64MultiArray)
+
+    def controller_callback_r(self, command):
+        self.latest_command_r = command
+        if self.collision == True:
+            command.data = [0,0,0,0,0,0]
+        elif self.near_collision == True:
+            for i in range(0,len(command.data)):
+                command.data = tuple(0.5 * elem for elem in command.data) # reduce speed by 50%
+        else:
+            pass
+        self.command_repub_r.publish(Float64MultiArray)
+
+    def slow_controllers(self):
+        print(self.latest_command_l)
+        if self.latest_command_l.data != None:
+            self.latest_command_l.data = self.multipy_tupple(self.latest_command_l.data, 0.9)
+            self.command_repub_l.publish(self.latest_command_l)
+        # if self.latest_command_r.data != [0,0,0,0,0,0]:
+        #     self.latest_command_r.data = self.multipy_tupple(self.latest_command_r.data, 0.9) # reduce speed by 50%
+        #     self.command_repub_r.publish(self.latest_command_r)
+
+    def stop_controllers(self):
+        stop_command = Float64MultiArray
+        stop_command.data = [0,0,0,0,0,0]
+        self.command_repub_l.publish(stop_command)
+        self.command_repub_r.publish(stop_command)
+
+    def multipy_tupple(self, tup1, factor):
+        data = list(tup1)
+        print(data)
+        return tuple(factor * elem for elem in data)
+        
+        
+
 
 if __name__ == '__main__':
     rospy.init_node('dual_arm_collision_avoidance')

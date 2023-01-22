@@ -34,7 +34,7 @@ joint_group_pos_controller:
     - $(arg prefix)wrist_2_joint
     - $(arg prefix)wrist_3_joint
 
-joint_group_vel_controller_l:
+joint_group_vel_controller_l/unsafe:
   type: velocity_controllers/JointGroupVelocityController
   joints: 
     - $(arg prefix)_l/shoulder_pan_joint
@@ -44,7 +44,7 @@ joint_group_vel_controller_l:
     - $(arg prefix)_l/wrist_2_joint
     - $(arg prefix)_l/wrist_3_joint
 
-joint_group_vel_controller_r:
+joint_group_vel_controller_r/unsafe:
   type: velocity_controllers/JointGroupVelocityController
   joints: 
     - $(arg prefix)_r/shoulder_pan_joint

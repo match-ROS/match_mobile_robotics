@@ -5,6 +5,8 @@
         <arg name="ur_prefix_l" default="UR10_l/"/>
         <arg name="ur_prefix_r" default="UR10_r/"/>
         <arg name="tf_prefix" default="mur620"/>
+        <arg name="controller_name_l" default="joint_group_vel_controller_l"/>
+        <arg name="controller_name_r" default="joint_group_vel_controller_r"/>
 
         
 
@@ -15,6 +17,9 @@
             <param name="ur_prefix_l" value="$(arg ur_prefix_l)" />
             <param name="ur_prefix_r" value="$(arg ur_prefix_r)" />
             <param name="tf_prefix" value="$(arg tf_prefix)" />
+            <param name="controller_name_l" value="$(arg controller_name_l)" />
+            <param name="controller_name_r" value="$(arg controller_name_r)" />
+            
             
         </node>
     </group>

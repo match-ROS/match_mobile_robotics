@@ -1,0 +1,41 @@
+<launch>
+    <arg name="tf_prefix" default=""/>
+    <arg name="ur_version" default="ur10e"/>
+    <arg name="ur_position" default="right"/>
+    <arg name="mur_number" default="mur1"/>
+    <!-- <arg name="kinematics_config" default="$(find ur_launch_hardware)/calibration_UR16e_13.yaml"/> -->
+    <!-- <arg name="kinematics_config_r" default="$(find ur_launch_hardware)/config/calibration.yaml"/> -->
+    <arg name="moveit_config_pkg" value="$(arg ur_version)_moveit_config"/>
+    <arg name="robot_ip_r" default="UR10_r"/>
+
+
+
+    <!-- Bringup the enabeling procdeure for the ur -->
+    <node pkg="ur_launch_hardware" type="enable_ur.py" name="enable_ur" output="screen" />
+     
+    <!-- Interface for gripper abstraction -->
+    <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
+
+    <!-- Bringup the ur driver within proper namespaces -->
+    <remap from="/robot_description" to="robot_description"/>
+    <rosparam file="$(find ur_launch_hardware)/config/controllers.yaml" command="load" subst_value="true"/>
+    <include file="$(find ur_robot_driver)/launch/$(arg ur_version)_bringup.launch" pass_all_args="true">
+        <arg name="controllers" value="joint_group_vel_controller joint_state_controller"/>
+        <arg name="stopped_controllers" value="position_joint_controller"/>      
+        <!-- <arg name="kinematics_config" value="$(arg kinematics_config_r)"/> -->
+        <arg name="robot_ip" value="$(arg robot_ip_r)"/>        
+    </include>
+
+    <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/>
+
+
+    <!-- <node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+        args="arm_controller">
+    </node> -->
+
+    <!-- <arg name="node_start_delay" default="20.0" />
+    <node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "
+        args="joint_group_vel_controller">
+    </node> -->
+
+</launch>

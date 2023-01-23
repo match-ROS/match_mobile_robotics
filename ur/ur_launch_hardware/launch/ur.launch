@@ -7,9 +7,10 @@
     <arg name="reverse_port" default="50001"/>  
     <arg name="script_sender_port" default="50002"/> 
     <arg name="trajectory_port" default="50003"/> 
+    <arg name="script_command_port" default="50004"/> 
 
     <!-- Bringup the enabeling procdeure for the ur -->
-    <node pkg="ur_launch_hardware" type="enable_ur.py" name="enable_ur" output="screen" />
+    <!-- <node pkg="ur_launch_hardware" type="enable_ur.py" name="enable_ur" output="screen" /> -->
      
     <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
@@ -25,6 +26,7 @@
         <arg name="reverse_port" value="$(arg reverse_port)"/>  
         <arg name="script_sender_port" value="$(arg script_sender_port)"/>  
         <arg name="trajectory_port" value="$(arg trajectory_port)"/>  
+        <arg name="script_command_port" value="$(arg script_command_port)"/>
     </include>
 
     <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/>
@@ -33,10 +35,5 @@
     <!-- <node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
         args="arm_controller">
     </node> -->
-
-    <arg name="node_start_delay" default="20.0" />
-    <node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' "
-        args="joint_group_vel_controller">
-    </node>
 
 </launch>

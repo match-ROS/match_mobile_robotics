@@ -41,6 +41,7 @@
                 <arg name="reverse_port" value="50005"/>
                 <arg name="script_sender_port" value="50006"/>
                 <arg name="trajectory_port" value="50007"/>
+                <arg name="script_command_port" value="50008"/>
             </include> 
         </group>
 

@@ -4,6 +4,9 @@
     <arg name="kinematics_config" default="$(find ur_launch_hardware)/config/calibration.yaml"/>
     <arg name="moveit_config_pkg" value="$(arg ur_version)_moveit_config"/>
     <arg name="robot_ip" default="ur"/>
+    <arg name="reverse_port" default="50001"/>  
+    <arg name="script_sender_port" default="50002"/> 
+    <arg name="trajectory_port" default="50003"/> 
 
     <!-- Bringup the enabeling procdeure for the ur -->
     <node pkg="ur_launch_hardware" type="enable_ur.py" name="enable_ur" output="screen" />
@@ -18,7 +21,10 @@
         <arg name="controllers" value="joint_state_controller"/>
         <arg name="stopped_controllers" value="position_joint_controller"/>      
         <arg name="kinematics_config" value="$(arg kinematics_config)"/>
-        <arg name="robot_ip" value="$(arg robot_ip)"/>        
+        <arg name="robot_ip" value="$(arg robot_ip)"/>    
+        <arg name="reverse_port" value="$(arg reverse_port)"/>  
+        <arg name="script_sender_port" value="$(arg script_sender_port)"/>  
+        <arg name="trajectory_port" value="$(arg trajectory_port)"/>  
     </include>
 
     <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/>

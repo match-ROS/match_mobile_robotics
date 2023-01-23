@@ -2,14 +2,14 @@
     <!-- Defining arguments for the mur launch --> 
     <arg name="launch_mir" default="false"/>
     <arg name="launch_urs" default="true"/>
-    <arg name="controllers_started" default="joint_state_controller"/>
+    <arg name="controllers_started" default="joint_group_vel_controller joint_state_controller"/>
     <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="mur"/>
  
    
     <!-- Bringup the base of the mur -->
-    <group if="$(eval arg('launch_mir') =='true')">
+    <group if="$(eval arg('launch_mir') ==true)">
         <include file="$(find mur_launch_hardware)/launch/mur_base.launch"/>      
     </group>
 
@@ -17,15 +17,33 @@
 
 
     <!-- Bringup the URs -->   
-    <group if="$(eval arg('launch_mir') =='true')">  
-        <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/ur"/>   <!-- Fixing missing tf_prefix forwarding to the ur packages -->
+    <group if="$(eval arg('launch_urs') ==true)"> 
 
-        <include file="$(find ur_launch_hardware)/launch/ur.launch" ns="mur/ur">
-            <arg name="tf_prefix" value="$(arg tf_prefix)/ur/"/>
-            <arg name="ur_version" value="ur10e"/>
-            <arg name="robot_ip" value="UR10_r"/>
-            <arg name="kinematics_config" default="$(find ur_launch_hardware)/calibration/calibration_UR16e_13.yaml"/>
-        </include> 
+        <group ns= "UR10_r"> 
+            <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/UR10_r"/>  
+
+            <include file="$(find ur_launch_hardware)/launch/ur.launch" ns="mur/ur">
+                <arg name="tf_prefix" value="$(arg tf_prefix)/UR10_r/"/>
+                <arg name="ur_version" value="ur10e"/>
+                <arg name="robot_ip" value="UR10_r"/>
+                <arg name="kinematics_config" default="$(find ur_launch_hardware)/calibration/calibration_UR16e_13.yaml"/>
+            </include> 
+        </group>
+
+        <group ns= "UR10_l"> 
+            <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/UR10_l"/>   <!-- Fixing missing tf_prefix forwarding to the ur packages -->
+
+            <include file="$(find ur_launch_hardware)/launch/ur.launch" ns="mur/ur">
+                <arg name="tf_prefix" value="$(arg tf_prefix)/UR10_l/"/>
+                <arg name="ur_version" value="ur10e"/>
+                <arg name="robot_ip" value="UR10_l"/>
+                <arg name="kinematics_config" default="$(find ur_launch_hardware)/calibration/calibration_UR16e_09.yaml"/>
+                <arg name="reverse_port" value="50005"/>
+                <arg name="script_sender_port" value="50006"/>
+                <arg name="trajectory_port" value="50007"/>
+            </include> 
+        </group>
+
     </group>
 
 

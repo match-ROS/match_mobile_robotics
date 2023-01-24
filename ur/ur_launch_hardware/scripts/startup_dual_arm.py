@@ -4,7 +4,6 @@ from rospy import service
 from std_srvs.srv import Trigger, TriggerRequest
 import sys
 import rospy
-from ur_dashboard_msgs.msg import GetRobotMode
 
 def startup_client():
     mur_ns = rospy.get_param('~mur_ns',"")
@@ -44,7 +43,7 @@ def startup_client():
 
             result = brake_release_service(brake_release) 
             print(result)
-            rospy.sleep(6.0)
+            rospy.sleep(15.0)
             
             result = stop_service(stop) 
             print(result)

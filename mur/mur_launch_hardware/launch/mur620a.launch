@@ -19,6 +19,9 @@
     <!-- Bringup the URs -->   
     <group if="$(eval arg('launch_urs') ==true)"> 
 
+        <!-- Bringup the enabeling procdeure for the ur -->
+        <node pkg="ur_launch_hardware" type="startup_dual_arm.py" name="enable_ur" output="screen" />
+        
         <group ns= "UR10_r"> 
             <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/UR10_r"/>  
 

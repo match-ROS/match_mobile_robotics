@@ -101,6 +101,12 @@
 			<param name="mur_ns" value="$(arg mur_ns)"/>
 			<param name="ur_prefix" value="$(arg prefix)"/>
 		</node>
+
+		<include file="$(find mur_control)/launch/dual_arm_collision_avoidance.launch">
+			<arg name="ur_prefix_l" value="$(arg prefix)_l/"/>
+			<arg name="ur_prefix_r" value="$(arg prefix)_r/"/>
+		</include>
+
 	
 	</group> 
 

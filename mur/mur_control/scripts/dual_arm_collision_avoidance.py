@@ -18,9 +18,9 @@ class Dual_arm_collision_avoidance():
         self.near_collision = True
         self.joint_pose_l = Pose()
         self.joint_pose_r = Pose()
-        self.latest_command_l = Float64MultiArray
+        self.latest_command_l = Float64MultiArray()
         self.latest_command_l.data = [0,0,0,0,0,0]
-        self.latest_command_r = Float64MultiArray
+        self.latest_command_r = Float64MultiArray()
         self.latest_command_r.data = [0,0,0,0,0,0]
         self.joints_state_index_l = [0,1,2,3,4,5]
         self.joints_state_index_r = [0,1,2,3,4,5]
@@ -130,6 +130,7 @@ class Dual_arm_collision_avoidance():
                 for j in range(0,len(self.joint_pose_list_r)):
                     dist = sqrt((self.joint_pose_list_l[i].position.x - self.joint_pose_list_r[j].position.x)**2 + (self.joint_pose_list_l[i].position.y - self.joint_pose_list_r[j].position.y)**2 + (self.joint_pose_list_l[i].position.z - self.joint_pose_list_r[j].position.z)**2)
                     if dist < self.safety_dist_threshold:
+                        rospy.logerr_once("Collision detected!")
                         collision = True
                         self.stop_controllers()
                         break
@@ -186,7 +187,7 @@ class Dual_arm_collision_avoidance():
             self.sort_joint_states_r(JointState)
             self.inital_run_r = False
         for i in range(0,6):
-            self.q_r[i] = JointState.position[self.joints_state_index_l[i]]
+            self.q_r[i] = JointState.position[self.joints_state_index_r[i]]
 
     def controller_callback_l(self, command):
         self.latest_command_l = command
@@ -196,7 +197,7 @@ class Dual_arm_collision_avoidance():
             command.data = tuple(0.5 * elem for elem in command.data) # reduce speed by 50%
         else:
             pass
-        self.command_repub_l.publish(Float64MultiArray)
+        self.command_repub_l.publish(command)
 
     def controller_callback_r(self, command):
         self.latest_command_r = command
@@ -207,26 +208,25 @@ class Dual_arm_collision_avoidance():
                 command.data = tuple(0.5 * elem for elem in command.data) # reduce speed by 50%
         else:
             pass
-        self.command_repub_r.publish(Float64MultiArray)
+        self.command_repub_r.publish(command)
+        
 
     def slow_controllers(self):
-        print(self.latest_command_l)
         if self.latest_command_l.data != None:
             self.latest_command_l.data = self.multipy_tupple(self.latest_command_l.data, 0.9)
             self.command_repub_l.publish(self.latest_command_l)
-        # if self.latest_command_r.data != [0,0,0,0,0,0]:
-        #     self.latest_command_r.data = self.multipy_tupple(self.latest_command_r.data, 0.9) # reduce speed by 50%
-        #     self.command_repub_r.publish(self.latest_command_r)
+        if self.latest_command_r.data != [0,0,0,0,0,0]:
+            self.latest_command_r.data = self.multipy_tupple(self.latest_command_r.data, 0.9) # reduce speed by 50%
+            self.command_repub_r.publish(self.latest_command_r)
 
     def stop_controllers(self):
-        stop_command = Float64MultiArray
+        stop_command = Float64MultiArray()
         stop_command.data = [0,0,0,0,0,0]
         self.command_repub_l.publish(stop_command)
         self.command_repub_r.publish(stop_command)
 
     def multipy_tupple(self, tup1, factor):
         data = list(tup1)
-        print(data)
         return tuple(factor * elem for elem in data)
         
         

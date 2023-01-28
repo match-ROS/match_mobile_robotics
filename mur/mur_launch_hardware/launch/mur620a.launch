@@ -6,7 +6,7 @@
     <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="mur620a"/>
-    <arg name="mur_ns" default="mur620a"/>
+    <arg name="mur_ns" default=""/>
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
    
@@ -31,24 +31,24 @@
             <param name="mur_ns" value="$(arg mur_ns)"/>
         </node>
         
-        <group ns= "$(right_arm_group_name)"> 
-            <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(right_arm_group_name)"/>  
+        <group ns= "$(arg right_arm_group_name)"> 
+            <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)"/>  
 
             <include file="$(find ur_launch_hardware)/launch/dual_ur.launch">
                 <arg name="ur_version" value="ur10e"/>
-                <arg name="robot_ip" value="$(right_arm_group_name)"/>
+                <arg name="robot_ip" value="$(arg right_arm_group_name)"/>
                 <arg name="kinematics_config" value="$(find ur_launch_hardware)/calibration/calibration_UR16e_13.yaml"/>
                 <arg name="controllers" value="$(arg controllers_started)"/>
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
             </include> 
         </group>
 
-        <group ns= "$(left_arm_group_name)"> 
-            <param name="mur/ur/robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(left_arm_group_name)"/>   <!-- Fixing missing tf_prefix forwarding to the ur packages -->
+        <group ns= "$(arg left_arm_group_name)"> 
+            <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)"/>   <!-- Fixing missing tf_prefix forwarding to the ur packages -->
 
             <include file="$(find ur_launch_hardware)/launch/dual_ur.launch">
                 <arg name="ur_version" value="ur10e"/>
-                <arg name="robot_ip" value="$(left_arm_group_name)"/>
+                <arg name="robot_ip" value="$(arg left_arm_group_name)"/>
                 <arg name="kinematics_config" value="$(find ur_launch_hardware)/calibration/calibration_UR16e_09.yaml"/>
                 <arg name="controllers" value="$(arg controllers_started)"/>
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>

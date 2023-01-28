@@ -6,8 +6,8 @@ import rospy
 
 def startup_client():
     mur_ns = rospy.get_param('~mur_ns',"")
-    left_arm_group_name = rospy.get_param('~left_arm_group_name',"")
-    right_arm_group_name = rospy.get_param('~right_arm_group_name',"")
+    left_arm_group_name = rospy.get_param('~left_arm_group_name',"UR10_l")
+    right_arm_group_name = rospy.get_param('~right_arm_group_name',"UR10_r")
     service_topics = [mur_ns+ left_arm_group_name + "/ur_hardware_interface/dashboard/", mur_ns+ right_arm_group_name + "/ur_hardware_interface/dashboard/"]
     
     try:
@@ -31,27 +31,27 @@ def startup_client():
             play            = TriggerRequest()
             
             result = quit_service(quit) 
-            print(result)
+            #print(result)
             rospy.sleep(0.1)
             
             result = connect_service(connect) 
-            print(result)
+            #print(result)
             rospy.sleep(0.1)
 
             result = power_on_service(power_on) 
-            print(result)
+            #print(result)
             rospy.sleep(0.1)
 
             result = brake_release_service(brake_release) 
-            print(result)
-            rospy.sleep(15.0)
+            #print(result)
+            rospy.sleep(20.0)
             
             result = stop_service(stop) 
-            print(result)
+            #print(result)
             rospy.sleep(0.1)
             
             result = play_service(play) 
-            print(result)
+            #print(result)
         
         
         

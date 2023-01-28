@@ -44,9 +44,9 @@
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
             </include>  -->
 
-            <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                <param name="/ewellix/port" value="/dev/ttyUSB0" />
-            </node>
+            <include file="$(find ewellix_tlt)/launch/component_ewellix.launch">
+                <arg name="port" value="/dev/ttyUSB0"/>
+            </include> 
         </group>
 
         <group ns= "$(arg left_arm_group_name)"> 
@@ -63,9 +63,9 @@
                 <arg name="trajectory_port" value="50007"/>
                 <arg name="script_command_port" value="50008"/>
             </include>  -->
-            <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                <param name="/ewellix/port" value="/dev/ttyUSB1" />
-            </node>
+            <include file="$(find ewellix_tlt)/launch/component_ewellix.launch">
+                <arg name="port" value="/dev/ttyUSB1"/>
+            </include> 
         </group>
 
     </group>

@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import print_function
-from rospy import service
 from std_srvs.srv import Trigger, TriggerRequest
 import sys
 import rospy
 
 def startup_client():
     mur_ns = rospy.get_param('~mur_ns',"")
-    service_topics = [mur_ns+ "/UR10_l/mur/ur/ur_hardware_interface/dashboard/", mur_ns+ "/UR10_r/mur/ur/ur_hardware_interface/dashboard/"]
+    left_arm_group_name = rospy.get_param('~left_arm_group_name',"")
+    right_arm_group_name = rospy.get_param('~right_arm_group_name',"")
+    service_topics = [mur_ns+ left_arm_group_name + "/ur_hardware_interface/dashboard/", mur_ns+ right_arm_group_name + "/ur_hardware_interface/dashboard/"]
     
     try:
 

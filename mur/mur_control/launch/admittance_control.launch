@@ -6,7 +6,7 @@
         <arg name="target_pose_topic" default="target_pose"/>
         <arg name="actual_pose_topic" default="/mur620/UR10_l/tcp_pose"/>
         <arg name="cartesian_ff_velocity_topic" default="/cartesian_ff_velocity_topic"/>
-        <arg name="joint_group_vel_topic" default="/mur620/joint_group_vel_controller_l/command"/>
+        <arg name="joint_group_vel_topic" default="/mur620/joint_group_vel_controller_l/unsafe/command"/>
         <arg name="ur_prefix" default="UR10_l/"/>
         <arg name="joint_states_topic" default="/mur620/joint_states"/>
         

@@ -39,7 +39,7 @@ class Admittance_control():
         
         # change the controller to joint_group_vel_controller (the controller generelly should be switched somewhere else)
         stop = self.ur_prefix + 'arm_controller'
-        start = 'joint_group_vel_controller_l'
+        start = 'joint_group_vel_controller_l/unsafe'
         self.switch_controllers(stop, start)
 
         # set current pose as target pose

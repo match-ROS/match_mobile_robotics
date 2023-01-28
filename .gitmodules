@@ -35,3 +35,6 @@
 [submodule "ur/robotiq"]
 	path = ur/robotiq
 	url = https://github.com/pumablattlaus/robotiq.git
+[submodule "mir/mir_submodules/ewellix_tlt"]
+	path = mir/mir_submodules/ewellix_tlt
+	url = https://github.com/matchRos/ewellix_tlt

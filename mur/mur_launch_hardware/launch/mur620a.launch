@@ -15,7 +15,8 @@
     <group if="$(eval arg('launch_mir') ==true)">
         <group ns="mir600">
             <include file="$(find mur_launch_hardware)/launch/mur_base.launch"> 
-                <arg name="mir_type" value="mir600"/>
+                <arg name="mir_type" value="mir_600"/>
+                <arg name="tf_prefix" value="$(arg tf_prefix)"/>
             </include>
         </group>     
     </group>
@@ -46,7 +47,7 @@
 
             <include file="$(find ewellix_tlt)/launch/component_ewellix.launch">
                 <arg name="port" value="/dev/ttyUSB0"/>
-                <arg name="tf_prefix" value="$(arg left_arm_group_name)"/>
+                <arg name="ur_prefix" value="$(arg left_arm_group_name)"/>
             </include> 
         </group>
 
@@ -66,7 +67,7 @@
             </include>  -->
             <include file="$(find ewellix_tlt)/launch/component_ewellix.launch">
                 <arg name="port" value="/dev/ttyUSB1"/>
-                <arg name="tf_prefix" value="$(arg right_arm_group_name)"/>
+                <arg name="ur_prefix" value="$(arg right_arm_group_name)"/>
             </include> 
         </group>
 

@@ -13,18 +13,16 @@
     <!-- Bringup the base of the mur -->
 
     <group if="$(eval arg('launch_mir') ==true)">
-        <group ns="mir600">
-            <include file="$(find mur_launch_hardware)/launch/mur_base.launch"> 
-                <arg name="mir_type" value="mir_600"/>
-                <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-            </include>
+        <group ns="$(arg tf_prefix)/mir">
+        <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/mir"/>  
+        <include file="$(find mur_launch_hardware)/launch/mur_base.launch"> 
+            <arg name="mir_type" value="mir_600"/>
+            <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+        </include>
         </group>     
     </group>
 
-   
-
-
-    <!-- Bringup the URs -->   
+       <!-- Bringup the URs -->   
     <group if="$(eval arg('launch_urs') ==true)"> 
 
         <!-- Bringup the enabeling procdeure for the ur -->
@@ -45,10 +43,15 @@
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
             </include>  -->
 
-            <include file="$(find ewellix_tlt)/launch/component_ewellix.launch">
-                <arg name="port" value="/dev/ttyUSB0"/>
-                <arg name="ur_prefix" value="$(arg left_arm_group_name)"/>
-            </include> 
+            <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
+                <param name="/ewellix/port" value="/dev/ttyUSB0" />
+            </node>
+
+            <node name="lift_tf_broadcaster" pkg="ewellix_tlt" type="lift_tf_broadcaster.py" output="screen" respawn="true" >
+                <param name="lift_height_topic" value="ewellix_tlt_node/joint_states" />
+                <param name="lift_base_name" value="$(arg tf_prefix)/mir/right_lift_bottom" />
+                <param name="lift_link_name" value="$(arg tf_prefix)/mir/right_lift_top" />
+            </node>
         </group>
 
         <group ns= "$(arg left_arm_group_name)"> 
@@ -65,10 +68,15 @@
                 <arg name="trajectory_port" value="50007"/>
                 <arg name="script_command_port" value="50008"/>
             </include>  -->
-            <include file="$(find ewellix_tlt)/launch/component_ewellix.launch">
-                <arg name="port" value="/dev/ttyUSB1"/>
-                <arg name="ur_prefix" value="$(arg right_arm_group_name)"/>
-            </include> 
+            <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
+                <param name="/ewellix/port" value="/dev/ttyUSB1" />
+            </node>
+
+            <node name="lift_tf_broadcaster" pkg="ewellix_tlt" type="lift_tf_broadcaster.py" output="screen" respawn="true" >
+                <param name="lift_height_topic" value="ewellix_tlt_node/joint_states" />
+                <param name="lift_base_name" value="$(arg tf_prefix)/mir/left_lift_bottom" />
+                <param name="lift_link_name" value="$(arg tf_prefix)/mir/left_lift_top" />
+            </node>
         </group>
 
     </group>

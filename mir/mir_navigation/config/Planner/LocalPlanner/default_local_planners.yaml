@@ -5,8 +5,8 @@
 controllers:
   - name: 'DWAPlannerROS'
     type: 'dwa_local_planner/DWAPlannerROS'
-  - name: 'EBandPlannerROS'
-    type: 'eband_local_planner/EBandPlannerROS'
+  # - name: 'EBandPlannerROS'
+  #   type: 'eband_local_planner/EBandPlannerROS'
   - name: 'PoseFollower'
     type: 'pose_follower/PoseFollower'
   - name: 'TebLocalPlannerROS'

@@ -12,7 +12,6 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="UR_arm">
-        <joint name="$(arg prefix)base_link-base_fixed_joint"/>
         <joint name="$(arg prefix)base_link-base_link_inertia"/>
         <joint name="$(arg prefix)shoulder_pan_joint"/>
         <joint name="$(arg prefix)shoulder_lift_joint"/>
@@ -23,6 +22,15 @@
         <joint name="$(arg prefix)wrist_3-flange"/>
         <joint name="$(arg prefix)flange-tool0"/>
     </group>
+    <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
+    <passive_joint name="bl_caster_rotation_joint" />
+    <passive_joint name="bl_caster_wheel_joint" />
+    <passive_joint name="br_caster_rotation_joint" />
+    <passive_joint name="br_caster_wheel_joint" />
+    <passive_joint name="fl_caster_rotation_joint" />
+    <passive_joint name="fl_caster_wheel_joint" />
+    <passive_joint name="fr_caster_rotation_joint" />
+    <passive_joint name="fr_caster_wheel_joint" />
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="Home_custom" group="UR_arm">
         <joint name="$(arg prefix)elbow_joint" value="1.6141"/>
@@ -78,6 +86,7 @@
     <disable_collisions link1="$(arg prefix)wrist_1_link" link2="$(arg prefix)wrist_2_link" reason="Adjacent"/>
     <disable_collisions link1="$(arg prefix)wrist_1_link" link2="$(arg prefix)wrist_3_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)wrist_2_link" link2="$(arg prefix)wrist_3_link" reason="Adjacent"/>
+    <disable_collisions link1="$(arg prefix)wrist_3_link" link2="$(arg prefix)gripper" reason="Adjacent"/>
     <disable_collisions link1="back_laser_link" link2="base_link" reason="Adjacent"/>
     <disable_collisions link1="back_laser_link" link2="bl_caster_rotation_link" reason="Never"/>
     <disable_collisions link1="back_laser_link" link2="bl_caster_wheel_link" reason="Never"/>

@@ -5,6 +5,7 @@
   <!-- The name of the parameter under which the URDF is loaded -->
   <arg name="robot_description" default="robot_description"/>
   <arg name="model_name" default="model_name"/>
+  <arg name="set_global_robot_description" default="false"/>
 
   <arg name="prefix"/>
 
@@ -14,6 +15,10 @@
   <!-- The semantic description that corresponds to the URDF -->
   <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro $(find mur_moveit_config)/config/mur.srdf.xacro prefix:=$(arg prefix) model_name:=$(arg model_name)"/> 
   <param name="$(arg prefix)$(arg robot_description)_semantic" command="$(find xacro)/xacro $(find mur_moveit_config)/config/mur.srdf.xacro prefix:=$(arg prefix) model_name:=$(arg model_name)"/> 
+  <group if="$(arg set_global_robot_description)">
+     <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro $(find mur_moveit_config)/config/mur.srdf.xacro prefix:=$(arg prefix) model_name:=$(arg model_name)"/> 
+  </group>
+  
   <!--textfile="$(find mur_moveit_config)/config/MiR200_UR5.srdf.xacro"/-->
 
   <!-- <param name="$(arg robot_description)_semantic" textfile="$(find mur_moveit_config)/config/mur216.srdf" /> -->

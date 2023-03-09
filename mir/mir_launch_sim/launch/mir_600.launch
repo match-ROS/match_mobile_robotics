@@ -6,6 +6,7 @@
 	<arg name="robot_yaw" default="0.0" />  
 	<arg name="model_name" default=""/>
     <arg name="robot_urdf_path" default="$(find mir_description)/urdf/mir_600/mir_600.gazebo.urdf"/>
+    <arg name="gazebo_joint_state_controller_config" default="$(find mir_launch_sim)/config/gazebo_joint_state_controller.yaml" />
 
     <arg name="move_base_selector" default="move_base" />
 	<arg name="global_planner" default="GlobalPlanner" />
@@ -26,5 +27,6 @@
         <arg name="global_planner_config" value="$(arg global_planner_config)" />
 		<arg name="local_planner" value="$(arg local_planner)" />
         <arg name="local_planner_config" value="$(arg local_planner_config)" />
+        <arg name="gazebo_joint_state_controller_config" value="$(arg gazebo_joint_state_controller_config)" />
     </include>
 </launch>

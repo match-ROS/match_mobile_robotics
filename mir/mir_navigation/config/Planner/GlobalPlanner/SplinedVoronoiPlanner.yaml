@@ -3,11 +3,12 @@ SplinedVoronoiPlanner:
   angle_threshold: 0.0 # 0.3927 # PI / 8; 22,5°
   min_distance_control_points: 1.25
   plan_resolution: 50 # pt / m
-  max_curvature: 1.0
+  max_curvature: 1.0  # value is used unless it is -1, then max curvature is calculated from formation radius.
   curvature_safety_margin: 0.02
-  free_space_factor: 4.0
+  free_space_factor: 2.0
   optimize_lengths: true
-  max_optimization_time: 4.0
+  max_optimization_time: 40.0
+  perform_splining: true
 
   formation_config:
     robot_names: ["/mir1", "/mir2"]

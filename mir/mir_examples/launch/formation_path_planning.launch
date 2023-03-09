@@ -11,8 +11,8 @@
   <!-- Choose group for creating a namespace environment if you want to add multiple nodes/includes to that namespace easily -->
   <group ns="$(arg robot1_name)">
     <include file="$(find mir_launch_sim)/launch/mir_200.launch">
-        <arg name="robot_x"     default="-1.0" />
-        <arg name="robot_y"     default="0.0" />
+        <arg name="robot_x"     default="60.0" />
+        <arg name="robot_y"     default="64.0" />
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot1_name)" />       
         <arg name="model_name"  default="$(arg robot1_name)"/>
@@ -21,8 +21,8 @@
 
   <!-- Just add the ns parameter to the tag to insert this one node/include in the namespace -->
   <include file="$(find mir_launch_sim)/launch/mir_200.launch" ns="$(arg robot2_name)">
-      <arg name="robot_x"     default="-1.0" />
-      <arg name="robot_y"     default="0.7" />
+      <arg name="robot_x"     default="60.0" />
+      <arg name="robot_y"     default="64.7" />
       <arg name="robot_yaw"   default="0.0" /> 
       <arg name="tf_prefix"   default="$(arg robot2_name)" />       
       <arg name="model_name"  default="$(arg robot2_name)"/>
@@ -30,8 +30,8 @@
 
   <!-- Just add the ns parameter to the tag to insert this one node/include in the namespace -->
   <include file="$(find mir_launch_sim)/launch/mir_200.launch" ns="$(arg robot3_name)">
-      <arg name="robot_x"     default="-1.0" />
-      <arg name="robot_y"     default="-0.7" />
+      <arg name="robot_x"     default="60.0" />
+      <arg name="robot_y"     default="63.3" />
       <arg name="robot_yaw"   default="0.0" /> 
       <arg name="tf_prefix"   default="$(arg robot3_name)" />       
       <arg name="model_name"  default="$(arg robot3_name)"/>
@@ -39,9 +39,9 @@
   
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_examples)/rviz/formation_path_planning_visualization.rviz" /><!--2D Navigation-->
 
-  <node name="state_machine" pkg="formation_controller" type="state_machine.py" output="screen">
+  <!-- <node name="state_machine" pkg="formation_controller" type="state_machine.py" output="screen">
     <param name="robot_names" value="[$(arg robot1_name), $(arg robot2_name), $(arg robot3_name)]" />
-  </node>
+  </node> -->
 
 
 

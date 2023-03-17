@@ -38,3 +38,6 @@
 [submodule "mir/mir_submodules/ewellix_tlt"]
 	path = mir/mir_submodules/ewellix_tlt
 	url = https://github.com/matchRos/ewellix_tlt
+[submodule "submodules/match_path_planning"]
+	path = submodules/match_path_planning
+	url = https://github.com/match-ROS/match_path_planning

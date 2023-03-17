@@ -38,3 +38,6 @@
 [submodule "submodules/match_path_planning"]
 	path = submodules/match_path_planning
 	url = https://github.com/match-ROS/match_path_planning
+[submodule "ur/universal_robot"]
+	path = ur/universal_robot
+	url = https://github.com/ros-industrial/universal_robot

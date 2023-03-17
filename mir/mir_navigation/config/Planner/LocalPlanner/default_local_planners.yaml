@@ -13,6 +13,8 @@ controllers:
     type: 'teb_local_planner/TebLocalPlannerROS'
   - name: 'TrajectoryPlannerROS'
     type: 'base_local_planner/TrajectoryPlannerROS'
+  - name: 'LocalPlanFollower'
+    type: 'local_plan_follower/LocalPlanFollower'
   # No dependency found for this planner 
   # - name: 'MIRPlannerROS'
   #   type: 'mirLocalPlanner/MIRPlannerROS'

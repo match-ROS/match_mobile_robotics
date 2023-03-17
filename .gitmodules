@@ -26,9 +26,6 @@
 [submodule "ur/ur_ros_driver"]
 	path = ur/ur_ros_driver
 	url = https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
-[submodule "ur/universal_robot"]
-	path = ur/universal_robot
-	url = https://github.com/fmauch/universal_robot.git
 [submodule "mir/mir_submodules/mir_robot"]
 	path = mir/mir_submodules/mir_robot
 	url = https://github.com/match-ROS/mir_robot

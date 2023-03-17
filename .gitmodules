@@ -41,3 +41,6 @@
 [submodule "ur/universal_robot"]
 	path = ur/universal_robot
 	url = https://github.com/ros-industrial/universal_robot
+[submodule "submodules/match_robot_controllers"]
+	path = submodules/match_robot_controllers
+	url = https://github.com/match-ROS/match_robot_controllers

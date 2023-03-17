@@ -18,6 +18,7 @@
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot1_name)" />       
         <arg name="model_name"  default="$(arg robot1_name)"/>
+        <arg name="local_planner" default="LocalPlanFollower" />
     </include>
   </group> 
 
@@ -28,6 +29,7 @@
       <arg name="robot_yaw"   default="0.0" /> 
       <arg name="tf_prefix"   default="$(arg robot2_name)" />       
       <arg name="model_name"  default="$(arg robot2_name)"/>
+      <arg name="local_planner" default="LocalPlanFollower" />
   </include>
 
   <!-- Just add the ns parameter to the tag to insert this one node/include in the namespace -->
@@ -37,6 +39,7 @@
       <arg name="robot_yaw"   default="0.0" /> 
       <arg name="tf_prefix"   default="$(arg robot3_name)" />       
       <arg name="model_name"  default="$(arg robot3_name)"/>
+      <arg name="local_planner" default="LocalPlanFollower" />
   </include>
   
   <node type="rviz" name="rviz" pkg="rviz" args="-d $(find mir_examples)/rviz/formation_path_planning_visualization.rviz" /><!--2D Navigation-->

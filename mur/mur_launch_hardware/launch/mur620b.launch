@@ -1,16 +1,15 @@
 <launch>
     <!-- Defining arguments for the mur launch --> 
     <arg name="launch_mir" default="true"/>
-    <arg name="launch_urs" default="false"/>
+    <arg name="launch_urs" default="true"/>
     <arg name="controllers_started" default="joint_group_vel_controller joint_state_controller"/>
     <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
-    <arg name="tf_prefix" default="mur620a"/>
+    <arg name="tf_prefix" default="mur620b"/>
     <arg name="mur_ns" default=""/>
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
-   
-    <!-- Bringup the base of the mur -->
+       <!-- Bringup the base of the mur -->
 
     <group if="$(eval arg('launch_mir') ==true)">
         <group ns="$(arg tf_prefix)/mir">
@@ -35,7 +34,7 @@
        
         <group ns= "$(arg right_arm_group_name)"> 
             <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)"/>  
-             <node pkg="tf" type="static_transform_publisher" name="lift_top_to_ur_base" args="0 0 0.55 3.1415 0 0 $(arg tf_prefix)/mir/right_lift_top $(arg tf_prefix)/$(arg right_arm_group_name)/base_link 1" />
+             <node pkg="tf" type="static_transform_publisher" name="mocap_to_ur" args="0.518 0.315 0 0 3.1415 0 MuR620b $(arg tf_prefix)/$(arg right_arm_group_name)/base_link 1" />
 
 
             <include file="$(find ur_launch_hardware)/launch/dual_ur.launch">
@@ -48,8 +47,8 @@
 
         </group>
 
-        <group ns= "$(arg left_arm_group_name)"> 
-            <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)"/>   <!-- Fixing missing tf_prefix forwarding to the ur packages -->
+        <!-- <group ns= "$(arg left_arm_group_name)"> 
+            <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)"/>   
 
             <node pkg="tf" type="static_transform_publisher" name="lift_top_to_ur_base" args="0 0 0.55 0 0 0 $(arg tf_prefix)/mir/left_lift_top $(arg tf_prefix)/$(arg left_arm_group_name)/base_link 1" />
 
@@ -65,7 +64,7 @@
                 <arg name="script_command_port" value="50008"/>
             </include> 
 
-        </group>
+        </group> -->
 
     </group>
 

@@ -7,6 +7,7 @@
     <arg name="global_planner_config" default="(find mir_navigation)/config/Planner/GlobalPlanner/GlobalPlanner.yaml" doc="Path to the global config file." />
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" default="(find mir_navigation)/config/Planner/LocalPlanner/DWAPlannerROS.yaml" doc="Path to the local config file." />
+    <arg name="mocap_frame_id" default="mur620b"/>
 
     <include file="$(find mir_launch_hardware)/launch/general_mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
@@ -20,5 +21,6 @@
 
         <!-- This launch file will pass the MiR100 files to the mir_driver.launch-->
         <arg name="mir_type" value="MiR600" />
+        <arg name="mocap_frame_id" default="$(arg mocap_frame_id)"/>
     </include>
 </launch>

@@ -9,6 +9,9 @@
      <arg name="start_move_base_simple" default="false" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
 
     <arg name="mir_type" doc="This variable selects the robot that is loaded. Default: MiR200. Options: MiR100, MiR200"/>
+    <arg name="localization_type" default="mocap" />
+    <arg name="localization_mode" default="0" />
+    <arg name="mocap_frame_id" default="mur620b" />
 
     <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
@@ -36,4 +39,13 @@
             </include>
         </group>
     </group>
+
+    <node name="mir_pose_simple" pkg="mir_navigation" type="mir_pose_simple.py" output="screen">
+		<param name="localization_type" value="$(arg localization_type)"/>
+		<param name="odom_topic" value="mobile_base_controller/odom"/>
+		<param name="amcl_pose_topic" value="amcl_pose"/>
+		<param name="mocap" value="/qualisys/$(arg mocap_frame_id)/pose"/>
+	</node>
+
+
 </launch>

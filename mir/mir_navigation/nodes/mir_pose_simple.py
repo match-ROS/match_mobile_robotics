@@ -13,6 +13,7 @@ class Mir_pose_simple():
         self.odom_topic = rospy.get_param("~odom_topic", "odom")
         self.amcl_pose_topic = rospy.get_param("~amcl_pose_topic", "amcl_pose")
         self.groud_truth_topic = rospy.get_param("~groud_truth_topic", "groud_truth")
+        self.mocap_topic = rospy.get_param("~mocap_topic", "/qualisys/mur620b/pose")
         
         # Subscribe to the localization topic based on the localization_type parameter
         if self.localization_type == "amcl":
@@ -21,6 +22,8 @@ class Mir_pose_simple():
             rospy.Subscriber(self.groud_truth_topic, Odometry, self.groud_truth_callback)
         elif self.localization_type == "odom":
             rospy.Subscriber(self.odom_topic, Odometry, self.odom_callback)
+        elif self.localization_type == "mocap":
+            rospy.Subscriber(self.mocap_topic, PoseStamped, self.mocap_callback)
 
         # Initialize the publishers
         self.pose_pub = rospy.Publisher('mir_pose_simple', Pose, queue_size=1)
@@ -38,7 +41,9 @@ class Mir_pose_simple():
         self.pose_pub.publish(msg.pose.pose)
         self.pose_stamped_pub.publish(PoseStamped(header=msg.header, pose=msg.pose.pose))
 
-
+    def mocap_callback(self, msg):
+        self.pose_pub.publish(msg.pose)
+        self.pose_stamped_pub.publish(msg)
 
 if __name__ == '__main__':
     try:

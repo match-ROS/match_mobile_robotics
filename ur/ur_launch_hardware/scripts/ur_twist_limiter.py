@@ -8,14 +8,14 @@ from geometry_msgs.msg import Twist
 class UR_twist_limiter():
     
     def config(self):
-        self.input_command_topic = rospy.get_param("~input_command_topic", "/cmd_vel")
-        self.output_command_topic = rospy.get_param("~output_command_topic", "/cmd_vel_limited")
+        self.input_command_topic = rospy.get_param("~input_command_topic", "/UR10_r/twist_controller/command_safe")
+        self.output_command_topic = rospy.get_param("~output_command_topic", "/UR10_r/twist_controller/command")
         
         self.lin_vel_limit = rospy.get_param("~lin_vel_limit", 0.1)
         self.angular_vel_limit = rospy.get_param("~angular_vel_limit", 0.1)
-        self.lin_acc_limit = rospy.get_param("~lin_acc_limit", 0.1)
-        self.angular_acc_limit = rospy.get_param("~angular_acc_limit", 0.1)
-        self.lin_jerk_limit = rospy.get_param("~lin_jerk_limit", 0.01)
+        self.lin_acc_limit = rospy.get_param("~lin_acc_limit", 0.4)
+        self.angular_acc_limit = rospy.get_param("~angular_acc_limit", 0.005)
+        self.lin_jerk_limit = rospy.get_param("~lin_jerk_limit", 0.04)
         self.angular_jerk_limit = rospy.get_param("~angular_jerk_limit", 0.1)
         self.command_timeout = rospy.get_param("~command_timeout", 0.5)
     
@@ -23,22 +23,24 @@ class UR_twist_limiter():
         rospy.init_node("ur_twist_limiter")
         self.config()
         
-        rospy.Subscriber(self.input_command_topic, Twist, self.input_callback)
+        rospy.Subscriber(self.input_command_topic, Twist, self.input_callback, True)
         self.output_pub = rospy.Publisher(self.output_command_topic, Twist, queue_size=1)
         
         self.initial_run = True
         
     def monitor(self):
         self.last_command_timestamp = rospy.Time.now()
+        rate = rospy.Rate(50)
         while not rospy.is_shutdown():
             if self.last_command_timestamp + rospy.Duration(self.command_timeout) < rospy.Time.now():
-                self.output_pub.publish(Twist())
-            rospy.sleep(0.1)
+                self.input_callback(Twist(), False)
+            rate.sleep()
         
 
-    def input_callback(self,msg = Twist()):
+    def input_callback(self,msg = Twist(), callback = True):
         now = rospy.Time.now()
-        self.last_command_timestamp = now
+        if callback:
+            self.last_command_timestamp = now
         
         vel_scale_factor = 1.0
         
@@ -73,15 +75,15 @@ class UR_twist_limiter():
         
         if abs(msg.linear.x - self.last_command.linear.x) / dt > self.lin_acc_limit:
             msg.linear.x = self.last_command.linear.x + self.lin_acc_limit * dt * (msg.linear.x - self.last_command.linear.x) / abs(msg.linear.x - self.last_command.linear.x)
-        if abs(msg.linear.y - self.last_command.linear.y) / dt > self.lin_acc_limit and abs(msg.linear.y - self.last_command.linear.y) / dt * vel_scale_factor > self.lin_acc_limit:
+        if abs(msg.linear.y - self.last_command.linear.y) / dt > self.lin_acc_limit:
             msg.linear.y = self.last_command.linear.y + self.lin_acc_limit * dt * (msg.linear.y - self.last_command.linear.y) / abs(msg.linear.y - self.last_command.linear.y)
-        if abs(msg.linear.z - self.last_command.linear.z) / dt > self.lin_acc_limit and abs(msg.linear.z - self.last_command.linear.z) / dt * vel_scale_factor > self.lin_acc_limit:
+        if abs(msg.linear.z - self.last_command.linear.z) / dt > self.lin_acc_limit:
             msg.linear.z = self.last_command.linear.z + self.lin_acc_limit * dt * (msg.linear.z - self.last_command.linear.z) / abs(msg.linear.z - self.last_command.linear.z)
-        if abs(msg.angular.x - self.last_command.angular.x) / dt > self.angular_acc_limit and abs(msg.angular.x - self.last_command.angular.x) / dt * vel_scale_factor > self.angular_acc_limit:
+        if abs(msg.angular.x - self.last_command.angular.x) / dt > self.angular_acc_limit:
             msg.angular.x = self.last_command.angular.x + self.angular_acc_limit * dt * (msg.angular.x - self.last_command.angular.x) / abs(msg.angular.x - self.last_command.angular.x)
-        if abs(msg.angular.y - self.last_command.angular.y) / dt > self.angular_acc_limit and abs(msg.angular.y - self.last_command.angular.y) / dt * vel_scale_factor > self.angular_acc_limit:
+        if abs(msg.angular.y - self.last_command.angular.y) / dt > self.angular_acc_limit:
             msg.angular.y = self.last_command.angular.y + self.angular_acc_limit * dt * (msg.angular.y - self.last_command.angular.y) / abs(msg.angular.y - self.last_command.angular.y)
-        if abs(msg.angular.z - self.last_command.angular.z) / dt > self.angular_acc_limit and abs(msg.angular.z - self.last_command.angular.z) / dt * vel_scale_factor > self.angular_acc_limit:
+        if abs(msg.angular.z - self.last_command.angular.z) / dt > self.angular_acc_limit:
             msg.angular.z = self.last_command.angular.z + self.angular_acc_limit * dt * (msg.angular.z - self.last_command.angular.z) / abs(msg.angular.z - self.last_command.angular.z)
         
         # apply velocity limit
@@ -89,17 +91,17 @@ class UR_twist_limiter():
         # vel_scale_factor = 1.0 # reset scale factor
         
         # limit jerk
-        if abs(msg.linear.x - self.last_command.linear.x) / dt - self.last_acc.linear.x / dt > self.lin_jerk_limit:
+        if abs(msg.linear.x - self.last_command.linear.x) / dt - self.last_acc.linear.x  > self.lin_jerk_limit:
             msg.linear.x = self.last_command.linear.x + self.lin_jerk_limit * dt * (msg.linear.x - self.last_command.linear.x) / abs(msg.linear.x - self.last_command.linear.x) + self.last_acc.linear.x / dt * dt
-        if abs(msg.linear.y - self.last_command.linear.y) / dt - self.last_acc.linear.y / dt > self.lin_jerk_limit and abs(msg.linear.y - self.last_command.linear.y) / dt - self.last_acc.linear.y / dt * vel_scale_factor > self.lin_jerk_limit:
+        if abs(msg.linear.y - self.last_command.linear.y) / dt - self.last_acc.linear.y  > self.lin_jerk_limit:
             msg.linear.y = self.last_command.linear.y + self.lin_jerk_limit * dt * (msg.linear.y - self.last_command.linear.y) / abs(msg.linear.y - self.last_command.linear.y) + self.last_acc.linear.y / dt * dt
-        if abs(msg.linear.z - self.last_command.linear.z) / dt - self.last_acc.linear.z / dt > self.lin_jerk_limit and abs(msg.linear.z - self.last_command.linear.z) / dt - self.last_acc.linear.z / dt * vel_scale_factor > self.lin_jerk_limit:
+        if abs(msg.linear.z - self.last_command.linear.z) / dt - self.last_acc.linear.z  > self.lin_jerk_limit:
             msg.linear.z = self.last_command.linear.z + self.lin_jerk_limit * dt * (msg.linear.z - self.last_command.linear.z) / abs(msg.linear.z - self.last_command.linear.z) + self.last_acc.linear.z / dt * dt
-        if abs(msg.angular.x - self.last_command.angular.x) / dt - self.last_acc.angular.x / dt > self.angular_jerk_limit and abs(msg.angular.x - self.last_command.angular.x) / dt - self.last_acc.angular.x / dt * vel_scale_factor > self.angular_jerk_limit:
+        if abs(msg.angular.x - self.last_command.angular.x) / dt - self.last_acc.angular.x  > self.angular_jerk_limit:
             msg.angular.x = self.last_command.angular.x + self.angular_jerk_limit * dt * (msg.angular.x - self.last_command.angular.x) / abs(msg.angular.x - self.last_command.angular.x) + self.last_acc.angular.x / dt * dt
-        if abs(msg.angular.y - self.last_command.angular.y) / dt - self.last_acc.angular.y / dt > self.angular_jerk_limit and abs(msg.angular.y - self.last_command.angular.y) / dt - self.last_acc.angular.y / dt * vel_scale_factor > self.angular_jerk_limit:
+        if abs(msg.angular.y - self.last_command.angular.y) / dt - self.last_acc.angular.y  > self.angular_jerk_limit:
             msg.angular.y = self.last_command.angular.y + self.angular_jerk_limit * dt * (msg.angular.y - self.last_command.angular.y) / abs(msg.angular.y - self.last_command.angular.y) + self.last_acc.angular.y / dt * dt
-        if abs(msg.angular.z - self.last_command.angular.z) / dt - self.last_acc.angular.z / dt > self.angular_jerk_limit and abs(msg.angular.z - self.last_command.angular.z) / dt - self.last_acc.angular.z / dt * vel_scale_factor > self.angular_jerk_limit:
+        if abs(msg.angular.z - self.last_command.angular.z) / dt - self.last_acc.angular.z  > self.angular_jerk_limit:
             msg.angular.z = self.last_command.angular.z + self.angular_jerk_limit * dt * (msg.angular.z - self.last_command.angular.z) / abs(msg.angular.z - self.last_command.angular.z) + self.last_acc.angular.z / dt * dt
         # apply velocity limit
         #msg = self.apply_vel_scale_factor(msg, vel_scale_factor)
@@ -110,6 +112,12 @@ class UR_twist_limiter():
         # update last timestamp and command
         self.time_old = now
         self.last_command = msg
+        self.last_acc.linear.x = (msg.linear.x - self.last_command.linear.x) / dt
+        self.last_acc.linear.y = (msg.linear.y - self.last_command.linear.y) / dt
+        self.last_acc.linear.z = (msg.linear.z - self.last_command.linear.z) / dt
+        self.last_acc.angular.x = (msg.angular.x - self.last_command.angular.x) / dt
+        self.last_acc.angular.y = (msg.angular.y - self.last_command.angular.y) / dt
+        self.last_acc.angular.z = (msg.angular.z - self.last_command.angular.z) / dt
     
     
     

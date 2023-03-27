@@ -34,7 +34,7 @@
        
         <group ns= "$(arg right_arm_group_name)"> 
             <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)"/>  
-             <node pkg="tf" type="static_transform_publisher" name="mocap_to_ur" args="0.518 0.315 0 0 3.1415 0 mur620b $(arg tf_prefix)/$(arg right_arm_group_name)/base_link 1" />
+             <node pkg="tf" type="static_transform_publisher" name="mocap_to_ur" args="-0.518 0.315 0 0 3.1415 0 mur620b $(arg tf_prefix)/$(arg right_arm_group_name)/base_link 1" />
 
 
             <include file="$(find ur_launch_hardware)/launch/dual_ur.launch">

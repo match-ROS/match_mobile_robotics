@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<launch>
+  <node name="match_ur_calibration" pkg="ur_launch_hardware" type="get_ur_calibration_node" respawn="false" output="screen">
+  </node>
+</launch>

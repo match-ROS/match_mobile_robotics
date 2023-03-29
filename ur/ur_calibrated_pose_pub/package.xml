@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ur_launch_hardware</name>
+  <name>ur_calibrated_pose_pub</name>
   <version>0.0.0</version>
-  <description>The ur_launch_hardware package</description>
+  <description>The ur_calibrated_pose_pub package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
   <!-- <maintainer email="jane.doe@example.com">Jane Doe</maintainer> -->
-  <maintainer email="rosmatch@todo.todo">rosmatch</maintainer>
+  <maintainer email="codebase@match.uni-hannover.de">rosmatch</maintainer>
 
 
   <!-- One license tag required, multiple allowed, one license per tag -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/ur_launch_hardware</url> -->
+  <!-- <url type="website">http://wiki.ros.org/ur_calibrated_pose_pub</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,8 +49,8 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <exec_depend>ros_controllers</exec_depend>
-  <!--exec_depend>cartesian_compliance_controller</exec_depend-->
+  <depend>roscpp</depend>
+
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

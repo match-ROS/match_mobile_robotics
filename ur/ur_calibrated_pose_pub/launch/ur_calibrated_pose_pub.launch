@@ -1,0 +1,8 @@
+<launch>
+    <arg name="robot_ip" default="ur10_r"/>
+    
+    <!-- Interface for gripper abstraction -->
+    <node name="ur_calibrated_pose_pub_node" type="ur_calibrated_pose_pub_node" pkg="ur_calibrated_pose_pub">
+        <param name="robot_ip" value="$(arg robot_ip)"/>
+    </node>
+</launch>

@@ -13,6 +13,7 @@
   <!-- <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="xacro '$(find mur_description)/urdf/mur_216.gazebo.xacro'"/> -->
 
   <!-- The semantic description that corresponds to the URDF -->
+  <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro $(find mur_moveit_config)/config/mur.srdf.xacro prefix:=$(arg prefix) model_name:=$(arg model_name)"/> 
   <param name="$(arg prefix)$(arg robot_description)_semantic" command="$(find xacro)/xacro $(find mur_moveit_config)/config/mur.srdf.xacro prefix:=$(arg prefix) model_name:=$(arg model_name)"/> 
   <group if="$(arg set_global_robot_description)">
      <param name="$(arg robot_description)_semantic" command="$(find xacro)/xacro $(find mur_moveit_config)/config/mur.srdf.xacro prefix:=$(arg prefix) model_name:=$(arg model_name)"/> 

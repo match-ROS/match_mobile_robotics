@@ -26,8 +26,6 @@ class UR_enable():
         # wait for the action server to finish
         client.wait_for_result()
         rospy.loginfo("Robot enabled")
-        
-        rospy.sleep(0.1)
     
 if __name__ == '__main__':
     rospy.init_node('UR_enable')

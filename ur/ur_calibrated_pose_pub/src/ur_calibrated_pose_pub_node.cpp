@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 
 #include <XmlRpc.h>
+#include <Eigen/Dense>
 
 #include <ur_client_library/comm/parser.h>
 #include <ur_client_library/comm/pipeline.h>
@@ -46,7 +47,7 @@ int main(int argc, char **argv)
 				{
 					if(joint_info_xmlrpc["theta"].getType() == XmlRpc::XmlRpcValue::TypeDouble)
 					{
-						theta = (double)joint_info_xmlrpc["theta"];
+						theta = (((double)joint_info_xmlrpc["theta"] * M_PI) / 180.0);
 					}
 					else
 					{
@@ -100,7 +101,7 @@ int main(int argc, char **argv)
 				{
 					if(joint_info_xmlrpc["alpha"].getType() == XmlRpc::XmlRpcValue::TypeDouble)
 					{
-						alpha = (double)joint_info_xmlrpc["alpha"];
+						alpha = (((double)joint_info_xmlrpc["alpha"] * M_PI) / 180.0);
 					}
 					else
 					{

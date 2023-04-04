@@ -11,6 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
     roscpp)
 
 find_package(ur_client_library REQUIRED)
+find_package(Eigen3 REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -117,6 +118,7 @@ catkin_package(
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIRS})
 include_directories(
     include
     ${catkin_INCLUDE_DIRS}

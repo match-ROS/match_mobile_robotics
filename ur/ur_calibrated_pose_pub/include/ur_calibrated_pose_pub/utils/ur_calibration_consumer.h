@@ -2,11 +2,10 @@
 #define UR_LAUNCH_HARDWARE_MATCH_UR_CALIBRATION_CONSUMER_H_INCLUDED
 #include "ros/ros.h"
 
-#include <ur_client_library/comm/pipeline.h>
-
-#include <ur_client_library/primary/robot_state/kinematics_info.h>
-
 #include <vector>
+
+#include <ur_client_library/comm/pipeline.h>
+#include <ur_client_library/primary/robot_state/kinematics_info.h>
 
 #include <ur_calibrated_pose_pub/utils/dh_transformation.h>
 

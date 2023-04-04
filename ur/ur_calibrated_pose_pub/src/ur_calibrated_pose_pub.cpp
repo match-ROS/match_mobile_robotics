@@ -1,18 +1,3 @@
-// #include "ros/ros.h"
-// #include <sensor_msgs/JointState.h>
-
-// #include <XmlRpc.h>
-// #include <Eigen/Dense>
-
-// #include <ur_client_library/comm/parser.h>
-// #include <ur_client_library/comm/pipeline.h>
-// #include <ur_client_library/comm/producer.h>
-// #include <ur_client_library/comm/stream.h>
-// #include <ur_client_library/primary/primary_parser.h>
-
-// #include <ur_calibrated_pose_pub/utils/ur_calibration_consumer.h>
-// #include <ur_calibrated_pose_pub/utils/dh_transformation.h>
-
 #include <ur_calibrated_pose_pub/ur_calibrated_pose_pub.h>
 
 namespace ur_calibrated_pose_pub
@@ -70,6 +55,18 @@ namespace ur_calibrated_pose_pub
 			ur_calibrated_pose_msg.pose.orientation.w = 1.0;
 						
 			ur_calibrated_pose_publisher_.publish(ur_calibrated_pose_msg);
+
+
+			tf::Transform transform;
+			transform.setOrigin(tf::Vector3(complete_transformation_matrix(0, 3),
+											complete_transformation_matrix(1, 3),
+											complete_transformation_matrix(2, 3)));
+			tf::Quaternion q;
+			q.setRPY(0.0, 0.0, 0.0);
+			transform.setRotation(q);
+
+			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "mur620b/UR10_r/base_link", "mur620b/UR10_r/calibrated_ee_pose"));
+
 
 			ros::spinOnce();
 			publish_rate.sleep();
@@ -171,7 +168,7 @@ namespace ur_calibrated_pose_pub
 						}
 						else
 						{
-							ROS_ERROR("DH parameter list - alpha is not well formed");
+							ROS_ERROR_STREAM("DH parameter list - alpha is not well formed.");
 							return;
 						}
 					}

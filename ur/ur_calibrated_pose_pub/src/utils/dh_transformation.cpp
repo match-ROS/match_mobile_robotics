@@ -53,7 +53,7 @@ namespace dh_utils
 
 	double DHTransformation::getCalibratedAlpha()
 	{
-		return this->alpha_	+ this->delta_transformation_->getAlpha();
+		return this->alpha_ + this->delta_transformation_->getAlpha();
 	}
 
 	Eigen::Matrix4d DHTransformation::getTransformationMatrix()
@@ -96,7 +96,8 @@ namespace dh_utils
 
 		// According to the UR documentation the transformation matrix is calculated as follows:
 		// trans in Z, rot in Z, trans in X and rot in X
-		this->transformation_matrix_ = this->d_transformation_matrix_ * this->theta_transformation_matrix_ * this->a_transformation_matrix_ * this->alpha_transformation_matrix_;	
+		// this->transformation_matrix_ = this->d_transformation_matrix_ * this->theta_transformation_matrix_ * this->a_transformation_matrix_ * this->alpha_transformation_matrix_;	
+		this->transformation_matrix_ = this->theta_transformation_matrix_ * this->d_transformation_matrix_ * this->a_transformation_matrix_ * this->alpha_transformation_matrix_;
 	}
 
 

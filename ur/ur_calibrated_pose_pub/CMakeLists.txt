@@ -10,7 +10,8 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
     roscpp
     geometry_msgs
-    sensor_msgs)
+    sensor_msgs
+    tf)
 
 find_package(ur_client_library REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -112,6 +113,7 @@ catkin_package(
         roscpp
         geometry_msgs
         sensor_msgs
+        tf
     DEPENDS 
         ur_client_library
 )

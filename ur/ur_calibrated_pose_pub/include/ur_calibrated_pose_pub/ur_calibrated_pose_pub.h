@@ -4,6 +4,7 @@
 #include "ros/ros.h"
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseStamped.h>
+#include <tf/transform_broadcaster.h>
 
 #include <XmlRpc.h>
 #include <Eigen/Dense>
@@ -33,6 +34,8 @@ namespace ur_calibrated_pose_pub
 
             ros::Subscriber joint_state_subscriber_;
             ros::Publisher ur_calibrated_pose_publisher_;
+
+            tf::TransformBroadcaster end_effector_broadcaster_;
 
             std::string robot_ip_;
             std::string ur_joint_state_topic_name_;

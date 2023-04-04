@@ -22,11 +22,6 @@ namespace ur_launch_hardware
 																						  kin_info->dh_alpha_[i]);
 
 				this->dh_transformations_list_.push_back(dh_transformation);
-
-				ROS_INFO_STREAM("d: " << kin_info->dh_d_[i]);
-				ROS_INFO_STREAM("a: " << kin_info->dh_a_[i]);
-				ROS_INFO_STREAM("theta: " << kin_info->dh_theta_[i]);
-				ROS_INFO_STREAM("alpha: " << kin_info->dh_alpha_[i]);
 			}
 			
 			calibrated_ = true;

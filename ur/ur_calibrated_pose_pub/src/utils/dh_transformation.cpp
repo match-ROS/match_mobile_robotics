@@ -56,15 +56,26 @@ namespace dh_utils
 		return this->alpha_	+ this->delta_transformation_->getAlpha();
 	}
 
+	Eigen::Matrix4d DHTransformation::getTransformationMatrix()
+	{
+		this->calcTransformationMatrices();
+		return this->transformation_matrix_;
+	}
+
 	void DHTransformation::setDeltaTransformation(DHTransformation delta_transformation)
 	{
 		this->delta_transformation_ = std::make_shared<DHTransformation>(delta_transformation);
 	}
 
-	void DHTransformation::setTransformationMatrices()
+	void DHTransformation::setJointState(double current_joint_state)
 	{
-		this->theta_transformation_matrix_ << cos(this->getCalibratedTheta()), -sin(this->getCalibratedTheta()), 0, 0,
-			sin(this->getCalibratedTheta()), cos(this->getCalibratedTheta()), 0, 0,
+		this->current_joint_state_ = current_joint_state;
+	}
+
+	void DHTransformation::calcTransformationMatrices()
+	{
+		this->theta_transformation_matrix_ << cos(this->getCalibratedTheta() + this->current_joint_state_), -sin(this->getCalibratedTheta() + this->current_joint_state_), 0, 0,
+			sin(this->getCalibratedTheta() + this->current_joint_state_), cos(this->getCalibratedTheta() + this->current_joint_state_), 0, 0,
 			0, 0, 1, 0,
 			0, 0, 0, 1;
 

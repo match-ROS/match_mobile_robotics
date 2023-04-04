@@ -1,6 +1,7 @@
-#ifndef DH_PARAMETER_SET_H_INCLUDED
-#define DH_PARAMETER_SET_H_INCLUDED
+#ifndef DH_TRANSFORMATION_H_INCLUDED
+#define DH_TRANSFORMATION_H_INCLUDED
 
+#include <vector>
 #include <memory>
 #include <Eigen/Dense>
 
@@ -26,9 +27,13 @@ namespace dh_utils
         Eigen::Matrix4d getTransformationMatrix();
 
         void setDeltaTransformation(DHTransformation delta_transformation);
-        void setTransformationMatrices();
+        void setJointState(double current_joint_state);
+
+        void calcTransformationMatrices();
         
     private:
+        double current_joint_state_;
+
         double theta_;
         double d_;
         double a_;
@@ -43,4 +48,4 @@ namespace dh_utils
         std::shared_ptr<DHTransformation> delta_transformation_ = nullptr;
     };
 }  // namespace dh_utils
-#endif  // ifndef DH_PARAMETER_SET_H_INCLUDED
+#endif  // ifndef DH_TRANSFORMATION_H_INCLUDED

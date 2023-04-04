@@ -8,7 +8,9 @@ add_compile_options(-std=c++14)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-    roscpp)
+    roscpp
+    geometry_msgs
+    sensor_msgs)
 
 find_package(ur_client_library REQUIRED)
 find_package(Eigen3 REQUIRED)
@@ -108,6 +110,8 @@ catkin_package(
 #  LIBRARIES ur_calibrated_pose_pub
     CATKIN_DEPENDS 
         roscpp
+        geometry_msgs
+        sensor_msgs
     DEPENDS 
         ur_client_library
 )
@@ -135,7 +139,10 @@ add_library(ur_calibration_consumer
     src/utils/ur_calibration_consumer.cpp
 )
 
-
+add_library(ur_calibrated_pose_pub
+    include/ur_calibrated_pose_pub/ur_calibrated_pose_pub.h
+    src/ur_calibrated_pose_pub.cpp
+)
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
@@ -160,8 +167,7 @@ add_executable(ur_calibrated_pose_pub_node src/ur_calibrated_pose_pub_node.cpp)
 ## Specify libraries to link a library or executable target against
 target_link_libraries(ur_calibrated_pose_pub_node
     ${catkin_LIBRARIES}
-    ur_calibration_consumer
-    ur_client_library::urcl
+    ur_calibrated_pose_pub
 )
 
 target_link_libraries(dh_utils
@@ -170,6 +176,13 @@ target_link_libraries(dh_utils
 
 target_link_libraries(ur_calibration_consumer
     ${catkin_LIBRARIES}
+    dh_utils
+    ur_client_library::urcl
+)
+
+target_link_libraries(ur_calibrated_pose_pub
+    ${catkin_LIBRARIES}
+    ur_calibration_consumer
     dh_utils
     ur_client_library::urcl
 )

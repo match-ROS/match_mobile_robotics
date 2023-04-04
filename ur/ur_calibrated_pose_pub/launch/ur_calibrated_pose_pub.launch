@@ -3,6 +3,7 @@
     
     <!-- Interface for gripper abstraction -->
     <node name="ur_calibrated_pose_pub_node" type="ur_calibrated_pose_pub_node" pkg="ur_calibrated_pose_pub">
+        <rosparam file="$(find ur_calibrated_pose_pub)/config/ur10e_dh_params.yaml" command="load" subst_value="true"/>
         <param name="robot_ip" value="$(arg robot_ip)"/>
     </node>
 </launch>

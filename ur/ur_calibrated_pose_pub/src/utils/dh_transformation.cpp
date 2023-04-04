@@ -36,6 +36,11 @@ namespace dh_utils
         return this->alpha_;
     }
 
+    void DHTransformation::setDeltaTransformation(DHTransformation delta_transformation)
+    {
+        this->delta_transformation_ = std::make_shared<DHTransformation>(delta_transformation);
+    }
+
     // Eigen::Matrix4d dh_transformation(double d, double a, double theta, double alpha)
     // {
     //     Eigen::Matrix4d T;

@@ -16,9 +16,9 @@ namespace ur_launch_hardware
 			// DHRobot my_robot;
 			for (size_t i = 0; i < kin_info->dh_a_.size(); ++i)
 			{
-				dh_utils::DHTransformation dh_transformation = dh_utils::DHTransformation(kin_info->dh_d_[i],
+				dh_utils::DHTransformation dh_transformation = dh_utils::DHTransformation(kin_info->dh_theta_[i],
+																						  kin_info->dh_d_[i],
 																						  kin_info->dh_a_[i],
-																						  kin_info->dh_theta_[i],
 																						  kin_info->dh_alpha_[i]);
 
 				this->dh_transformations_list_.push_back(dh_transformation);

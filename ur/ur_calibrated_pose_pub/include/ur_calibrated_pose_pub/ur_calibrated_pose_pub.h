@@ -5,6 +5,7 @@
 #include <sensor_msgs/JointState.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
 
 #include <XmlRpc.h>
 #include <Eigen/Dense>
@@ -36,11 +37,14 @@ namespace ur_calibrated_pose_pub
             ros::Publisher ur_calibrated_pose_publisher_;
 
             tf::TransformBroadcaster end_effector_broadcaster_;
+            tf::TransformListener listener;
 
             std::string robot_ip_;
             std::string ur_joint_state_topic_name_;
+            std::string dh_parameter_switch_;
+            
             std::vector<dh_utils::DHTransformation> ideal_dh_transformations_list_;
-
+            std::vector<dh_utils::DHTransformation> calibrated_dh_transformations_list_;
 
             void readParams(); // Read ROS parameter from param server
             void getCalibratedDHParameter(); // Read calibrated DH parameters from robot controller

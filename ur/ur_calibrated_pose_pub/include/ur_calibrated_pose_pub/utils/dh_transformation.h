@@ -19,14 +19,8 @@ namespace dh_utils
         double geta();
         double getAlpha();
 
-        double getCalibratedTheta();
-        double getCalibratedd();
-        double getCalibrateda();
-        double getCalibratedAlpha();
-
         Eigen::Matrix4d getTransformationMatrix();
 
-        void setDeltaTransformation(DHTransformation delta_transformation);
         void setJointState(double current_joint_state);
 
         void calcTransformationMatrices();
@@ -44,8 +38,6 @@ namespace dh_utils
         Eigen::Matrix4d a_transformation_matrix_;
         Eigen::Matrix4d alpha_transformation_matrix_;
         Eigen::Matrix4d transformation_matrix_;
-
-        std::shared_ptr<DHTransformation> delta_transformation_ = nullptr;
     };
 }  // namespace dh_utils
 #endif  // ifndef DH_TRANSFORMATION_H_INCLUDED

@@ -24,6 +24,7 @@ namespace ur_calibrated_pose_pub
 		ros::Rate publish_rate = ros::Rate(100.0);
 		while(ros::ok())
 		{
+			// Debugging of each transformation by broadcasting it to tf
 			// Eigen::Matrix4d tf_matrix_0 = Eigen::Matrix4d::Identity();
 			// Eigen::Matrix4d tf_matrix_1 = Eigen::Matrix4d::Identity();
 			// Eigen::Matrix4d tf_matrix_2 = Eigen::Matrix4d::Identity();
@@ -113,7 +114,7 @@ namespace ur_calibrated_pose_pub
 				}
 			}
 			
-			// Eigen::Vector3d euler_angle = complete_transformation_matrix.block(0,0,3,3).eulerAngles(0, 1, 2);
+			
 
 			geometry_msgs::PoseStamped ur_calibrated_pose_msg;
 			ur_calibrated_pose_msg.header.stamp = ros::Time::now();
@@ -122,30 +123,29 @@ namespace ur_calibrated_pose_pub
 			ur_calibrated_pose_msg.pose.position.y = complete_transformation_matrix(1, 3);
 			ur_calibrated_pose_msg.pose.position.z = complete_transformation_matrix(2, 3);
 			
-			// Eigen::Quaternion<float> q;
-			// q = Eigen::AngleAxisf(euler_angle(0), Eigen::Vector3f::UnitX()) *
-			// 	Eigen::AngleAxisf(euler_angle(1), Eigen::Vector3f::UnitY()) *
-			// 	Eigen::AngleAxisf(euler_angle(2), Eigen::Vector3f::UnitZ());
-			
-			// ur_calibrated_pose_msg.pose.orientation.x = q.x();
-			// ur_calibrated_pose_msg.pose.orientation.y = q.y();
-			// ur_calibrated_pose_msg.pose.orientation.z = q.z();
-			// ur_calibrated_pose_msg.pose.orientation.w = q.w();
+			Eigen::Matrix3d rotation_matrix = complete_transformation_matrix.block(0,0,3,3);
+			Eigen::Vector3d euler_angle = rotation_matrix.eulerAngles(0, 1, 2);
+			Eigen::Quaternion<float> eigen_q;
+			eigen_q = Eigen::AngleAxisf(euler_angle(0), Eigen::Vector3f::UnitX()) *
+					  Eigen::AngleAxisf(euler_angle(1), Eigen::Vector3f::UnitY()) *
+					  Eigen::AngleAxisf(euler_angle(2), Eigen::Vector3f::UnitZ());
 
-			ur_calibrated_pose_msg.pose.orientation.x = 0.0;
-			ur_calibrated_pose_msg.pose.orientation.y = 0.0;
-			ur_calibrated_pose_msg.pose.orientation.z = 0.0;
-			ur_calibrated_pose_msg.pose.orientation.w = 1.0;
+			ur_calibrated_pose_msg.pose.orientation.x = eigen_q.x();
+			ur_calibrated_pose_msg.pose.orientation.y = eigen_q.y();
+			ur_calibrated_pose_msg.pose.orientation.z = eigen_q.z();
+			ur_calibrated_pose_msg.pose.orientation.w = eigen_q.w();
 						
 			ur_calibrated_pose_publisher_.publish(ur_calibrated_pose_msg);
-
 
 			tf::Transform transform;
 			transform.setOrigin(tf::Vector3(complete_transformation_matrix(0, 3),
 											complete_transformation_matrix(1, 3),
 											complete_transformation_matrix(2, 3)));
 			tf::Quaternion q;
-			q.setRPY(0.0, 0.0, 0.0);
+			q.setX(eigen_q.x());
+			q.setY(eigen_q.y());
+			q.setZ(eigen_q.z());
+			q.setW(eigen_q.w());
 			transform.setRotation(q);
 
 			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "mur620b/UR10_r/base_link", "mur620b/UR10_r/calibrated_ee_pose"));

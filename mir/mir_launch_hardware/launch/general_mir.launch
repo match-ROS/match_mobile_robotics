@@ -6,16 +6,19 @@
     <arg name="global_planner_config" doc="Path to the global config file." />
     <arg name="local_planner" default="DWAPlannerROS" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" doc="Path to the local config file." />
-     <arg name="start_move_base_simple" default="false" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
+    <arg name="start_move_base_simple" default="false" doc="If set to true this will launch the move_base_simple_relay node which controls the more complex move_base_flex action interface with a single goal topic" />
 
     <arg name="mir_type" doc="This variable selects the robot that is loaded. Default: MiR200. Options: MiR100, MiR200"/>
     <arg name="localization_type" default="mocap" />
     <arg name="localization_mode" default="0" />
     <arg name="mocap_frame_id" default="mur620b" />
+    <arg name="external_localization" default="False"/>
+    <arg name="localization_topic" default="/qualisys/mur620b/base_link/pose"/>
 
     <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
         <arg name="mir_type" value="$(arg mir_type)"/>
+        <arg name="external_localization" value="$(arg external_localization)"/>
     </include>
 
     <group if="$(eval move_base)">
@@ -47,5 +50,14 @@
 		<param name="mocap" value="/qualisys/$(arg mocap_frame_id)/pose"/>
 	</node>
 
+    <group if="$(arg external_localization)">
+        <node pkg="mir_launch_hardware" type="external_localization_broadcaster.py" name="external_localization_broadcaster">
+            <param name="tf_prefix" value="$(arg tf_prefix)"/>
+            <param name="localization_topic" value="$(arg localization_topic)"/>
+        </node>
+
+        <!-- static transform publisher to fake the odom frame -->
+        <node pkg="tf2_ros" type="static_transform_publisher" name="odom_transformer" args="0 0 0 0 0 0 map $(arg tf_prefix)/odom"/>
+    </group>
 
 </launch>

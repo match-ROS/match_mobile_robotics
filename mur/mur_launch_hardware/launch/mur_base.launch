@@ -2,10 +2,14 @@
     <arg name="tf_prefix" default="mur"/>
     <arg name="mir_type" doc="This variable selects the robot that is loaded. Default: mir_200. Options: mir_100, mir_200" default="mir_200"/>
     <arg name="tf_mir_ur" default="0.35 -0.15 0.35 0 0 1 0"/>
+    <arg name="external_localization" default="true"/>
+    <arg name="localization_topic" default="/qualisys/mur620b/base_link/pose"/>
 
     <!-- TODO: include robot_name in ns?  -->
     <include file="$(find mir_launch_hardware)/launch/$(arg mir_type).launch">
-        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>    
+        <arg name="tf_prefix" value="$(arg tf_prefix)/mir"/>   
+        <arg name="external_localization" value="$(arg external_localization)"/>
+        <param name="localization_topic" value="$(arg localization_topic)"/>
     </include>
 
     <!-- Add a Transformation from Mir to ur for closed tf tree -->

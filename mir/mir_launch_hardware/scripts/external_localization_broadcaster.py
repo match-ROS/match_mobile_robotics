@@ -54,7 +54,6 @@ class ExternalLocalizationBroadcaster:
         pose_out.orientation.y = orientation[1]
         pose_out.orientation.z = orientation[2]
         pose_out.orientation.w = orientation[3]
-         
         return pose_out
 
             

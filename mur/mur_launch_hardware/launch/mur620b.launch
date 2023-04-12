@@ -3,6 +3,7 @@
     <arg name="launch_mir" default="true"/>
     <arg name="launch_urs" default="false"/>
     <arg name="external_localization" default="True"/>
+    <param name="localization_topic" value="/qualisys/mur620b/base_link/pose"/>
     <arg name="controllers_started" default="joint_group_vel_controller joint_state_controller"/>
     <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
@@ -19,6 +20,7 @@
             <arg name="mir_type" value="mir_600"/>
             <arg name="tf_prefix" value="$(arg tf_prefix)"/>
             <arg name="external_localization" value="$(arg external_localization)"/>
+            <param name="localization_topic" value="$(arg localization_topic)"/>
         </include>
         </group>     
     </group>

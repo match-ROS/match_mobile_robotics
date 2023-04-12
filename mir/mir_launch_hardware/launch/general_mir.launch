@@ -12,10 +12,12 @@
     <arg name="localization_type" default="mocap" />
     <arg name="localization_mode" default="0" />
     <arg name="mocap_frame_id" default="mur620b" />
+    <arg name="external_localization" default="False"/>
 
     <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
         <arg name="mir_type" value="$(arg mir_type)"/>
+        <arg name="external_localization" value="$(arg external_localization)"/>
     </include>
 
     <group if="$(eval move_base)">

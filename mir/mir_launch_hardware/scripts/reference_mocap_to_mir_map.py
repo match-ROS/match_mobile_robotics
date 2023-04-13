@@ -4,6 +4,7 @@ import tf
 from tf import transformations
 from geometry_msgs.msg import PoseStamped, Pose
 from copy import deepcopy
+import math
 
 class ReferenceMocapToMirMap:
     def __init__(self):
@@ -46,12 +47,6 @@ class ReferenceMocapToMirMap:
         mir_pose_avg_end = self.average_pose(self.mir_poses)
         mocap_pose_avg_end = self.average_pose(self.mocap_poses)
         
-        
-        print('mir_pose_avg_start', mir_pose_avg_start)
-        print('mocap_pose_avg_start', mocap_pose_avg_start)
-        print('mir_pose_avg_end', mir_pose_avg_end)
-        print('mocap_pose_avg_end', mocap_pose_avg_end)
-        
         # check if dist is the same
         mir_poses_dist = ((mir_pose_avg_end.position.x - mir_pose_avg_start.position.x)**2 + (mir_pose_avg_end.position.y - mir_pose_avg_start.position.y)**2 + (mir_pose_avg_end.position.z - mir_pose_avg_start.position.z)**2)**0.5
         mocap_poses_dist = ((mocap_pose_avg_end.position.x - mocap_pose_avg_start.position.x)**2 + (mocap_pose_avg_end.position.y - mocap_pose_avg_start.position.y)**2 + (mocap_pose_avg_end.position.z - mocap_pose_avg_start.position.z)**2)**0.5
@@ -60,19 +55,23 @@ class ReferenceMocapToMirMap:
             rospy.logerr('Distance traveled by MIR and mocap is not the same. Please try again.')
             
         
+        # compute angle between the two poses
+        mir_angle = math.atan2(mir_pose_avg_end.position.y - mir_pose_avg_start.position.y, mir_pose_avg_end.position.x - mir_pose_avg_start.position.x)
+        mocap_angle = math.atan2(mocap_pose_avg_end.position.y - mocap_pose_avg_start.position.y, mocap_pose_avg_end.position.x - mocap_pose_avg_start.position.x)
         
-        
-        # # compute relative position
-        # relative_position = [mir_pose_avg.position.x - mocap_pose_avg.position.x, mir_pose_avg.position.y - mocap_pose_avg.position.y, mir_pose_avg.position.z - mocap_pose_avg.position.z]
 
-        # # compute relative orientation
-        # relative_orientation = transformations.quaternion_multiply([mocap_pose_avg.orientation.x, mocap_pose_avg.orientation.y, mocap_pose_avg.orientation.z, mocap_pose_avg.orientation.w], transformations.quaternion_inverse([mir_pose_avg.orientation.x, mir_pose_avg.orientation.y, mir_pose_avg.orientation.z, mir_pose_avg.orientation.w]))
         
-        # convert relative orientation to euler angles
-        # relative_euler = transformations.euler_from_quaternion(relative_orientation)        
+        # compute relative angle
+        relative_angle = mocap_angle - mir_angle
         
-        # print('relative_position', relative_position)
-        # print('relative_orientation', relative_orientation)
+        relative_position_start = [mir_pose_avg_start.position.x - mocap_pose_avg_start.position.x, mir_pose_avg_start.position.y - mocap_pose_avg_start.position.y]
+        relative_position_end = [mir_pose_avg_end.position.x - mocap_pose_avg_end.position.x, mir_pose_avg_end.position.y - mocap_pose_avg_end.position.y]
+        
+        rel_transform = [(relative_position_end[0] + relative_position_start[0])/2, (relative_position_end[1] + relative_position_start[1])/2, relative_angle]
+        # output transform
+        rospy.loginfo('map transform: {}'.format(rel_transform)) 
+        
+
 
     
 
@@ -92,6 +91,11 @@ class ReferenceMocapToMirMap:
 
         # normalize quaternion
         norm = (avg.orientation.x**2 + avg.orientation.y**2 + avg.orientation.z**2 + avg.orientation.w**2)**0.5
+        
+        if norm == 0:
+            rospy.logerr('quaternion not valid')
+            return None
+                    
         avg.orientation.x /= norm
         avg.orientation.y /= norm
         avg.orientation.z /= norm

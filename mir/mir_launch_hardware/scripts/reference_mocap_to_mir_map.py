@@ -8,8 +8,8 @@ import math
 
 class ReferenceMocapToMirMap:
     def __init__(self):
-        self.mir_pose_topic = rospy.get_param('~mir_pose_topic', '/mur620b/mir/robot_pose')
-        self.mocap_pose_topic = rospy.get_param('~mocap_pose_topic', '/qualisys/mur620b/base_link/pose')
+        self.mir_pose_topic = rospy.get_param('~mir_pose_topic', '/mur620c/mir/robot_pose')
+        self.mocap_pose_topic = rospy.get_param('~mocap_pose_topic', '/qualisys/mur620c/pose')
         rospy.Subscriber(self.mir_pose_topic, Pose, self.mir_pose_callback)
         rospy.Subscriber(self.mocap_pose_topic, PoseStamped, self.mocap_pose_callback)
 

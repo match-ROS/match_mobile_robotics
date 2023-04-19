@@ -5,7 +5,7 @@
     <arg name="controllers_started" default="joint_group_vel_controller joint_state_controller"/>
     <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
-    <arg name="tf_prefix" default="mur620a"/>
+    <arg name="tf_prefix" default="mur620c"/>
     <arg name="mur_ns" default=""/>
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>

@@ -25,6 +25,6 @@
         <arg name="mir_type" value="MiR600" />
         <arg name="mocap_frame_id" default="$(arg mocap_frame_id)"/>
         <arg name="external_localization" value="$(arg external_localization)"/>
-        <param name="localization_topic" value="$(arg localization_topic)"/>
+        <arg name="localization_topic" value="$(arg localization_topic)"/>
     </include>
 </launch>

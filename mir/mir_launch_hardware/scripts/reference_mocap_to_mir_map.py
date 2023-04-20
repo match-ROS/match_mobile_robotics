@@ -15,6 +15,8 @@ class ReferenceMocapToMirMap:
 
         self.mir_poses = []
         self.mocap_poses = []
+        self.thetas_mir = []
+        self.thetas_mocap = []
         
         # wait for first messages
         rospy.loginfo('Waiting for first messages...')
@@ -24,17 +26,40 @@ class ReferenceMocapToMirMap:
         rospy.loginfo('Got first message from mocap_pose_topic')
         rospy.sleep(3.0)
         self.run()
+        # self.compute_theta()
         
     def mir_pose_callback(self, msg):
         self.mir_poses.append(deepcopy(msg))
+        self.thetas_mir.append(transformations.euler_from_quaternion([msg.orientation.x, msg.orientation.y, msg.orientation.z, msg.orientation.w])[2])
+        self.thetas_mocap.append(self.current_mocap_theta)
         
     def mocap_pose_callback(self, msg):
         self.mocap_poses.append(deepcopy(msg.pose))
+        self.current_mocap_theta = transformations.euler_from_quaternion([msg.pose.orientation.x, msg.pose.orientation.y, msg.pose.orientation.z, msg.pose.orientation.w])[2]
+    
+    
+    def compute_theta(self):
+        diff = [0.0 for i in range(len(self.thetas_mir))]
+        for i in range(len(self.thetas_mir)):
+            diff[i] = self.thetas_mir[i] - self.thetas_mocap[i]
+            if diff[i] > math.pi:
+                diff[i] -= 2 * math.pi
+            elif diff[i] < -math.pi:
+                diff[i] += 2 * math.pi
+                
+        print('diff: ', diff)
+            
+        # compute average
+        avg = sum(diff) / len(diff)
+        print('avg: ', avg)
+            
+    
     
     def run(self):
         # compute average pose
         mir_pose_avg_start = self.average_pose(self.mir_poses)
         mocap_pose_avg_start = self.average_pose(self.mocap_poses)
+        diff = 1.254877135437004
         
         theta_mir = transformations.euler_from_quaternion([mir_pose_avg_start.orientation.x, mir_pose_avg_start.orientation.y, mir_pose_avg_start.orientation.z, mir_pose_avg_start.orientation.w])[2]
         theta_mocap = transformations.euler_from_quaternion([mocap_pose_avg_start.orientation.x, mocap_pose_avg_start.orientation.y, mocap_pose_avg_start.orientation.z, mocap_pose_avg_start.orientation.w])[2]
@@ -43,41 +68,19 @@ class ReferenceMocapToMirMap:
         # print('mocap_pose_avg_start: ', mocap_pose_avg_start)
         # print('theta_mocap: ', theta_mocap)
         
+        R = transformations.rotation_matrix(-diff, (0, 0, 1))
         
-        # turn both positions to the same orientation
-        R = transformations.rotation_matrix(theta_mir, (0, 0, 1))
-        
-        mir_pose_transformed = Pose()
-        mir_pose_transformed.position.x = R[0, 0] * mir_pose_avg_start.position.x + R[0, 1] * mir_pose_avg_start.position.y
-        mir_pose_transformed.position.y = R[1, 0] * mir_pose_avg_start.position.x + R[1, 1] * mir_pose_avg_start.position.y
-        
-        R = transformations.rotation_matrix(theta_mocap, (0, 0, 1))
         mocap_pose_transformed = Pose()
         mocap_pose_transformed.position.x = R[0, 0] * mocap_pose_avg_start.position.x + R[0, 1] * mocap_pose_avg_start.position.y
         mocap_pose_transformed.position.y = R[1, 0] * mocap_pose_avg_start.position.x + R[1, 1] * mocap_pose_avg_start.position.y
         
-        # compute position difference
-        diff_x = mir_pose_transformed.position.x - mocap_pose_transformed.position.x
-        diff_y = mir_pose_transformed.position.y - mocap_pose_transformed.position.y
+        pose_diff = [mocap_pose_transformed.position.x - mir_pose_avg_start.position.x, mocap_pose_transformed.position.y - mir_pose_avg_start.position.y]
         
-        # transform position differnce to the map frame
-        R = transformations.rotation_matrix(-theta_mir, (0, 0, 1))
-        diff_x_map = R[0, 0] * diff_x + R[0, 1] * diff_y
-        diff_y_map = R[1, 0] * diff_x + R[1, 1] * diff_y
+        print("pose_diff", pose_diff)
         
-        print('diff_x_map: ', diff_x_map)
-        print('diff_y_map: ', diff_y_map)
+        return 0
         
-        while not rospy.is_shutdown():
-            rospy.sleep(0.01)
-            
-            
-                
-        
-        
-        
-        rospy.sleep(3.0)
-        
+
         # wait for the user to move the robot
         rospy.loginfo('Please move the robot to a new position and press enter...')
         input()
@@ -89,6 +92,18 @@ class ReferenceMocapToMirMap:
         mir_pose_avg_end = self.average_pose(self.mir_poses)
         mocap_pose_avg_end = self.average_pose(self.mocap_poses)
         
+        theta_mir = transformations.euler_from_quaternion([mir_pose_avg_end.orientation.x, mir_pose_avg_end.orientation.y, mir_pose_avg_end.orientation.z, mir_pose_avg_end.orientation.w])[2]
+        theta_mocap = transformations.euler_from_quaternion([mocap_pose_avg_end.orientation.x, mocap_pose_avg_end.orientation.y, mocap_pose_avg_end.orientation.z, mocap_pose_avg_end.orientation.w])[2]
+        
+        print('mir_pose_avg_end: ', mir_pose_avg_end)
+        print('theta_mir: ', theta_mir)
+        print('mocap_pose_avg_end: ', mocap_pose_avg_end)
+        print('theta_mocap: ', theta_mocap)
+        
+        
+        
+        
+        
         # check if dist is the same
         mir_poses_dist = ((mir_pose_avg_end.position.x - mir_pose_avg_start.position.x)**2 + (mir_pose_avg_end.position.y - mir_pose_avg_start.position.y)**2 + (mir_pose_avg_end.position.z - mir_pose_avg_start.position.z)**2)**0.5
         mocap_poses_dist = ((mocap_pose_avg_end.position.x - mocap_pose_avg_start.position.x)**2 + (mocap_pose_avg_end.position.y - mocap_pose_avg_start.position.y)**2 + (mocap_pose_avg_end.position.z - mocap_pose_avg_start.position.z)**2)**0.5
@@ -96,28 +111,7 @@ class ReferenceMocapToMirMap:
         if abs(mir_poses_dist - mocap_poses_dist) > 0.05:
             rospy.logerr('Distance traveled by MIR and mocap is not the same. Please try again.')
             
-        # compute position difference for start and end
-        position_diff_start = [mir_pose_avg_start.position.x - mocap_pose_avg_start.position.x, mir_pose_avg_start.position.y - mocap_pose_avg_start.position.y]
-        position_diff_end = [mir_pose_avg_end.position.x - mocap_pose_avg_end.position.x, mir_pose_avg_end.position.y - mocap_pose_avg_end.position.y]
         
-        print('position_diff_start: {}'.format(position_diff_start))
-        print('position_diff_end: {}'.format(position_diff_end))
-        
-        # compute angle between the two poses
-        mir_angle = math.atan2(mir_pose_avg_end.position.y - mir_pose_avg_start.position.y, mir_pose_avg_end.position.x - mir_pose_avg_start.position.x)
-        mocap_angle = math.atan2(mocap_pose_avg_end.position.y - mocap_pose_avg_start.position.y, mocap_pose_avg_end.position.x - mocap_pose_avg_start.position.x)
-        
-
-        
-        # compute relative angle
-        relative_angle = mocap_angle - mir_angle
-        
-        relative_position_start = [mir_pose_avg_start.position.x - mocap_pose_avg_start.position.x, mir_pose_avg_start.position.y - mocap_pose_avg_start.position.y]
-        relative_position_end = [mir_pose_avg_end.position.x - mocap_pose_avg_end.position.x, mir_pose_avg_end.position.y - mocap_pose_avg_end.position.y]
-        
-        rel_transform = [(relative_position_end[0] + relative_position_start[0])/2, (relative_position_end[1] + relative_position_start[1])/2, relative_angle]
-        # output transform
-        rospy.loginfo('map transform: {}'.format(rel_transform)) 
         
 
 

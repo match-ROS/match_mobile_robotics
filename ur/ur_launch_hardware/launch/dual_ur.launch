@@ -5,6 +5,7 @@
     <arg name="controllers" default="joint_state_controller"/>
     <arg name="stopped_controllers" default="joint_state_controller"/>
     <arg name="controller_config_file" default="$(find ur_launch_hardware)/config/ur10e_controllers.yaml" />
+    <arg name="UR_prefix" default="UR10_"/>
     <arg name="robot_ip" default="ur"/>
     <arg name="reverse_port" default="50001"/>  
     <arg name="script_sender_port" default="50002"/> 
@@ -30,5 +31,10 @@
     </include>
 
     <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/>
+
+    <include file="$(find ur_calibrated_pose_pub)/launch/ur_calibrated_pose_pub.launch" pass_all_args="false">
+        <arg name="robot_ip" value="$(arg robot_ip)"/>
+        <arg name="ur_joint_state_topic_name" value="/$(arg UR_prefix)/joint_states"/>
+    </include>
 
 </launch>

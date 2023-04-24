@@ -45,7 +45,7 @@
 
             <!-- enable ur -->
             <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                <param name="/ewellix/port" value="/dev/ttyUSB1" />
+                <param name="/ewellix/port" value="/dev/ttyUSB0" />
             </node>
 
             <node name="lift_tf_broadcaster" pkg="ur_utilities" type="lift_tf_broadcaster.py" output="screen" respawn="true" >
@@ -74,8 +74,10 @@
             </include> 
 
             <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                <param name="/ewellix/port" value="/dev/ttyUSB0" />
+                <param name="/ewellix/port" value="/dev/ttyUSB1" />
             </node>
+
+
 
             <node name="UR_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false" >
                 <param name="set_mode_topic" value="/$(arg tf_prefix)/$(arg right_arm_group_name)/ur_hardware_interface/set_mode" />

@@ -37,4 +37,12 @@
         <arg name="ur_joint_state_topic_name" value="/$(arg UR_prefix)/joint_states"/>
     </include>
 
+    <!-- limit twist commands -->
+    <node name="ur_twist_limiter" type="ur_twist_limiter.py" pkg="ur_launch_hardware">
+        <param name="input_command_topic" value="/$(arg UR_prefix)/twist_controller/command_safe"/>
+        <param name="output_command_topic" value="/$(arg UR_prefix)/twist_controller/command"/>
+        <param name="max_linear_speed" value="0.1"/>
+        <param name="max_linear_acceleration" value="0.1"/>
+    </node>
+
 </launch>

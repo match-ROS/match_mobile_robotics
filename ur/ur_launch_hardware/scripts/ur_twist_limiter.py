@@ -8,12 +8,12 @@ from geometry_msgs.msg import Twist
 class UR_twist_limiter():
     
     def config(self):
-        self.input_command_topic = rospy.get_param("~input_command_topic", "/UR10_r/twist_controller/command_safe")
-        self.output_command_topic = rospy.get_param("~output_command_topic", "/UR10_r/twist_controller/command")
+        self.input_command_topic = rospy.get_param("~input_command_topic", "mur620c/UR10_r/twist_controller/command_safe")
+        self.output_command_topic = rospy.get_param("~output_command_topic", "mur620c/UR10_r/twist_controller/command")
         
-        self.lin_vel_limit = rospy.get_param("~lin_vel_limit", 0.1)
+        self.lin_vel_limit = rospy.get_param("~max_linear_speed", 0.1)
         self.angular_vel_limit = rospy.get_param("~angular_vel_limit", 0.1)
-        self.lin_acc_limit = rospy.get_param("~lin_acc_limit", 0.4)
+        self.lin_acc_limit = rospy.get_param("~max_linear_acceleration", 0.4)
         self.angular_acc_limit = rospy.get_param("~angular_acc_limit", 0.005)
         self.lin_jerk_limit = rospy.get_param("~lin_jerk_limit", 0.04)
         self.angular_jerk_limit = rospy.get_param("~angular_jerk_limit", 0.1)

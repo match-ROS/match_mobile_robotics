@@ -75,7 +75,7 @@
             </include> 
 
             <node name="ewellix_tlt_node" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                <param name="/ewellix/port" value="/dev/ttyUSB1" />
+                <param name="/ewellix/port" value="/dev/ttyUSB2" />
             </node>
 
 

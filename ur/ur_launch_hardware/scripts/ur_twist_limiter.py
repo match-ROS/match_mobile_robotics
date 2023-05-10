@@ -149,7 +149,7 @@ class UR_twist_limiter():
 
         # Add variables (name, description, default value, min, max, edit_method)
         ddynrec.add_variable("lin_vel_limit", "float/double variable", 0.15, 0, 0.3)
-        ddynrec.add_variable("angular_vel_limit", "float/double variable", 0.05, 0, 0.6)
+        ddynrec.add_variable("angular_vel_limit", "float/double variable", 0.2, 0, 0.6)
         ddynrec.add_variable("lin_acc_limit", "float/double variable", 0.6, 0, 2.0)
         ddynrec.add_variable("angular_acc_limit", "float/double variable", 0.05, 0, 0.5)
         ddynrec.add_variable("lin_jerk_limit", "float/double variable", 0.15, 0, 0.4)

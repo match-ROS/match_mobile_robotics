@@ -44,3 +44,6 @@
 [submodule "submodules/match_robot_controllers"]
 	path = submodules/match_robot_controllers
 	url = https://github.com/match-ROS/match_robot_controllers
+[submodule "submoules/gazebo_ros_link_attacher"]
+	path = submoules/gazebo_ros_link_attacher
+	url = https://github.com/pal-robotics/gazebo_ros_link_attacher.git

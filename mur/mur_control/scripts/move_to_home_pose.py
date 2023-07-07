@@ -15,13 +15,17 @@ group_names = robot.get_group_names()
 # group_names = rospy.get_param("move_group/group_names")
 
 for group_name in group_names:
-	rospy.loginfo("Going to Home_custom for Group name: {}".format(group_name))
-	move_group = moveit_commander.MoveGroupCommander(group_name)
+	try:
+		rospy.loginfo("Going to home for Group name: {}".format(group_name))
+		move_group = moveit_commander.MoveGroupCommander(group_name)
 
-	# Go to saved home pose:
-	move_group.set_named_target("Home_custom")
-	plan_home = move_group.go(wait=True)
-	move_group.stop()
+		# Go to saved home pose:
+		move_group.set_named_target("home")
+		plan_home = move_group.go(wait=True)
+		move_group.stop()
+	except moveit_commander.MoveItCommanderException as e:
+		rospy.logwarn("Exception occured: {}".format(e))
+		pass
 
 
 # group_name = "UR_arm"

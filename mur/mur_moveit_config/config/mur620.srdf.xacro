@@ -33,6 +33,28 @@
         <joint name="$(arg prefix)_r/wrist_3-flange"/>
         <joint name="$(arg prefix)_r/flange-tool0"/>
     </group>
+	<group name="UR_arm_both">
+		<joint name="$(arg prefix)_l/base_link-base_link_inertia"/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint"/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint"/>
+        <joint name="$(arg prefix)_l/elbow_joint"/>
+        <joint name="$(arg prefix)_l/wrist_1_joint"/>
+        <joint name="$(arg prefix)_l/wrist_2_joint"/>
+        <joint name="$(arg prefix)_l/wrist_3_joint"/>
+        <joint name="$(arg prefix)_l/wrist_3-flange"/>
+        <joint name="$(arg prefix)_l/flange-tool0"/>
+
+        <joint name="$(arg prefix)_r/base_link-base_link_inertia"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint"/>
+        <joint name="$(arg prefix)_r/elbow_joint"/>
+        <joint name="$(arg prefix)_r/wrist_1_joint"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint"/>
+        <joint name="$(arg prefix)_r/wrist_3-flange"/>
+        <joint name="$(arg prefix)_r/flange-tool0"/>
+    </group>
+
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
     <passive_joint name="bl_caster_rotation_joint" />
     <passive_joint name="bl_caster_wheel_joint" />
@@ -59,9 +81,29 @@
         <joint name="$(arg prefix)_r/wrist_2_joint" value="-1.5621"/>
         <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
     </group_state>
+
+	<group_state name="home" group="UR_arm_both">
+        <joint name="$(arg prefix)_l/elbow_joint" value="1.6141"/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint" value="-1.5621"/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint" value="-0.0347"/>
+        <joint name="$(arg prefix)_l/wrist_1_joint" value="-1.7009"/>
+        <joint name="$(arg prefix)_l/wrist_2_joint" value="-1.5621"/>
+        <joint name="$(arg prefix)_l/wrist_3_joint" value="0"/>
+        <joint name="$(arg prefix)_r/elbow_joint" value="1.6141"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint" value="-1.5621"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint" value="-0.0347"/>
+        <joint name="$(arg prefix)_r/wrist_1_joint" value="-1.7009"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint" value="-1.5621"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
+    </group_state>
+
     <!--END EFFECTOR: Purpose: Represent information about an end effector.-->
     <end_effector name="hand_l" parent_link="$(arg prefix)_l/tool0" group="UR_arm_l"/>
 	<end_effector name="hand_r" parent_link="$(arg prefix)_r/tool0" group="UR_arm_r"/>
+
+	<end_effector name="hand_l_both" parent_link="$(arg prefix)_l/tool0" group="UR_arm_both"/>
+	<end_effector name="hand_r_both" parent_link="$(arg prefix)_r/tool0" group="UR_arm_both"/>
+
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
 
 	<disable_collisions link1="$(arg prefix)_l/base_link_inertia" link2="$(arg prefix)_l/shoulder_link" reason="Adjacent"/>

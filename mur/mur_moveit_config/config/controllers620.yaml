@@ -20,3 +20,15 @@ controller_list:
       - $(arg prefix)_r/wrist_1_joint
       - $(arg prefix)_r/wrist_2_joint
       - $(arg prefix)_r/wrist_3_joint
+
+  - name: $(arg prefix)_l/lift_controller 
+    action_ns: "follow_joint_trajectory"
+    type: FollowJointTrajectory
+    joints:
+      - left_lift_joint
+
+  - name: $(arg prefix)_r/lift_controller 
+    action_ns: "follow_joint_trajectory"
+    type: FollowJointTrajectory
+    joints:
+      - right_lift_joint

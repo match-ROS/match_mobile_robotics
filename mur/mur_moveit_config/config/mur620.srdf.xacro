@@ -54,6 +54,55 @@
         <joint name="$(arg prefix)_r/wrist_3-flange"/>
         <joint name="$(arg prefix)_r/flange-tool0"/>
     </group>
+	<group name="UR_arm_lift_l">
+		<joint name="left_lift_joint"/>
+		<joint name="$(arg prefix)_l/base_link-base_link_inertia"/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint"/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint"/>
+        <joint name="$(arg prefix)_l/elbow_joint"/>
+        <joint name="$(arg prefix)_l/wrist_1_joint"/>
+        <joint name="$(arg prefix)_l/wrist_2_joint"/>
+        <joint name="$(arg prefix)_l/wrist_3_joint"/>
+        <joint name="$(arg prefix)_l/wrist_3-flange"/>
+        <joint name="$(arg prefix)_l/flange-tool0"/>
+    </group>
+	<group name="UR_arm_lift_r">
+		<joint name="right_lift_joint"/>
+        <joint name="$(arg prefix)_r/base_link-base_link_inertia"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint"/>
+        <joint name="$(arg prefix)_r/elbow_joint"/>
+        <joint name="$(arg prefix)_r/wrist_1_joint"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint"/>
+        <joint name="$(arg prefix)_r/wrist_3-flange"/>
+        <joint name="$(arg prefix)_r/flange-tool0"/>
+    </group>
+	<group name="UR_arm_all">
+		<joint name="left_lift_joint"/>
+		<joint name="$(arg prefix)_l/base_link-base_link_inertia"/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint"/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint"/>
+        <joint name="$(arg prefix)_l/elbow_joint"/>
+        <joint name="$(arg prefix)_l/wrist_1_joint"/>
+        <joint name="$(arg prefix)_l/wrist_2_joint"/>
+        <joint name="$(arg prefix)_l/wrist_3_joint"/>
+        <joint name="$(arg prefix)_l/wrist_3-flange"/>
+        <joint name="$(arg prefix)_l/flange-tool0"/>
+
+        <joint name="right_lift_joint"/>
+		<joint name="$(arg prefix)_r/base_link-base_link_inertia"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint"/>
+        <joint name="$(arg prefix)_r/elbow_joint"/>
+        <joint name="$(arg prefix)_r/wrist_1_joint"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint"/>
+        <joint name="$(arg prefix)_r/wrist_3-flange"/>
+        <joint name="$(arg prefix)_r/flange-tool0"/>
+    </group>
+
+
 
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
     <passive_joint name="bl_caster_rotation_joint" />

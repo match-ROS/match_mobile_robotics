@@ -48,11 +48,14 @@
 		<node name="ur_controller_spawner_r" pkg="controller_manager" type="spawner" output="screen"
 				args="$(arg prefix)_r/arm_controller $(arg prefix)_l/arm_controller">
 		</node>
-
-
-		<node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="lift_controller_l lift_controller_r   ">
+		
+		<node name="ur_controller_spawner_lift" pkg="controller_manager" type="spawner" output="screen"
+				args="$(arg prefix)_l/lift_controller $(arg prefix)_r/lift_controller">
 		</node>
+
+		<!-- <node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+			args="lift_controller_l lift_controller_r   ">
+		</node> -->
 
 		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
 			args="--stopped joint_group_vel_controller_l/unsafe">

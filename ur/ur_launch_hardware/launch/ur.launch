@@ -6,7 +6,9 @@
     <arg name="robot_ip" default="ur"/>
 
     <!-- Bringup the enabeling procdeure for the ur -->
-    <node pkg="ur_launch_hardware" type="enable_ur.py" name="enable_ur" output="screen" />
+    <node name="UR_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false" >
+                <param name="set_mode_topic" value="/$(arg tf_prefix)/ur_hardware_interface/set_mode" />
+    </node>
      
     <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>

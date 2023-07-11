@@ -3,26 +3,28 @@
 import rospy
 
 from geometry_msgs.msg import Twist
+from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
 
 
 class UR_twist_limiter():
     
     def config(self):
-        self.input_command_topic = rospy.get_param("~input_command_topic", "/UR10_r/twist_controller/command_safe")
-        self.output_command_topic = rospy.get_param("~output_command_topic", "/UR10_r/twist_controller/command")
+        self.input_command_topic = rospy.get_param("~input_command_topic", "mur620c/UR10_r/twist_controller/command_safe")
+        self.output_command_topic = rospy.get_param("~output_command_topic", "mur620c/UR10_r/twist_controller/command")
         
-        self.lin_vel_limit = rospy.get_param("~lin_vel_limit", 0.1)
-        self.angular_vel_limit = rospy.get_param("~angular_vel_limit", 0.1)
-        self.lin_acc_limit = rospy.get_param("~lin_acc_limit", 0.4)
-        self.angular_acc_limit = rospy.get_param("~angular_acc_limit", 0.005)
-        self.lin_jerk_limit = rospy.get_param("~lin_jerk_limit", 0.04)
-        self.angular_jerk_limit = rospy.get_param("~angular_jerk_limit", 0.1)
-        self.command_timeout = rospy.get_param("~command_timeout", 0.5)
+        # self.lin_vel_limit = rospy.get_param("~max_linear_speed", 0.1)
+        # self.angular_vel_limit = rospy.get_param("~angular_vel_limit", 0.1)
+        # self.lin_acc_limit = rospy.get_param("~max_linear_acceleration", 0.4)
+        # self.angular_acc_limit = rospy.get_param("~angular_acc_limit", 0.005)
+        # self.lin_jerk_limit = rospy.get_param("~lin_jerk_limit", 0.04)
+        # self.angular_jerk_limit = rospy.get_param("~angular_jerk_limit", 0.1)
+        # self.command_timeout = rospy.get_param("~command_timeout", 0.5)
     
     def __init__(self):
         rospy.init_node("ur_twist_limiter")
         self.config()
-        
+        self.setup_ddynamic_reconfigure()
+                
         rospy.Subscriber(self.input_command_topic, Twist, self.input_callback, True)
         self.output_pub = rospy.Publisher(self.output_command_topic, Twist, queue_size=1)
         
@@ -130,7 +132,32 @@ class UR_twist_limiter():
         msg.angular.z *= scale_factor
         return msg
         
+    def dyn_rec_callback(self,config, level):
+        self.lin_vel_limit = config["lin_vel_limit"]
+        self.angular_vel_limit = config["angular_vel_limit"]
+        self.lin_acc_limit = config["lin_acc_limit"]
+        self.angular_acc_limit = config["angular_acc_limit"]
+        self.angular_jerk_limit = config["angular_jerk_limit"]
+        self.lin_jerk_limit = config["lin_jerk_limit"]
+        self.command_timeout = config["command_timeout"]
+        
+        return config
     
+    def setup_ddynamic_reconfigure(self):
+        # Create a D(ynamic)DynamicReconfigure
+        ddynrec = DDynamicReconfigure("example_dyn_rec")
+
+        # Add variables (name, description, default value, min, max, edit_method)
+        ddynrec.add_variable("lin_vel_limit", "float/double variable", 0.15, 0, 0.3)
+        ddynrec.add_variable("angular_vel_limit", "float/double variable", 0.2, 0, 0.6)
+        ddynrec.add_variable("lin_acc_limit", "float/double variable", 0.6, 0, 2.0)
+        ddynrec.add_variable("angular_acc_limit", "float/double variable", 0.05, 0, 0.5)
+        ddynrec.add_variable("lin_jerk_limit", "float/double variable", 0.15, 0, 0.4)
+        ddynrec.add_variable("angular_jerk_limit", "float/double variable", 0.05, 0, 0.1)
+        ddynrec.add_variable("command_timeout", "float/double variable", 0.05, 0, 0.5)
+
+        # Start the server
+        ddynrec.start(self.dyn_rec_callback)
         
         
         

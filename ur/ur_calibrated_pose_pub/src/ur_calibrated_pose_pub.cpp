@@ -114,11 +114,13 @@ namespace ur_calibrated_pose_pub
 				}
 			}
 			
+			// Get namespace of the node:
+			std::string node_namespace = ros::this_node::getNamespace();
 			
 
 			geometry_msgs::PoseStamped ur_calibrated_pose_msg;
 			ur_calibrated_pose_msg.header.stamp = ros::Time::now();
-			ur_calibrated_pose_msg.header.frame_id = "mur620b/UR10_r/base_link";
+			ur_calibrated_pose_msg.header.frame_id = node_namespace + "/base_link";	// TODO: change to generic name
 			ur_calibrated_pose_msg.pose.position.x = complete_transformation_matrix(0, 3);
 			ur_calibrated_pose_msg.pose.position.y = complete_transformation_matrix(1, 3);
 			ur_calibrated_pose_msg.pose.position.z = complete_transformation_matrix(2, 3);
@@ -148,7 +150,7 @@ namespace ur_calibrated_pose_pub
 			q.setW(eigen_q.w());
 			transform.setRotation(q);
 
-			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "mur620b/UR10_r/base_link", "mur620b/UR10_r/calibrated_ee_pose"));
+			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), node_namespace + "/base_link", node_namespace + "/calibrated_ee_pose"));	// change to generic name
 
 			ros::spinOnce();
 			publish_rate.sleep();

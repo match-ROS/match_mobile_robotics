@@ -1,6 +1,7 @@
 <launch>
     <arg name="tf_prefix" default="mur"/>
     <arg name="mir_type" doc="This variable selects the robot that is loaded. Default: mir_200. Options: mir_100, mir_200" default="mir_200"/>
+    <arg name="lift" doc="if prismatic lift joint is used" default="false"/>
     <arg name="tf_mir_ur" default="0.35 -0.15 0.35 0 0 1 0"/>
     <arg name="external_localization" default="false"/>
 
@@ -10,6 +11,9 @@
         <arg name="external_localization" value="$(arg external_localization)"/>
         <arg name="mocap_frame_id" default="$(arg tf_prefix)"/>
         <arg name="localization_topic" value="/qualisys/$(arg tf_prefix)/pose"/>
+        <!-- if mir_type==mir600: set arg lift: -->
+        <arg name="lift" value="$(arg lift)" if="$(eval arg('mir_type')=='mir_600')"/>
+        
     </include>
 
     <!-- Add a Transformation from Mir to ur for closed tf tree -->

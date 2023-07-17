@@ -20,7 +20,7 @@
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
         <arg name="mir_type" value="$(arg mir_type)"/>
         <arg name="lift" value="$(arg lift)"/>
-        <arg name="external_localization" value="$(arg external_localization)"/>
+        <!-- <arg name="external_localization" value="$(arg external_localization)"/> -->
     </include>
 
     <group if="$(eval move_base)">

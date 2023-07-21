@@ -5,7 +5,7 @@ name: CI - Ubuntu Focal
 
 on: # this determines when this workflow is run
   push:
-  #   branches: [ master, melodic-devel ] #  when master or melodic-devel branch is pushed to
+    branches: [ noetic-devel ]
   pull_request:
   #   branches: [ master ] # when there is a pull request against master
   # schedule: # uncomment to run periodically

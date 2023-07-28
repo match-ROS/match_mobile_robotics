@@ -49,7 +49,7 @@ class Dual_arm_collision_avoidance():
                 break
             except:
                 rospy.sleep(1.0)
-                rospy.logerr_throttle("waiting for tf to come up")
+                rospy.logerr_throttle(5,"waiting for tf to come up")
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
             

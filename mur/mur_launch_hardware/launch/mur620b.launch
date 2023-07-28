@@ -11,8 +11,14 @@
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
    
+    <!-- Load robot description -->
+    <group ns="$(arg tf_prefix)">
+        <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=false"/>
+    </group>
+    
     <!-- Bringup the base of the mur -->
 
+    <!-- <remap from="mir/robot_description" to="robot_description"/> -->
     <group if="$(eval arg('launch_mir') ==true)">
         <group ns="$(arg tf_prefix)/mir">
         <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/mir"/>  
@@ -20,6 +26,7 @@
             <arg name="mir_type" value="mir_600"/>
             <arg name="tf_prefix" value="$(arg tf_prefix)"/>
             <arg name="lift" value="false"/>
+            <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro"/>
         </include>
         </group>     
     </group>

@@ -6,6 +6,9 @@ lift in mur launch, but not mir
     - load lift_module in mur.lauch
     - connect left_lift_bottom (mir) ->lift_top -> UR or left_lift_bottom (mir) ->ur in mur.launch
 
+HW:
+- anstatt mir_type mitzuschleifen stattdessen robot_description? 
+
 ## HW/Sim identic
 
 same urdf for hw and sim

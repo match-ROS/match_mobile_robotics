@@ -16,7 +16,7 @@
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
 
     <!-- Bringup the ur driver within proper namespaces -->
-    <remap from="/robot_description" to="robot_description"/>
+    <!-- <remap from="/robot_description" to="robot_description"/> -->
     <rosparam file="$(find ur_launch_hardware)/config/controllers.yaml" command="load" subst_value="true"/>
     <include file="$(find ur_robot_driver)/launch/$(arg ur_version)_bringup.launch" pass_all_args="true">
         <arg name="controllers" value="joint_state_controller"/>
@@ -28,9 +28,12 @@
         <arg name="trajectory_port" value="$(arg trajectory_port)"/>  
         <arg name="script_command_port" value="$(arg script_command_port)"/>
         <!-- <arg name="controller_config_file" value="$(arg controller_config_file)"/> -->
+
+        <!-- For ur_hardware_interface: -->
+        <arg name="tf_prefix" value="$(arg UR_prefix)"/>
     </include>
 
-    <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/>
+    <!-- <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/> -->
 
     <include file="$(find ur_calibrated_pose_pub)/launch/ur_calibrated_pose_pub.launch" pass_all_args="false">
         <arg name="robot_ip" value="$(arg robot_ip)"/>

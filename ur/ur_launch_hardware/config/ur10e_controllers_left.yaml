@@ -140,7 +140,7 @@ forward_cartesian_traj_controller:
 
 twist_controller:
    type: "ros_controllers_cartesian/TwistController"
-   frame_id: "tool0_controller"
+   frame_id: "UR10_l/tool0_controller"
    publish_rate: *loop_hz
    joints: *robot_joints
 
@@ -148,16 +148,16 @@ pose_based_cartesian_traj_controller:
    type: pose_controllers/CartesianTrajectoryController
 
    # UR driver convention
-   base: base
-   tip: tool0_controller
+   base: UR10_l/base
+   tip: UR10_l/tool0_controller
    joints: *robot_joints
 
 joint_based_cartesian_traj_controller:
    type: position_controllers/CartesianTrajectoryController
 
    # UR driver convention
-   base: base
-   tip: tool0
+   base: UR10_l/base
+   tip: UR10_l/tool0
    joints: *robot_joints
 
 robot_status_controller:

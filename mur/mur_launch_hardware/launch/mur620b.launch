@@ -11,27 +11,26 @@
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
    
-    <!-- Load robot description -->
-    <group ns="$(arg tf_prefix)">
-        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=false"/>
-        <node name="robot_state_publisher_all" pkg="robot_state_publisher" type="robot_state_publisher"/>
-        <param name="robot_state_publisher_all/tf_prefix" value="$(arg tf_prefix)"/>
-    </group>
-    
     <!-- Bringup the base of the mur -->
 
     <!-- TODO: disable robot_state_publisher of mir if joint states are used by other publisher. else: remap robot_description? -->
-    <group if="$(eval arg('launch_mir') ==true)">
-        <group ns="$(arg tf_prefix)/mir">
-        <remap from="joint_states" to="/$(arg tf_prefix)/joint_states"/>
-        
-        <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)"/>  
-        <include file="$(find mur_launch_hardware)/launch/mur_base.launch"> 
-            <arg name="mir_type" value="mir_600"/>
-            <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-            <!-- <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro"/> -->
-            <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=false"/>
-        </include>
+    <group ns="$(arg tf_prefix)">
+        <!-- Load robot description -->
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=false"/>
+
+        <group unless="$(eval arg('launch_mir') ==true)">
+            <!-- if mir is not launched, state publisher is not launched. Therefore: -->
+            <node name="robot_state_publisher_urs" pkg="robot_state_publisher" type="robot_state_publisher"/>
+            <param name="robot_state_publisher_urs/tf_prefix" value="$(arg tf_prefix)"/>
+        </group> 
+
+        <group if="$(eval arg('launch_mir') ==true)">
+            <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)"/>  
+            <include file="$(find mur_launch_hardware)/launch/mur_base.launch"> 
+                <arg name="mir_type" value="mir_600"/>
+                <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+                <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=false"/>
+            </include>
         </group>     
     </group>
     
@@ -56,9 +55,12 @@
                 <arg name="script_sender_port" value="50006"/>
                 <arg name="trajectory_port" value="50007"/>
                 <arg name="script_command_port" value="50008"/>
-                <!-- <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)"/> -->
-                <arg name="UR_prefix" value="$(arg tf_prefix)/"/>
-            </include> 
+                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)/"/>
+            </include>
+
+            <node name="$(arg left_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false">
+                <param name="set_mode_topic" value="/$(arg tf_prefix)/$(arg left_arm_group_name)/ur_hardware_interface/set_mode" />
+            </node>
 
 
         </group>
@@ -81,17 +83,32 @@
                 <arg name="controllers" value="$(arg controllers_started)"/>
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
                 <arg name="controller_config_file" value="$(find ur_launch_hardware)/config/ur10e_controllers_right.yaml"/>
-                <arg name="UR_prefix" value="$(arg tf_prefix)/"/>
+                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)/"/>
             </include> 
 
 
-            <!-- <node name="UR_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false" >
+            <node name="$(arg right_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false" >
                 <param name="set_mode_topic" value="/$(arg tf_prefix)/$(arg right_arm_group_name)/ur_hardware_interface/set_mode" />
-            </node> -->
+            </node>
 
         </group>
 
     </group>
+
+
+<!-- rosrun tf tf_echo mur620b UR10_l
+At time 1690896446.232
+- Translation: [0.483, 0.320, 0.004]
+- Rotation: in Quaternion [0.007, -0.004, 0.126, 0.992]
+            in RPY (radian) [0.013, -0.009, 0.253]
+            in RPY (degree) [0.722, -0.518, 14.517] -->
+
+<!-- rosrun tf tf_echo mur620b UR10_l
+At time 1690896691.282
+- Translation: [0.484, -0.316, 0.007]
+- Rotation: in Quaternion [0.768, 0.640, 0.002, -0.007]
+            in RPY (radian) [-3.134, -0.012, 1.390]
+            in RPY (degree) [-179.565, -0.673, 79.649] -->
 
 
 </launch>

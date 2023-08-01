@@ -25,8 +25,10 @@
 	<xacro:mir_600_gazebo tf_prefix="$(arg tf_prefix)" robot_namespace="$(arg robot_namespace)"/>
 
 	<!-- Init the UR5 robot arm macro -->
-	<xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
-	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
+	<!-- <xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
+	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/> -->
+	<xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/PositionJointInterface"/>
+	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/PositionJointInterface"/>
 	<!-- Init the plugins that run the MiR in Gazebo -->
 	<xacro:controller_plugin_gazebo robot_namespace="$(arg robot_namespace)"/>
 
@@ -57,7 +59,7 @@
 		<joint name="plattform_manipulator_joint_r" type="fixed">
 			<parent link="right_lift_bottom" />
 			<child link="UR10_r/base_link" />
-			<origin xyz="0.0 0.0 0.555" rpy="0 0 0" />
+			<origin xyz="0.0 0.0 0.555" rpy="0 0 3.14159265" />
 		</joint>
 
 	</xacro:unless>

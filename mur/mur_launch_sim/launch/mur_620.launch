@@ -4,7 +4,7 @@
 	<arg name="robot_y"   default="0.0" />
 	<arg name="robot_yaw" default="0.0" />
 	<arg name="model_name" default="mur620"/>
-	<arg name="mur_ns" default="mur620"/>
+	<arg name="mur_ns" default="$(arg tf_prefix)"/>	 <!-- mur620 -->
 	<arg name="move_base_selector" default="move_base" />
 	<arg name="global_planner" default="GlobalPlanner" />
 	<arg name="local_planner" default="DWAPlannerROS" />

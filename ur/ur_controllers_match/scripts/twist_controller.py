@@ -26,6 +26,8 @@ from tf.transformations import quaternion_from_euler, euler_from_quaternion
 from geometry_msgs.msg import Vector3Stamped, Twist, TransformStamped, PoseStamped
 from std_msgs.msg import Float64MultiArray, Float32, Bool
 
+from typing import List
+
 
 class ur_admittance_controller():
     
@@ -168,7 +170,7 @@ class ur_admittance_controller():
         # * Initialize tf TransformListener
         self.tf_listener = tf.TransformListener()
         rospy.loginfo("Wait for transformation 'wrist_3_link' to 'base_link'.")
-        self.tf_listener.waitForTransform(self.ns_prefix+"wrist_3_link",self.ns_prefix+"base_link", rospy.Time(), rospy.Duration(5.0))
+        self.tf_listener.waitForTransform(self.ns_prefix+"wrist_3_link",self.ns_prefix+"base_link", rospy.Time(), rospy.Duration(20.0))
         rospy.loginfo("Wait for transformation 'mirbase_footprint' to 'wrist_3_link'.")
         self.tf_listener.waitForTransform(self.ns_prefix_mir+"base_footprint",self.ns_prefix+"wrist_3_link", rospy.Time(), rospy.Duration(5.0))
         rospy.loginfo("Wait for transformation 'mirbase_footprint' to 'base_link'.")
@@ -188,14 +190,18 @@ class ur_admittance_controller():
         
         # * Initialize move_it
         moveit_commander.roscpp_initialize(sys.argv)
-        try:
-            group_name = 'UR_arm_l'
-            print("Initialize movit_commander. Group name: ",group_name)
-            self.group = moveit_commander.MoveGroupCommander(group_name, wait_for_servers=5.0, ns="/"+self.namespace, robot_description="/"+self.namespace+"/robot_description")
-            # self.group = moveit_commander.MoveGroupCommander(group_name, wait_for_servers=5.0, ns="", robot_description="robot_description")
-        except Exception as e: 
-            print(e)
-            raise Exception("Could not initialize moveit_commander. Group name: ",group_name)
+        while True: #TODO: not rospy.is_shutdown:
+            try:
+                group_name = 'UR_arm_l'
+                print("Initialize movit_commander. Group name: ",group_name)
+                self.group = moveit_commander.MoveGroupCommander(group_name, wait_for_servers=5.0, ns="/"+self.namespace, robot_description="/"+self.namespace+"/robot_description")
+                # self.group = moveit_commander.MoveGroupCommander(group_name, wait_for_servers=5.0, ns="", robot_description="robot_description")
+                break
+
+            except Exception as e: 
+                rospy.logwarn(e)
+                # raise Exception("Could not initialize moveit_commander. Group name: ",group_name)
+                rospy.sleep(1)
 
         # Set endeffector link
         self.group.set_end_effector_link("tool0")
@@ -286,7 +292,7 @@ class ur_admittance_controller():
         
         # Subscriber to "/ur/cooperative_manipulation/cartesian_velocity_command"
         self.cartesian_velocity_command_sub = rospy.Subscriber(
-            "cooperative_manipulation/cartesian_velocity_command",
+            "twist_command",
             Twist,
             self.cartesian_velocity_command_callback,queue_size=1)
         
@@ -543,7 +549,6 @@ class ur_admittance_controller():
         self.joint_velocity_pub.unregister()
         print("Unregister from wrench_ext_sub!")
         self.wrench_ext_sub.unregister()
-        
     
 if __name__ == '__main__':
     ur_admittance_controller()

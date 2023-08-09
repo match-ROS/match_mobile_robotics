@@ -36,7 +36,8 @@ class ur_admittance_controller():
         self.publish_rate = 100 #max Rate (measured iin control loop to be more robust)
         # self.ft_sensor_frame = self.ns_prefix+"ft_sensor_link" # without gripper
         self.ft_sensor_frame = self.ns_prefix+"tool0" #_controller"
-        self.command_in_frame = self.ns_prefix_mir+'base_footprint'
+        # self.command_in_frame = self.ns_prefix_mir+'base_footprint'
+        self.command_in_frame = rospy.get_param("~command_in_frame", self.ns_prefix+'base_link')
         self.command_out_frame = None #self.ns_prefix_mir+'base_footprint'  # if None: self.group.get_planning_frame()
         self.eef_frame_w_o_ns = "tool0" #self.prefix+"tool0" #"wrist_3_link" #without namespace
         # self.jacobian_frame = None #self.ns_prefix+"base_link" # if None: self.group.get_planning_frame()

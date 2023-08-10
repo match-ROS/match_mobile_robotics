@@ -15,10 +15,9 @@
         
     </include>
 
-    <!-- Add a Transformation from Mir to ur for closed tf tree -->
-    <!-- <node pkg="tf2_ros" type="static_transform_publisher" name="mir_ur_transformer" 
-        args="$(arg tf_mir_ur) $(arg tf_prefix)/mir/base_link $(arg tf_prefix)/ur/base_link" ns="mur" /> -->
-
+    <!-- <node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+        args="arm_controller">
+    </node> -->
 
 </launch>
 

@@ -1,5 +1,9 @@
 # TODO
 
+## MUR
+
+- controller_manager general (mur_base.launch) or for each ur (ur.launch)?
+
 ## Lift
 
 lift in mur launch, but not mir

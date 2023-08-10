@@ -56,7 +56,7 @@
                 <arg name="script_sender_port" value="50006"/>
                 <arg name="trajectory_port" value="50007"/>
                 <arg name="script_command_port" value="50008"/>
-                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)/"/>
+                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)"/>
             </include>
 
             <node name="$(arg left_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false">
@@ -97,7 +97,7 @@
                 <arg name="controllers" value="$(arg controllers_started)"/>
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
                 <arg name="controller_config_file" value="$(find ur_launch_hardware)/config/ur10e_controllers_right.yaml"/>
-                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)/"/>
+                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)"/>
             </include> 
 
 

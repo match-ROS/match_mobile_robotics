@@ -39,12 +39,21 @@ class Dual_arm_collision_avoidance():
         self.run()
 
     def run(self):
+
+        # get trafos from mobile base to ur base
+        trans_l = trans_r = []
+        while trans_l == [] or trans_r == []:
+            try:
+                (trans_l,rot_l) = self.tf_listener.lookupTransform(self.tf_prefix +'/base_link', self.tf_prefix + "/" + self.ur_prefix_l + 'base_link', rospy.Time(0))
+                (trans_r,rot_r) = self.tf_listener.lookupTransform(self.tf_prefix +'/base_link', self.tf_prefix + "/" + self.ur_prefix_r + 'base_link', rospy.Time(0))
+                break
+            except:
+                rospy.sleep(1.0)
+                rospy.logerr_throttle(5,"waiting for tf to come up")
         rate = rospy.Rate(self.rate)
         while not rospy.is_shutdown():
             
-            # get trafos from mobile base to ur base
-            (trans_l,rot_l) = self.tf_listener.lookupTransform(self.tf_prefix +'/base_link', self.tf_prefix + "/" + self.ur_prefix_l + 'base_link', rospy.Time(0))
-            (trans_r,rot_r) = self.tf_listener.lookupTransform(self.tf_prefix +'/base_link', self.tf_prefix + "/" + self.ur_prefix_r + 'base_link', rospy.Time(0))
+ 
 
             T_l = [[1,0,0,0],
              [0,1,0,0],

@@ -1,7 +1,7 @@
 <launch>
   <!-- Basic launch file for one robot in the match_world_common map-->
 
-  <include file="$(find match_gazebo)/launch/match_world_common.launch">
+  <include file="$(find match_gazebo)/launch/scale.launch">
   </include>
 
   <arg name="robot1_name"  default="mir1"/>
@@ -13,8 +13,8 @@
   <!-- Choose group for creating a namespace environment if you want to add multiple nodes/includes to that namespace easily -->
   <group ns="$(arg robot1_name)">
     <include file="$(find mir_launch_sim)/launch/mir_200.launch">
-        <arg name="robot_x"     default="-1.0" />
-        <arg name="robot_y"     default="0.0" />
+        <arg name="robot_x"     default="35.0" />
+        <arg name="robot_y"     default="74.0" />
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot1_name)" />       
         <arg name="model_name"  default="$(arg robot1_name)"/>
@@ -24,8 +24,8 @@
 
   <!-- Just add the ns parameter to the tag to insert this one node/include in the namespace -->
   <include file="$(find mir_launch_sim)/launch/mir_200.launch" ns="$(arg robot2_name)">
-      <arg name="robot_x"     default="-1.0" />
-      <arg name="robot_y"     default="0.7" />
+      <arg name="robot_x"     default="35.0" />
+      <arg name="robot_y"     default="73.0" />
       <arg name="robot_yaw"   default="0.0" /> 
       <arg name="tf_prefix"   default="$(arg robot2_name)" />       
       <arg name="model_name"  default="$(arg robot2_name)"/>
@@ -34,8 +34,8 @@
 
   <!-- Just add the ns parameter to the tag to insert this one node/include in the namespace -->
   <include file="$(find mir_launch_sim)/launch/mir_200.launch" ns="$(arg robot3_name)">
-      <arg name="robot_x"     default="-1.0" />
-      <arg name="robot_y"     default="-0.7" />
+      <arg name="robot_x"     default="35.0" />
+      <arg name="robot_y"     default="75" />
       <arg name="robot_yaw"   default="0.0" /> 
       <arg name="tf_prefix"   default="$(arg robot3_name)" />       
       <arg name="model_name"  default="$(arg robot3_name)"/>

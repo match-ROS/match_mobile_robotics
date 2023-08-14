@@ -1,7 +1,5 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:arg name="use_lift" default='true'/>
-	<xacro:property name="use_lift" value="$(arg use_lift)"/>
 
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/sick_s300.urdf.xacro" />
@@ -9,7 +7,6 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/match_logo.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/general/_d435.urdf.xacro" />
 	<xacro:include filename="$(find mir_description)/urdf/mir_600/mir_600_top_module.urdf.xacro" />
-	<xacro:include filename="$(find mir_description)/urdf/mir_600/mir_600_top_lift.urdf.xacro" />
 	
 	<xacro:property name="deg_to_rad" value="${(1 / 360) * (2 * pi)}" />
 
@@ -146,11 +143,6 @@
 		<xacro:match_logo parent="base_link" locationprefix="right" location_dx="${mir_600_match_logo_dx}" location_dy="${-1 * mir_600_match_logo_dy}" location_dz="${mir_600_match_logo_dz}" orientation="${pi}"/> -->
 
 		<xacro:top_module/>
-
-		<!-- <xacro:if value="${use_lift == 'true'}"> -->
-		<xacro:if value="${use_lift}">
-			<xacro:top_lift/>
-		</xacro:if>
 		
 
 

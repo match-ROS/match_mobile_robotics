@@ -152,7 +152,7 @@
           <pose>0 0 0 0 -0 0</pose>
           <geometry>
             <mesh>
-              <uri>/home/rosmatch/catkin_ws/src/match_mobile_robotics/match_gazebo/maps/scale.dae</uri>
+              <uri>model://meshes/scale.dae</uri>
               <scale>1 1 1</scale>
             </mesh>
           </geometry>
@@ -173,7 +173,7 @@
           <pose>0 0 0 0 -0 0</pose>
           <geometry>
             <mesh>
-              <uri>/home/rosmatch/catkin_ws/src/match_mobile_robotics/match_gazebo/maps/scale.dae</uri>
+              <uri>model://meshes/scale.dae</uri>
               <scale>1 1 1</scale>
             </mesh>
           </geometry>
@@ -254,7 +254,7 @@
           <pose>0 0 0 0 -0 0</pose>
           <geometry>
             <mesh>
-              <uri>/home/rosmatch/catkin_ws/src/match_mobile_robotics/match_gazebo/models/meshes/deco.stl</uri>
+              <uri>model://meshes/deco.stl</uri>
               <scale>0.05 0.05 0.05</scale>
             </mesh>
           </geometry>
@@ -281,7 +281,7 @@
           <pose>0 0 0 0 -0 0</pose>
           <geometry>
             <mesh>
-              <uri>/home/rosmatch/catkin_ws/src/match_mobile_robotics/match_gazebo/models/meshes/deco.stl</uri>
+              <uri>model://meshes/deco.stl</uri>
               <scale>0.05 0.05 0.05</scale>
             </mesh>
           </geometry>

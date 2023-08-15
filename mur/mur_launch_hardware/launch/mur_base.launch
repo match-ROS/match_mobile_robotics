@@ -15,10 +15,6 @@
         
     </include>
 
-    <!-- <node name="ur_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
-        args="arm_controller">
-    </node> -->
-
 </launch>
 
    

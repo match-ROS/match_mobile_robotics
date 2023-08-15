@@ -32,7 +32,16 @@
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
                 <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift)"/>
             </include>
-        </group>     
+        </group>
+        
+        <!-- Load controllers  yaml-->
+        <rosparam file="$(find mur_moveit_config)/config/controllers620.yaml" command="load"/>
+        
+        <!-- Spawn controllers -->
+        <!-- <node name="urs_controller_spawner" pkg="controller_manager" type="spawner" output="screen"
+            args="arm_controller">
+        </node> -->
+
     </group>
     
     <!-- Bringup the left UR -->

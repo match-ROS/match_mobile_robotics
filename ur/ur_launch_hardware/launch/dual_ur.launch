@@ -30,7 +30,7 @@
         <!-- <arg name="controller_config_file" value="$(arg controller_config_file)"/> -->
 
         <!-- For ur_hardware_interface: -->
-        <arg name="tf_prefix" value="$(arg UR_prefix)"/>
+        <arg name="tf_prefix" value="$(arg UR_prefix)/"/>
     </include>
 
     <!-- <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/> -->

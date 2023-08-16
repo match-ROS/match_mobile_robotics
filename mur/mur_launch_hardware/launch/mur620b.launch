@@ -18,7 +18,6 @@
         <arg name="controllers_stopped" value="$(arg controllers_stopped)"/>
         <arg name="pose_filename" value="$(arg pose_filename)"/>
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-        <arg name="mur_ns" value="$(arg mur_ns)"/>
         <arg name="left_arm_group_name" value="$(arg left_arm_group_name)"/>
         <arg name="right_arm_group_name" value="$(arg right_arm_group_name)"/>
         <arg name="use_lift" value="false"/>

@@ -7,13 +7,11 @@ Panels:
         - /Global Options1
         - /Status1
         - /MotionPlanning1/Robot Description1
-        - /Map1
-        - /LaserScan1
-        - /Trajectory1
+        - /Mur620b1
         - /Trajectory1/Status1
-        - /Map2
+        - /Map3/Status1
       Splitter Ratio: 0.5012581944465637
-    Tree Height: 1714
+    Tree Height: 1692
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -31,7 +29,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -162,7 +160,7 @@ Visualization Manager:
         Goal State Color: 250; 128; 0
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
-        Planning Group: endeffector
+        Planning Group: ""
         Query Goal State: true
         Query Start State: false
         Show Workspace: false
@@ -346,7 +344,7 @@ Visualization Manager:
         Goal State Color: 250; 128; 0
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
-        Planning Group: endeffector
+        Planning Group: ""
         Query Goal State: true
         Query Start State: false
         Show Workspace: false
@@ -435,140 +433,124 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
-        base:
+        UR10_l/base:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        base_link:
+        UR10_l/base_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        base_link_inertia:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        flange:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        forearm_link:
+        UR10_l/base_link_inertia:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        shoulder_link:
+        UR10_l/flange:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_l/forearm_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        tool0:
+        UR10_l/gripper:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        upper_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_1_link:
+        UR10_l/shoulder_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wrist_2_link:
+        UR10_l/tcp:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_l/tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_l/upper_arm_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wrist_3_link:
+        UR10_l/wrist_1_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-      Name: RobotModel
-      Robot Description: /mur620b/UR10_l/robot_description
-      TF Prefix: mur620b/UR10_l
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
-        base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link_inertia:
+        UR10_l/wrist_2_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        flange:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        forearm_link:
+        UR10_l/wrist_3_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        shoulder_link:
+        UR10_r/base:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_r/base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_r/base_link_inertia:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        tool0:
+        UR10_r/flange:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        upper_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_1_link:
+        UR10_r/forearm_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wrist_2_link:
+        UR10_r/gripper:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_r/shoulder_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-        wrist_3_link:
+        UR10_r/tcp:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_r/tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        UR10_r/upper_arm_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
           Value: true
-      Name: RobotModel
-      Robot Description: /mur620b/UR10_r/robot_description
-      TF Prefix: mur620b/UR10_r
-      Update Interval: 0
-      Value: true
-      Visual Enabled: true
-    - Alpha: 1
-      Class: rviz/RobotModel
-      Collision Enabled: false
-      Enabled: true
-      Links:
-        All Links Enabled: true
-        Expand Joint Details: false
-        Expand Link Details: false
-        Expand Tree: false
-        Link Tree Style: Links in Alphabetic Order
+        UR10_r/wrist_1_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        UR10_r/wrist_2_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        UR10_r/wrist_3_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         back_laser_link:
           Alpha: 1
           Show Axes: false
@@ -714,9 +696,9 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-      Name: RobotModel
-      Robot Description: /mur620b/mir/robot_description
-      TF Prefix: mur620b/mir
+      Name: Mur620b
+      Robot Description: /mur620b/robot_description
+      TF Prefix: mur620b
       Update Interval: 0
       Value: true
       Visual Enabled: true
@@ -859,11 +841,21 @@ Visualization Manager:
       Unreliable: false
       Use Timestamp: false
       Value: true
+    - Alpha: 0.699999988079071
+      Class: rviz/Map
+      Color Scheme: map
+      Draw Behind: false
+      Enabled: true
+      Name: Map
+      Topic: /mur620b/mir/move_base_node/global_costmap/costmap
+      Unreliable: false
+      Use Timestamp: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: mur620b/mir/base_footprint
+    Fixed Frame: map
     Frame Rate: 30
   Name: root
   Tools:
@@ -887,7 +879,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 13.784520149230957
+      Distance: 6.247408866882324
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -895,29 +887,29 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.7654337882995605
-        Y: -0.26369309425354004
-        Z: 3.300453317933716e-05
+        X: 44.445640563964844
+        Y: 41.98257064819336
+        Z: 0.0001536579948151484
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.744295060634613
+      Pitch: 0.34429633617401123
       Target Frame: <Fixed Frame>
-      Yaw: 4.9733662605285645
+      Yaw: 1.9933714866638184
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 2086
+  Height: 2064
   Hide Left Dock: false
   Hide Right Dock: false
   MotionPlanning:
     collapsed: false
   MotionPlanning - Trajectory Slider:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000007c500000720fc0200000012fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e000007200000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000004c5000002c9000002b800fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000002600000026fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067000000031800000476000002b800fffffffb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000372000001880000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000002600000026fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000007a00ffffff000000010000015f00000720fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000006e000007200000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000f000000005efc0100000002fb0000000800540069006d0065010000000000000f00000006dc00fffffffb0000000800540069006d00650100000000000004500000000000000000000005c40000072000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd0000000400000000000007c50000070afc0200000012fb0000001200530065006c0065006300740069006f006e00000001e10000009b000000b000fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000006e0000070a0000018200fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e006700000004c5000002c9000002b800fffffffb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000002600000026fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e0067000000031800000476000002b800fffffffb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000001c004d006f00740069006f006e0050006c0061006e006e0069006e00670100000372000001880000000000000000fb00000044004d006f00740069006f006e0050006c0061006e006e0069006e00670020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000002600000026fb000000280020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000000000000000fb0000003c005400720061006a006500630074006f007200790020002d0020005400720061006a006500630074006f0072007900200053006c00690064006500720000000000ffffffff0000007a00ffffff000000010000015f0000070afc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000006e0000070a0000013200fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e940000005efc0100000002fb0000000800540069006d0065010000000000000e94000006dc00fffffffb0000000800540069006d00650100000000000004500000000000000000000005580000070a00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -928,6 +920,6 @@ Window Geometry:
     collapsed: false
   Views:
     collapsed: false
-  Width: 3840
-  X: 3840
-  Y: 0
+  Width: 3732
+  X: 150
+  Y: 69

@@ -49,6 +49,7 @@
     <arg name="moveit_controller_manager" value="$(arg model_name)" unless="$(arg fake_execution)"/>
     <arg name="moveit_controller_manager" value="fake" if="$(arg fake_execution)"/>
     <arg name="prefix" value="$(arg prefix)"/>
+    <arg name="mur_ns" value="$(arg mur_ns)"/>
   </include>
 
   <!-- Sensors Functionality -->

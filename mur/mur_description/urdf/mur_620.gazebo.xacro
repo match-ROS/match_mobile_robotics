@@ -5,6 +5,8 @@
 	<xacro:arg name="tf_prefix" default=''/>
 	<xacro:arg name="use_lift" default='true'/>
 	<xacro:property name="use_lift" value="$(arg use_lift)"/>
+	<xacro:arg name="sim" default='true'/>
+	<xacro:property name="sim" value="$(arg sim)"/>
 
 	<!-- MiR200 base -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_600/mir_600.urdf.xacro" />
@@ -18,17 +20,19 @@
 	<xacro:include filename="$(find mir_description)/urdf/general/plugins.gazebo.xacro" />
 	<xacro:p3d_base_controller robot_namespace="$(arg robot_namespace)"/>
 	<!-- include gripper -->
-	<xacro:include filename="$(find schunk_emh_rp_45)/urdf/schunk_emh_rp_045.urdf.xacro"/>
+	<xacro:if value="${sim}">
+		<xacro:include filename="$(find schunk_emh_rp_45)/urdf/schunk_emh_rp_045.urdf.xacro"/>
+	</xacro:if>
 	<!-- Init the MiR200 marco that is also used for the hardware -->
 	<xacro:mir_600 />
 	<!-- Init the MiR200 macro that includes all infos that Gazebo need to function -->
 	<xacro:mir_600_gazebo tf_prefix="$(arg tf_prefix)" robot_namespace="$(arg robot_namespace)"/>
 
 	<!-- Init the UR5 robot arm macro -->
-	<!-- <xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
-	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/> -->
-	<xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/PositionJointInterface"/>
-	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/PositionJointInterface"/>
+	<xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
+	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/VelocityJointInterface"/>
+	<!-- <xacro:ur10e_robot prefix="UR10_l/" transmission_hw_interface="hardware_interface/PositionJointInterface"/>
+	<xacro:ur10e_robot prefix="UR10_r/" transmission_hw_interface="hardware_interface/PositionJointInterface"/> -->
 	<!-- Init the plugins that run the MiR in Gazebo -->
 	<xacro:controller_plugin_gazebo robot_namespace="$(arg robot_namespace)"/>
 
@@ -45,7 +49,7 @@
 		<joint name="plattform_manipulator_joint_r" type="fixed">
 				<parent link="right_lift_top" />
 				<child link="UR10_r/base_link" />
-				<origin xyz="0.0 0.0 0.555" rpy="0 0 0" />
+				<origin xyz="0.0 0.0 0.555" rpy="0 0 3.14159265" />
 		</joint>
 	</xacro:if>
 
@@ -64,8 +68,10 @@
 
 	</xacro:unless>
 
-	<xacro:schunk_emh_rp_045 tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
-	<xacro:schunk_emh_rp_045 tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
+	<xacro:if value="${sim}">
+		<xacro:schunk_emh_rp_045 tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
+		<xacro:schunk_emh_rp_045 tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
+	</xacro:if>
 	<!-- <gazebo>
 		<plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">		
 			<robotNamespace>mir</robotNamespace>

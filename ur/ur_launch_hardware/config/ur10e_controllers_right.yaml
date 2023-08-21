@@ -125,6 +125,22 @@ vel_joint_traj_controller:
    state_publish_rate: *loop_hz
    action_monitor_rate: 20
 
+arm_controller:
+  type: pass_through_controllers/JointTrajectoryController
+  joints: *robot_joints
+  constraints:
+    goal_time: 0.6
+    stopped_velocity_tolerance: 0.05
+    UR10_r/shoulder_pan_joint: {trajectory: 0.1, goal: 0.1}
+    UR10_r/shoulder_lift_joint: {trajectory: 0.1, goal: 0.1}
+    UR10_r/elbow_joint: {trajectory: 0.1, goal: 0.1}
+    UR10_r/wrist_2_joint: {trajectory: 0.1, goal: 0.1}
+    UR10_r/wrist_1_joint: {trajectory: 0.1, goal: 0.1}
+    UR10_r/wrist_3_joint: {trajectory: 0.1, goal: 0.1}
+  stop_trajectory_duration: 0.5
+  state_publish_rate:  25
+  action_monitor_rate: 10
+
 # Pass an array of joint velocities directly to the joints
 joint_group_vel_controller:
    type: velocity_controllers/JointGroupVelocityController

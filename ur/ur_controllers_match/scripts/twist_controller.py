@@ -153,11 +153,12 @@ class ur_admittance_controller():
         
         
         # * Get namespace for topics from launch file
-        self.namespace = rospy.get_param("ur_ns",default="mur620c")
-        self.prefix = rospy.get_param("prefix_ur", default="UR10_l/")
+        self.namespace = rospy.get_param("~ur_ns",default="mur620c")
+        self.prefix = rospy.get_param("~prefix_ur", default="UR10_l/")
         self.ns_prefix = self.namespace + "/" + self.prefix
-        self.prefix_mir = rospy.get_param("prefix_mir", default="")
+        self.prefix_mir = rospy.get_param("~prefix_mir", default="")
         self.ns_prefix_mir = self.namespace + "/" + self.prefix_mir
+        self.group_name = rospy.get_param("~group_name", default="UR_arm_l")
 
         # * Load config parameters
         self.config()
@@ -193,7 +194,7 @@ class ur_admittance_controller():
         moveit_commander.roscpp_initialize(sys.argv)
         while True: #TODO: not rospy.is_shutdown:
             try:
-                group_name = 'UR_arm_l'
+                group_name = self.group_name
                 print("Initialize movit_commander. Group name: ",group_name)
                 self.group = moveit_commander.MoveGroupCommander(group_name, wait_for_servers=5.0, ns="/"+self.namespace, robot_description="/"+self.namespace+"/robot_description")
                 # self.group = moveit_commander.MoveGroupCommander(group_name, wait_for_servers=5.0, ns="", robot_description="robot_description")

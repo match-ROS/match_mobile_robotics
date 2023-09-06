@@ -5,7 +5,7 @@
     <arg name="controllers" default="joint_state_controller"/>
     <arg name="stopped_controllers" default="joint_state_controller"/>
     <arg name="controller_config_file" default="$(find ur_launch_hardware)/config/ur10e_controllers.yaml" />
-    <arg name="UR_prefix" default="UR10_"/>
+    <arg name="UR_prefix" default="UR10_/"/>
     <arg name="robot_ip" default="ur"/>
     <arg name="reverse_port" default="50001"/>  
     <arg name="script_sender_port" default="50002"/> 
@@ -15,23 +15,6 @@
     <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
 
-    <!-- Bringup the ur driver within proper namespaces -->
-    <!-- <remap from="/robot_description" to="robot_description"/> -->
-    <rosparam file="$(find ur_launch_hardware)/config/controllers.yaml" command="load" subst_value="true"/>
-    <include file="$(find ur_robot_driver)/launch/$(arg ur_version)_bringup.launch" pass_all_args="true">
-        <arg name="controllers" value="$(arg controllers)"/>
-        <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>      
-        <!-- <arg name="kinematics_config" value="$(arg kinematics_config)"/> -->
-        <arg name="robot_ip" value="$(arg robot_ip)"/>    
-        <arg name="reverse_port" value="$(arg reverse_port)"/>  
-        <arg name="script_sender_port" value="$(arg script_sender_port)"/>  
-        <arg name="trajectory_port" value="$(arg trajectory_port)"/>  
-        <arg name="script_command_port" value="$(arg script_command_port)"/>
-        <arg name="controller_config_file" value="$(arg controller_config_file)"/>
-
-        <!-- For ur_hardware_interface: -->
-        <arg name="tf_prefix" value="$(arg UR_prefix)/"/>
-    </include>
 
     <!-- <include file="$(eval find(moveit_config_pkg)+'/launch/move_group.launch')"/> -->
 
@@ -48,4 +31,25 @@
         <param name="max_linear_acceleration" value="0.1"/>
     </node>
 
+    <!-- Last to only remap ur_hardware_interface -->
+    <remap from="/tf" to="/tf_old"/>
+    <include file="$(find ur_robot_driver)/launch/$(arg ur_version)_bringup.launch" pass_all_args="true">
+        <arg name="controllers" value="$(arg controllers)"/>
+        <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>      
+        <!-- <arg name="kinematics_config" value="$(arg kinematics_config)"/> -->
+        <arg name="robot_ip" value="$(arg robot_ip)"/>    
+        <arg name="reverse_port" value="$(arg reverse_port)"/>  
+        <arg name="script_sender_port" value="$(arg script_sender_port)"/>  
+        <arg name="trajectory_port" value="$(arg trajectory_port)"/>  
+        <arg name="script_command_port" value="$(arg script_command_port)"/>
+        <arg name="controller_config_file" value="$(arg controller_config_file)"/>
+
+        <!-- For ur_hardware_interface: -->
+        <arg name="tf_prefix" value="$(arg UR_prefix)"/>
+    </include>
+
+    <!-- TODO: REMAP tf-names from ur_hardware_interface. Right now: UR10_r/base -> UR10_r/tool0_controller instead of /mur620/UR10_r/... -->
+    <!-- <node name="remapper_$(arg robot_ip)" pkg="tf_remapper_cpp" type="tf_remap">
+        <rosparam param="mappings">[{old: /UR10_r/tool0_controller, new: /mur620c/UR10_r/tool0_controller}, {old: /UR10_r/base, new: /mur620c/UR10_r/base}]</rosparam>
+    </node> -->
 </launch>

@@ -52,6 +52,13 @@
 
   <exec_depend>moveit_commander</exec_depend>
 
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf2</build_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>tf2</exec_depend>
+ 
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

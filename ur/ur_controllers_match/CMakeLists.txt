@@ -140,6 +140,7 @@ ${catkin_INCLUDE_DIRS}
 ## The recommended prefix ensures that target names across packages don't collide
 # add_executable(${PROJECT_NAME}_node src/ur_controllers_node.cpp)
 add_executable(twist_controller src/twist_controller)
+add_executable(twist_controller_fb src/twist_controller_feedback)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -156,6 +157,10 @@ add_executable(twist_controller src/twist_controller)
 #   ${catkin_LIBRARIES}
 # )
 target_link_libraries(twist_controller
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(twist_controller_fb
   ${catkin_LIBRARIES}
 )
 

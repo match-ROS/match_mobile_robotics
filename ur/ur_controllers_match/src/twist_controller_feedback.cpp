@@ -40,9 +40,6 @@ public:
         previous_error_angular = Eigen::Vector3d::Zero();
         integral_angular = Eigen::Vector3d::Zero();
 
-        // Initialize the desired end-effector position and orientation
-        desired_position = geometry_msgs::Point();
-        desired_orientation = tf2::Quaternion(0.0, 0.0, 0.0, 1.0); // Initialize as no rotation
 
 
         // init twistVector with zeros
@@ -60,6 +57,10 @@ public:
 
         joint_model_group = move_group->getCurrentState(5.0)->getJointModelGroup(PLANNING_GROUP);
 
+        // Initialize the desired end-effector position and orientation
+        geometry_msgs::Pose cur_pose = move_group->getCurrentPose().pose;
+        desired_position = cur_pose.position;
+        desired_orientation = tf2::Quaternion(cur_pose.orientation.x, cur_pose.orientation.y, cur_pose.orientation.z, cur_pose.orientation.w);
 
         // Set up a publisher for joint velocity commands
         joint_vel_pub = nh.advertise<std_msgs::Float64MultiArray>(ur_prefix+"joint_group_vel_controller/command", 1);
@@ -113,7 +114,7 @@ public:
         orientation_error = desired_orientation * orientation_error.inverse();
 
         // Implement feedback control to adjust the twist command
-        Eigen::VectorXd corrected_twist_vec;
+        Eigen::VectorXd corrected_twist_vec = Eigen::VectorXd::Zero(6);
         corrected_twist_vec[0] = twistVector[0] + kp * position_error.x + ki * integral.x() + kd * (position_error.x - previous_error.x());
         corrected_twist_vec[1] = twistVector[1] + kp * position_error.y + ki * integral.y() + kd * (position_error.y - previous_error.y());
         corrected_twist_vec[2] = twistVector[2] + kp * position_error.z + ki * integral.z() + kd * (position_error.z - previous_error.z());

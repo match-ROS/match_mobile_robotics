@@ -4,7 +4,7 @@
 	<arg name="robot_y"   default="0.0" />
 	<arg name="robot_yaw" default="0.0" />
 	<arg name="model_name" default="mur620"/>
-	<arg name="mur_ns" default="mur620"/>
+	<arg name="mur_ns" default="$(arg tf_prefix)"/>	 <!-- mur620 -->
 	<arg name="move_base_selector" default="move_base" />
 	<arg name="global_planner" default="GlobalPlanner" />
 	<arg name="local_planner" default="DWAPlannerROS" />
@@ -59,7 +59,7 @@
 		</node> -->
 
 		<node name="ur_controller_stopped_spawner" pkg="controller_manager" type="spawner" output="screen"
-			args="--stopped joint_group_vel_controller_l/unsafe">
+			args="--stopped joint_group_vel_controller_l/unsafe joint_group_vel_controller_r/unsafe">
 		</node>
 
 		<node name="copy_robot_description" pkg="mur_description" type="copy_robot_description.py" output="screen">
@@ -70,6 +70,7 @@
 		<include file="$(find mur_control)/launch/dual_arm_collision_avoidance.launch">
 			<arg name="ur_prefix_l" value="$(arg prefix)_l/"/>
 			<arg name="ur_prefix_r" value="$(arg prefix)_r/"/>
+			<arg name="tf_prefix" value="$(arg tf_prefix)"/>
 		</include>
 
 

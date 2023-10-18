@@ -1,44 +1,20 @@
 # TODO
 
-## MUR
+## check if dual_ur newest commit is correct
+- tf_prefix and ur_prefix. Working to set commadns?
+- why is tf_prefix of twist_commands not mur620b/... but mur620/...
 
-- controller_manager general (mur_base.launch) or for each ur (ur.launch)?
-
-## Lift
-
-lift in mur launch, but not mir
-
-- load lift_module in mur.lauch
-- connect left_lift_bottom (mir) ->lift_top -> UR or left_lift_bottom (mir) ->ur in mur.launch
+## disable state pub of ur!
+- right now just disabled in sub package
+- see match_mobile_robotics/ur/ur_ros_driver/ur_robot_driver/launch/ur_common.launch
 
 ## HW/Sim identic
 
-same urdf for hw and sim:
+### Twist-Controller:
+tool0_controller tf is now remapped to /tf_old
+- -> change name from UR10_r/base -> UR10_r/tool0_controller to /mur620/UR10_r/... and publish to /tf
 
-- remap robot_description
-- robot_state_publisher
-    - change tf_prefix to ""
-- joint_state_publisher
-    - change tf_prefix to "UR16_l/"
-- call joints "mir/...", UR16_l/..." in urdf and tf_prefix="mur"?
-    - urdf: mir links=/mir/..., therefore tf_prefix="mur"
-- only one robot_state_publisher for all mur?
-    - remap /mur/ur/joint_states to /mur/joint_states
-        - or use **relay** to publish to both and remap old tf
-    - disable mir: remove_tf_frames, /mur620b/mir/tf_remove_state_publisher_frames
-- controller_config_file: load general config file and only rename joints?
-- enable launch of move_group in dual_ur.launch
 
-### MoveiIt one process
-
-use only one process for both arms.
-
-- mur urdf
-- has to be executed twice:
-    - grip_service_interface
-    - bringup.launch
-    - ur_calibrated_pose_pub.launch
-    - ur_twist_limiter
-
-- has to be executed once:
-    - move_group (mur_moveit_config package)
+### Set Caster_joints
+- to 0 or fixed
+- otherwise always warning from move_group

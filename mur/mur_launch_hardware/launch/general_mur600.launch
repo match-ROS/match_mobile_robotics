@@ -33,6 +33,13 @@
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
                 <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift) sim:=false"/>
             </include>
+
+            <!-- Joints of mir: -->
+             <!-- <node name="joint_state_publisher_mir_zeros" pkg="joint_state_publisher" type="joint_state_publisher">
+                <param name="source_list" value="[/mur620c/joint_states]"/>
+                <param name="robot_description" value=""/>
+                <param name="zeros" value="{bl_caster_rotation_joint:0.0, bl_caster_wheel_joint:0.0, br_caster_rotation_joint:0.0, br_caster_wheel_joint:0.0, fl_caster_rotation_joint:0.0, fl_caster_wheel_joint:0.0, fr_caster_rotation_joint:0.0, fr_caster_wheel_joint:0.0, left_wheel_joint:0.0, right_wheel_joint:0.0}"/>
+             </node> -->
         </group>
 
     </group>
@@ -58,7 +65,8 @@
                 <arg name="script_sender_port" value="50006"/>
                 <arg name="trajectory_port" value="50007"/>
                 <arg name="script_command_port" value="50008"/>
-                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg left_arm_group_name)"/>
+                <arg name="UR_prefix" value="$(arg left_arm_group_name)/"/>
+                <arg name="tf_prefix" value="$(arg tf_prefix)"/>
             </include>
 
             <node name="$(arg left_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false">
@@ -101,7 +109,8 @@
                 <arg name="controllers" value="$(arg controllers_started)"/>
                 <arg name="stopped_controllers" value="$(arg controllers_stopped)"/>
                 <arg name="controller_config_file" value="$(find ur_launch_hardware)/config/ur10e_controllers_right.yaml"/>
-                <arg name="UR_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)"/>
+                <arg name="UR_prefix" value="$(arg right_arm_group_name)/"/>
+                <arg name="tf_prefix" value="$(arg tf_prefix)"/>
             </include> 
 
 
@@ -111,8 +120,8 @@
 
              <!-- Lift module -->
             <group if="$(eval arg('use_lift') ==true)"> 
-                <remap from="ewellix_tlt_node_l/joint_states" to="/$(arg tf_prefix)/joint_states"/>
-                <node name="ewellix_tlt_node_l" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
+                <remap from="ewellix_tlt_node_r/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+                <node name="ewellix_tlt_node_r" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
                     <param name="ewellix/port" value="/dev/ttyUSB1" />
                     <param name="ewellix/joint_name" value="right_lift_joint" />
                 </node>

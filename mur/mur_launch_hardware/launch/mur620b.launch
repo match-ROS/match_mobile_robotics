@@ -3,8 +3,8 @@
     <arg name="launch_mir" default="true"/>
     <arg name="launch_ur_l" default="true"/>
     <arg name="launch_ur_r" default="true"/>
-    <arg name="controllers_started" default="joint_group_vel_controller joint_state_controller"/>
-    <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
+    <arg name="controllers_started" default="arm_controller joint_state_controller"/>
+    <arg name="controllers_stopped" default="joint_group_vel_controller"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="mur620b"/>
     <arg name="left_arm_group_name" default="UR10_l"/>

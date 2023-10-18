@@ -18,3 +18,11 @@ tool0_controller tf is now remapped to /tf_old
 ### Set Caster_joints
 - to 0 or fixed
 - otherwise always warning from move_group
+
+### SIM:
+prob. have to set in mir_launch_sim:
+
+    ```   
+    <remap to="cmd_vel" from="mobile_base_controller/cmd_vel"/>
+    <remap from="odom" to="mobile_base_controller/odom"/>
+    ```

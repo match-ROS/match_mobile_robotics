@@ -9,6 +9,7 @@
     <arg name="tf_prefix" default="mur620c"/>
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
+    <arg name="external_localization" default="false"/>
    
     <include file="$(find mur_launch_hardware)/launch/general_mur600.launch">
         <arg name="launch_mir" value="$(arg launch_mir)"/>
@@ -21,6 +22,7 @@
         <arg name="left_arm_group_name" value="$(arg left_arm_group_name)"/>
         <arg name="right_arm_group_name" value="$(arg right_arm_group_name)"/>
         <arg name="use_lift" value="true"/>
+        <arg name="external_localization" value="$(arg external_localization)"/>
     </include> 
 
 

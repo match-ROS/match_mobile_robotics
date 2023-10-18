@@ -12,6 +12,7 @@
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
     <arg name="use_lift" default="true"/>
+    <arg name="external_localization" default="false"/>
    
     <!-- Bringup the base of the mur -->
 
@@ -32,6 +33,7 @@
                 <arg name="mir_type" value="mir_600"/>
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
                 <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift) sim:=false"/>
+                <arg name="external_localization" value="$(arg external_localization)"/>
             </include>
 
             <!-- Joints of mir: -->

@@ -37,7 +37,7 @@
     <include file="$(find ur_robot_driver)/launch/$(arg ur_version)_bringup.launch" pass_all_args="true">
         <arg name="controllers" value="$(arg controllers)"/>
         <arg name="stopped_controllers" value="$(arg stopped_controllers)"/>      
-        <!-- <arg name="kinematics_config" value="$(arg kinematics_config)"/> -->
+        <arg name="kinematics_config" value="$(arg kinematics_config)"/>
         <arg name="robot_ip" value="$(arg robot_ip)"/>    
         <arg name="reverse_port" value="$(arg reverse_port)"/>  
         <arg name="script_sender_port" value="$(arg script_sender_port)"/>  

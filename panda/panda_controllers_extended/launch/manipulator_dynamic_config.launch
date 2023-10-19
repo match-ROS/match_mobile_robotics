@@ -1,9 +1,0 @@
-<launch>
-
-    <node name="manipulator_dynamic_config" pkg="panda_controllers_extended" type="manipulator_dynamic_config" output="screen">
-        <param name="rate" value="10"/>
-        <remap from="accel" to="miranda/panda/compliance_controller/imu"/>
-    </node>
-
-
-</launch>

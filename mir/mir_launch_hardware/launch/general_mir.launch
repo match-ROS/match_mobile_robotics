@@ -38,7 +38,7 @@
                 <arg name="local_planner" value="$(arg local_planner)"/>
                 <arg name="local_planner_config" value="$(arg local_planner_config)" />
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-                <arg name="start_move_base_simple" value="$(arg start_move_base_simple"/> 
+                <arg name="start_move_base_simple" value="$(arg start_move_base_simple)"/> 
             </include>
         </group>
     </group>

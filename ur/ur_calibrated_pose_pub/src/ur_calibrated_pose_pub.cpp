@@ -120,7 +120,7 @@ namespace ur_calibrated_pose_pub
 
 			geometry_msgs::PoseStamped ur_calibrated_pose_msg;
 			ur_calibrated_pose_msg.header.stamp = ros::Time::now();
-			ur_calibrated_pose_msg.header.frame_id = node_namespace + "/base_link";	// TODO: change to generic name
+			ur_calibrated_pose_msg.header.frame_id = node_namespace + "/base";	// TODO: change to generic name
 			ur_calibrated_pose_msg.pose.position.x = complete_transformation_matrix(0, 3);
 			ur_calibrated_pose_msg.pose.position.y = complete_transformation_matrix(1, 3);
 			ur_calibrated_pose_msg.pose.position.z = complete_transformation_matrix(2, 3);
@@ -150,7 +150,7 @@ namespace ur_calibrated_pose_pub
 			q.setW(eigen_q.w());
 			transform.setRotation(q);
 
-			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), node_namespace + "/base_link", node_namespace + "/calibrated_ee_pose"));	// change to generic name
+			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), node_namespace + "/base", node_namespace + "/calibrated_ee_pose"));	// change to generic name
 
 			ros::spinOnce();
 			publish_rate.sleep();
@@ -173,6 +173,8 @@ namespace ur_calibrated_pose_pub
 			ROS_ERROR("No ur_joint_state_topic_name parameter found");
 			return;
 		}
+
+		this->private_nh_.param<std::string>("joint_prefix", this->joint_prefix_, "");
 
 		this->private_nh_.param<std::string>("dh_parameter_switch", this->dh_parameter_switch_, "");
 		if(this->dh_parameter_switch_ == "")
@@ -311,32 +313,32 @@ namespace ur_calibrated_pose_pub
 		// Add each the dh_parameter into the for loop. Otherwise the active joint values are not updated
 		for(int joint_counter = 0; joint_counter < joint_state_msg->name.size(); joint_counter++)
 		{
-			if(joint_state_msg->name[joint_counter] == "shoulder_pan_joint")
+			if(joint_state_msg->name[joint_counter] == this->joint_prefix_+"shoulder_pan_joint")
 			{
 				this->ideal_dh_transformations_list_[0].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[0].setJointState(joint_state_msg->position[joint_counter]);
 			}
-			else if(joint_state_msg->name[joint_counter] == "shoulder_lift_joint")
+			else if(joint_state_msg->name[joint_counter] == this->joint_prefix_+"shoulder_lift_joint")
 			{
 				this->ideal_dh_transformations_list_[1].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[1].setJointState(joint_state_msg->position[joint_counter]);
 			}
-			else if(joint_state_msg->name[joint_counter] == "elbow_joint")
+			else if(joint_state_msg->name[joint_counter] == this->joint_prefix_+"elbow_joint")
 			{
 				this->ideal_dh_transformations_list_[2].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[2].setJointState(joint_state_msg->position[joint_counter]);
 			}
-			else if(joint_state_msg->name[joint_counter] == "wrist_1_joint")
+			else if(joint_state_msg->name[joint_counter] == this->joint_prefix_+"wrist_1_joint")
 			{
 				this->ideal_dh_transformations_list_[3].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[3].setJointState(joint_state_msg->position[joint_counter]);
 			}
-			else if(joint_state_msg->name[joint_counter] == "wrist_2_joint")
+			else if(joint_state_msg->name[joint_counter] == this->joint_prefix_+"wrist_2_joint")
 			{
 				this->ideal_dh_transformations_list_[4].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[4].setJointState(joint_state_msg->position[joint_counter]);
 			}
-			else if(joint_state_msg->name[joint_counter] == "wrist_3_joint")
+			else if(joint_state_msg->name[joint_counter] == this->joint_prefix_+"wrist_3_joint")
 			{
 				this->ideal_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);

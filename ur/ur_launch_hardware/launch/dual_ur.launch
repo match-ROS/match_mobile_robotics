@@ -21,7 +21,8 @@
 
     <include file="$(find ur_calibrated_pose_pub)/launch/ur_calibrated_pose_pub.launch" pass_all_args="false">
         <arg name="robot_ip" value="$(arg robot_ip)"/>
-        <arg name="ur_joint_state_topic_name" value="/$(arg tf_prefix)/$(arg UR_prefix)/joint_states"/>
+        <arg name="ur_joint_state_topic_name" value="/$(arg tf_prefix)/joint_states"/>
+        <arg name="joint_prefix" value="$(arg UR_prefix)"/>
     </include>
 
     <!-- limit twist commands -->

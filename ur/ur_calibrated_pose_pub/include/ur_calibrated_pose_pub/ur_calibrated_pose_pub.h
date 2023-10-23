@@ -41,6 +41,7 @@ namespace ur_calibrated_pose_pub
 
             std::string robot_ip_;
             std::string ur_joint_state_topic_name_;
+            std::string joint_prefix_;
             std::string dh_parameter_switch_;
             
             std::vector<dh_utils::DHTransformation> ideal_dh_transformations_list_;

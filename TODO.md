@@ -1,8 +1,7 @@
 # TODO
-
-## check if dual_ur newest commit is correct
-- tf_prefix and ur_prefix. Working to set commadns?
-- why is tf_prefix of twist_commands not mur620b/... but mur620/...
+## move_group:
+In mur_moveit_config/launch/move_group.launch launched by start_moveit_620.launch:
+- **false robot description is used** for planning_context.launch etc. has to use mur620.srdf.xacro instead of mur.srdf.xacro (only for mur620, for mur100 ok)
 
 ## disable state pub of ur!
 - right now just disabled in sub package

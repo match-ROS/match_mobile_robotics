@@ -39,8 +39,8 @@
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="local_costmap" subst_value="true" />
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_local_params.yaml" command="load" subst_value="true" />
 
-        <remap from="cmd_vel" to="mobile_base_controller/cmd_vel"/>
-        <remap from="odom" to="mobile_base_controller/odom"/>
+        <!-- <remap from="cmd_vel" to="mobile_base_controller/cmd_vel"/>
+        <remap from="odom" to="mobile_base_controller/odom"/> -->
         <remap from="map" to="/map" />
     </node>
 

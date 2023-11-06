@@ -7,9 +7,9 @@
     <arg name="global_planner_config" default="$(find mir_navigation)/config/Planner/GlobalPlanner/SplinedVoronoiPlanner.yaml" doc="Path to the global config file." />
     <arg name="local_planner" default="LocalPlanFollower" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" default="$(find mir_navigation)/config/Planner/LocalPlanner/LocalPlanFollower.yaml" doc="Path to the local config file." />
-    <arg name="mocap_frame_id" default="mur620b"/>
+    <arg name="mocap_frame_id" default="mur620a"/>
     <arg name="external_localization" default="False"/>
-    <arg name="localization_topic" default="/qualisys/mur620b/base_link/pose"/>
+    <arg name="localization_topic" default="/qualisys/mur620a/pose"/>
     <arg name="robot_description" default="$(find mir_description)/urdf/mir_600/mir_600.urdf" doc="The path to load the robot_description param" />
 
 

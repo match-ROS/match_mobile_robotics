@@ -12,13 +12,13 @@
     <arg name="localization_type" default="mocap" />
     <arg name="localization_mode" default="0" />
     <arg name="mocap_frame_id" default="(arg tf_prefix)" />
-    <arg name="external_localization" default="False"/>
-    <arg name="localization_topic" default="/qualisys/mur620a/pose"/>
+    <arg name="external_localization" default="true"/>
+    <arg name="map_mocap_tranformation" default="51.5104 45.2064 0 0 0 0.07994 1 "/>
 
     <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
         <arg name="robot_description" value="$(arg robot_description)"/>
-        <!-- <arg name="external_localization" value="$(arg external_localization)"/> -->
+        <arg name="external_localization" value="$(arg external_localization)"/>
     </include>
 
     <group if="$(eval move_base)">
@@ -53,14 +53,17 @@
     <node name="rgb_control" pkg="mir_launch_hardware" type="rgb_control.py" output="screen">
 	</node>
 
-    <group if="$(arg external_localization)">
-        <node pkg="mir_launch_hardware" type="external_localization_broadcaster.py" name="external_localization_broadcaster">
+    <group if="$(eval external_localization)">
+        <node pkg="tf" type="static_transform_publisher" name="tf_mocap_map" args="$(arg map_mocap_tranformation) map mocap 100" />
+        <!-- node pkg="mir_launch_hardware" type="external_localization_broadcaster.py" name="external_localization_broadcaster" -->
+        <node pkg="mir_launch_hardware" type="mocap_transform_publisher.py" name="mocap_transform_publisher">
             <param name="tf_prefix" value="$(arg tf_prefix)"/>
-            <param name="localization_topic" value="$(arg localization_topic)"/>
+            <param name="localization_topic" value="/qualisys/$(arg mocap_frame_id)/pose"/>
+            <param name="transformation_mocap" value="$(arg map_mocap_tranformation)" default="51.5104 45.2064 0 0 0 0.07994 1"/>
         </node>
-
+        <node pkg="mir_launch_hardware" name="mocap_transform_publisher" type="mocap_transform_publisher.py" output="screen" /> 
         <!-- static transform publisher to fake the odom frame -->
-        <node pkg="tf2_ros" type="static_transform_publisher" name="odom_transformer" args="0 0 0 0 0 0 map $(arg tf_prefix)/odom"/>
+        <!-- node pkg="tf2_ros" type="static_transform_publisher" name="odom_transformer" args="0 0 0 0 0 0 map $(arg tf_prefix)/odom"/ -->
     </group>
 
 </launch>

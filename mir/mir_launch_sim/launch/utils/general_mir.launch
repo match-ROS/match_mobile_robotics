@@ -48,6 +48,9 @@
 		</include>
 	</group>
 	
+	<!-- gazebo uses topics mobile_base_controller/* -->
+	<remap to="mobile_base_controller/cmd_vel" from="cmd_vel" />
+	<remap from="odom" to="mobile_base_controller/odom"/>
 	<!-- Start of move base or move base flex -->
 	<group if="$(eval move_base_selector=='move_base')">
 		<include file="$(find mir_navigation)/launch/move_base.launch" pass_all_args="true">

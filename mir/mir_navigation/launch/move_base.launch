@@ -26,7 +26,7 @@
         <!-- <rosparam file="$(find mir_navigation)/config/Costmap/MoveBaseLocalCostmap/costmap_local_params_plugins.yaml" command="load"/> -->
 
         <!-- Remappings -->        
-        <remap from="cmd_vel" to="mobile_base_controller/cmd_vel"/>
-        <remap from="odom" to="mobile_base_controller/odom"/>
+        <!-- <remap to="cmd_vel" from="mobile_base_controller/cmd_vel"/>
+        <remap from="odom" to="mobile_base_controller/odom"/> -->
     </node>
 </launch>

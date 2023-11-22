@@ -32,7 +32,7 @@
   <!-- Dependencies can be catkin packages or system dependencies -->
   <!-- Examples: -->
   <!-- Use depend as a shortcut for packages that are both build and exec dependencies -->
-  <!--   <depend>roscpp</depend> -->
+    <depend>roscpp</depend>
   <!--   Note that this is equivalent to the following: -->
   <!--   <build_depend>roscpp</build_depend> -->
   <!--   <exec_depend>roscpp</exec_depend> -->
@@ -49,6 +49,15 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
+
+  <exec_depend>moveit_commander</exec_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>tf2</build_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>tf2</exec_depend>
+ 
 
 
   <!-- The export tag contains other, unspecified, tags -->

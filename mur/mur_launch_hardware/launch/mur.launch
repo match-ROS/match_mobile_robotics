@@ -4,6 +4,7 @@
     <arg name="controllers_stopped" default="empty"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="mur"/>
+    <arg name="localization_type" default="mocap" />
  
    
     <!-- Bringup the base of the mur -->

@@ -17,13 +17,27 @@ class RGBControl():
         rospy.Service('RGB_control/rainbow_start', Trigger, self.light_effect)
         rospy.Service('RGB_control/rainbow_stop', Trigger, self.light_effect)
         rospy.Service('RGB_control/solid_color', ColorRGB, self.light_effect)
+        rospy.Service('RGB_control/match_color', Trigger, self.light_effect)
         self.light_cmd_pub = rospy.Publisher('/new_light_cmd', LightCmd, queue_size=1)
         self.light_cmd = LightCmd()
+        rospy.sleep(1) # wait for the mir to be ready
+        self.default_effect()
         rospy.spin()
+
+
+    def default_effect(self):
+        self.light_cmd.color1 = "ffff00"
+        self.light_cmd.color2 = "964000"
+        self.light_cmd.priority = 1000
+        self.light_cmd.leds = "all"
+        self.light_cmd.effect = "solid"
+        self.light_cmd_pub.publish(self.light_cmd)
         
     def light_effect(self, req):
+        request_topic = req._connection_header['service']
+        request = request_topic.split('/')[-1] 
 
-        if req._connection_header['service'] == '/RGB_control/rainbow_start':
+        if request == 'rainbow_start':
             rospy.loginfo('rainbow_start')
             self.light_cmd.color1 = "ffffff"
             self.light_cmd.color2 = "ffffff"
@@ -32,7 +46,7 @@ class RGBControl():
             self.light_cmd.effect = "rainbow"
             self.light_cmd_pub.publish(self.light_cmd)
             return TriggerResponse(success=True, message='OK')
-        elif req._connection_header['service'] == '/RGB_control/rainbow_stop':
+        elif request == 'rainbow_stop':
             rospy.loginfo('rainbow_stop')
             self.light_cmd.color1 = "ffff00"
             self.light_cmd.color2 = "ff0000"
@@ -41,7 +55,16 @@ class RGBControl():
             self.light_cmd.effect = "Wave"
             self.light_cmd_pub.publish(self.light_cmd)
             return TriggerResponse(success=True, message='OK')
-        elif req._connection_header['service'] == '/RGB_control/solid_color':
+        elif request == 'match_color':
+            rospy.loginfo('match_color')
+            self.light_cmd.color1 = "ffff00"
+            self.light_cmd.color2 = "965000"
+            self.light_cmd.priority = 1000
+            self.light_cmd.leds = "all"
+            self.light_cmd.effect = "solid"
+            self.light_cmd_pub.publish(self.light_cmd)
+            return TriggerResponse(success=True, message='OK')
+        elif request == 'solid_color':
             rospy.loginfo('solid_color')
             colorR = hex(req.red)[2:]
             if len(colorR) == 1:

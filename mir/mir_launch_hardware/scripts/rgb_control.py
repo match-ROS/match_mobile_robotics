@@ -26,8 +26,8 @@ class RGBControl():
 
 
     def default_effect(self):
-        self.light_cmd.color1 = "ffff00"
-        self.light_cmd.color2 = "964000"
+        self.light_cmd.color1 = "968200"
+        self.light_cmd.color2 = "ffffff"
         self.light_cmd.priority = 1000
         self.light_cmd.leds = "all"
         self.light_cmd.effect = "solid"

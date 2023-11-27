@@ -7,6 +7,14 @@
 	<xacro:property name="use_lift" value="$(arg use_lift)"/>
 	<xacro:arg name="sim" default='true'/>
 	<xacro:property name="sim" value="$(arg sim)"/>
+	<xacro:arg name="ur_l_xyz" default='0 0 0'/>
+	<xacro:arg name="ur_l_rpy" default='0 0 0'/>
+	<xacro:property name="ur_l_xyz" value="$(arg ur_l_xyz)"/>
+	<xacro:property name="ur_l_rpy" value="$(arg ur_l_rpy)"/>
+	<xacro:arg name="ur_r_xyz" default='0 0 0'/>
+	<xacro:arg name="ur_r_rpy" default='0 0 0'/>
+	<xacro:property name="ur_r_xyz" value="$(arg ur_r_xyz)"/>
+	<xacro:property name="ur_r_rpy" value="$(arg ur_r_rpy)"/>
 
 	<!-- MiR200 base -->
 	<xacro:include filename="$(find mir_description)/urdf/mir_600/mir_600.urdf.xacro" />
@@ -76,13 +84,13 @@
 	<joint name="plattform_ur_calibration_joint_l" type="fixed">
 			<parent link="UR10_l/base_ideal" />
 			<child link="UR10_l/base_link" />
-			<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
+			<origin xyz="${ur_l_xyz}" rpy="${ur_l_rpy}" /> <!-- 0 0 0" -->
 	</joint>
 
 	<joint name="plattform_ur_calibration_joint_r" type="fixed">
 			<parent link="UR10_r/base_ideal" />
 			<child link="UR10_r/base_link" />
-			<origin xyz="0.0 0.0 0.0" rpy="0 0 3.14159265" />
+			<origin xyz="${ur_r_xyz}" rpy="${ur_r_rpy}" /> <!-- 0 0 3.14159265" -->
 	</joint>
 
 	<xacro:if value="${sim}">

@@ -7,11 +7,11 @@
     <arg name="global_planner_config" default="$(find mir_navigation)/config/Planner/GlobalPlanner/SplinedVoronoiPlanner.yaml" doc="Path to the global config file." />
     <arg name="local_planner" default="LocalPlanFollower" doc="Name of the local planner that should be used by the navigation stack"/>
     <arg name="local_planner_config" default="$(find mir_navigation)/config/Planner/LocalPlanner/LocalPlanFollower.yaml" doc="Path to the local config file." />
-    <arg name="mocap_frame_id" default="mur620b"/>
+    <arg name="mocap_frame_id" default="mur620a"/>
     <arg name="external_localization" default="False"/>
-    <arg name="localization_topic" default="/qualisys/mur620b/base_link/pose"/>
+    <arg name="localization_topic" default="/qualisys/mur620a/pose"/>
     <arg name="robot_description" default="$(find mir_description)/urdf/mir_600/mir_600.urdf" doc="The path to load the robot_description param" />
-
+    <arg name="localization_type" default="mocap" />
 
     <include file="$(find mir_launch_hardware)/launch/general_mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
@@ -28,5 +28,6 @@
         <arg name="mocap_frame_id" default="$(arg mocap_frame_id)"/>
         <arg name="external_localization" value="$(arg external_localization)"/>
         <arg name="localization_topic" value="$(arg localization_topic)"/>
+        <arg name="localization_type" value="$(arg localization_type)"/>
     </include>
 </launch>

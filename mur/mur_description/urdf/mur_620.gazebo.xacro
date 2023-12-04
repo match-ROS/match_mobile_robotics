@@ -12,7 +12,7 @@
 	<xacro:property name="ur_l_xyz" value="$(arg ur_l_xyz)"/>
 	<xacro:property name="ur_l_rpy" value="$(arg ur_l_rpy)"/>
 	<xacro:arg name="ur_r_xyz" default='0 0 0'/>
-	<xacro:arg name="ur_r_rpy" default='0 0 0'/>
+	<xacro:arg name="ur_r_rpy" default='0 0 3.14159265359'/>
 	<xacro:property name="ur_r_xyz" value="$(arg ur_r_xyz)"/>
 	<xacro:property name="ur_r_rpy" value="$(arg ur_r_rpy)"/>
 

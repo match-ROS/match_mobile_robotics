@@ -1,8 +1,8 @@
 <launch>
     <!-- Defining arguments for the mur launch --> 
     <arg name="launch_mir" default="true"/>
-    <arg name="launch_ur_l" default="true"/>
-    <arg name="launch_ur_r" default="true"/>
+    <arg name="launch_ur_l" default="false"/>
+    <arg name="launch_ur_r" default="false"/>
     <arg name="controllers_started" default="arm_controller joint_state_controller"/>
     <arg name="controllers_stopped" default="joint_group_vel_controller"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>

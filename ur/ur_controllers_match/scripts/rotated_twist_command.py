@@ -20,12 +20,11 @@ class PubRotatedTwist():
         rospy.Subscriber("twist_cmd_ideal", Twist, self.cb_twist)
         
     def cb_twist(self, msg:Twist):
-        rospy.loginfo(msg)
         v_in = np.array([*msg.linear.__reduce__()[2], *msg.angular.__reduce__()[2]])
-        rospy.loginfo(f"v_in: {v_in}")
         v_out = self.rot6@v_in
-        msg_out = Twist(linear=v_out[:3], angular=v_out[3:])
-        rospy.loginfo(f"msg_out: {msg_out}")
+        msg.linear.x, msg.linear.y, msg.linear.z = v_out[:3]
+        msg.angular.x, msg.angular.y, msg.angular.z = v_out[3:]
+        self.pub.publish(msg)
 
 if __name__ == "__main__":
     rospy.init_node("rotate_twist")

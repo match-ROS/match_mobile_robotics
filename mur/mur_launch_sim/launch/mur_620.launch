@@ -12,6 +12,7 @@
 	<arg name="robot_urdf_path" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg lift)"/>
 	<arg name="gazebo_joint_state_controller_config" default="$(find mur_control)/config/gazebo_joint_state_controller.yaml" />
 	<arg name="prefix" value="UR10" doc="Prefix for the UR16 links"/>
+	<arg name="enable_dual_collison_avoidance" default="true" doc="if dual arm collision avoidance should be enabled"/>
 
 	<!-- if an object should be grasped configure its model and joint names here -->
 	<arg name="object_name" default="object01" />
@@ -67,7 +68,7 @@
 			<param name="ur_prefix" value="$(arg prefix)"/>
 		</node>
 
-		<include file="$(find mur_control)/launch/dual_arm_collision_avoidance.launch">
+		<include file="$(find mur_control)/launch/dual_arm_collision_avoidance.launch" if="$(arg enable_dual_collison_avoidance)">
 			<arg name="ur_prefix_l" value="$(arg prefix)_l/"/>
 			<arg name="ur_prefix_r" value="$(arg prefix)_r/"/>
 			<arg name="tf_prefix" value="$(arg tf_prefix)"/>

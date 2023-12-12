@@ -22,7 +22,7 @@ class PubRotatedTwist():
     def cb_twist(self, msg:Twist):
         v_in = np.array([*msg.linear.__reduce__()[2], *msg.angular.__reduce__()[2]])
         v_out = self.rot6@v_in
-        # msg_out = Twist(linear=v_out[:3], angular=v_out[3:])
+        
         msg.linear.x, msg.linear.y, msg.linear.z = v_out[:3]
         msg.angular.x, msg.angular.y, msg.angular.z = v_out[3:]
         self.pub.publish(msg)

@@ -9,7 +9,8 @@ class PubRotatedTwist():
     def __init__(self, from_frame: str = None, to_frame: str = None):
         tf_listener = tf.TransformListener()
         tf_listener.waitForTransform(from_frame, to_frame, rospy.Time(0), rospy.Duration(5.0))
-        rot = tf_listener.lookupTransform(from_frame, to_frame, rospy.Time(0))[1] # rotation from base_footprint to ur/base
+        # rot = tf_listener.lookupTransform(from_frame, to_frame, rospy.Time(0))[1] # rotation from base_footprint to ur/base
+        rot = tf_listener.lookupTransform(to_frame, from_frame, rospy.Time(0))[1] # rotation from base_footprint to ur/base
         rot = transformations.quaternion_matrix(rot)[0:3,0:3] # rot as matrix
         # rot6 is 6x3 matrix filled with rot for rotation of all 6 degrees
         rot6 = np.zeros((6,6))

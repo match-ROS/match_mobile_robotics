@@ -26,7 +26,7 @@ class RGBControl():
 
 
     def default_effect(self):
-        self.light_cmd.color1 = "968000"
+        self.light_cmd.color1 = "509600"
         self.light_cmd.color2 = "ffffff"
         self.light_cmd.priority = 1000
         self.light_cmd.leds = "all"
@@ -58,7 +58,7 @@ class RGBControl():
         elif request == 'match_color':
             rospy.loginfo('match_color')
             self.light_cmd.color1 = "ffff00"
-            self.light_cmd.color2 = "965000"
+            self.light_cmd.color2 = "509600"
             self.light_cmd.priority = 1000
             self.light_cmd.leds = "all"
             self.light_cmd.effect = "solid"

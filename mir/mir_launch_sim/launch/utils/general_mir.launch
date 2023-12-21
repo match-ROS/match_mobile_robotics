@@ -49,6 +49,7 @@
 	</group>
 	
 	<!-- gazebo uses topics mobile_base_controller/* -->
+	<node name="relay" pkg="topic_tools" type="relay" args="cmd_vel mobile_base_controller/cmd_vel" />
 	<remap to="mobile_base_controller/cmd_vel" from="cmd_vel" />
 	<remap from="odom" to="mobile_base_controller/odom"/>
 	<!-- Start of move base or move base flex -->

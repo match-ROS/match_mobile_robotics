@@ -18,7 +18,7 @@ class RGBControl():
         rospy.Service('RGB_control/rainbow_stop', Trigger, self.light_effect)
         rospy.Service('RGB_control/solid_color', ColorRGB, self.light_effect)
         rospy.Service('RGB_control/match_color', Trigger, self.light_effect)
-        self.light_cmd_pub = rospy.Publisher('/new_light_cmd', LightCmd, queue_size=1)
+        self.light_cmd_pub = rospy.Publisher('new_light_cmd', LightCmd, queue_size=1)
         self.light_cmd = LightCmd()
         rospy.sleep(1) # wait for the mir to be ready
         self.default_effect()
@@ -26,8 +26,8 @@ class RGBControl():
 
 
     def default_effect(self):
-        self.light_cmd.color1 = "ffff00"
-        self.light_cmd.color2 = "964000"
+        self.light_cmd.color1 = "509600"
+        self.light_cmd.color2 = "ffffff"
         self.light_cmd.priority = 1000
         self.light_cmd.leds = "all"
         self.light_cmd.effect = "solid"
@@ -58,7 +58,7 @@ class RGBControl():
         elif request == 'match_color':
             rospy.loginfo('match_color')
             self.light_cmd.color1 = "ffff00"
-            self.light_cmd.color2 = "965000"
+            self.light_cmd.color2 = "509600"
             self.light_cmd.priority = 1000
             self.light_cmd.leds = "all"
             self.light_cmd.effect = "solid"

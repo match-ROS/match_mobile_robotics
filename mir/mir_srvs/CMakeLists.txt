@@ -60,6 +60,7 @@ find_package(catkin REQUIRED COMPONENTS
  add_service_files(
    FILES
    LightCommand.srv
+   ColorRGB.srv
 #   Service2.srv
  )
 

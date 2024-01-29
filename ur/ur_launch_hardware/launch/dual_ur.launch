@@ -12,6 +12,7 @@
     <arg name="script_sender_port" default="50002"/> 
     <arg name="trajectory_port" default="50003"/> 
     <arg name="script_command_port" default="50004"/> 
+    <arg name="use_state_publisher" default="true"/>
 
     <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
@@ -45,6 +46,8 @@
         <arg name="trajectory_port" value="$(arg trajectory_port)"/>  
         <arg name="script_command_port" value="$(arg script_command_port)"/>
         <arg name="controller_config_file" value="$(arg controller_config_file)"/>
+
+        <arg name="use_state_publisher" value="$(arg use_state_publisher)"/> 
 
         <!-- For ur_hardware_interface: -->
         <arg name="tf_prefix" value="$(arg UR_prefix)"/>

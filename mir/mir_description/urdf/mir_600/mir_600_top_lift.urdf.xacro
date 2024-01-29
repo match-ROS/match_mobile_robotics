@@ -22,6 +22,10 @@
 			</collision>
 		</link>
 
+		<gazebo reference="left_lift_top">
+			<material>Gazebo/Grey</material>
+		</gazebo>
+
 		<joint name="left_lift_joint" type="prismatic">
 			<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />
 			<parent link="left_lift_bottom" />
@@ -49,6 +53,10 @@
 				</geometry>
 			</collision>
 		</link>
+
+		<gazebo reference="right_lift_top">
+			<material>Gazebo/Grey</material>
+		</gazebo>
 
 		<joint name="right_lift_joint" type="prismatic">
 			<origin xyz="0.0 0.0 0.0" rpy="0 0 0" />

@@ -134,7 +134,7 @@
 	<group_state name="home" group="UR_arm_both">
         <joint name="$(arg prefix)_l/elbow_joint" value="1.6141"/>
         <joint name="$(arg prefix)_l/shoulder_lift_joint" value="-1.5621"/>
-        <joint name="$(arg prefix)_l/shoulder_pan_joint" value="-0.0347"/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint" value="3.14"/>
         <joint name="$(arg prefix)_l/wrist_1_joint" value="-1.7009"/>
         <joint name="$(arg prefix)_l/wrist_2_joint" value="-1.5621"/>
         <joint name="$(arg prefix)_l/wrist_3_joint" value="0"/>

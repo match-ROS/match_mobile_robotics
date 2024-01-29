@@ -7,10 +7,10 @@ from math import cos, sin, pi
 
 class ExternalLocalizationBroadcaster:
     def __init__(self):
-        self.tf_prefix = rospy.get_param('~tf_prefix', 'mur620b/mir')
+        self.tf_prefix = rospy.get_param('~tf_prefix', 'mur620d')
         self.pose_broadcaster = tf.TransformBroadcaster()
-        self.localization_topic = rospy.get_param('~localization_topic', '/qualisys/mur620c/pose')
-        self.mocap_offset = rospy.get_param('~mocap_offset', [53.7737162408294, 41.56569006773283, 1.2534877135437004])
+        self.localization_topic = rospy.get_param('~localization_topic', '/qualisys/mur620d/pose')
+        self.mocap_offset = rospy.get_param('~mocap_offset', [37.30436983166483, 34.421838301291274, 0.3967520289935211])
         self.sub = rospy.Subscriber(self.localization_topic, PoseStamped, self.callback)
         self.timestamp = rospy.Time.now()
         rospy.spin()
@@ -26,9 +26,10 @@ class ExternalLocalizationBroadcaster:
             (pose.position.x, pose.position.y, pose.position.z), 
             (pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w),
             now,
-            self.tf_prefix + '/base_footprint',
-            self.tf_prefix + '/odom'   
+            'map',
+            self.tf_prefix + '/base_footprint_transformed'   
         )
+        print("pose", pose.position.x, pose.position.y, pose.position.z)
               
               
     def transform_pose_to_mir_map(self, pose = Pose()):

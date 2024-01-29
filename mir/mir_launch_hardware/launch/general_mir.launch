@@ -18,7 +18,7 @@
     <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>
         <arg name="robot_description" value="$(arg robot_description)"/>
-        <!-- <arg name="external_localization" value="$(arg external_localization)"/> -->
+        <arg name="external_localization" value="$(arg external_localization)"/>
     </include>
 
     <group if="$(eval move_base)">

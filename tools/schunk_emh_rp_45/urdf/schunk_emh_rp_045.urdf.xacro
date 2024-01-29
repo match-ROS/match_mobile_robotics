@@ -37,6 +37,10 @@
 			</collision>
 		</link>
 
+		<gazebo reference="${tf_prefix}/tcp">
+			<material>Gazebo/DarkGrey</material>
+		</gazebo>
+
 		<!-- the ft_sensor plugin will not work with fixed joints. This is why a prismatic joint with very small limits is added -->
 		<joint name="${tf_prefix}/tcp_joint" type="prismatic">
 			<origin xyz="0 0 0.0" rpy="0 0 0" />

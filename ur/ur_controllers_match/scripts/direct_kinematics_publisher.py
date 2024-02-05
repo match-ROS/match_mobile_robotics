@@ -32,6 +32,8 @@ class Direct_kinematics_publisher():
         self.tcp_pose.position.y = -T[1][3] # y is pointing to the left
         self.tcp_pose.position.z = T[2][3]
         q = tf.transformations.quaternion_from_matrix(T)
+        q_rot = tf.transformations.quaternion_from_euler(pi/2,pi,pi/2)
+        q = tf.transformations.quaternion_multiply(q,q_rot)
         self.tcp_pose.orientation.x = q[0]
         self.tcp_pose.orientation.y = q[1]
         self.tcp_pose.orientation.z = q[2]

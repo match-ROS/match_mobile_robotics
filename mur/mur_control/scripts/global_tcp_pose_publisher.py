@@ -26,7 +26,14 @@ class GlobalTCPPosePublisher():
         
         rate = rospy.Rate(self.rate)  # 10 Hz
         
-        tf_listener.waitForTransform(self.base_frame, self.UR_base_link_name, rospy.Time(), rospy.Duration(8.0))
+        trans = None
+        while trans is None:
+            try:
+                # get transform between map and UR base link
+                trans, rot = tf_listener.lookupTransform(self.base_frame, self.UR_base_link_name, rospy.Time(0))
+            except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+                continue
+            rospy.sleep(0.1)
 
         while not rospy.is_shutdown():
             try:

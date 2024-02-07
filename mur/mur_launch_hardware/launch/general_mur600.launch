@@ -12,17 +12,22 @@
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
     <arg name="use_lift" default="true"/>
-    <arg name="external_localization" default="false"/>
+    <arg name="external_localization" default="false"/>  <!-- if true, the tf_tree is no longer published by the mir but by the external localization publisher -->
     <arg name="kinematic_config_l" default="$(find ur_launch_hardware)/calibration/calibration_UR10_18.yaml"/>
     <arg name="kinematic_config_r" default="$(find ur_launch_hardware)/calibration/calibration_UR10_12.yaml"/>
-    <arg name="localization_type" default="mocap" />
+    <arg name="ur_l_xyz" default="0.0 0.0 0.0"/>
+    <arg name="ur_l_rpy" default="0.0 0.0 0.0"/>
+    <arg name="ur_r_xyz" default="0.0 0.0 0.0"/>
+    <arg name="ur_r_rpy" default="0.0 0.0 3.141596"/>
+    <arg name="cmplt_robot_descr" default="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift) sim:=false ur_l_rpy:='$(arg ur_l_rpy)' ur_r_rpy:='$(arg ur_r_rpy)' ur_l_xyz:='$(arg ur_l_xyz)' ur_r_xyz:='$(arg ur_r_xyz)'" /> <!-- Complete robot description -->
+    <arg name="localization_type" default="mocap" /> <!-- mocap or amcl or robot_pose or odom-->
    
     <!-- Bringup the base of the mur -->
 
     <!-- TODO: disable robot_state_publisher of mir if joint states are used by other publisher. else: remap robot_description? -->
     <group ns="$(arg tf_prefix)">
         <!-- Load robot description -->
-        <param name="robot_description" command="$(find xacro)/xacro --inorder $(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift) sim:=false"/>
+        <param name="robot_description" command="$(find xacro)/xacro --inorder $(arg cmplt_robot_descr)"/>
 
         <group unless="$(eval arg('launch_mir') ==true)">
             <!-- if mir is not launched, state publisher is not launched. Therefore: -->
@@ -35,7 +40,7 @@
             <include file="$(find mur_launch_hardware)/launch/mur_base.launch"> 
                 <arg name="mir_type" value="mir_600"/>
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
-                <arg name="robot_description" value="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift) sim:=false"/>
+                <arg name="robot_description" value="$(arg cmplt_robot_descr)"/>
                 <arg name="external_localization" value="$(arg external_localization)"/>
                 <arg name="localization_type" value="$(arg localization_type)"/>
             </include>
@@ -73,6 +78,7 @@
                 <arg name="script_command_port" value="50008"/>
                 <arg name="UR_prefix" value="$(arg left_arm_group_name)/"/>
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+                <arg name="use_state_publisher" value="$(eval not arg('launch_mir'))"/> <!-- robot_state_pub is run by mir -->
             </include>
 
             <node name="$(arg left_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false">
@@ -117,6 +123,7 @@
                 <arg name="controller_config_file" value="$(find ur_launch_hardware)/config/ur10e_controllers_right.yaml"/>
                 <arg name="UR_prefix" value="$(arg right_arm_group_name)/"/>
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+                <arg name="use_state_publisher" value="$(eval not arg('launch_mir'))"/> <!-- robot_state_pub is run by mir -->
             </include> 
 
 

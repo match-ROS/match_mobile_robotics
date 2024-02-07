@@ -18,7 +18,8 @@
 	url = https://github.com/Slamtec/rplidar_ros.git
 [submodule "ur/ur_ros_driver"]
 	path = ur/ur_ros_driver
-	url = https://github.com/UniversalRobots/Universal_Robots_ROS_Driver.git
+	url = https://github.com/match-ROS/Universal_Robots_ROS_Driver.git
+	branch = master
 [submodule "mir/mir_submodules/mir_robot"]
 	path = mir/mir_submodules/mir_robot
 	url = https://github.com/match-ROS/mir_robot.git

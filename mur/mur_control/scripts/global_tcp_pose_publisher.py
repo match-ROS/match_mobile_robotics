@@ -9,13 +9,13 @@ class GlobalTCPPosePublisher():
 
     def __init__(self):
         self.rate = rospy.get_param('rate', 100.0)
-        self.UR_base_link_name = rospy.get_param('UR_base_link_name', 'mur620a/UR10_l/base_link')
+        self.UR_base_link_name = rospy.get_param('UR_base_link_name', 'mur620a/UR10_l/base_link_inertia')
         self.base_frame = rospy.get_param('base_frame', 'map')
-        self.local_TCP_pose_topic = rospy.get_param('local_TCP_pose_topic', '/mur620a/UR10_l/tcp_pose')
+        self.local_TCP_pose_topic = rospy.get_param('local_TCP_pose_topic', '/mur620a/UR10_l/ur_calibrated_pose')
 
         self.local_TCP_pose = Pose()
 
-        rospy.Subscriber(self.local_TCP_pose_topic, Pose, self.local_TCP_pose_callback)
+        rospy.Subscriber(self.local_TCP_pose_topic, PoseStamped, self.local_TCP_pose_callback)
 
     def tcp_pose_publisher(self):
         rospy.init_node('global_tcp_pose_publisher', anonymous=True)
@@ -64,7 +64,7 @@ class GlobalTCPPosePublisher():
             rate.sleep()
 
     def local_TCP_pose_callback(self, data):
-        self.local_TCP_pose = data
+        self.local_TCP_pose = data.pose
 
                 
 

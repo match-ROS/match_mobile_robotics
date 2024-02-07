@@ -8,7 +8,7 @@ class UR_enable():
     
     
     def __init__(self):
-        self.set_mode_topic = rospy.get_param('~set_mode_topic', '/UR10_r/ur_hardware_interface/set_mode')
+        self.set_mode_topic = rospy.get_param('~set_mode_topic', 'mur620a/UR10_l/ur_hardware_interface/set_mode')
     
     def main(self):
         # initialize action server to enable the robot

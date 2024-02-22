@@ -91,6 +91,10 @@
 				<param name="ur_prefix" value="$(arg prefix)_l/" />
 				<remap from="joint_states" to="/$(arg mur_ns)/joint_states" />
 			</node>
+			<node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen">
+				<param name="UR_base_link_name" value="$(arg mur_ns)/$(arg prefix)_l/base_link" />
+				<param name="local_TCP_pose_topic" value="/$(arg mur_ns)/$(arg prefix)_l/tcp_pose" />
+			</node>
 		</group>
 
 		
@@ -104,6 +108,10 @@
 			<node name="direct_kinematics_publisher" pkg="ur_controllers_match" type="direct_kinematics_publisher.py" output="screen">
 				<param name="ur_prefix" value="$(arg prefix)_r/" />
 				<remap from="joint_states" to="/$(arg mur_ns)/joint_states" />
+			</node>
+			<node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen">
+				<param name="UR_base_link_name" value="$(arg mur_ns)/$(arg prefix)_r/base_link" />
+				<param name="local_TCP_pose_topic" value="/$(arg mur_ns)/$(arg prefix)_r/tcp_pose" />
 			</node>
 		</group>
 

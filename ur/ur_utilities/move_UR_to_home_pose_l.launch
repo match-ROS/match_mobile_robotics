@@ -1,0 +1,17 @@
+<launch>
+
+
+    <arg name="UR_prefix" default="UR10_l"/>
+    <arg name="tf_prefix" default="mur620a"/>
+    <arg name="home_position" default="Home_custom"/>
+
+    <group ns="$(arg tf_prefix)">
+        <node name="move_UR_to_home_position" pkg="ur_utilities" type="move_UR_to_home_position.py" output="screen">
+            <param name="UR_prefix" value="$(arg UR_prefix)" />
+            <param name="tf_prefix" value="$(arg tf_prefix)" />
+            <param name="home_position" value="$(arg home_position)" />
+        </node>
+    </group>
+
+
+</launch>

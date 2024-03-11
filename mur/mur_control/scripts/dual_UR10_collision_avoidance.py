@@ -101,19 +101,19 @@ class Dual_arm_collision_avoidance():
                 self.joint_pose_r.position.z = T_r[2][3] + trans_r[2]
                 self.joint_pose_list_r.append(deepcopy(self.joint_pose_r))
             
-                br = tf.TransformBroadcaster()
-                br.sendTransform((self.joint_pose_l.position.x, self.joint_pose_l.position.y, self.joint_pose_l.position.z),
-                        tf.transformations.quaternion_from_euler(0, 0, 0),
-                        rospy.Time.now(),
-                        "joint"+str(i)+"_l",
-                        self.tf_prefix +'/base_link')
+                # br = tf.TransformBroadcaster()
+                # br.sendTransform((self.joint_pose_l.position.x, self.joint_pose_l.position.y, self.joint_pose_l.position.z),
+                #         tf.transformations.quaternion_from_euler(0, 0, 0),
+                #         rospy.Time.now(),
+                #         "joint"+str(i)+"_l",
+                #         self.tf_prefix +'/base_link')
 
-                br = tf.TransformBroadcaster()
-                br.sendTransform((self.joint_pose_r.position.x, self.joint_pose_r.position.y, self.joint_pose_r.position.z),
-                        tf.transformations.quaternion_from_euler(0, 0, 0),
-                        rospy.Time.now(),
-                        "joint"+str(i)+"_r",
-                        self.tf_prefix +'/base_link')
+                # br = tf.TransformBroadcaster()
+                # br.sendTransform((self.joint_pose_r.position.x, self.joint_pose_r.position.y, self.joint_pose_r.position.z),
+                #         tf.transformations.quaternion_from_euler(0, 0, 0),
+                #         rospy.Time.now(),
+                #         "joint"+str(i)+"_r",
+                #         self.tf_prefix +'/base_link')
 
             # generate link poses
             for i in range(0,2):
@@ -162,8 +162,6 @@ class Dual_arm_collision_avoidance():
                         near_collision = True
             self.collision = collision
             self.near_collision = near_collision
-            if near_collision:
-                self.slow_controllers()
 
             rate.sleep()
 
@@ -280,15 +278,6 @@ class Dual_arm_collision_avoidance():
         else:
             pass
         self.twist_command_repub_r.publish(command)
-        
-
-    def slow_controllers(self):
-        if self.latest_command_l.data != None:
-            self.latest_command_l.data = self.multipy_tupple(self.latest_command_l.data, 0.9)
-            self.jgvc_command_repub_l.publish(self.latest_command_l)
-        if self.latest_command_r.data != [0,0,0,0,0,0]:
-            self.latest_command_r.data = self.multipy_tupple(self.latest_command_r.data, 0.9) # reduce speed by 50%
-            self.jgvc_command_repub_r.publish(self.latest_command_r)
 
     def stop_controllers(self):
         stop_command = Float64MultiArray()

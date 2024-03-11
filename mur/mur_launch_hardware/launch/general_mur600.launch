@@ -57,7 +57,7 @@
     
     <!-- Bringup the left UR -->
     <group if="$(eval arg('launch_ur_l') ==true)"> 
-        <remap from="/$(arg tf_prefix)/$(arg left_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+        <!-- <remap from="/$(arg tf_prefix)/$(arg left_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/> -->
 
         <group ns= "$(arg tf_prefix)/$(arg left_arm_group_name)">
             <!-- use defined overall mur-description: -->
@@ -114,7 +114,7 @@
     <!-- Bringup the right UR -->   
     <group if="$(eval arg('launch_ur_r') ==true)">
 
-        <remap from="/$(arg tf_prefix)/$(arg right_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+        <!-- <remap from="/$(arg tf_prefix)/$(arg right_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/> -->
 
         <group ns= "$(arg tf_prefix)/$(arg right_arm_group_name)"> 
             <param name="robot_state_publisher/tf_prefix" value="$(arg tf_prefix)/$(arg right_arm_group_name)"/>  

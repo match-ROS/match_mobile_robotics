@@ -28,8 +28,8 @@
 
     <!-- limit twist commands -->
     <node name="ur_twist_limiter" type="ur_twist_limiter.py" pkg="ur_launch_hardware">
-        <param name="input_command_topic" value="/$(arg tf_prefix)/$(arg UR_prefix)twist_controller/command_safe"/>
-        <param name="output_command_topic" value="/$(arg tf_prefix)/$(arg UR_prefix)twist_controller/command"/>
+        <param name="input_command_topic" value="/$(arg tf_prefix)/$(arg UR_prefix)twist_controller/command_collision_free"/>
+        <param name="output_command_topic" value="/$(arg tf_prefix)/$(arg UR_prefix)twist_controller/controller_input"/>
         <param name="max_linear_speed" value="0.1"/>
         <param name="max_linear_acceleration" value="0.1"/>
     </node>

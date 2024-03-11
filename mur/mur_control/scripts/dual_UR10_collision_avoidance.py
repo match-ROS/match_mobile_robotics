@@ -7,6 +7,7 @@ from geometry_msgs.msg import Pose
 from copy import deepcopy
 import tf
 from std_msgs.msg import Float64MultiArray
+from geometry_msgs.msg import Twist
 
 class Dual_arm_collision_avoidance():
 
@@ -28,12 +29,27 @@ class Dual_arm_collision_avoidance():
         self.q_r = [0,0,0,0,0,0]
         self.DH_params = [[0,0,0.1807,pi/2],[0,-0.6127,0,0],[0,-0.57155,0,0],[0,0,0.17415,pi/2],[0,0,0.11985,-pi/2],[0,0,0.11655,0]]
         self.tf_listener = tf.TransformListener()
-        self.command_repub_l = rospy.Publisher(self.controller_name_l + "/unsafe/command", Float64MultiArray, queue_size=1)
-        self.command_repub_r = rospy.Publisher(self.controller_name_r + "/unsafe/command", Float64MultiArray, queue_size=1)
-        rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_l + "joint_states", JointState, self.joint_states_callback_l)
-        rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_r + "joint_states", JointState, self.joint_states_callback_r)
-        rospy.Subscriber(self.controller_name_l + "/safe/command", Float64MultiArray, self.controller_callback_l)
-        rospy.Subscriber(self.controller_name_r + "/safe/command", Float64MultiArray, self.controller_callback_r)
+        self.jgvc_command_repub_l = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_l + "joint_group_vel_controller/controller_input", Float64MultiArray, queue_size=1)
+        self.jgvc_command_repub_r = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_r + "joint_group_vel_controller/controller_input", Float64MultiArray, queue_size=1)
+
+        self.twist_command_repub_l = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_l + "twist_controller/controller_input", Twist, queue_size=1)
+        self.twist_command_repub_r = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_r + "twist_controller/controller_input", Twist, queue_size=1)
+
+        # rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_l + "joint_states", JointState, self.joint_states_callback_l)
+        # rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_r + "joint_states", JointState, self.joint_states_callback_r)
+        rospy.Subscriber(self.joint_states_topic, JointState, self.joint_states_callback)
+        # rospy.Subscriber(self.controller_name_l + "/command", Float64MultiArray, self.jgvc_controller_callback_l)
+        # rospy.Subscriber(self.controller_name_r + "/command", Float64MultiArray, self.jgvc_controller_callback_r)
+
+        # subscribe to joint_group_vel_controller/command
+        rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_l + "joint_group_vel_controller/command", Float64MultiArray, self.jgvc_controller_callback_l)
+        rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_r + "joint_group_vel_controller/command", Float64MultiArray, self.jgvc_controller_callback_r)
+        # subscribe to twist commands
+        rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_l + "twist_controller/command", Twist, self.twist_controller_callback_l)
+        rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_r + "twist_controller/command", Twist, self.twist_controller_callback_r)
+
+
+
         rospy.sleep(1)
 
         self.run()
@@ -69,8 +85,7 @@ class Dual_arm_collision_avoidance():
             self.joint_pose_list_l = []
             self.joint_pose_list_r = []
 
-
-            # compute pose of every joint
+           # compute pose of every joint
             for i in range(0,6):
                 T_l = np.dot(T_l,self.compute_DH_matrix(self.q_l[i] , self.DH_params[i][2]  
                 ,self.DH_params[i][1] , self.DH_params[i][3]))
@@ -81,24 +96,24 @@ class Dual_arm_collision_avoidance():
 
                 T_r = np.dot(T_r,self.compute_DH_matrix(self.q_r[i] , self.DH_params[i][2] 
                 ,self.DH_params[i][1] , self.DH_params[i][3]))
-                self.joint_pose_r.position.x = -T_r[0][3] + trans_r[0]
-                self.joint_pose_r.position.y = -T_r[1][3] + trans_r[1]
+                self.joint_pose_r.position.x = T_r[0][3] + trans_r[0]
+                self.joint_pose_r.position.y = T_r[1][3] + trans_r[1]
                 self.joint_pose_r.position.z = T_r[2][3] + trans_r[2]
                 self.joint_pose_list_r.append(deepcopy(self.joint_pose_r))
             
-                # br = tf.TransformBroadcaster()
-                # br.sendTransform((self.joint_pose_l.position.x, self.joint_pose_l.position.y, self.joint_pose_l.position.z),
-                #         tf.transformations.quaternion_from_euler(0, 0, 0),
-                #         rospy.Time.now(),
-                #         "joint"+str(i)+"_l",
-                #         self.tf_prefix +'/base_link')
+                br = tf.TransformBroadcaster()
+                br.sendTransform((self.joint_pose_l.position.x, self.joint_pose_l.position.y, self.joint_pose_l.position.z),
+                        tf.transformations.quaternion_from_euler(0, 0, 0),
+                        rospy.Time.now(),
+                        "joint"+str(i)+"_l",
+                        self.tf_prefix +'/base_link')
 
-                # br = tf.TransformBroadcaster()
-                # br.sendTransform((self.joint_pose_r.position.x, self.joint_pose_r.position.y, self.joint_pose_r.position.z),
-                #         tf.transformations.quaternion_from_euler(0, 0, 0),
-                #         rospy.Time.now(),
-                #         "joint"+str(i)+"_r",
-                #         self.tf_prefix +'/base_link')
+                br = tf.TransformBroadcaster()
+                br.sendTransform((self.joint_pose_r.position.x, self.joint_pose_r.position.y, self.joint_pose_r.position.z),
+                        tf.transformations.quaternion_from_euler(0, 0, 0),
+                        rospy.Time.now(),
+                        "joint"+str(i)+"_r",
+                        self.tf_prefix +'/base_link')
 
             # generate link poses
             for i in range(0,2):
@@ -119,19 +134,19 @@ class Dual_arm_collision_avoidance():
                     link_pose_r.position.z = joint0_pose_r.position.z + (joint1_pose_r.position.z - joint0_pose_r.position.z) * (idx+1) / (self.collision_objects_per_link+1)
                     self.joint_pose_list_r.append(link_pose_r)
 
-                    br = tf.TransformBroadcaster()
-                    br.sendTransform((link_pose_l.position.x, link_pose_l.position.y, link_pose_l.position.z),
-                            tf.transformations.quaternion_from_euler(0, 0, 0),
-                            rospy.Time.now(),
-                            "link"+str(i)+"_l" + str(idx),
-                            self.tf_prefix +'/base_link')
+                    # br = tf.TransformBroadcaster()
+                    # br.sendTransform((link_pose_l.position.x, link_pose_l.position.y, link_pose_l.position.z),
+                    #         tf.transformations.quaternion_from_euler(0, 0, 0),
+                    #         rospy.Time.now(),
+                    #         "link"+str(i)+"_l" + str(idx),
+                    #         self.tf_prefix +'/base_link')
 
-                    br = tf.TransformBroadcaster()
-                    br.sendTransform((link_pose_r.position.x, link_pose_r.position.y, link_pose_r.position.z),
-                            tf.transformations.quaternion_from_euler(0, 0, 0),
-                            rospy.Time.now(),
-                            "link"+str(i)+"_r" + str(idx),
-                            self.tf_prefix +'/base_link')
+                    # br = tf.TransformBroadcaster()
+                    # br.sendTransform((link_pose_r.position.x, link_pose_r.position.y, link_pose_r.position.z),
+                    #         tf.transformations.quaternion_from_euler(0, 0, 0),
+                    #         rospy.Time.now(),
+                    #         "link"+str(i)+"_r" + str(idx),
+                    #         self.tf_prefix +'/base_link')
 
             collision = False
             near_collision = False
@@ -198,7 +213,24 @@ class Dual_arm_collision_avoidance():
         for i in range(0,6):
             self.q_r[i] = JointState.position[self.joints_state_index_r[i]]
 
-    def controller_callback_l(self, command):
+    def joint_states_callback(self, JointState):
+        joint_state_prefix = JointState.name[0].split("/")[0] + "/"
+        if joint_state_prefix == self.ur_prefix_l:
+            if self.inital_run_l:
+                self.sort_joint_states_l(JointState)
+                self.inital_run_l = False
+            for i in range(0,6):
+                self.q_l[i] = JointState.position[self.joints_state_index_l[i]]
+        elif joint_state_prefix == self.ur_prefix_r:
+            if self.inital_run_r:
+                self.sort_joint_states_r(JointState)
+                self.inital_run_r = False
+            for i in range(0,6):
+                self.q_r[i] = JointState.position[self.joints_state_index_r[i]]
+        else:
+            rospy.logerr("Received joint state with unknown prefix")
+
+    def jgvc_controller_callback_l(self, command):
         self.latest_command_l = command
         if self.collision == True:
             command.data = [0,0,0,0,0,0]
@@ -206,9 +238,9 @@ class Dual_arm_collision_avoidance():
             command.data = tuple(0.5 * elem for elem in command.data) # reduce speed by 50%
         else:
             pass
-        self.command_repub_l.publish(command)
+        self.jgvc_command_repub_l.publish(command)
 
-    def controller_callback_r(self, command):
+    def jgvc_controller_callback_r(self, command):
         self.latest_command_r = command
         if self.collision == True:
             command.data = [0,0,0,0,0,0]
@@ -217,22 +249,52 @@ class Dual_arm_collision_avoidance():
                 command.data = tuple(0.5 * elem for elem in command.data) # reduce speed by 50%
         else:
             pass
-        self.command_repub_r.publish(command)
+        self.jgvc_command_repub_r.publish(command)
+
+    def twist_controller_callback_l(self, command):
+        self.latest_command_l = command
+        if self.collision == True:
+            command = Twist()
+        elif self.near_collision == True:
+            command.linear.x = 0.5 * command.linear.x
+            command.linear.y = 0.5 * command.linear.y
+            command.linear.z = 0.5 * command.linear.z
+            command.angular.x = 0.5 * command.angular.x
+            command.angular.y = 0.5 * command.angular.y
+            command.angular.z = 0.5 * command.angular.z
+        else:
+            pass
+        self.twist_command_repub_l.publish(command)
+
+    def twist_controller_callback_r(self, command):
+        self.latest_command_r = command
+        if self.collision == True:
+            command = Twist()
+        elif self.near_collision == True:
+            command.linear.x = 0.5 * command.linear.x
+            command.linear.y = 0.5 * command.linear.y
+            command.linear.z = 0.5 * command.linear.z
+            command.angular.x = 0.5 * command.angular.x
+            command.angular.y = 0.5 * command.angular.y
+            command.angular.z = 0.5 * command.angular.z
+        else:
+            pass
+        self.twist_command_repub_r.publish(command)
         
 
     def slow_controllers(self):
         if self.latest_command_l.data != None:
             self.latest_command_l.data = self.multipy_tupple(self.latest_command_l.data, 0.9)
-            self.command_repub_l.publish(self.latest_command_l)
+            self.jgvc_command_repub_l.publish(self.latest_command_l)
         if self.latest_command_r.data != [0,0,0,0,0,0]:
             self.latest_command_r.data = self.multipy_tupple(self.latest_command_r.data, 0.9) # reduce speed by 50%
-            self.command_repub_r.publish(self.latest_command_r)
+            self.jgvc_command_repub_r.publish(self.latest_command_r)
 
     def stop_controllers(self):
         stop_command = Float64MultiArray()
         stop_command.data = [0,0,0,0,0,0]
-        self.command_repub_l.publish(stop_command)
-        self.command_repub_r.publish(stop_command)
+        self.jgvc_command_repub_l.publish(stop_command)
+        self.jgvc_command_repub_r.publish(stop_command)
 
     def multipy_tupple(self, tup1, factor):
         data = list(tup1)

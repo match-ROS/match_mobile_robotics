@@ -29,6 +29,8 @@ class UR_twist_limiter():
         self.output_pub = rospy.Publisher(self.output_command_topic, Twist, queue_size=1)
         
         self.initial_run = True
+        self.last_command = Twist()
+        self.last_acc = Twist()
         
     def monitor(self):
         self.last_command_timestamp = rospy.Time.now()
@@ -40,13 +42,23 @@ class UR_twist_limiter():
         
 
     def input_callback(self,msg = Twist(), callback = True):
+
+        # on intial run set time old
+        if self.initial_run:
+            self.last_command = Twist()
+            self.time_old = rospy.Time.now()
+            self.last_acc = Twist()
+            self.initial_run = False
+            return
+
         now = rospy.Time.now()
         if callback:
             self.last_command_timestamp = now
         
         vel_scale_factor = 1.0
-        
-        # limit velocity
+        output = Twist()
+
+        # limit velocities
         if abs(msg.linear.x) > self.lin_vel_limit:
             vel_scale_factor = self.lin_vel_limit / abs(msg.linear.x)
         if abs(msg.linear.y) > self.lin_vel_limit and abs(msg.linear.y) * vel_scale_factor > self.lin_vel_limit:
@@ -59,67 +71,93 @@ class UR_twist_limiter():
             vel_scale_factor = self.angular_vel_limit / abs(msg.angular.y)
         if abs(msg.angular.z) > self.angular_vel_limit and abs(msg.angular.z) * vel_scale_factor > self.angular_vel_limit:
             vel_scale_factor = self.angular_vel_limit / abs(msg.angular.z)
-            
-        # apply velocity limit
-        msg = self.apply_vel_scale_factor(msg, vel_scale_factor)
-        vel_scale_factor = 1.0 # reset scale factor
-        
-        # on intial run set time old
-        if self.initial_run:
-            self.last_command = Twist()
-            self.time_old = rospy.Time.now()
-            self.last_acc = Twist()
-            self.initial_run = False
-            return
-        
-        # limit acceleration
-        dt = (now - self.time_old).to_sec()
-        
-        if abs(msg.linear.x - self.last_command.linear.x) / dt > self.lin_acc_limit:
-            msg.linear.x = self.last_command.linear.x + self.lin_acc_limit * dt * (msg.linear.x - self.last_command.linear.x) / abs(msg.linear.x - self.last_command.linear.x)
-        if abs(msg.linear.y - self.last_command.linear.y) / dt > self.lin_acc_limit:
-            msg.linear.y = self.last_command.linear.y + self.lin_acc_limit * dt * (msg.linear.y - self.last_command.linear.y) / abs(msg.linear.y - self.last_command.linear.y)
-        if abs(msg.linear.z - self.last_command.linear.z) / dt > self.lin_acc_limit:
-            msg.linear.z = self.last_command.linear.z + self.lin_acc_limit * dt * (msg.linear.z - self.last_command.linear.z) / abs(msg.linear.z - self.last_command.linear.z)
-        if abs(msg.angular.x - self.last_command.angular.x) / dt > self.angular_acc_limit:
-            msg.angular.x = self.last_command.angular.x + self.angular_acc_limit * dt * (msg.angular.x - self.last_command.angular.x) / abs(msg.angular.x - self.last_command.angular.x)
-        if abs(msg.angular.y - self.last_command.angular.y) / dt > self.angular_acc_limit:
-            msg.angular.y = self.last_command.angular.y + self.angular_acc_limit * dt * (msg.angular.y - self.last_command.angular.y) / abs(msg.angular.y - self.last_command.angular.y)
-        if abs(msg.angular.z - self.last_command.angular.z) / dt > self.angular_acc_limit:
-            msg.angular.z = self.last_command.angular.z + self.angular_acc_limit * dt * (msg.angular.z - self.last_command.angular.z) / abs(msg.angular.z - self.last_command.angular.z)
-        
-        # apply velocity limit
-        # msg = self.apply_vel_scale_factor(msg, vel_scale_factor)
-        # vel_scale_factor = 1.0 # reset scale factor
-        
-        # limit jerk
-        if abs(msg.linear.x - self.last_command.linear.x) / dt - self.last_acc.linear.x  > self.lin_jerk_limit:
-            msg.linear.x = self.last_command.linear.x + self.lin_jerk_limit * dt * (msg.linear.x - self.last_command.linear.x) / abs(msg.linear.x - self.last_command.linear.x) + self.last_acc.linear.x / dt * dt
-        if abs(msg.linear.y - self.last_command.linear.y) / dt - self.last_acc.linear.y  > self.lin_jerk_limit:
-            msg.linear.y = self.last_command.linear.y + self.lin_jerk_limit * dt * (msg.linear.y - self.last_command.linear.y) / abs(msg.linear.y - self.last_command.linear.y) + self.last_acc.linear.y / dt * dt
-        if abs(msg.linear.z - self.last_command.linear.z) / dt - self.last_acc.linear.z  > self.lin_jerk_limit:
-            msg.linear.z = self.last_command.linear.z + self.lin_jerk_limit * dt * (msg.linear.z - self.last_command.linear.z) / abs(msg.linear.z - self.last_command.linear.z) + self.last_acc.linear.z / dt * dt
-        if abs(msg.angular.x - self.last_command.angular.x) / dt - self.last_acc.angular.x  > self.angular_jerk_limit:
-            msg.angular.x = self.last_command.angular.x + self.angular_jerk_limit * dt * (msg.angular.x - self.last_command.angular.x) / abs(msg.angular.x - self.last_command.angular.x) + self.last_acc.angular.x / dt * dt
-        if abs(msg.angular.y - self.last_command.angular.y) / dt - self.last_acc.angular.y  > self.angular_jerk_limit:
-            msg.angular.y = self.last_command.angular.y + self.angular_jerk_limit * dt * (msg.angular.y - self.last_command.angular.y) / abs(msg.angular.y - self.last_command.angular.y) + self.last_acc.angular.y / dt * dt
-        if abs(msg.angular.z - self.last_command.angular.z) / dt - self.last_acc.angular.z  > self.angular_jerk_limit:
-            msg.angular.z = self.last_command.angular.z + self.angular_jerk_limit * dt * (msg.angular.z - self.last_command.angular.z) / abs(msg.angular.z - self.last_command.angular.z) + self.last_acc.angular.z / dt * dt
-        # apply velocity limit
-        #msg = self.apply_vel_scale_factor(msg, vel_scale_factor)
+
+        output = self.apply_vel_scale_factor(msg, vel_scale_factor)
+        acc_scale_factor = 1.0 # reset scale factor
+
+        # compute accelerations
+        acc_lin_x = (output.linear.x - self.last_command.linear.x) / (now - self.last_command_timestamp).to_sec()
+        acc_lin_y = (output.linear.y - self.last_command.linear.y) / (now - self.last_command_timestamp).to_sec()
+        acc_lin_z = (output.linear.z - self.last_command.linear.z) / (now - self.last_command_timestamp).to_sec()
+        acc_ang_x = (output.angular.x - self.last_command.angular.x) / (now - self.last_command_timestamp).to_sec()
+        acc_ang_y = (output.angular.y - self.last_command.angular.y) / (now - self.last_command_timestamp).to_sec()
+        acc_ang_z = (output.angular.z - self.last_command.angular.z) / (now - self.last_command_timestamp).to_sec()
+
+        # compute the acc scale factor based on how much the acceleration is over the limit
+        if abs(acc_lin_x) > self.lin_acc_limit:
+            acc_scale_factor = self.lin_acc_limit / abs(acc_lin_x)
+        if abs(acc_lin_y) > self.lin_acc_limit and abs(acc_lin_y) * acc_scale_factor > self.lin_acc_limit:
+            acc_scale_factor = self.lin_acc_limit / abs(acc_lin_y)
+        if abs(acc_lin_z) > self.lin_acc_limit and abs(acc_lin_z) * acc_scale_factor > self.lin_acc_limit:
+            acc_scale_factor = self.lin_acc_limit / abs(acc_lin_z)
+        if abs(acc_ang_x) > self.angular_acc_limit and abs(acc_ang_x) * acc_scale_factor > self.angular_acc_limit:
+            acc_scale_factor = self.angular_acc_limit / abs(acc_ang_x)
+        if abs(acc_ang_y) > self.angular_acc_limit and abs(acc_ang_y) * acc_scale_factor > self.angular_acc_limit:
+            acc_scale_factor = self.angular_acc_limit / abs(acc_ang_y)
+        if abs(acc_ang_z) > self.angular_acc_limit and abs(acc_ang_z) * acc_scale_factor > self.angular_acc_limit:
+            acc_scale_factor = self.angular_acc_limit / abs(acc_ang_z)
+
+        # apply acceleration limit
+        acc_lin_x = acc_lin_x * acc_scale_factor
+        acc_lin_y = acc_lin_y * acc_scale_factor
+        acc_lin_z = acc_lin_z * acc_scale_factor
+        acc_ang_x = acc_ang_x * acc_scale_factor
+        acc_ang_y = acc_ang_y * acc_scale_factor
+        acc_ang_z = acc_ang_z * acc_scale_factor
+
+        # compute jerk based on the limited acceleration
+        jerk_lin_x = acc_lin_x - self.last_acc.linear.x
+        jerk_lin_y = acc_lin_y - self.last_acc.linear.y
+        jerk_lin_z = acc_lin_z - self.last_acc.linear.z
+        jerk_ang_x = acc_ang_x - self.last_acc.angular.x
+        jerk_ang_y = acc_ang_y - self.last_acc.angular.y
+        jerk_ang_z = acc_ang_z - self.last_acc.angular.z
+
+
+        # compute the jerk scale factor based on how much the jerk is over the limit
+        jerk_scale_factor = 1.0
+        if abs(jerk_lin_x) > self.lin_jerk_limit:
+            jerk_scale_factor = self.lin_jerk_limit / abs(jerk_lin_x)
+        if abs(jerk_lin_y) > self.lin_jerk_limit and abs(jerk_lin_y) * jerk_scale_factor > self.lin_jerk_limit:
+            jerk_scale_factor = self.lin_jerk_limit / abs(jerk_lin_y)
+        if abs(jerk_lin_z) > self.lin_jerk_limit and abs(jerk_lin_z) * jerk_scale_factor > self.lin_jerk_limit:
+            jerk_scale_factor = self.lin_jerk_limit / abs(jerk_lin_z)
+        if abs(jerk_ang_x) > self.angular_jerk_limit and abs(jerk_ang_x) * jerk_scale_factor > self.angular_jerk_limit:
+            jerk_scale_factor = self.angular_jerk_limit / abs(jerk_ang_x)
+        if abs(jerk_ang_y) > self.angular_jerk_limit and abs(jerk_ang_y) * jerk_scale_factor > self.angular_jerk_limit:
+            jerk_scale_factor = self.angular_jerk_limit / abs(jerk_ang_y)
+        if abs(jerk_ang_z) > self.angular_jerk_limit and abs(jerk_ang_z) * jerk_scale_factor > self.angular_jerk_limit:
+            jerk_scale_factor = self.angular_jerk_limit / abs(jerk_ang_z)
+
+        # apply jerk limit
+        acc_lin_x = self.last_acc.linear.x + jerk_scale_factor * jerk_lin_x
+        acc_lin_y = self.last_acc.linear.y + jerk_scale_factor * jerk_lin_y
+        acc_lin_z = self.last_acc.linear.z + jerk_scale_factor * jerk_lin_z
+        acc_ang_x = self.last_acc.angular.x + jerk_scale_factor * jerk_ang_x
+        acc_ang_y = self.last_acc.angular.y + jerk_scale_factor * jerk_ang_y
+        acc_ang_z = self.last_acc.angular.z + jerk_scale_factor * jerk_ang_z
+
+        # compute the new velocities
+        output.linear.x = self.last_command.linear.x + acc_lin_x
+        output.linear.y = self.last_command.linear.y + acc_lin_y
+        output.linear.z = self.last_command.linear.z + acc_lin_z
+        output.angular.x = self.last_command.angular.x + acc_ang_x
+        output.angular.y = self.last_command.angular.y + acc_ang_y
+        output.angular.z = self.last_command.angular.z + acc_ang_z
+
+        # update old values
+        self.last_command = output
+        self.last_acc.linear.x = acc_lin_x
+        self.last_acc.linear.y = acc_lin_y
+        self.last_acc.linear.z = acc_lin_z
+        self.last_acc.angular.x = acc_ang_x
+        self.last_acc.angular.y = acc_ang_y
+        self.last_acc.angular.z = acc_ang_z
 
         # republish message
         self.output_pub.publish(msg)
 
-        # update last timestamp and command
-        self.time_old = now
-        self.last_command = msg
-        self.last_acc.linear.x = (msg.linear.x - self.last_command.linear.x) / dt
-        self.last_acc.linear.y = (msg.linear.y - self.last_command.linear.y) / dt
-        self.last_acc.linear.z = (msg.linear.z - self.last_command.linear.z) / dt
-        self.last_acc.angular.x = (msg.angular.x - self.last_command.angular.x) / dt
-        self.last_acc.angular.y = (msg.angular.y - self.last_command.angular.y) / dt
-        self.last_acc.angular.z = (msg.angular.z - self.last_command.angular.z) / dt
+
     
     
     

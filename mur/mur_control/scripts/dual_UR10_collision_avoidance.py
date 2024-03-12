@@ -32,8 +32,8 @@ class Dual_arm_collision_avoidance():
         self.jgvc_command_repub_l = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_l + "joint_group_vel_controller/controller_input", Float64MultiArray, queue_size=1)
         self.jgvc_command_repub_r = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_r + "joint_group_vel_controller/controller_input", Float64MultiArray, queue_size=1)
 
-        self.twist_command_repub_l = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_l + "twist_controller/controller_input", Twist, queue_size=1)
-        self.twist_command_repub_r = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_r + "twist_controller/controller_input", Twist, queue_size=1)
+        self.twist_command_repub_l = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_l + "twist_controller/command_collision_free", Twist, queue_size=1)
+        self.twist_command_repub_r = rospy.Publisher("/" + self.tf_prefix + "/" + self.ur_prefix_r + "twist_controller/command_collision_free", Twist, queue_size=1)
 
         # rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_l + "joint_states", JointState, self.joint_states_callback_l)
         # rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_r + "joint_states", JointState, self.joint_states_callback_r)
@@ -48,7 +48,7 @@ class Dual_arm_collision_avoidance():
         rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_l + "twist_controller/command", Twist, self.twist_controller_callback_l)
         rospy.Subscriber("/" + self.tf_prefix + "/" + self.ur_prefix_r + "twist_controller/command", Twist, self.twist_controller_callback_r)
 
-
+        rospy.loginfo("Dual arm collision avoidance node started")
 
         rospy.sleep(1)
 

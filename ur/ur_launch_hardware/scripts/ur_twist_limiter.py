@@ -4,6 +4,7 @@ import rospy
 
 from geometry_msgs.msg import Twist
 from ddynamic_reconfigure_python.ddynamic_reconfigure import DDynamicReconfigure
+from copy import deepcopy
 
 
 class UR_twist_limiter():
@@ -31,6 +32,7 @@ class UR_twist_limiter():
         self.initial_run = True
         self.last_command = Twist()
         self.last_acc = Twist()
+        self.time_old = rospy.Time.now()
         
     def monitor(self):
         self.last_command_timestamp = rospy.Time.now()
@@ -76,12 +78,12 @@ class UR_twist_limiter():
         acc_scale_factor = 1.0 # reset scale factor
 
         # compute accelerations
-        acc_lin_x = (output.linear.x - self.last_command.linear.x) / (now - self.last_command_timestamp).to_sec()
-        acc_lin_y = (output.linear.y - self.last_command.linear.y) / (now - self.last_command_timestamp).to_sec()
-        acc_lin_z = (output.linear.z - self.last_command.linear.z) / (now - self.last_command_timestamp).to_sec()
-        acc_ang_x = (output.angular.x - self.last_command.angular.x) / (now - self.last_command_timestamp).to_sec()
-        acc_ang_y = (output.angular.y - self.last_command.angular.y) / (now - self.last_command_timestamp).to_sec()
-        acc_ang_z = (output.angular.z - self.last_command.angular.z) / (now - self.last_command_timestamp).to_sec()
+        acc_lin_x = (output.linear.x - self.last_command.linear.x)
+        acc_lin_y = (output.linear.y - self.last_command.linear.y) 
+        acc_lin_z = (output.linear.z - self.last_command.linear.z) 
+        acc_ang_x = (output.angular.x - self.last_command.angular.x) 
+        acc_ang_y = (output.angular.y - self.last_command.angular.y)
+        acc_ang_z = (output.angular.z - self.last_command.angular.z) 
 
         # compute the acc scale factor based on how much the acceleration is over the limit
         if abs(acc_lin_x) > self.lin_acc_limit:
@@ -112,7 +114,6 @@ class UR_twist_limiter():
         jerk_ang_x = acc_ang_x - self.last_acc.angular.x
         jerk_ang_y = acc_ang_y - self.last_acc.angular.y
         jerk_ang_z = acc_ang_z - self.last_acc.angular.z
-
 
         # compute the jerk scale factor based on how much the jerk is over the limit
         jerk_scale_factor = 1.0
@@ -145,8 +146,9 @@ class UR_twist_limiter():
         output.angular.y = self.last_command.angular.y + acc_ang_y
         output.angular.z = self.last_command.angular.z + acc_ang_z
 
-        # update old values
-        self.last_command = output
+        # update old valueslast_command
+        self.last_command = deepcopy(output)
+        self.time_old = now
         self.last_acc.linear.x = acc_lin_x
         self.last_acc.linear.y = acc_lin_y
         self.last_acc.linear.z = acc_lin_z
@@ -155,8 +157,7 @@ class UR_twist_limiter():
         self.last_acc.angular.z = acc_ang_z
 
         # republish message
-        self.output_pub.publish(msg)
-
+        self.output_pub.publish(output)
 
     
     
@@ -172,11 +173,11 @@ class UR_twist_limiter():
         
     def dyn_rec_callback(self,config, level):
         self.lin_vel_limit = config["lin_vel_limit"]
-        self.angular_vel_limit = config["angular_vel_limit"]
-        self.lin_acc_limit = config["lin_acc_limit"]
-        self.angular_acc_limit = config["angular_acc_limit"]
-        self.angular_jerk_limit = config["angular_jerk_limit"]
-        self.lin_jerk_limit = config["lin_jerk_limit"]
+        self.angular_vel_limit = config["angular_vel_limit"] 
+        self.lin_acc_limit = config["lin_acc_limit"] / 1000.0
+        self.angular_acc_limit = config["angular_acc_limit"] / 1000.0
+        self.angular_jerk_limit = config["angular_jerk_limit"] / 1000.0
+        self.lin_jerk_limit = config["lin_jerk_limit"] / 1000.0
         self.command_timeout = config["command_timeout"]
         
         return config
@@ -188,10 +189,10 @@ class UR_twist_limiter():
         # Add variables (name, description, default value, min, max, edit_method)
         ddynrec.add_variable("lin_vel_limit", "float/double variable", 0.15, 0, 0.3)
         ddynrec.add_variable("angular_vel_limit", "float/double variable", 0.2, 0, 0.6)
-        ddynrec.add_variable("lin_acc_limit", "float/double variable", 0.6, 0, 2.0)
-        ddynrec.add_variable("angular_acc_limit", "float/double variable", 0.05, 0, 0.5)
-        ddynrec.add_variable("lin_jerk_limit", "float/double variable", 0.15, 0, 0.4)
-        ddynrec.add_variable("angular_jerk_limit", "float/double variable", 0.05, 0, 0.1)
+        ddynrec.add_variable("lin_acc_limit", "float/double variable", 4.0, 0, 10.0)
+        ddynrec.add_variable("angular_acc_limit", "float/double variable", 4.0, 0, 10.0)
+        ddynrec.add_variable("lin_jerk_limit", "float/double variable", 0.8, 0, 2.0)
+        ddynrec.add_variable("angular_jerk_limit", "float/double variable", 0.8, 0, 2.0)
         ddynrec.add_variable("command_timeout", "float/double variable", 0.05, 0, 0.5)
 
         # Start the server

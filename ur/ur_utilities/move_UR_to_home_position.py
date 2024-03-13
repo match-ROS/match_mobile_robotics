@@ -19,6 +19,7 @@ class MoveURToHomePosition():
         # Initialize ROS node
         rospy.init_node('controller_manager_example')
         self.config()
+        self.initial_controller = None
 
     def main(self):
 
@@ -46,7 +47,10 @@ class MoveURToHomePosition():
         switch_controller = rospy.ServiceProxy("/" + self.tf_prefix + "/" + self.UR_prefix +  '/controller_manager/switch_controller', SwitchController)
         request = SwitchControllerRequest()
         request.start_controllers = ['arm_controller']
-        request.stop_controllers = [self.initial_controller]
+        if self.initial_controller is None:
+            request.stop_controllers = []
+        else:
+            request.stop_controllers = [self.initial_controller]
         request.strictness = 2
         response = switch_controller(request)
 
@@ -59,13 +63,18 @@ class MoveURToHomePosition():
 
         # move to the first known pose
         group.set_named_target(self.home_position)
+        # reduce velocity 
+        group.set_max_velocity_scaling_factor(0.1)
         group.go()
 
-        # switch back to the initial controller
-        request.start_controllers = [self.initial_controller]
-        request.stop_controllers = ['arm_controller']
-        response = switch_controller(request)
-        print("Switch controller response:", response)
+        if self.initial_controller is None:
+            pass
+        else:
+            # switch back to the initial controller
+            request.start_controllers = [self.initial_controller]
+            request.stop_controllers = ['arm_controller']
+            response = switch_controller(request)
+            print("Switch controller response:", response)
         
  
 

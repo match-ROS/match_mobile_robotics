@@ -13,6 +13,7 @@ class MoveURToHomePosition():
         self.default_controllers = rospy.get_param('~default_controller', ['joint_state_controller', 'force_torque_sensor_controller', 'gripper_controller'])
         self.tf_prefix = rospy.get_param('~tf_prefix', 'mur620a')
         self.UR_prefix = rospy.get_param('~UR_prefix', 'UR10_l')
+        self.move_group_name = rospy.get_param('~move_group_name', 'UR_arm_l')
         self.home_position = rospy.get_param('~home_position', 'Home_custom')
 
     def __init__(self):
@@ -59,7 +60,7 @@ class MoveURToHomePosition():
         # Initialize moveit commander
         moveit_commander.roscpp_initialize(sys.argv)
         #robot = moveit_commander.RobotCommander()
-        group = moveit_commander.MoveGroupCommander("UR_arm_l")
+        group = moveit_commander.MoveGroupCommander(self.move_group_name)
 
         # move to the first known pose
         group.set_named_target(self.home_position)

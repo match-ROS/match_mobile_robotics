@@ -1,10 +1,11 @@
 <launch>
 
 
-    <arg name="UR_prefix" default="UR10_l"/>
+    <arg name="UR_prefix" default="UR10_r"/>
     <arg name="tf_prefix" default="mur620a"/>
     <arg name="home_position" default="Home_custom"/>
-    <arg name="move_group_name" default="UR_arm_l"/>
+    <arg name="move_group_name" default="UR_arm_r"/>
+
 
     <group ns="$(arg tf_prefix)">
         <node name="move_UR_to_home_position" pkg="ur_utilities" type="move_UR_to_home_position.py" output="screen">

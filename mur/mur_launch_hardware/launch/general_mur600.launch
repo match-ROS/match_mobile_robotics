@@ -104,7 +104,7 @@
             <!-- global pose publisher -->
             <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
                 <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link_inertia" />
-                <param name="local_TCP_pose_topic" value="$(arg tf_prefix)/$(arg left_arm_group_name)/ur_calibrated_pose" />
+                <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
             </node>
 
 
@@ -142,7 +142,7 @@
             <!-- global pose publisher -->
             <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
                 <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base_link_inertia" />
-                <param name="local_TCP_pose_topic" value="$(arg tf_prefix)/$(arg right_arm_group_name)/ur_calibrated_pose" />
+                <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
             </node>
 
              <!-- Lift module -->

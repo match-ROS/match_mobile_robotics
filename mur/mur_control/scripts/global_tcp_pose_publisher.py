@@ -8,6 +8,7 @@ from tf.transformations import quaternion_from_euler
 class GlobalTCPPosePublisher():
 
     def __init__(self):
+        rospy.init_node('global_tcp_pose_publisher', anonymous=True)
         self.rate = rospy.get_param('rate', 100.0)
         self.UR_base_link_name = rospy.get_param('~UR_base_link_name', 'mur620a/UR10_l/base_link_inertia')
         self.base_frame = rospy.get_param('~base_frame', 'map')
@@ -18,7 +19,7 @@ class GlobalTCPPosePublisher():
         rospy.Subscriber(self.local_TCP_pose_topic, PoseStamped, self.local_TCP_pose_callback)
 
     def tcp_pose_publisher(self):
-        rospy.init_node('global_tcp_pose_publisher', anonymous=True)
+        
         
         tf_listener = tf.TransformListener()    
         

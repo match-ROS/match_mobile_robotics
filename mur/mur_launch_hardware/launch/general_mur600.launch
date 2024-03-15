@@ -145,6 +145,16 @@
                 <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
             </node>
 
+            <!-- if both arms are launched, turn on dual arm collision avoidance -->
+            <group if="$(eval arg('launch_ur_l') ==true)">
+                <include file="$(find mur_control)/launch/dual_UR10_collision_avoidance.launch">
+                    <arg name="ur_prefix_l" value="$(arg left_arm_group_name)/"/>
+                    <arg name="ur_prefix_r" value="$(arg right_arm_group_name)/"/>
+                    <arg name="tf_prefix" value="$(arg tf_prefix)"/>
+                    <arg name="joint_states_topic" value="/$(arg tf_prefix)/joint_states"/>
+                </include>
+            </group>
+
              <!-- Lift module -->
             <group if="$(eval arg('use_lift') ==true)"> 
                 <remap from="ewellix_tlt_node_r/joint_states" to="/$(arg tf_prefix)/joint_states"/>

@@ -225,8 +225,10 @@ class Dual_arm_collision_avoidance():
                 self.inital_run_r = False
             for i in range(0,6):
                 self.q_r[i] = JointState.position[self.joints_state_index_r[i]]
-        else:
-            rospy.logerr("Received joint state with unknown prefix")
+        # elif joint_state_prefix == self.tf_prefix:
+        #     pass
+        # else:
+        #     rospy.logerr("Received joint state with unknown prefix " + joint_state_prefix)
 
     def jgvc_controller_callback_l(self, command):
         self.latest_command_l = command

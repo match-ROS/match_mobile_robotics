@@ -82,8 +82,8 @@
                 <arg name="use_state_publisher" value="$(eval not arg('launch_mir'))"/> <!-- robot_state_pub is run by mir -->
             </include>
 
-            <node name="$(arg left_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false">
-                <param name="set_mode_topic" value="/$(arg tf_prefix)/$(arg left_arm_group_name)/ur_hardware_interface/set_mode" />
+            <node name="$(arg left_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false" >
+                <param name="ur_hardware_interface_topic" value="/$(arg tf_prefix)/$(arg left_arm_group_name)/ur_hardware_interface" />
             </node>
 
             <!-- Lift module -->
@@ -136,7 +136,7 @@
 
 
             <node name="$(arg right_arm_group_name)_enable" pkg="ur_utilities" type="UR_enable.py" output="screen" respawn="false" >
-                <param name="set_mode_topic" value="/$(arg tf_prefix)/$(arg right_arm_group_name)/ur_hardware_interface/set_mode" />
+                <param name="ur_hardware_interface_topic" value="/$(arg tf_prefix)/$(arg right_arm_group_name)/ur_hardware_interface" />
             </node>
 
             <!-- global pose publisher -->

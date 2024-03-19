@@ -76,7 +76,7 @@
                 <arg name="reverse_port" value="50005"/>
                 <arg name="script_sender_port" value="50006"/>
                 <arg name="trajectory_port" value="50007"/>
-                <arg name="script_command_port" value="50008"/>
+                <arg name="script_command_port" value="50009"/>
                 <arg name="UR_prefix" value="$(arg left_arm_group_name)/"/>
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
                 <arg name="use_state_publisher" value="$(eval not arg('launch_mir'))"/> <!-- robot_state_pub is run by mir -->
@@ -148,8 +148,8 @@
             <!-- if both arms are launched, turn on dual arm collision avoidance -->
             <group if="$(eval arg('launch_ur_l') ==true)">
                 <include file="$(find mur_control)/launch/dual_UR10_collision_avoidance.launch">
-                    <arg name="ur_prefix_l" value="$(arg left_arm_group_name)/"/>
-                    <arg name="ur_prefix_r" value="$(arg right_arm_group_name)/"/>
+                    <!-- <arg name="ur_prefix_l" value="$(arg left_arm_group_name)/"/>
+                    <arg name="ur_prefix_r" value="$(arg right_arm_group_name)/"/> -->
                     <arg name="tf_prefix" value="$(arg tf_prefix)"/>
                     <arg name="joint_states_topic" value="/$(arg tf_prefix)/joint_states"/>
                 </include>

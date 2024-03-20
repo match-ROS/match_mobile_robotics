@@ -5,7 +5,7 @@
     if no argument is passed, moveit_simple_controller_manager will be set -->
   <arg name="moveit_controller_manager" default="moveit_simple_controller_manager/MoveItSimpleControllerManager" />
   <param name="moveit_controller_manager" value="$(arg moveit_controller_manager)"/>
-  <param name="use_controller_manager" value="false"/>
+  <param name="use_controller_manager" value="true"/>
   <param name="trajectory_execution/execution_duration_monitoring" value="false"/>
   <rosparam file="$(find mur_moveit_config)/config/controllers620.yaml" subst_value="true"/>
   <rosparam file="$(find mur_control)/config/mur620e_controllers.yaml" subst_value="true"/>

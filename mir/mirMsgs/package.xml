@@ -1,0 +1,26 @@
+<package>
+  <name>mirMsgs</name>
+  <maintainer email="robomind@robomind.com">robomind</maintainer>
+  <version>1.0.0</version>
+  <description>
+     mirMsgs
+  </description>
+  <author>robomind</author>
+  <license>BSD</license>
+  <url>http://ros.org/wiki/mirMsgs</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>mir_hook_shared_interface</build_depend>
+
+  <run_depend>geometry_msgs</run_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>mir_hook_shared_interface</run_depend>
+
+</package>
+
+

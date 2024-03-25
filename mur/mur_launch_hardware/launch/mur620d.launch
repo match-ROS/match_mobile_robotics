@@ -11,6 +11,12 @@
     <arg name="right_arm_group_name" default="UR10_r"/>
     <arg name="external_localization" default="false"/>
     <arg name="localization_type" default="robot_pose" /> <!-- mocap or amcl or robot_pose or odom-->
+
+    <!-- ur base calibration -->
+    <arg name="ur_l_xyz" default="-0.016336416303694423 -0.005028832374393943 0.0"/>
+    <arg name="ur_l_rpy" default="0.0 0.0 -0.23640963340626803"/>
+    <arg name="ur_r_xyz" default="-0.014413717596175157 0.001884619443986657 0"/>
+    <arg name="ur_r_rpy" default="0.0 0.0 2.908743319735608"/>
    
     <include file="$(find mur_launch_hardware)/launch/general_mur600.launch">
         <arg name="launch_mir" value="$(arg launch_mir)"/>
@@ -27,6 +33,10 @@
         <arg name="kinematic_config_l" value="$(find ur_launch_hardware)/calibration/calibration_UR10_18.yaml"/>
         <arg name="kinematic_config_r" value="$(find ur_launch_hardware)/calibration/calibration_UR10_12.yaml"/>
         <arg name="localization_type" value="$(arg localization_type)"/>
+        <arg name="ur_l_xyz" value="$(arg ur_l_xyz)"/>
+        <arg name="ur_l_rpy" value="$(arg ur_l_rpy)"/>
+        <arg name="ur_r_xyz" value="$(arg ur_r_xyz)"/>
+        <arg name="ur_r_rpy" value="$(arg ur_r_rpy)"/>
     </include> 
 
 

@@ -12,9 +12,9 @@ class UR_calibrate_base_pose:
 
     def config(self):
         self.ur_base_link = rospy.get_param('~ur_base_link', 'UR10')
-        self.mir_base_link = rospy.get_param('~mir_base_link', 'mur620d')
+        self.mir_base_link = rospy.get_param('~mir_base_link', 'mur620a')
         self.num_samples = rospy.get_param('~num_samples', 100)
-        self.ur_default_pose = rospy.get_param('~ur_default_pose', [0.549, -0.318, -0.49, 0.0, 0.0, 0.0])
+        self.ur_default_pose = rospy.get_param('~ur_default_pose', [0.549, 0.318, -0.49, 0.0, 0.0, 0.0])
 
     def __init__(self):
         rospy.init_node('UR_calibrate_base_pose')

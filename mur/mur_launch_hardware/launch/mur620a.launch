@@ -12,6 +12,12 @@
     <arg name="external_localization" default="false"/>
     <arg name="localization_type" default="robot_pose" />
    
+    <!-- ur base calibration -->
+    <arg name="ur_l_xyz" default="-0.007900118242505472 -0.0028563536871674122 0.0"/>
+    <arg name="ur_l_rpy" default="0.0 0.0 0.006501019574732006"/>
+    <arg name="ur_r_xyz" default="-0.011620549670083302 0.0007995423928620626 0"/>
+    <arg name="ur_r_rpy" default="0.0 0.0 3.1171118645045235"/>
+
     <include file="$(find mur_launch_hardware)/launch/general_mur600.launch">
         <arg name="launch_mir" value="$(arg launch_mir)"/>
         <arg name="launch_ur_l" value="$(arg launch_ur_l)"/>

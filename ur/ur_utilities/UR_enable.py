@@ -9,7 +9,7 @@ class UR_enable():
     
     
     def __init__(self):
-        self.ur_hardware_interface_topic = rospy.get_param('~ur_hardware_interface_topic', 'mur620b/UR10_r/ur_hardware_interface')
+        self.ur_hardware_interface_topic = rospy.get_param('~ur_hardware_interface_topic', 'mur620a/UR10_l/ur_hardware_interface')
     
     def main(self):
         rospy.init_node('UR_enable')

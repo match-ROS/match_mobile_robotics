@@ -15,7 +15,7 @@
     <!-- ur base calibration -->
     <arg name="ur_l_xyz" default="-0.016336416303694423 -0.005028832374393943 0.0"/>
     <arg name="ur_l_rpy" default="0.0 0.0 -0.23640963340626803"/>
-    <arg name="ur_r_xyz" default="-0.014413717596175157 0.001884619443986657 0"/>
+    <arg name="ur_r_xyz" default="-0.014413717596175157 0.001884619443986657 0.0"/>
     <arg name="ur_r_rpy" default="0.0 0.0 2.908743319735608"/>
    
     <include file="$(find mur_launch_hardware)/launch/general_mur600.launch">

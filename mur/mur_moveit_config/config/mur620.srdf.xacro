@@ -131,7 +131,7 @@
         <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
     </group_state>
 
-    <group_state name="handling_position" group="UR_arm_l">
+    <group_state name="handling_position_wide" group="UR_arm_l">
         <joint name="$(arg prefix)_l/elbow_joint" value="1.57079632679 "/>
         <joint name="$(arg prefix)_l/shoulder_lift_joint" value="-1.57079632679 "/>
         <joint name="$(arg prefix)_l/shoulder_pan_joint" value="-0.0"/>
@@ -139,10 +139,61 @@
         <joint name="$(arg prefix)_l/wrist_2_joint" value="-1.57079632679 "/>
         <joint name="$(arg prefix)_l/wrist_3_joint" value="0"/>
     </group_state>
-    <group_state name="handling_position" group="UR_arm_r">
+    <group_state name="handling_position_wide" group="UR_arm_r">
         <joint name="$(arg prefix)_r/elbow_joint" value="-1.57079632679"/>
         <joint name="$(arg prefix)_r/shoulder_lift_joint" value="-1.57079632679"/>
         <joint name="$(arg prefix)_r/shoulder_pan_joint" value="-0.0"/>
+        <joint name="$(arg prefix)_r/wrist_1_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint" value="1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
+    </group_state>
+
+    <group_state name="handling_position_narrow" group="UR_arm_l">
+        <joint name="$(arg prefix)_l/elbow_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint" value="3.14159265359 "/>
+        <joint name="$(arg prefix)_l/wrist_1_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/wrist_2_joint" value="1.57079632679 "/>
+        <joint name="$(arg prefix)_l/wrist_3_joint" value="0"/>
+    </group_state>
+    <group_state name="handling_position_narrow" group="UR_arm_r">
+        <joint name="$(arg prefix)_r/elbow_joint" value="1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint" value="3.14159265359 "/>
+        <joint name="$(arg prefix)_r/wrist_1_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
+    </group_state>
+
+    <group_state name="handling_position_narrow_lift" group="UR_arm_l">
+        <joint name="$(arg prefix)_l/elbow_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint" value="3.378002286996061"/>
+        <joint name="$(arg prefix)_l/wrist_1_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/wrist_2_joint" value="1.57079632679 "/>
+        <joint name="$(arg prefix)_l/wrist_3_joint" value="0"/>
+    </group_state>
+    <group_state name="handling_position_narrow_lift" group="UR_arm_r">
+        <joint name="$(arg prefix)_r/elbow_joint" value="1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint" value="3.378002286996061 "/>
+        <joint name="$(arg prefix)_r/wrist_1_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
+    </group_state>
+
+    <group_state name="handling_position_wide_lift" group="UR_arm_l">
+        <joint name="$(arg prefix)_l/elbow_joint" value="1.57079632679 "/>
+        <joint name="$(arg prefix)_l/shoulder_lift_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/shoulder_pan_joint" value="0.23640963340626803"/>
+        <joint name="$(arg prefix)_l/wrist_1_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/wrist_2_joint" value="-1.57079632679 "/>
+        <joint name="$(arg prefix)_l/wrist_3_joint" value="0"/>
+    </group_state>
+    <group_state name="handling_position_wide_lift" group="UR_arm_r">
+        <joint name="$(arg prefix)_r/elbow_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint" value="0.23640963340626803"/>
         <joint name="$(arg prefix)_r/wrist_1_joint" value="-1.57079632679"/>
         <joint name="$(arg prefix)_r/wrist_2_joint" value="1.57079632679"/>
         <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>

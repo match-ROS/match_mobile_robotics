@@ -1,0 +1,18 @@
+<launch>
+
+    <arg name="robot_name"  default="mur620a"/>
+    <arg name="group_vel_controller_topic" default="/$(arg robot_name)/joint_group_vel_controller_r/unsafe/command"/>
+    <arg name="commanded_twist_topic" default="/$(arg robot_name)/UR10_r/commanded_twist"/>
+    <arg name="move_group_name" default="UR_arm_r"/>
+
+    <group ns="$(arg robot_name)">
+
+        <node name="twist_controller_sim_$(arg robot_name)_$(arg move_group_name)" pkg="mur_control" type="twist_controller_sim.py" output="screen">
+            <param name="robot_name" value="$(arg robot_name)" />
+            <param name="group_vel_controller_topic" value="$(arg group_vel_controller_topic)" />
+            <param name="commanded_twist_topic" value="$(arg commanded_twist_topic)" />
+            <param name="move_group_name" value="$(arg move_group_name)" />  
+        </node>
+    </group>
+
+</launch>

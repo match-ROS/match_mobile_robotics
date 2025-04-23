@@ -8,13 +8,14 @@
     <arg name="robot2_name"  default="mur620b"/>
     <arg name="robot3_name"  default="mur620c"/>
     <arg name="robot4_name"  default="mur620d"/>
+    <arg name="robot5_name"  default="VRM"/>
     <arg name="node_start_delay" default="5.0" doc="used to delay nodes that should not start right away"/>
 
     
     <!-- spawn robots   -->
 
     <include file="$(find mur_launch_sim)/launch/mur_620.launch">
-        <arg name="robot_x"     default="-2.3" />
+        <arg name="robot_x"     default="-2.0" />
         <arg name="robot_y"     default="-1.0" />
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot1_name)" />       
@@ -22,24 +23,31 @@
 
       
     <include file="$(find mur_launch_sim)/launch/mur_620.launch">
-        <arg name="robot_x"     default="-2.3" />
+        <arg name="robot_x"     default="-2.0" />
         <arg name="robot_y"     default="1.0" />
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot2_name)" />       
     </include> 
     
     <include file="$(find mur_launch_sim)/launch/mur_620.launch">
-        <arg name="robot_x"     default="2.3" />
+        <arg name="robot_x"     default="2.0" />
         <arg name="robot_y"     default="-1.0" />
         <arg name="robot_yaw"   default="3.14159265359 " /> 
         <arg name="tf_prefix"   default="$(arg robot3_name)" />       
     </include>
 
     <include file="$(find mur_launch_sim)/launch/mur_620.launch">
-        <arg name="robot_x"     default="2.3" />
+        <arg name="robot_x"     default="2.0" />
         <arg name="robot_y"     default="1.0" />
         <arg name="robot_yaw"   default="3.14159265359 " /> 
         <arg name="tf_prefix"   default="$(arg robot4_name)" />       
+    </include>
+
+    <include file="$(find mur_launch_sim)/launch/mur_620.launch">
+        <arg name="robot_x"     default="10.0" />
+        <arg name="robot_y"     default="0" />
+        <arg name="robot_yaw"   default="0.0 " /> 
+        <arg name="tf_prefix"   default="$(arg robot5_name)" />       
     </include>
     
     <!-- launch virtual object -->

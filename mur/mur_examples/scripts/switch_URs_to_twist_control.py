@@ -4,7 +4,7 @@ from controller_manager_msgs.srv import SwitchController, SwitchControllerReques
 
 print('Switching URs to twist control')
 # List of robot names
-robot_names = rospy.get_param('~robot_names', ['mur620a', 'mur620b', 'mur620c', 'mur620d'])
+robot_names = rospy.get_param('~robot_names', ['mur620a', 'mur620b', 'mur620c', 'mur620d','VRM'])
 UR_prefix = rospy.get_param('~UR_prefix', ['UR10_l', 'UR10_r'])
 rospy.init_node('switch_URs_to_twist_control')
 

@@ -179,3 +179,6 @@ my_admittance_controller:
   manipulator_frame: "mur620a/UR10_l/tool0"
   wrench_topic: "/mur620a/UR10_l/wrench"
   admittance: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
+  mir_pose_topic: "/mur620a/mir_pose_stamped_simple"
+  position_error_gain: [0.5, 0.5, 0.5, 0.4, 0.4, 0.4]
+  manipulator_cmd_topic: "/mur620a/UR10_l/twist_controller/command_safe"

@@ -177,3 +177,5 @@ my_admittance_controller:
   object_pose_topic: "/virtual_object/object_pose"
   object_vel_topic: "/virtual_object/object_vel"
   manipulator_frame: "mur620a/UR10_l/tool0"
+  wrench_topic: "/mur620a/UR10_l/wrench"
+  admittance: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]

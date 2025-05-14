@@ -163,3 +163,17 @@ $(arg prefix)_r/lift_controller:
   stop_trajectory_duration: 0.5
   state_publish_rate:  25
   action_monitor_rate: 10
+
+my_admittance_controller:
+  type: "my_admittance_controller/AdmittanceController"
+  joints:
+    - $(arg prefix)_l/shoulder_pan_joint
+    - $(arg prefix)_l/shoulder_lift_joint
+    - $(arg prefix)_l/elbow_joint
+    - $(arg prefix)_l/wrist_1_joint
+    - $(arg prefix)_l/wrist_2_joint
+    - $(arg prefix)_l/wrist_3_joint
+  relative_pose: [0.0, 0.5, 0.0, 0.0, 0.0, 0.0]
+  object_pose_topic: "/virtual_object/object_pose"
+  object_vel_topic: "/virtual_object/object_vel"
+  manipulator_frame: "mur620a/UR10_l/tool0"

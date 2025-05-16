@@ -13,6 +13,10 @@ class Direct_kinematics_publisher():
         # Initialize the node
         rospy.init_node('direct_kinematics_publisher', anonymous=True)
         self.load_params()
+        # get current namespace
+        self.ns = rospy.get_namespace()
+        self.ns = self.ns[1:]
+
         self.joint_names = ['shoulder_pan_joint', 'shoulder_lift_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
         self.DH_params = [[0,0,0.1807,pi/2],[0,-0.6127,0,0],[0,-0.57155,0,0],[0,0,0.17415,pi/2],[0,0,0.11985,-pi/2],[0,0,0.11655,0]]
         self.q = [0,0,0,0,0,0]
@@ -39,7 +43,7 @@ class Direct_kinematics_publisher():
         self.tcp_pose.pose.orientation.z = q[2]
         self.tcp_pose.pose.orientation.w = q[3]
         self.tcp_pose.header.stamp = rospy.Time.now()
-        self.tcp_pose.header.frame_id = "base_link"
+        self.tcp_pose.header.frame_id = self.ns+"base_link"
         self.pose_pub.publish(self.tcp_pose)
 
 

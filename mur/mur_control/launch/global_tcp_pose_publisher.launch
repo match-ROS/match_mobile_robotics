@@ -1,0 +1,22 @@
+<launch>
+    <arg name="world_T_base_topic" default="/mur620/mir_pose_stamped_simple"/>
+    <arg name="base_T_ee_topic" default="/mur620/UR10_l/tcp_pose"/> <!-- TODO: could be done with static transform in future -->
+    <arg name="world_T_ee_topic" default="/global_nozzle_pose"/>
+    <arg name="static_tf_included" default="true"/>
+    <arg name="static_tf_parent" default="mur620/base_footprint"/>
+    <arg name="static_tf_child" default="mur620/UR10_l/base_link"/>
+    <arg name="world_frame" default="map"/> <!-- just for publisher frame -->
+    
+    <node name="pose_composer" pkg="mur_control" type="pose_composer.py" output="screen">
+        <!-- Topic Remappings -->
+        <remap from="world_T_base" to="$(arg world_T_base_topic)"/>
+        <remap from="base_T_ee" to="$(arg base_T_ee_topic)"/>
+        <remap from="world_T_ee" to="$(arg world_T_ee_topic)"/><!-- publisher -->
+
+        <param name="world_frame" value="$(arg world_frame)"/>
+
+        <param name="static_tf_included" value="$(arg static_tf_included)"/>
+        <param name="static_tf_parent" value="$(arg static_tf_parent)"/>
+        <param name="static_tf_child" value="$(arg static_tf_child)"/>
+    </node>
+</launch>

@@ -7,9 +7,9 @@
     <arg name="move_group_name" default="UR_arm_r"/>
 
     <!-- enable UR -->
-    <node name="UR_enable" pkg="ur_utilities" type="UR_enable.py" output="screen">
+    <!-- <node name="UR_enable" pkg="ur_utilities" type="UR_enable.py" output="screen">
         <param name="ur_hardware_interface_topic" value="/$(arg tf_prefix)/$(arg UR_prefix)/ur_hardware_interface/set_mode" />
-    </node>
+    </node> -->
 
     <node name="move_UR_to_home_position" pkg="ur_utilities" type="move_UR_to_home_position.py" output="screen">
         <param name="UR_prefix" value="$(arg UR_prefix)" />

@@ -198,6 +198,14 @@
         <joint name="$(arg prefix)_r/wrist_2_joint" value="1.57079632679"/>
         <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
     </group_state>
+    <group_state name="handling_position_wide_lift_mur620c" group="UR_arm_r">
+        <joint name="$(arg prefix)_r/elbow_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_lift_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/shoulder_pan_joint" value="-0.23640963340626803"/>
+        <joint name="$(arg prefix)_r/wrist_1_joint" value="-1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_2_joint" value="1.57079632679"/>
+        <joint name="$(arg prefix)_r/wrist_3_joint" value="0"/>
+    </group_state>
 
 	<group_state name="home" group="UR_arm_both">
         <joint name="$(arg prefix)_l/elbow_joint" value="1.6141"/>
@@ -298,14 +306,6 @@
     <disable_collisions link1="$(arg prefix)_l/shoulder_link" link2="right_lift_top" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_l/shoulder_link" link2="right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_l/shoulder_link" link2="top_module" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="$(arg prefix)_l/wrist_1_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="$(arg prefix)_l/wrist_2_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="$(arg prefix)_l/wrist_3_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="back_laser_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="bl_caster_rotation_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="bl_caster_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="br_caster_rotation_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_l/tcp" link2="br_caster_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_l/upper_arm_link" link2="back_laser_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_l/upper_arm_link" link2="base_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_l/upper_arm_link" link2="bl_caster_rotation_link" reason="Never"/>
@@ -392,13 +392,6 @@
     <disable_collisions link1="$(arg prefix)_r/shoulder_link" link2="right_lift_top" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_r/shoulder_link" link2="right_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_r/shoulder_link" link2="top_module" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="$(arg prefix)_r/wrist_1_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="$(arg prefix)_r/wrist_2_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="$(arg prefix)_r/wrist_3_link" reason="Adjacent"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="back_laser_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="bl_caster_rotation_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="bl_caster_wheel_link" reason="Never"/>
-    <disable_collisions link1="$(arg prefix)_r/tcp" link2="br_caster_wheel_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_r/upper_arm_link" link2="back_laser_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_r/upper_arm_link" link2="base_link" reason="Never"/>
     <disable_collisions link1="$(arg prefix)_r/upper_arm_link" link2="bl_caster_rotation_link" reason="Never"/>

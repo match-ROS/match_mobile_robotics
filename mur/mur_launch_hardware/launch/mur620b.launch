@@ -34,7 +34,14 @@
         <arg name="kinematic_config_l" value="$(find ur_launch_hardware)/calibration/calibration_UR10_19.yaml"/>
         <arg name="kinematic_config_r" value="$(find ur_launch_hardware)/calibration/calibration_UR10_17.yaml"/>
         <arg name="localization_type" value="$(arg localization_type)"/>
+        <arg name="ur_l_xyz" value="$(arg ur_l_xyz)"/>
+        <arg name="ur_l_rpy" value="$(arg ur_l_rpy)"/>
+        <arg name="ur_r_xyz" value="$(arg ur_r_xyz)"/>
+        <arg name="ur_r_rpy" value="$(arg ur_r_rpy)"/>
     </include>
 
+    <!-- static transform_publisher node to complete the tf-tree -->
+    <node pkg="tf" type="static_transform_publisher" name="dummy_lift_$(arg tf_prefix)_$(arg left_arm_group_name)" args="0 0 0 0 0 0 $(arg tf_prefix)/left_lift_bottom $(arg tf_prefix)/left_lift_top 100" />
+    <node pkg="tf" type="static_transform_publisher" name="dummy_lift_$(arg tf_prefix)_$(arg right_arm_group_name)" args="0 0 0 0 0 0 $(arg tf_prefix)/right_lift_bottom $(arg tf_prefix)/right_lift_top 100" />
 
 </launch>

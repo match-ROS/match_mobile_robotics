@@ -96,10 +96,14 @@
 				<param name="ur_prefix" value="$(arg prefix)_l/" />
 				<remap from="joint_states" to="/$(arg mur_ns)/joint_states" />
 			</node>
-			<node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen">
-				<param name="UR_base_link_name" value="$(arg mur_ns)/$(arg prefix)_l/base_link" />
-				<param name="local_TCP_pose_topic" value="/$(arg mur_ns)/$(arg prefix)_l/tcp_pose" />
-			</node>
+
+			<include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+				<arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
+                <arg name="base_T_ee_topic" value="tcp_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg prefix)_l/base_link"/>
+            </include>
 		</group>
 
 		
@@ -114,14 +118,17 @@
 				<param name="ur_prefix" value="$(arg prefix)_r/" />
 				<remap from="joint_states" to="/$(arg mur_ns)/joint_states" />
 			</node>
-			<node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen">
-				<param name="UR_base_link_name" value="$(arg mur_ns)/$(arg prefix)_r/base_link" />
-				<param name="local_TCP_pose_topic" value="/$(arg mur_ns)/$(arg prefix)_r/tcp_pose" />
-			</node>
+			<include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+				<arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
+                <arg name="base_T_ee_topic" value="tcp_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg prefix)_r/base_link"/>
+            </include>
 		</group>
 
 		<!-- use feedback instead (ur_controllers_match twist_controller_fb )-->
-		<group if = "$(arg use_inverse_differential_kinematics)">
+		<!-- <group if = "$(arg use_inverse_differential_kinematics)">
 			<node name="twist_controller_sim_r" pkg="mur_control" type="twist_controller_sim.py" output="screen" launch-prefix="bash -c 'sleep $(arg node_start_delay); $0 $@' " >
 				<param name="robot_name" value="$(arg mur_ns)" />
 				<param name="group_vel_controller_topic" value="joint_group_vel_controller_r/unsafe/command" />
@@ -135,7 +142,7 @@
 				<param name="commanded_twist_topic" value="$(arg prefix)_l/commanded_twist" />
 				<param name="move_group_name" value="UR_arm_l" />
 			</node>
-		</group>
+		</group> -->
 
 
 	

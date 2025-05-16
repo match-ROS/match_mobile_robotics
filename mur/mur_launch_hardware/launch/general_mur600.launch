@@ -21,9 +21,9 @@
     <arg name="ur_l_rpy" default="0.0 0.0 0.0"/>
     <arg name="ur_r_xyz" default="0.0 0.0 0.0"/>
     <arg name="ur_r_rpy" default="0.0 0.0 3.141596"/>
-    <arg name="cmplt_robot_descr" default="$(find mur_description)/urdf/mur_620.gazebo.xacro simulate_camera:= $(arg simulate_camera) use_lift:=$(arg use_lift) sim:=false tool:=$(arg tool) ur_l_rpy:='$(arg ur_l_rpy)' ur_r_rpy:='$(arg ur_r_rpy)' ur_l_xyz:='$(arg ur_l_xyz)' ur_r_xyz:='$(arg ur_r_xyz)'" /> <!-- Complete robot description -->
+    <arg name="cmplt_robot_descr" default="$(find mur_description)/urdf/mur_620.gazebo.xacro use_lift:=$(arg use_lift) tool:=$(arg tool) simulate_camera:=$(arg simulate_camera) sim:=false ur_l_rpy:='$(arg ur_l_rpy)' ur_r_rpy:='$(arg ur_r_rpy)' ur_l_xyz:='$(arg ur_l_xyz)' ur_r_xyz:='$(arg ur_r_xyz)'" /> <!-- Complete robot description -->
     <arg name="localization_type" default="mocap" /> <!-- mocap or amcl or robot_pose or odom-->
-   
+
     <!-- Bringup the base of the mur -->
 
     <!-- TODO: disable robot_state_publisher of mir if joint states are used by other publisher. else: remap robot_description? -->
@@ -112,6 +112,14 @@
                 <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link_inertia" />
                 <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
             </node>
+            <!-- TODO: change, but has to be tested first! -->
+            <!-- <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
+                <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link"/>
+            </include> -->
 
 
         </group>

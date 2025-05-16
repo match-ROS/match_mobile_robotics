@@ -2,16 +2,16 @@
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
 
-	<xacro:macro name="keyence_lj_x" params="tool_link tf_prefix">
+	<xacro:macro name="bauschaum_ee" params="tool_link tf_prefix">
 		
 		<link name="${tf_prefix}/gripper">
 			<xacro:cylinder_inertial mass="1.5" radius="0.32" length="0.128">
-				<origin xyz="0 0 0.06" rpy="0 0 0" />
+				<origin xyz="0 0 0.0" rpy="0 0 0" />
 			</xacro:cylinder_inertial>
 		</link>
 
 		<joint name="${tf_prefix}/gripper_joint" type="fixed">
-			<origin xyz="0.05 0 0.0" rpy="${-pi * 0.0} ${pi * 0.0} ${pi * 0.0}" />
+			<origin xyz="0.5 -0.13 0.0" rpy="${-pi * 0.5} ${pi * 0.0} ${pi * 0.0}" />
 			<parent link="${tool_link}" />
 			<child link="${tf_prefix}/gripper" />
 			<axis xyz="0 0 1" />
@@ -20,21 +20,15 @@
 
 		<link name="${tf_prefix}/tcp">
 			<xacro:cylinder_inertial mass="0.01" radius="0.32" length="0.128">
-				<origin xyz="0 0 0.06" rpy="0 0 0" />
+				<origin xyz="0 0 0.0" rpy="0 0 0" />
 			</xacro:cylinder_inertial>
 			<visual>
-				<origin xyz="0.05 0.05 0" rpy="0 ${pi * 0.5} ${pi * 1.0}" />
+				<origin xyz="0.0 0.0 0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
 				<geometry>
-					<mesh filename="package://keyence_lj_x/meshes/visual/lj_v7200.dae" scale="1.001 1.001 1.001"/>
+					<mesh filename="package://bauschaum_ee/meshes/visual/bauschaum_ee.stl" scale="0.001 0.001 0.001"/>
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
-			<collision>
-				<origin xyz="0 -0.128 0" rpy="0 0 0" />
-				<geometry>
-					<mesh filename="package://keyence_lj_x/meshes/collision/lj_v7200.stl" scale="1.001 1.001 1.001" />
-				</geometry>
-			</collision>
 		</link>
 
 		<gazebo reference="${tf_prefix}/tcp">
@@ -43,7 +37,7 @@
 
 		<!-- the ft_sensor plugin will not work with fixed joints. This is why a prismatic joint with very small limits is added -->
 		<joint name="${tf_prefix}/tcp_joint" type="prismatic">
-			<origin xyz="0 0 0.0" rpy="0 0 0" />
+			<origin xyz="-0.5 0.0 0.13" rpy="0 0 0" />
 			<parent link="${tf_prefix}/gripper" />
 			<child link="${tf_prefix}/tcp" />
 			<axis xyz="0 0 1" />
@@ -54,7 +48,7 @@
 		<!-- Gazebo Plugin for Line Laser -->
 		<gazebo reference="${tf_prefix}/gripper">
 			<sensor type="ray" name="line_laser">
-			<pose>0 0 0 1.57079632679 0 0</pose>
+			<pose>0 0 0 0.0 0 0</pose>
 			<visualize>true</visualize>
 			<update_rate>20.0</update_rate>
 			<ray>

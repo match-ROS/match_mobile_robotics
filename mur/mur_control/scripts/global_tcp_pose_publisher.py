@@ -13,7 +13,7 @@ class GlobalTCPPosePublisher():
         self.UR_base_link_name = rospy.get_param('~UR_base_link_name', 'mur620a/UR10_l/base_link_inertia')
         self.base_frame = rospy.get_param('~base_frame', 'map')
         self.local_TCP_pose_topic = rospy.get_param('~local_TCP_pose_topic', '/mur620a/UR10_l/ur_calibrated_pose')
-        self.static_mode = rospy.get_param('~static_mode', False)
+        self.static_mode = rospy.get_param('~static_mode', True)
 
         self.local_TCP_pose = Pose()
 

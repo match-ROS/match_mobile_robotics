@@ -39,6 +39,19 @@ public:
 
         joint_model_group = move_group->getCurrentState(5.0)->getJointModelGroup(PLANNING_GROUP);
 
+        // Get base link:
+        ros::V_string link_names = joint_model_group->getLinkModelNames();
+        auto base_link = link_names[0];
+        ROS_INFO("Base link of joint_model_group: %s", base_link.c_str());
+
+        // Get rotation between base_link and move_group->getPlanningFrame():
+        auto tf_base = move_group->getCurrentState(5.0)->getGlobalLinkTransform(base_link);
+        tf_rotation = tf_base.rotation();
+        tf_rotation.block(0,0,2,2) = -tf_rotation.block(0,0,2,2); // rotation of base_link to base_link_inertia
+        Eigen::Quaternion<double> q(tf_rotation);
+        q_tf_rotation = tf2::Quaternion(q.x(), q.y(), q.z(), q.w());
+        ROS_INFO_STREAM("Rotation between base_link and planning_frame: " << tf_rotation);
+
 
         // Set up a publisher for joint velocity commands
         joint_vel_pub = nh.advertise<std_msgs::Float64MultiArray>(ur_prefix+"joint_group_vel_controller/command", 1);
@@ -55,6 +68,8 @@ public:
         // Extract the Cartesian twist command from the message
         geometry_msgs::Twist twist = *twist_msg;
         twistVector = Eigen::VectorXd::Map(&twist.linear.x, 6);
+        twistVector.block(0,0,3,1) = tf_rotation*twistVector.block(0,0,3,1);
+        twistVector.block(3,0,3,1) = tf_rotation*twistVector.block(3,0,3,1);
 
     }
 
@@ -92,6 +107,8 @@ private:
     std::unique_ptr<moveit::planning_interface::MoveGroupInterface> move_group;
     std::string PLANNING_GROUP;
     const robot_state::JointModelGroup* joint_model_group;
+    Eigen::Matrix3d tf_rotation;
+    tf2::Quaternion q_tf_rotation;
     Eigen::VectorXd twistVector;
 };
 

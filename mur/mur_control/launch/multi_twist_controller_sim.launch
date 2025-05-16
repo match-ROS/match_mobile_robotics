@@ -1,0 +1,36 @@
+<launch>
+
+    
+    <arg name="robot1_name"  default="mur620a"/>
+    <arg name="robot2_name"  default="mur620b"/>
+
+
+    <include file="$(find mur_control)/launch/twist_controller_sim.launch">
+        <arg name="robot_name"  value="$(arg robot1_name)"/>
+        <arg name="group_vel_controller_topic" value="/$(arg robot1_name)/joint_group_vel_controller_l/unsafe/command"/>
+        <arg name="commanded_twist_topic" value="/$(arg robot1_name)/UR10_l/commanded_twist"/>
+        <arg name="move_group_name" value="UR_arm_l"/>
+    </include>
+
+    <include file="$(find mur_control)/launch/twist_controller_sim.launch">
+        <arg name="robot_name"  value="$(arg robot1_name)"/>
+        <arg name="group_vel_controller_topic" value="/$(arg robot1_name)/joint_group_vel_controller_r/unsafe/command"/>
+        <arg name="commanded_twist_topic" value="/$(arg robot1_name)/UR10_r/commanded_twist"/>
+        <arg name="move_group_name" value="UR_arm_r"/>
+    </include>
+
+    <include file="$(find mur_control)/launch/twist_controller_sim.launch">
+        <arg name="robot_name"  value="$(arg robot2_name)"/>
+        <arg name="group_vel_controller_topic" value="/$(arg robot2_name)/joint_group_vel_controller_l/unsafe/command"/>
+        <arg name="commanded_twist_topic" value="/$(arg robot2_name)/UR10_l/commanded_twist"/>
+        <arg name="move_group_name" value="UR_arm_l"/>
+    </include>
+
+    <include file="$(find mur_control)/launch/twist_controller_sim.launch">
+        <arg name="robot_name"  value="$(arg robot2_name)"/>
+        <arg name="group_vel_controller_topic" value="/$(arg robot2_name)/joint_group_vel_controller_r/unsafe/command"/>
+        <arg name="commanded_twist_topic" value="/$(arg robot2_name)/UR10_r/commanded_twist"/>
+        <arg name="move_group_name" value="UR_arm_r"/>
+    </include>
+
+</launch>

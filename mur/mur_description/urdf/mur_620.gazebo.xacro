@@ -34,6 +34,7 @@
 	<xacro:if value="${sim}">
 		<xacro:include filename="$(find schunk_emh_rp_45)/urdf/schunk_emh_rp_045.urdf.xacro"/>
 		<xacro:include filename="$(find keyence_lj_x)/urdf/keyence_lj_x.urdf.xacro"/>
+		<xacro:include filename="$(find bauschaum_ee)/urdf/bauschaum_ee.urdf.xacro"/>
 	</xacro:if>
 	<!-- Init the MiR200 marco that is also used for the hardware -->
 	<xacro:mir_600 />
@@ -105,6 +106,10 @@
 		<xacro:if value="${tool == 'keyence_line_laser'}">
 			<xacro:keyence_lj_x tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
 			<xacro:keyence_lj_x tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
+		</xacro:if>
+		<xacro:if value="${tool == 'bauschaum_ee'}">
+			<xacro:bauschaum_ee tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
+			<xacro:bauschaum_ee  tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
 		</xacro:if>
 	</xacro:if>
 

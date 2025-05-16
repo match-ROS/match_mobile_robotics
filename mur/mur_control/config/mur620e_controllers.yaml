@@ -167,12 +167,12 @@ $(arg prefix)_r/lift_controller:
 my_admittance_controller:
   type: "my_admittance_controller/AdmittanceController"
   joints:
-    - $(arg prefix)_l/shoulder_pan_joint
-    - $(arg prefix)_l/shoulder_lift_joint
-    - $(arg prefix)_l/elbow_joint
-    - $(arg prefix)_l/wrist_1_joint
-    - $(arg prefix)_l/wrist_2_joint
-    - $(arg prefix)_l/wrist_3_joint
+    - $(arg prefix)_r/shoulder_pan_joint
+    - $(arg prefix)_r/shoulder_lift_joint
+    - $(arg prefix)_r/elbow_joint
+    - $(arg prefix)_r/wrist_1_joint
+    - $(arg prefix)_r/wrist_2_joint
+    - $(arg prefix)_r/wrist_3_joint
   relative_pose: [0.0, 0.5, 0.0, 0.0, 0.0, 0.0]
   object_pose_topic: "/virtual_object/object_pose"
   object_vel_topic: "/virtual_object/object_vel"
@@ -181,4 +181,4 @@ my_admittance_controller:
   admittance: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
   mir_pose_topic: "/mur620a/mir_pose_stamped_simple"
   position_error_gain: [0.5, 0.5, 0.5, 0.4, 0.4, 0.4]
-  manipulator_cmd_topic: "/mur620a/UR10_l/twist_controller/command_safe"
+  manipulator_cmd_topic: "/mur620a/UR10_l/commanded_twist"

@@ -1,9 +1,9 @@
 <launch>
 
     <arg name="robot_name"  default="mur620a"/>
-    <arg name="group_vel_controller_topic" default="/$(arg robot_name)/joint_group_vel_controller_r/unsafe/command"/>
-    <arg name="commanded_twist_topic" default="/$(arg robot_name)/UR10_r/commanded_twist"/>
-    <arg name="move_group_name" default="UR_arm_r"/>
+    <arg name="group_vel_controller_topic" default="/$(arg robot_name)/joint_group_vel_controller_l/unsafe/command"/>
+    <arg name="commanded_twist_topic" default="/$(arg robot_name)/UR10_l/commanded_twist"/>
+    <arg name="move_group_name" default="UR_arm_l"/>
 
     <group ns="$(arg robot_name)">
 

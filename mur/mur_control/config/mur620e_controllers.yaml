@@ -182,3 +182,5 @@ my_admittance_controller:
   mir_pose_topic: "/mur620a/mir_pose_stamped_simple"
   position_error_gain: [0.5, 0.5, 0.5, 0.4, 0.4, 0.4]
   manipulator_cmd_topic: "/mur620a/UR10_l/commanded_twist"
+  mir_cmd_vel_topic: "/mur620a/cmd_vel"
+  relative_pose_topic: "/mur620a/UR10_l/relative_pose"

@@ -174,11 +174,19 @@ my_admittance_controller:
     - $(arg prefix)_r/wrist_2_joint
     - $(arg prefix)_r/wrist_3_joint
   relative_pose: [0.0, 0.5, 0.0, 0.0, 0.0, 0.0]
+  max_linear_velocity: 0.2
+  max_angular_velocity: 0.3
+  max_linear_acceleration: 1.0
+  max_angular_acceleration: 1.5
   object_pose_topic: "/virtual_object/object_pose"
   object_vel_topic: "/virtual_object/object_vel"
+  mir_frame: "mur620a/base_link"
   manipulator_frame: "mur620a/UR10_l/tool0"
   wrench_topic: "/mur620a/UR10_l/wrench"
   admittance: [0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
   mir_pose_topic: "/mur620a/mir_pose_stamped_simple"
   position_error_gain: [0.5, 0.5, 0.5, 0.4, 0.4, 0.4]
   manipulator_cmd_topic: "/mur620a/UR10_l/commanded_twist"
+  mir_odom_topic: "/mur620a/mobile_base_controller/odom"
+  
+

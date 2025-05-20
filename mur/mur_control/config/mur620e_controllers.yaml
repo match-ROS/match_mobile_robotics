@@ -188,5 +188,6 @@ my_admittance_controller:
   position_error_gain: [0.5, 0.5, 0.5, 0.4, 0.4, 0.4]
   manipulator_cmd_topic: "/mur620a/UR10_l/commanded_twist"
   mir_odom_topic: "/mur620a/mobile_base_controller/odom"
+  relative_pose_topic: "/mur620a/UR10_l/relative_pose"
   
 

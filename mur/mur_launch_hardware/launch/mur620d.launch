@@ -1,16 +1,16 @@
 <launch>
     <!-- Defining arguments for the mur launch --> 
     <arg name="launch_mir" default="true"/>
-    <arg name="launch_ur_l" default="true"/>
-    <arg name="launch_ur_r" default="true"/>
+    <arg name="launch_ur_l" default="false"/>
+    <arg name="launch_ur_r" default="false"/>
     <arg name="controllers_started" default="arm_controller joint_state_controller"/>
     <arg name="controllers_stopped" default="joint_group_vel_controller"/>  <!--Must not be empty-->
     <arg name="pose_filename" default="$(find mur_launch_hardware)/poses/my_poses.yaml"/>
     <arg name="tf_prefix" default="mur620d"/>
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
-    <arg name="external_localization" default="true"/>
-    <arg name="localization_type" default="mocap" /> <!-- mocap or amcl or robot_pose or odom-->
+    <arg name="external_localization" default="false"/>
+    <arg name="localization_type" default="robot_pose" /> <!-- mocap or amcl or robot_pose or odom-->
 
     <!-- ur base calibration -->
     <arg name="ur_l_xyz" default="-0.016336416303694423 -0.005028832374393943 0.0"/>

@@ -29,13 +29,11 @@
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
-			<collision>
-				<origin xyz="0.0 0.0 0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
-				<geometry>
-					<mesh filename="package://bauschaum_ee/meshes/collision/bauschaum_ee.stl" scale="0.001 0.001 0.001"/>
-				</geometry>
-			</collision>
 		</link>
+
+		<gazebo reference="${tf_prefix}/tcp">
+			<material>Gazebo/DarkGrey</material>
+		</gazebo>
 
 		<!-- the ft_sensor plugin will not work with fixed joints. This is why a prismatic joint with very small limits is added -->
 		<joint name="${tf_prefix}/tcp_joint" type="prismatic">
@@ -47,6 +45,45 @@
 		</joint>
 		
 
+		<!-- Gazebo Plugin for Line Laser -->
+		<gazebo reference="${tf_prefix}/gripper">
+			<sensor type="ray" name="line_laser">
+			<pose>0 0 0 0.0 0 0</pose>
+			<visualize>true</visualize>
+			<update_rate>20.0</update_rate>
+			<ray>
+				<scan>
+				<!-- Horizontal range parameters -->
+				<horizontal>
+					<samples>1000</samples> <!-- Number of laser beams -->
+					<resolution>1</resolution>
+					<min_angle>-0.27317277996474193</min_angle> <!-- Start angle in radians -->
+					<max_angle>0.27317277996474193</max_angle> <!-- End angle in radians -->
+				</horizontal>
+				<!-- Vertical range parameters (set min and max equal for a line) -->
+				<vertical>
+					<samples>1</samples> <!-- Single vertical beam -->
+					<min_angle>0.0</min_angle>
+					<max_angle>0.0</max_angle>
+				</vertical>
+				</scan>
+				<range>
+				<min>0.285</min> <!-- Minimum range in meters -->
+				<max>0.600</max> <!-- Maximum range in meters -->
+				<resolution>0.0001707329874779637</resolution> <!-- Range resolution -->
+				</range>
+				<noise>
+				<type>gaussian</type>
+				<mean>0.00005</mean>
+				<stddev>0.0005</stddev>
+				</noise>
+			</ray>
+			<plugin name="gazebo_ros_laser" filename="libgazebo_ros_laser.so">
+				<topicName>${tf_prefix}/line_laser/scan</topicName> <!-- ROS topic -->
+				<frameName>mur620a/${tf_prefix}/gripper</frameName> <!-- Frame for the laser -->
+			</plugin>
+			</sensor>
+		</gazebo>
 		
 	</xacro:macro>
 

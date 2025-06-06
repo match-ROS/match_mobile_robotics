@@ -11,7 +11,7 @@
 		</link>
 
 		<joint name="${tf_prefix}/gripper_joint" type="fixed">
-			<origin xyz="0.5 -0.13 0.0" rpy="${-pi * 0.5} ${pi * 0.0} ${pi * 0.0}" />
+			<origin xyz="0.13 0 0.50" rpy="${-pi * 0.0} ${-pi * 0.5} ${pi * 0.0}" />
 			<parent link="${tool_link}" />
 			<child link="${tf_prefix}/gripper" />
 			<axis xyz="0 0 1" />
@@ -23,14 +23,14 @@
 				<origin xyz="0 0 0.0" rpy="0 0 0" />
 			</xacro:cylinder_inertial>
 			<visual>
-				<origin xyz="0.0 0.0 0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
+				<origin xyz="0.01 0.0 0.0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
 				<geometry>
 					<mesh filename="package://bauschaum_ee/meshes/visual/bauschaum_ee.stl" scale="0.001 0.001 0.001"/>
 				</geometry>
 				<xacro:insert_block name="material_white" />
 			</visual>
 			<collision>
-				<origin xyz="0.0 0.0 0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
+				<origin xyz="0.01 0.0 0.0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
 				<geometry>
 					<mesh filename="package://bauschaum_ee/meshes/collision/bauschaum_ee.stl" scale="0.001 0.001 0.001"/>
 				</geometry>
@@ -39,7 +39,7 @@
 
 		<!-- the ft_sensor plugin will not work with fixed joints. This is why a prismatic joint with very small limits is added -->
 		<joint name="${tf_prefix}/tcp_joint" type="prismatic">
-			<origin xyz="-0.5 0.0 0.13" rpy="0 0 0" />
+			<origin xyz="-0.50 0.0 0.13" rpy="0 0 0" />
 			<parent link="${tf_prefix}/gripper" />
 			<child link="${tf_prefix}/tcp" />
 			<axis xyz="0 0 1" />

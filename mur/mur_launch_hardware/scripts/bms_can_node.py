@@ -14,14 +14,27 @@ import time
 
 
 #LED_PIN = board.D21 # LED control pin 
-BATTERY_NODE_ID = 0x0240  # address assignment of the message ->  0x<NODE_ID><40>   
+#BATTERY_NODE_ID = 0x0240  # address assignment of the message ->  0x<NODE_ID><40>   
                           # <NODE_ID> is written on the battery
+
 
 can.rc['interface'] = 'socketcan'
 can.rc['channel'] = 'can0'
 can.rc['bitrate'] = 250000
 P = 0x18 
 bms_SOC = 0
+
+def init():
+    global BATTERY_NODE_ID
+    BATTERY_NODE_ID = rospy.get_param('~battery_node_id', "0x0240")  # address assignment of the message ->  0x<NODE_ID><40>
+    # convert the string to an integer
+    
+    if isinstance(BATTERY_NODE_ID, str):
+        if BATTERY_NODE_ID.startswith("0x"):
+            BATTERY_NODE_ID = int(BATTERY_NODE_ID, 16)
+        else:
+            BATTERY_NODE_ID = int(BATTERY_NODE_ID, 10)
+
 
 def message_callback(msg: can.Message) -> None:
     """Regular callback function. Can also be a coroutine."""
@@ -78,6 +91,7 @@ if __name__ == '__main__':
     setup_can_interface()
     rospy.init_node('bms_manager_node', log_level=rospy.DEBUG)
     rospy.loginfo("bms_node_node started")
+    init()
     try:
         pub = rospy.Publisher('bms_status/SOC', std_msgs.msg.Float32, queue_size=10)
         rate = rospy.Rate(1) # refresh every second
@@ -89,7 +103,7 @@ if __name__ == '__main__':
             except can.CanError as e:
                 rospy.logerr(e)
             SOC_msg = "SOC is {}%".format(bms_SOC)
-            rospy.logdebug(SOC_msg)
+            #rospy.logdebug(SOC_msg)
             pub.publish(round(bms_SOC,1))
             rate.sleep()
     finally:    

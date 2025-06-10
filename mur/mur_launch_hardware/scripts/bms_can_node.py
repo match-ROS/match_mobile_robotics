@@ -81,8 +81,9 @@ def update_bms():
 def setup_can_interface():
     """Setzt die CAN-Schnittstelle auf 'can0' mit der Bitrate von 250000."""
     try:
-        subprocess.run(['echo', 'match123', '|', 'sudo', '-S', 'ip', 'link', 'set', 'can0', 'up', 'type', 'can', 'bitrate', '250000'], check=True) # todo: remove password from command - this is very insecure
-        rospy.loginfo("CAN Interface 'can0' wurde erfolgreich aktiviert.")
+        command = f"echo match123 | sudo -S ip link set can0 up type can bitrate 250000" # TODO: do not hardcode password - find a more secure method
+        print(f"Executing: {command}")
+        subprocess.Popen(command, shell=True)
     except subprocess.CalledProcessError as e:
         rospy.logerr(f"Fehler beim Aktivieren des CAN Interfaces: {e}")
 

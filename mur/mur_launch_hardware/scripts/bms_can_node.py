@@ -33,12 +33,6 @@ def message_callback(msg: can.Message) -> None:
         Current = int(msg.data[4:6].hex(),16)/10 - 3000
         bms_SOC = int(msg.data[6:8].hex(),16)/10
 
-        print("Cumulative Total Voltage: {}V".format(Cumulative_total_voltage))
-        print("Gather Total Voltage: {}V".format(Gather_total_voltage))
-        print("Current: {}A".format(Current))
-        print("SOC: {}%".format(bms_SOC))
-
-
 # function gets the data ID and calls process it
 async def update_can(d_id):
     with can.Bus() as bus:
@@ -74,7 +68,7 @@ def update_bms():
 def setup_can_interface():
     """Setzt die CAN-Schnittstelle auf 'can0' mit der Bitrate von 250000."""
     try:
-        subprocess.run(['sudo', 'ip', 'link', 'set', 'can0', 'up', 'type', 'can', 'bitrate', '250000'], check=True)
+        subprocess.run(['echo', 'match123', '|', 'sudo', '-S', 'ip', 'link', 'set', 'can0', 'up', 'type', 'can', 'bitrate', '250000'], check=True) # todo: remove password from command - this is very insecure
         rospy.loginfo("CAN Interface 'can0' wurde erfolgreich aktiviert.")
     except subprocess.CalledProcessError as e:
         rospy.logerr(f"Fehler beim Aktivieren des CAN Interfaces: {e}")
@@ -98,8 +92,7 @@ if __name__ == '__main__':
             rospy.logdebug(SOC_msg)
             pub.publish(round(bms_SOC,1))
             rate.sleep()
-    finally: 
-        led_strip.fill((0,0,0))
+    finally:    
         rospy.loginfo("bms_manager_node shut down")
         
         

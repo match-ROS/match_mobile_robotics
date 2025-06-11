@@ -43,6 +43,8 @@
         </group>
     </group>
 
+    <node name="mir_battery_state_publisher" pkg="mir_launch_hardware" type="mir_battery_state_publisher.py" output="screen"/>
+
     <node name="mir_pose_simple" pkg="mir_navigation" type="mir_pose_simple.py" output="screen">
 		<param name="localization_type" value="$(arg localization_type)"/>
 		<param name="odom_topic" value="mobile_base_controller/odom"/>

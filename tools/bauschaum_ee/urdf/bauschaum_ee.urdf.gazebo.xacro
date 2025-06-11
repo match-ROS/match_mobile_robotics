@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:include filename="$(find mir_description)/urdf/general/common_properties.urdf.xacro" />
+
+	<xacro:macro name="bauschaum_ee" params="tool_link tf_prefix">
+		
+		<link name="${tf_prefix}/gripper">
+			<xacro:cylinder_inertial mass="1.5" radius="0.32" length="0.128">
+				<origin xyz="0 0 0.0" rpy="0 0 0" />
+			</xacro:cylinder_inertial>
+		</link>
+
+		<joint name="${tf_prefix}/gripper_joint" type="fixed">
+			<origin xyz="0.5 -0.13 0.0" rpy="${-pi * 0.5} ${pi * 0.0} ${pi * 0.0}" />
+			<parent link="${tool_link}" />
+			<child link="${tf_prefix}/gripper" />
+			<axis xyz="0 0 1" />
+			<limit effort="1000" lower="-0.0001" upper="0.0001" velocity="10"/>
+		</joint>
+
+		<link name="${tf_prefix}/tcp">
+			<xacro:cylinder_inertial mass="0.01" radius="0.32" length="0.128">
+				<origin xyz="0 0 0.0" rpy="0 0 0" />
+			</xacro:cylinder_inertial>
+			<visual>
+				<origin xyz="0.0 0.0 0" rpy="0 ${pi * 0.5} ${pi * 0.0}" />
+				<geometry>
+					<mesh filename="package://bauschaum_ee/meshes/visual/bauschaum_ee.stl" scale="0.001 0.001 0.001"/>
+				</geometry>
+				<xacro:insert_block name="material_white" />
+			</visual>
+		</link>
+
+		<gazebo reference="${tf_prefix}/tcp">
+			<material>Gazebo/DarkGrey</material>
+		</gazebo>
+
+		<!-- the ft_sensor plugin will not work with fixed joints. This is why a prismatic joint with very small limits is added -->
+		<joint name="${tf_prefix}/tcp_joint" type="prismatic">
+			<origin xyz="-0.5 0.0 0.13" rpy="0 0 0" />
+			<parent link="${tf_prefix}/gripper" />
+			<child link="${tf_prefix}/tcp" />
+			<axis xyz="0 0 1" />
+   			<limit effort="1000" lower="-0.0001" upper="0.0001" velocity="10"/>
+		</joint>
+		
+
+		<!-- Gazebo Plugin for Line Laser -->
+		<gazebo reference="${tf_prefix}/gripper">
+			<sensor type="ray" name="line_laser">
+			<pose>0 0 0 0.0 0 0</pose>
+			<visualize>true</visualize>
+			<update_rate>20.0</update_rate>
+			<ray>
+				<scan>
+				<!-- Horizontal range parameters -->
+				<horizontal>
+					<samples>1000</samples> <!-- Number of laser beams -->
+					<resolution>1</resolution>
+					<min_angle>-0.27317277996474193</min_angle> <!-- Start angle in radians -->
+					<max_angle>0.27317277996474193</max_angle> <!-- End angle in radians -->
+				</horizontal>
+				<!-- Vertical range parameters (set min and max equal for a line) -->
+				<vertical>
+					<samples>1</samples> <!-- Single vertical beam -->
+					<min_angle>0.0</min_angle>
+					<max_angle>0.0</max_angle>
+				</vertical>
+				</scan>
+				<range>
+				<min>0.285</min> <!-- Minimum range in meters -->
+				<max>0.600</max> <!-- Maximum range in meters -->
+				<resolution>0.0001707329874779637</resolution> <!-- Range resolution -->
+				</range>
+				<noise>
+				<type>gaussian</type>
+				<mean>0.00005</mean>
+				<stddev>0.0005</stddev>
+				</noise>
+			</ray>
+			<plugin name="gazebo_ros_laser" filename="libgazebo_ros_laser.so">
+				<topicName>${tf_prefix}/line_laser/scan</topicName> <!-- ROS topic -->
+				<frameName>mur620a/${tf_prefix}/gripper</frameName> <!-- Frame for the laser -->
+			</plugin>
+			</sensor>
+		</gazebo>
+		
+	</xacro:macro>
+
+</robot>

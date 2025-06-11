@@ -34,8 +34,11 @@
 	<xacro:if value="${sim}">
 		<xacro:include filename="$(find schunk_emh_rp_45)/urdf/schunk_emh_rp_045.urdf.xacro"/>
 		<xacro:include filename="$(find keyence_lj_x)/urdf/keyence_lj_x.urdf.xacro"/>
-		<xacro:include filename="$(find bauschaum_ee)/urdf/bauschaum_ee.urdf.xacro"/>
+		<xacro:include filename="$(find bauschaum_ee)/urdf/bauschaum_ee.urdf.gazebo.xacro"/>
 	</xacro:if>
+	<xacro:unless value="${sim}">
+		<xacro:include filename="$(find bauschaum_ee)/urdf/bauschaum_ee.urdf.xacro"/>
+	</xacro:unless>
 	<!-- Init the MiR200 marco that is also used for the hardware -->
 	<xacro:mir_600 />
 	<!-- Init the MiR200 macro that includes all infos that Gazebo need to function -->
@@ -98,20 +101,20 @@
 			<origin xyz="${ur_r_xyz}" rpy="${ur_r_rpy}" /> <!-- 0 0 3.14159265" -->
 	</joint>
 
-	<xacro:if value="${sim}">
-		<xacro:if value="${tool == 'schunk_emh_rp_045'}">
-			<xacro:schunk_emh_rp_045 tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
-			<xacro:schunk_emh_rp_045 tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
-		</xacro:if>
-		<xacro:if value="${tool == 'keyence_line_laser'}">
-			<xacro:keyence_lj_x tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
-			<xacro:keyence_lj_x tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
-		</xacro:if>
-		<xacro:if value="${tool == 'bauschaum_ee'}">
-			<xacro:bauschaum_ee tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
-			<xacro:bauschaum_ee  tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
-		</xacro:if>
+	
+	<xacro:if value="${tool == 'schunk_emh_rp_045'}">
+		<xacro:schunk_emh_rp_045 tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
+		<xacro:schunk_emh_rp_045 tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
 	</xacro:if>
+	<xacro:if value="${tool == 'keyence_line_laser'}">
+		<xacro:keyence_lj_x tf_prefix="UR10_r"	tool_link="UR10_r/flange"/>
+		<xacro:keyence_lj_x tf_prefix="UR10_l"	tool_link="UR10_l/flange"/>
+	</xacro:if>
+	<xacro:if value="${tool == 'bauschaum_ee'}">
+		<xacro:bauschaum_ee tf_prefix="UR10_r"	tool_link="UR10_r/tool0"/>
+		<xacro:bauschaum_ee  tf_prefix="UR10_l"	tool_link="UR10_l/tool0"/>
+	</xacro:if>
+	
 
     <!-- <xacro:include filename="$(find print_sim)/urdf/keyence_line_laser.gazebo.xacro" /> 
     <xacro:keyence_line_laser parent_link="UR10_r/tcp" /> -->

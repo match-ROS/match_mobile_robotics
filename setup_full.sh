@@ -38,3 +38,4 @@ sudo apt install ros-one-moveit-planners* -y
 sudo apt install ros-one-moveit-ros* -y
 apt install ros-one-ros-control* -y
 sudo apt install ros-one-moveit-commander
+sudo apt install ros-one-pcl-ros

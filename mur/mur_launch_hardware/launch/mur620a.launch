@@ -37,6 +37,7 @@
         <arg name="ur_l_rpy" value="$(arg ur_l_rpy)"/>
         <arg name="ur_r_xyz" value="$(arg ur_r_xyz)"/>
         <arg name="ur_r_rpy" value="$(arg ur_r_rpy)"/>
+        <arg name="battery_node_id" value="0x0340"/>
     </include>
 
     <!-- static transform_publisher node to complete the tf-tree -->

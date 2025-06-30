@@ -15,7 +15,7 @@
 
     <include file="$(find mir_launch_sim)/launch/mir_600.launch" ns="$(arg robot1_name)">
         <arg name="robot_x"     default="40.3" />
-        <arg name="robot_y"     default="40.0" />
+        <arg name="robot_y"     default="40.5" />
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot1_name)" />  
         <arg name="model_name" value="$(arg robot1_name)"/>     
@@ -23,7 +23,7 @@
 
       
     <include file="$(find mir_launch_sim)/launch/mir_600.launch" ns="$(arg robot2_name)">
-        <arg name="robot_x"     default="42.3" />
+        <arg name="robot_x"     default="40.3" />
         <arg name="robot_y"     default="42.0" />
         <arg name="robot_yaw"   default="0.0" /> 
         <arg name="tf_prefix"   default="$(arg robot2_name)" />
@@ -31,21 +31,18 @@
     </include> 
     
     <include file="$(find mir_launch_sim)/launch/mir_600.launch" ns="$(arg robot3_name)">
-        <arg name="robot_x"     default="42.3" />
-        <arg name="robot_y"     default="40.0" />
+        <arg name="robot_x"     default="40.3" />
+        <arg name="robot_y"     default="43.5" />
         <arg name="robot_yaw"   default="0.0 " /> 
         <arg name="tf_prefix"   default="$(arg robot3_name)" /> 
         <arg name="model_name" value="$(arg robot3_name)"/>        
     </include>
 
-    <include file="$(find mir_launch_sim)/launch/mir_600.launch" ns="$(arg robot4_name)">
-        <arg name="robot_x"     default="40.3" />
-        <arg name="robot_y"     default="42.0" />
-        <arg name="robot_yaw"   default="0.0 " /> 
-        <arg name="tf_prefix"   default="$(arg robot4_name)" />    
-        <arg name="model_name" value="$(arg robot4_name)"/>     
-    </include>
-    
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher" args="0 0 0 0 0 0 mur620a/base_link Folgeroboter_1" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher2" args="0 0 0 0 0 0 mur620b/base_link Leitroboter" />
+    <node pkg="tf2_ros" type="static_transform_publisher" name="static_transform_publisher3" args="0 0 0 0 0 0 mur620c/base_link Folgeroboter_2" />
+
+
     <!-- launch virtual object -->
     <include file="$(find virtual_leader)/launch/virtual_leader.launch" />
 

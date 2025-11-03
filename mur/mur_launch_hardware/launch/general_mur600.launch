@@ -25,6 +25,7 @@
     <arg name="localization_type" default="mocap" /> <!-- mocap or amcl or robot_pose or odom-->
     <arg name="move_base_selector" default="move_base" doc="move_base or move_base_flex"/>
     <arg name="battery_node_id" default="0x0240" doc="Node ID of the BMS battery. Default is 0, which is the first battery."/>
+    <arg name="static_mode" default="false" /> <!-- if true, the global_tcp_pose_publisher will consider the mir static -->
 
     <!-- Bringup the base of the mur -->
 
@@ -117,18 +118,19 @@
             </group>
 
             <!-- global pose publisher -->
-            <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
+            <!-- <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
                 <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link_inertia" />
                 <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
-            </node>
-            <!-- TODO: change, but has to be tested first! -->
-            <!-- <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <param name="static_mode" value="${arg static_mode}"/>
+            </node> -->
+            <!-- TODO: changed, but has to be tested first! -->
+            <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
                 <arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
                 <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
                 <arg name="world_T_ee_topic" value="global_tcp_pose"/>
                 <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
-                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link"/>
-            </include> -->
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base"/>
+            </include>
 
 
         </group>
@@ -166,10 +168,13 @@
             </node>
 
             <!-- global pose publisher -->
-            <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
-                <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base_link_inertia" />
-                <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
-            </node>
+            <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
+                <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base"/>
+            </include>
 
              <!-- Lift module -->
             <group if="$(eval arg('use_lift') ==true)"> 

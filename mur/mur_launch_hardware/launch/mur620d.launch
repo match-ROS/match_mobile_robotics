@@ -11,6 +11,7 @@
     <arg name="right_arm_group_name" default="UR10_r"/>
     <arg name="external_localization" default="false"/>
     <arg name="localization_type" default="robot_pose" /> <!-- mocap or amcl or robot_pose or odom-->
+    <arg name="static_mode" default="false"/>
 
     <!-- ur base calibration -->
     <arg name="ur_l_xyz" default="-0.016336416303694423 -0.005028832374393943 0.0"/>
@@ -37,6 +38,8 @@
         <arg name="ur_l_rpy" value="$(arg ur_l_rpy)"/>
         <arg name="ur_r_xyz" value="$(arg ur_r_xyz)"/>
         <arg name="ur_r_rpy" value="$(arg ur_r_rpy)"/>
+        <arg name="battery_node_id" value="0x0440"/>
+        <arg name="static_mode" value="$(arg static_mode)"/>
     </include> 
 
 

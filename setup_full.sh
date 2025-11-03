@@ -9,26 +9,33 @@ cd build
 cmake ..
 make
 sudo make install
-cd ../../../../../..
+cd ../../../../../../..
 rosdep update
 rosdep install --from-paths src --ignore-src --rosdistro $ROS_DISTRO -y
 catkin build
 source devel/setup.bash
 
 # install dependencies manually (this should usually be done through rosdep) 
-sudo apt install ros-noetic-costmap-2d
-sudo apt install ros-noetic-serial
-sudo apt install ros-noetic-nav-core
-sudo apt install ros-noetic-moveit-core
-sudo apt install ros-noetic-ur-client-library
-sudo apt install ros-noetic-moveit-ros-planning-interface
-sudo apt install ros-noetic-mbf-msgs
-sudo apt install ros-noetic-mir-actions
-sudo apt install ros-noetic-navfn
-sudo apt install ros-noetic-industrial-robot-status-interface
-sudo apt install ros-noetic-move-base-msgs
-sudo apt install ros-noetic-scaled-joint-trajectory-controller
-sudo apt install ros-noetic-rospy-message-converter
-sudo apt install ros-noetic-speed-scaling-interface
-sudo apt install ros-noetic-speed-scaling-state-controller
-sudo apt install ros-noetic-pass-through-controllers
+sudo apt install ros-one-costmap-2d -y
+sudo apt install ros-one-serial -y
+sudo apt install ros-one-nav-core -y
+sudo apt install ros-one-moveit-core -y
+sudo apt install ros-one-ur-client-library -y
+sudo apt install ros-one-moveit-ros-planning-interface -y
+sudo apt install ros-one-mbf-msgs -y
+sudo apt install ros-one-mir-actions -y
+sudo apt install ros-one-navfn -y
+sudo apt install ros-one-industrial-robot-status-interface -y
+sudo apt install ros-one-move-base-msgs -y
+sudo apt install ros-one-scaled-joint-trajectory-controller -y
+sudo apt install ros-one-rospy-message-converter -y
+sudo apt install ros-one-speed-scaling-interface -y
+sudo apt install ros-one-speed-scaling-state-controller -y
+sudo apt install ros-one-pass-through-controllers -y
+sudo apt install libserial-dev -y
+sudo apt install ros-one-rqt-* -y
+sudo apt install ros-one-moveit-planners* -y
+sudo apt install ros-one-moveit-ros* -y
+apt install ros-one-ros-control* -y
+sudo apt install ros-one-moveit-commander
+sudo apt install ros-one-pcl-ros

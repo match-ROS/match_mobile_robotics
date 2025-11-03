@@ -37,5 +37,6 @@ sudo apt install ros-one-rqt-* -y
 sudo apt install ros-one-moveit-planners* -y
 sudo apt install ros-one-moveit-ros* -y
 apt install ros-one-ros-control* -y
-sudo apt install ros-one-moveit-commander
-sudo apt install ros-one-pcl-ros
+sudo apt install ros-one-moveit-commander -y
+sudo apt install ros-one-pcl-ros -y
+sudo apt install ros-one-tf2-sensor-msgs -y

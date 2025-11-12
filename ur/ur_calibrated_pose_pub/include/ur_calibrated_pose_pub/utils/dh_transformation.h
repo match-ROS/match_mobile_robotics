@@ -14,12 +14,12 @@ namespace dh_utils
         DHTransformation(double theta, double d, double a, double alpha);
         virtual ~DHTransformation() = default;
 
-        double getTheta() const;
-        double getd() const;
-        double geta() const;
-        double getAlpha() const;
-        // falls vorhanden/benötigt:
-        const Eigen::Matrix4d& getTransformationMatrix() const;
+        double getTheta();
+        double getd();
+        double geta();
+        double getAlpha();
+
+        Eigen::Matrix4d getTransformationMatrix();
 
         void setJointState(double current_joint_state);
 

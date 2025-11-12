@@ -15,12 +15,32 @@ namespace dh_utils
 		this->alpha_ = alpha;
 	}
 
-	double DHTransformation::getTheta() const { return theta_; }
-	double DHTransformation::getd()     const { return d_; }
-	double DHTransformation::geta()     const { return a_; }
-	double DHTransformation::getAlpha() const { return alpha_; }
-	// ggf.:
-	const Eigen::Matrix4d& DHTransformation::getTransformationMatrix() const { return transformation_matrix_; }
+	// Getter Methods
+	double DHTransformation::getTheta()
+	{
+		return this->theta_;
+	}
+
+	double DHTransformation::getd()
+	{
+		return this->d_;
+	}
+
+	double DHTransformation::geta()
+	{
+		return this->a_;
+	}
+
+	double DHTransformation::getAlpha()
+	{
+		return this->alpha_;
+	}
+
+	Eigen::Matrix4d DHTransformation::getTransformationMatrix()
+	{
+		this->calcTransformationMatrices();
+		return this->transformation_matrix_;
+	}
 
 	void DHTransformation::setJointState(double current_joint_state)
 	{

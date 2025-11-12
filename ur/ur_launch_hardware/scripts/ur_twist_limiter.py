@@ -193,7 +193,7 @@ class UR_twist_limiter():
         ddynrec.add_variable("angular_acc_limit", "float/double variable", 7.0, 0, 14.0)
         ddynrec.add_variable("lin_jerk_limit", "float/double variable", 0.8, 0, 2.0)
         ddynrec.add_variable("angular_jerk_limit", "float/double variable", 1.7, 0, 3.0)
-        ddynrec.add_variable("command_timeout", "float/double variable", 0.05, 0, 0.5)
+        ddynrec.add_variable("command_timeout", "float/double variable", 0.1, 0, 0.5)
 
         # Start the server
         ddynrec.start(self.dyn_rec_callback)

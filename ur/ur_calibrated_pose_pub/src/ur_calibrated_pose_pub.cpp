@@ -21,7 +21,7 @@ namespace ur_calibrated_pose_pub
 
 	void URCalibratedPosePub::execute()
 	{
-		ros::Rate publish_rate = ros::Rate(100.0);
+		ros::Rate publish_rate = ros::Rate(500.0);
 		while(ros::ok())
 		{
 			// Debugging of each transformation by broadcasting it to tf

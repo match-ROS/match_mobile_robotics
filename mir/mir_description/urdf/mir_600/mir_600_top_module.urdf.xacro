@@ -89,7 +89,7 @@
 		</gazebo>
 
 		<joint name="right_lift_bottom_joint" type="fixed">
-			<origin xyz="0.549 -0.318 -0.49" rpy="0 0 0" />
+			<origin xyz="0.549 -0.318 -0.518" rpy="0 0 0" />
 			<parent link="top_module" />
 			<child link="right_lift_bottom" />
 			<axis xyz="0 0 1" />

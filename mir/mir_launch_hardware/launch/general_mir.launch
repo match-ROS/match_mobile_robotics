@@ -49,7 +49,7 @@
 		<param name="localization_type" value="$(arg localization_type)"/>
 		<param name="odom_topic" value="mobile_base_controller/odom"/>
 		<param name="robot_pose_topic" value="robot_pose"/>
-		<param name="mocap_topic" value="/qualisys/$(arg mocap_frame_id)/pose"/>
+		<param name="mocap_topic" value="/qualisys_map/$(arg mocap_frame_id)/pose"/>
 	</node>
 
     <node name="rgb_control" pkg="mir_launch_hardware" type="rgb_control.py" output="screen">

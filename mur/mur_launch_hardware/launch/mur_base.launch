@@ -13,7 +13,7 @@
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>   
         <arg name="external_localization" value="$(arg external_localization)"/>
         <arg name="mocap_frame_id" default="$(arg tf_prefix)"/>
-        <arg name="localization_topic" value="/qualisys/$(arg tf_prefix)/pose"/>
+        <arg name="localization_topic" value="/qualisys_map/$(arg tf_prefix)/pose"/>
         <arg name="robot_description" value="$(arg robot_description)"/>
         <arg name="localization_type" value="$(arg localization_type)"/>    
         <arg name="move_base_selector" value="$(arg move_base_selector)"/>    

@@ -13,7 +13,7 @@
     <arg name="trajectory_port" default="50003"/> 
     <arg name="script_command_port" default="50004"/> 
     <arg name="use_state_publisher" default="true"/>
-    <arg name="calibrated_pose_base_frame" default="$(arg tf_prefix)/base"/>
+    <arg name="calibrated_pose_base_frame" default="$(arg tf_prefix)/$(arg UR_prefix)base_link"/>
 
     <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>

@@ -43,6 +43,7 @@ namespace ur_calibrated_pose_pub
             std::string ur_joint_state_topic_name_;
             std::string joint_prefix_;
             std::string dh_parameter_switch_;
+            std::string base_frame_id_;
             
             std::vector<dh_utils::DHTransformation> ideal_dh_transformations_list_;
             std::vector<dh_utils::DHTransformation> calibrated_dh_transformations_list_;
@@ -52,6 +53,8 @@ namespace ur_calibrated_pose_pub
 
             // Callback functions
             void jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state_msg);
+
+            std::string sanitizeFrameId(const std::string& frame_id) const;
     };
 }
 #endif  // ifndef UR_CALIBRATED_POSE_PUB_H_INCLUDED

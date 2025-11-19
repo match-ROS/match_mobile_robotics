@@ -21,6 +21,11 @@ namespace ur_calibrated_pose_pub
 
 	void URCalibratedPosePub::execute()
 	{
+		const std::string sanitized_namespace = this->sanitizeFrameId(ros::this_node::getNamespace());
+		const std::string default_base_frame_id = sanitized_namespace.empty() ? "base" : sanitized_namespace + "/base";
+		const std::string parent_frame_id = this->base_frame_id_.empty() ? default_base_frame_id : this->base_frame_id_;
+		const std::string child_frame_id = sanitized_namespace.empty() ? "calibrated_ee_pose" : sanitized_namespace + "/calibrated_ee_pose";
+
 		ros::Rate publish_rate = ros::Rate(500.0);
 		while(ros::ok())
 		{
@@ -114,13 +119,9 @@ namespace ur_calibrated_pose_pub
 				}
 			}
 			
-			// Get namespace of the node:
-			std::string node_namespace = ros::this_node::getNamespace();
-			
-
 			geometry_msgs::PoseStamped ur_calibrated_pose_msg;
 			ur_calibrated_pose_msg.header.stamp = ros::Time::now();
-			ur_calibrated_pose_msg.header.frame_id = node_namespace + "/base";	// TODO: change to generic name
+			ur_calibrated_pose_msg.header.frame_id = parent_frame_id;
 			ur_calibrated_pose_msg.pose.position.x = complete_transformation_matrix(0, 3);
 			ur_calibrated_pose_msg.pose.position.y = complete_transformation_matrix(1, 3);
 			ur_calibrated_pose_msg.pose.position.z = complete_transformation_matrix(2, 3);
@@ -150,7 +151,7 @@ namespace ur_calibrated_pose_pub
 			q.setW(eigen_q.w());
 			transform.setRotation(q);
 
-			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), node_namespace + "/base", node_namespace + "/calibrated_ee_pose"));	// change to generic name
+			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent_frame_id, child_frame_id));
 
 			ros::spinOnce();
 			publish_rate.sleep();
@@ -182,6 +183,9 @@ namespace ur_calibrated_pose_pub
 			ROS_ERROR("No dh_parameter_switch parameter found");
 			return;
 		}
+
+		this->private_nh_.param<std::string>("base_frame_id", this->base_frame_id_, "");
+		this->base_frame_id_ = this->sanitizeFrameId(this->base_frame_id_);
 
 		// Get DH parameters from parameter server
 		XmlRpc::XmlRpcValue dh_param_list;
@@ -344,5 +348,15 @@ namespace ur_calibrated_pose_pub
 				this->calibrated_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);
 			}
 		}
+	}
+
+	std::string URCalibratedPosePub::sanitizeFrameId(const std::string& frame_id) const
+	{
+		std::string sanitized = frame_id;
+		while(!sanitized.empty() && sanitized.front() == '/')
+		{
+			sanitized.erase(0, 1);
+		}
+		return sanitized;
 	}
 }

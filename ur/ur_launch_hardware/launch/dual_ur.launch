@@ -13,6 +13,7 @@
     <arg name="trajectory_port" default="50003"/> 
     <arg name="script_command_port" default="50004"/> 
     <arg name="use_state_publisher" default="true"/>
+    <arg name="calibrated_pose_base_frame" default="$(arg tf_prefix)/base"/>
 
     <!-- Interface for gripper abstraction -->
     <node name="gripper_interface" type="grip_service_interface.py" pkg="ur_launch_hardware"/>
@@ -24,6 +25,7 @@
         <arg name="robot_ip" value="$(arg robot_ip)"/>
         <arg name="ur_joint_state_topic_name" value="/$(arg tf_prefix)/joint_states"/>
         <arg name="joint_prefix" value="$(arg UR_prefix)"/>
+        <arg name="base_frame_id" value="$(arg calibrated_pose_base_frame)"/>
     </include>
 
     <!-- limit twist commands -->

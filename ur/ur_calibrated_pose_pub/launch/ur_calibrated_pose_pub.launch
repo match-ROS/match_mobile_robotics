@@ -6,6 +6,7 @@
     ideal: Uses the ideal CAD parameter from the config file -->
     <arg name="dh_parameter_switch" default="calibrated"/>
     <arg name="joint_prefix" default="UR10_l"/>
+    <arg name="base_frame_id" default=""/>
     
     <!-- Interface for gripper abstraction -->
     <node name="ur_calibrated_pose_pub_node" type="ur_calibrated_pose_pub_node" pkg="ur_calibrated_pose_pub" output="screen" respawn="true"> 
@@ -14,5 +15,6 @@
         <param name="ur_joint_state_topic_name" value="$(arg ur_joint_state_topic_name)"/>
         <param name="dh_parameter_switch" value="$(arg dh_parameter_switch)"/>
         <param name="joint_prefix" value="$(arg joint_prefix)"/>
+        <param name="base_frame_id" value="$(arg base_frame_id)"/>
     </node>
 </launch>

@@ -9,10 +9,6 @@ namespace ur_calibrated_pose_pub
 	void URCalibratedPosePub::init()
 	{
 		this->readParams();
-		this->node_namespace_ = this->sanitizeFrameId(ros::this_node::getNamespace());
-		this->default_parent_frame_id_ = this->node_namespace_.empty() ? "base" : this->node_namespace_ + "/base";
-		this->default_child_frame_id_ = this->node_namespace_.empty() ? "calibrated_ee_pose" : this->node_namespace_ + "/calibrated_ee_pose";
-		this->updateBaseFrameIdFromParam();
 		this->getCalibratedDHParameter();
 
 		// Initialze subscriber, publisher, service servers and service clients
@@ -25,12 +21,14 @@ namespace ur_calibrated_pose_pub
 
 	void URCalibratedPosePub::execute()
 	{
+		const std::string sanitized_namespace = this->sanitizeFrameId(ros::this_node::getNamespace());
+		const std::string default_base_frame_id = sanitized_namespace.empty() ? "base" : sanitized_namespace + "/base";
+		const std::string parent_frame_id = this->base_frame_id_.empty() ? default_base_frame_id : this->base_frame_id_;
+		const std::string child_frame_id = sanitized_namespace.empty() ? "calibrated_ee_pose" : sanitized_namespace + "/calibrated_ee_pose";
+
 		ros::Rate publish_rate = ros::Rate(500.0);
 		while(ros::ok())
 		{
-			this->updateBaseFrameIdFromParam();
-			const std::string parent_frame_id = this->base_frame_id_.empty() ? this->default_parent_frame_id_ : this->base_frame_id_;
-			const std::string child_frame_id = this->default_child_frame_id_;
 			// Debugging of each transformation by broadcasting it to tf
 			// Eigen::Matrix4d tf_matrix_0 = Eigen::Matrix4d::Identity();
 			// Eigen::Matrix4d tf_matrix_1 = Eigen::Matrix4d::Identity();
@@ -348,27 +346,6 @@ namespace ur_calibrated_pose_pub
 			{
 				this->ideal_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);
 				this->calibrated_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);
-			}
-		}
-	}
-
-	void URCalibratedPosePub::updateBaseFrameIdFromParam()
-	{
-		std::string param_value;
-		if(this->private_nh_.getParam("base_frame_id", param_value))
-		{
-			const std::string sanitized_value = this->sanitizeFrameId(param_value);
-			if(sanitized_value != this->base_frame_id_)
-			{
-				this->base_frame_id_ = sanitized_value;
-				if(this->base_frame_id_.empty())
-				{
-					ROS_INFO_STREAM("URCalibratedPosePub: Using default base frame '" << this->default_parent_frame_id_ << "'");
-				}
-				else
-				{
-					ROS_INFO_STREAM("URCalibratedPosePub: Using configured base frame '" << this->base_frame_id_ << "'");
-				}
 			}
 		}
 	}

@@ -44,12 +44,16 @@ namespace ur_calibrated_pose_pub
             std::string joint_prefix_;
             std::string dh_parameter_switch_;
             std::string base_frame_id_;
+            std::string node_namespace_;
+            std::string default_parent_frame_id_;
+            std::string default_child_frame_id_;
             
             std::vector<dh_utils::DHTransformation> ideal_dh_transformations_list_;
             std::vector<dh_utils::DHTransformation> calibrated_dh_transformations_list_;
 
             void readParams(); // Read ROS parameter from param server
             void getCalibratedDHParameter(); // Read calibrated DH parameters from robot controller
+            void updateBaseFrameIdFromParam();
 
             // Callback functions
             void jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state_msg);

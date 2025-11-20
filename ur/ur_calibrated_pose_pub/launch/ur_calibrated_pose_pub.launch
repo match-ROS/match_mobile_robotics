@@ -7,6 +7,7 @@
     <arg name="dh_parameter_switch" default="calibrated"/>
     <arg name="joint_prefix" default="UR10_l"/>
     <arg name="base_frame_id" default=""/>
+    <arg name="tcp_offset" default="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"/>
     
     <!-- Interface for gripper abstraction -->
     <node name="ur_calibrated_pose_pub_node" type="ur_calibrated_pose_pub_node" pkg="ur_calibrated_pose_pub" output="screen" respawn="true"> 
@@ -16,5 +17,6 @@
         <param name="dh_parameter_switch" value="$(arg dh_parameter_switch)"/>
         <param name="joint_prefix" value="$(arg joint_prefix)"/>
         <param name="base_frame_id" value="$(arg base_frame_id)"/>
+        <rosparam param="tcp_offset">$(arg tcp_offset)</rosparam>
     </node>
 </launch>

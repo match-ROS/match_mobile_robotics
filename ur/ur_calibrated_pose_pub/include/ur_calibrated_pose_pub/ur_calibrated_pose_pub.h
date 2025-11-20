@@ -9,6 +9,7 @@
 
 #include <XmlRpc.h>
 #include <Eigen/Dense>
+#include <Eigen/Geometry>
 #include <vector>
 
 #include <ur_client_library/comm/parser.h>
@@ -44,6 +45,7 @@ namespace ur_calibrated_pose_pub
             std::string joint_prefix_;
             std::string dh_parameter_switch_;
             std::string base_frame_id_;
+            Eigen::Matrix4d tcp_offset_transform_;
             
             std::vector<dh_utils::DHTransformation> ideal_dh_transformations_list_;
             std::vector<dh_utils::DHTransformation> calibrated_dh_transformations_list_;
@@ -55,6 +57,7 @@ namespace ur_calibrated_pose_pub
             void jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state_msg);
 
             std::string sanitizeFrameId(const std::string& frame_id) const;
+            Eigen::Matrix4d buildTransformFromOffset(const std::vector<double>& offset_vector) const;
     };
 }
 #endif  // ifndef UR_CALIBRATED_POSE_PUB_H_INCLUDED

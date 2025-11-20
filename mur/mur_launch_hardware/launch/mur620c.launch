@@ -12,7 +12,10 @@
     <arg name="external_localization" default="false"/>
     <arg name="localization_type" default="robot_pose" />
     <arg name="tool"   default="bauschaum_ee" />
+
+    <!-- calibrated pose -->
     <arg name="static_mode" default="false"/>
+    <arg name="tcp_offset" default="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"/>
     
     <!-- ur base calibration -->
     <arg name="ur_l_xyz" default="-0.008759885687255942 -0.0009479599747381218 0.0"/>
@@ -42,6 +45,7 @@
         <arg name="tool" value="$(arg tool)"/>
         <arg name="battery_node_id" value="0x0240"/>
         <arg name="static_mode" value="$(arg static_mode)"/>
+        <arg name="tcp_offset" value="$(arg tcp_offset)"/>
     </include> 
 
 

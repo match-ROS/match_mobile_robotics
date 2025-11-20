@@ -3,7 +3,7 @@
 namespace ur_calibrated_pose_pub
 {
 	URCalibratedPosePub::URCalibratedPosePub(ros::NodeHandle nh,
-											 ros::NodeHandle private_nh) : nh_(nh), private_nh_(private_nh)
+												 ros::NodeHandle private_nh) : nh_(nh), private_nh_(private_nh), tcp_offset_transform_(Eigen::Matrix4d::Identity())
 	{ }
 
 	void URCalibratedPosePub::init()
@@ -118,6 +118,7 @@ namespace ur_calibrated_pose_pub
 					complete_transformation_matrix = complete_transformation_matrix * dh_transformation.getTransformationMatrix();
 				}
 			}
+			complete_transformation_matrix = complete_transformation_matrix * this->tcp_offset_transform_;
 			
 			geometry_msgs::PoseStamped ur_calibrated_pose_msg;
 			ur_calibrated_pose_msg.header.stamp = ros::Time::now();
@@ -186,6 +187,44 @@ namespace ur_calibrated_pose_pub
 
 		this->private_nh_.param<std::string>("base_frame_id", this->base_frame_id_, "");
 		this->base_frame_id_ = this->sanitizeFrameId(this->base_frame_id_);
+
+		std::vector<double> tcp_offset_vector(6, 0.0);
+		if(this->private_nh_.hasParam("tcp_offset"))
+		{
+			XmlRpc::XmlRpcValue tcp_offset_xml;
+			this->private_nh_.getParam("tcp_offset", tcp_offset_xml);
+			if(tcp_offset_xml.getType() == XmlRpc::XmlRpcValue::TypeArray && tcp_offset_xml.size() == 6)
+			{
+				for(int index = 0; index < tcp_offset_xml.size(); index++)
+				{
+					if(tcp_offset_xml[index].getType() == XmlRpc::XmlRpcValue::TypeDouble ||
+					   tcp_offset_xml[index].getType() == XmlRpc::XmlRpcValue::TypeInt)
+					{
+						double value = 0.0;
+						if(tcp_offset_xml[index].getType() == XmlRpc::XmlRpcValue::TypeDouble)
+						{
+							value = static_cast<double>(tcp_offset_xml[index]);
+						}
+						else
+						{
+							value = static_cast<int>(tcp_offset_xml[index]);
+						}
+						tcp_offset_vector[index] = value;
+					}
+					else
+					{
+						ROS_ERROR("tcp_offset parameter list is not well formed");
+						return;
+					}
+				}
+			}
+			else
+			{
+				ROS_ERROR("tcp_offset parameter must contain exactly 6 numeric values");
+				return;
+			}
+		}
+		this->tcp_offset_transform_ = this->buildTransformFromOffset(tcp_offset_vector);
 
 		// Get DH parameters from parameter server
 		XmlRpc::XmlRpcValue dh_param_list;
@@ -348,6 +387,27 @@ namespace ur_calibrated_pose_pub
 				this->calibrated_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);
 			}
 		}
+	}
+
+	Eigen::Matrix4d URCalibratedPosePub::buildTransformFromOffset(const std::vector<double>& offset_vector) const
+	{
+		Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
+		if(offset_vector.size() != 6)
+		{
+			return transform;
+		}
+
+		transform(0, 3) = offset_vector[0];
+		transform(1, 3) = offset_vector[1];
+		transform(2, 3) = offset_vector[2];
+
+		Eigen::AngleAxisd roll(offset_vector[3], Eigen::Vector3d::UnitX());
+		Eigen::AngleAxisd pitch(offset_vector[4], Eigen::Vector3d::UnitY());
+		Eigen::AngleAxisd yaw(offset_vector[5], Eigen::Vector3d::UnitZ());
+		Eigen::Matrix3d rotation = (roll * pitch * yaw).matrix();
+		transform.block<3,3>(0, 0) = rotation;
+
+		return transform;
 	}
 
 	std::string URCalibratedPosePub::sanitizeFrameId(const std::string& frame_id) const

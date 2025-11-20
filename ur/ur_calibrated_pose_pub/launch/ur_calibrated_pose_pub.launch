@@ -17,6 +17,6 @@
         <param name="dh_parameter_switch" value="$(arg dh_parameter_switch)"/>
         <param name="joint_prefix" value="$(arg joint_prefix)"/>
         <param name="base_frame_id" value="$(arg base_frame_id)"/>
-        <rosparam param="tcp_offset">$(arg tcp_offset)</rosparam>
+        <rosparam param="tcp_offset" subst_value="true">$(arg tcp_offset)</rosparam>
     </node>
 </launch>

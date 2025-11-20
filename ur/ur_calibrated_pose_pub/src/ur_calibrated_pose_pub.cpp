@@ -210,6 +210,7 @@ namespace ur_calibrated_pose_pub
 							value = static_cast<int>(tcp_offset_xml[index]);
 						}
 						tcp_offset_vector[index] = value;
+						ROS_WARN_STREAM("tcp_offset[" << index << "] = " << value);
 					}
 					else
 					{
@@ -218,13 +219,45 @@ namespace ur_calibrated_pose_pub
 					}
 				}
 			}
+			else if (tcp_offset_xml.getType() == XmlRpc::XmlRpcValue::TypeString)
+			{
+				// Some callers pass the list as a single string (e.g. "[0,0,0.6,0,0,0]"). Try to parse that.
+				std::string s = static_cast<std::string>(tcp_offset_xml);
+				// remove brackets if present
+				if(!s.empty() && s.front() == '[' && s.back() == ']')
+				{
+					s = s.substr(1, s.size() - 2);
+				}
+				std::stringstream ss(s);
+				std::string item;
+				int idx = 0;
+				while (std::getline(ss, item, ',') && idx < 6)
+				{
+					try
+					{
+						tcp_offset_vector[idx] = std::stod(item);
+					}
+					catch(...) {
+						ROS_ERROR("Failed to parse tcp_offset string element to double");
+					}
+					idx++;
+				}
+				if(idx != 6)
+				{
+					ROS_ERROR("tcp_offset string did not contain 6 values");
+				}
+			}
 			else
 			{
-				ROS_ERROR("tcp_offset parameter must contain exactly 6 numeric values");
-				return;
+				ROS_ERROR("tcp_offset parameter must contain exactly 6 numeric values (array or string)");
 			}
 		}
 		this->tcp_offset_transform_ = this->buildTransformFromOffset(tcp_offset_vector);
+		// Log the parsed tcp_offset for visibility
+		ROS_INFO_STREAM("tcp_offset parsed: [" << tcp_offset_vector[0] << ", " << tcp_offset_vector[1] << ", " << tcp_offset_vector[2]
+		                << ", " << tcp_offset_vector[3] << ", " << tcp_offset_vector[4] << ", " << tcp_offset_vector[5] << "]");
+		ROS_INFO_STREAM("tcp_offset transform translation: x=" << this->tcp_offset_transform_(0,3)
+		                << ", y=" << this->tcp_offset_transform_(1,3) << ", z=" << this->tcp_offset_transform_(2,3));
 
 		// Get DH parameters from parameter server
 		XmlRpc::XmlRpcValue dh_param_list;

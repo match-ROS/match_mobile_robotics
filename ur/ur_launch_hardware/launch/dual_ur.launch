@@ -13,7 +13,7 @@
     <arg name="trajectory_port" default="50003"/> 
     <arg name="script_command_port" default="50004"/> 
     <arg name="use_state_publisher" default="true"/>
-    <arg name="calibrated_pose_base_frame" default="$(arg tf_prefix)/$(arg UR_prefix)base_link"/>
+    <arg name="calibrated_pose_base_frame" default="$(arg tf_prefix)/$(arg UR_prefix)base_link_inertia"/>
     <arg name="tcp_offset" default="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"/>
 
     <!-- Interface for gripper abstraction -->

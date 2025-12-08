@@ -13,7 +13,7 @@
     <arg name="localization_mode" default="0" />
     <arg name="mocap_frame_id" default="(arg tf_prefix)" />
     <arg name="external_localization" default="False"/>
-    <arg name="localization_topic" default="/qualisys/mur620a/pose"/>
+    <arg name="localization_topic" default="/qualisys_map/mur620c/pose"/>
 
     <include file="$(find mir_driver)/launch/mir.launch">
         <arg name="tf_prefix" value="$(arg tf_prefix)"/>

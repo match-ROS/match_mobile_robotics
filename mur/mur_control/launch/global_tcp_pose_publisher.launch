@@ -7,7 +7,7 @@
     <arg name="static_tf_child" default="mur620/UR10_l/base_link"/>
     <arg name="world_frame" default="map"/> <!-- just for publisher frame -->
     
-    <node name="pose_composer" pkg="mur_control" type="pose_composer.py" output="screen">
+    <node name="$(anon pose_composer)" pkg="mur_control" type="pose_composer.py" output="screen">
         <!-- Topic Remappings -->
         <remap from="world_T_base" to="$(arg world_T_base_topic)"/>
         <remap from="base_T_ee" to="$(arg base_T_ee_topic)"/>

@@ -6,6 +6,7 @@
     <arg name="static_tf_parent" default="mur620/base_footprint"/>
     <arg name="static_tf_child" default="mur620/UR10_l/base_link"/>
     <arg name="world_frame" default="map"/> <!-- just for publisher frame -->
+    <arg name="mocap_mode" default="false"/> <!-- if true, use mocap data to update world_T_ee -->
     
     <node name="$(anon pose_composer)" pkg="mur_control" type="pose_composer.py" output="screen">
         <!-- Topic Remappings -->
@@ -14,7 +15,7 @@
         <remap from="world_T_ee" to="$(arg world_T_ee_topic)"/><!-- publisher -->
 
         <param name="world_frame" value="$(arg world_frame)"/>
-
+        <param name="mocap_mode" value="$(arg mocap_mode)"/>
         <param name="static_tf_included" value="$(arg static_tf_included)"/>
         <param name="static_tf_parent" value="$(arg static_tf_parent)"/>
         <param name="static_tf_child" value="$(arg static_tf_child)"/>

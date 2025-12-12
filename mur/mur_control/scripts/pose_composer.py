@@ -37,6 +37,7 @@ class TotalPose:
         self.static_tf_included = rospy.get_param("~static_tf_included", False)
         static_tf_parent = rospy.get_param("~static_tf_parent", "mur620/base_footprint")
         static_tf_child = rospy.get_param("~static_tf_child", "mur620/UR10_l/base_link")
+        self.mocap_mode = rospy.get_param("~mocap_mode", False)
         self.static_T = None
         if self.static_tf_included:
             tf_listener = TransformListener()
@@ -68,7 +69,8 @@ class TotalPose:
         self.base_T_ee = base_T_ee
 
         self.world_T_ee.header.stamp = msg.header.stamp
-        self.update_world_T_ee()
+        if not self.mocap_mode:
+            self.update_world_T_ee()
 
     def update_world_T_ee(self):
         

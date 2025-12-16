@@ -60,6 +60,7 @@ class TotalPose:
             rospy.logwarn(f"Invalid lift axis '{axis}'. Falling back to 'z'.")
             axis = "z"
         self.lift_axis_index = axis_map[axis]
+        self.lift_joint_seen = False
 
         if self.lift_enabled:
             missing = []
@@ -138,8 +139,10 @@ class TotalPose:
     def lift_joint_callback(self, msg: JointState):
         try:
             lift_index = msg.name.index(self.lift_joint_name)
+            self.lift_joint_seen = True
         except ValueError:
-            rospy.logwarn_throttle(5.0, f"Lift joint '{self.lift_joint_name}' not found in JointState message. Waiting...")
+            if not self.lift_joint_seen:
+                rospy.logwarn_throttle(5.0, f"Lift joint '{self.lift_joint_name}' not found in JointState message. Waiting...")
             return
 
         if lift_index >= len(msg.position):

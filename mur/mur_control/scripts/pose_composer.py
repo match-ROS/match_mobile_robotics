@@ -39,6 +39,8 @@ class TotalPose:
         self.static_tf_included = rospy.get_param("~static_tf_included", False)
         static_tf_parent = rospy.get_param("~static_tf_parent", "mur620/base_footprint")
         static_tf_child = rospy.get_param("~static_tf_child", "mur620/UR10_l/base_link")
+        self.mocap_mode = rospy.get_param("~mocap_mode", False)
+        self.static_T = None
         self.tf_listener = TransformListener()
 
         self.static_T = np.eye(4)
@@ -130,7 +132,8 @@ class TotalPose:
         self.base_T_ee = self._apply_static_chain(base_T_ee)
 
         self.world_T_ee.header.stamp = msg.header.stamp
-        self.update_world_T_ee()
+        if not self.mocap_mode:
+            self.update_world_T_ee()
 
     def lift_joint_callback(self, msg: JointState):
         try:

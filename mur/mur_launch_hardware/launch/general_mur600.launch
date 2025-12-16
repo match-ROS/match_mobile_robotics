@@ -190,6 +190,16 @@
                 <arg name="lift_axis" value="z"/>
             </include>
 
+            <!-- global pose publisher with mocap input -->
+            <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <arg name="world_T_base_topic" default="/qualisys_map/$(arg tf_prefix)/pose"/>
+                <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose_mocap"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base"/>
+                <arg name="mocap_mode" value="true"/>
+            </include>
+            
              <!-- Lift module -->
             <group if="$(eval arg('use_lift') ==true)"> 
                 <remap from="ewellix_tlt_node_r/joint_states" to="/$(arg tf_prefix)/joint_states"/>

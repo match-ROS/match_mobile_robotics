@@ -131,6 +131,12 @@
                 <arg name="world_T_ee_topic" value="global_tcp_pose"/>
                 <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
                 <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base"/>
+                <arg name="lift_enabled" value="$(arg use_lift)"/>
+                <arg name="lift_joint_name" value="left_lift_joint"/>
+                <arg name="lift_joint_states_topic" value="/$(arg tf_prefix)/joint_states"/>
+                <arg name="lift_bottom_frame" value="$(arg tf_prefix)/left_lift_bottom"/>
+                <arg name="lift_top_frame" value="$(arg tf_prefix)/left_lift_top"/>
+                <arg name="lift_axis" value="z"/>
             </include>
 
 
@@ -176,6 +182,12 @@
                 <arg name="world_T_ee_topic" value="global_tcp_pose"/>
                 <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
                 <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base"/>
+                <arg name="lift_enabled" value="$(arg use_lift)"/>
+                <arg name="lift_joint_name" value="right_lift_joint"/>
+                <arg name="lift_joint_states_topic" value="/$(arg tf_prefix)/joint_states"/>
+                <arg name="lift_bottom_frame" value="$(arg tf_prefix)/right_lift_bottom"/>
+                <arg name="lift_top_frame" value="$(arg tf_prefix)/right_lift_top"/>
+                <arg name="lift_axis" value="z"/>
             </include>
 
             <!-- global pose publisher with mocap input -->

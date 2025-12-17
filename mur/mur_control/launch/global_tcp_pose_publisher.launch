@@ -6,6 +6,12 @@
     <arg name="static_tf_parent" default="mur620/base_footprint"/>
     <arg name="static_tf_child" default="mur620/UR10_l/base_link"/>
     <arg name="world_frame" default="map"/> <!-- just for publisher frame -->
+    <arg name="lift_enabled" default="false"/>
+    <arg name="lift_joint_name" default=""/>
+    <arg name="lift_joint_states_topic" default="/mur620/joint_states"/>
+    <arg name="lift_bottom_frame" default=""/>
+    <arg name="lift_top_frame" default=""/>
+    <arg name="lift_axis" default="z"/>
     <arg name="mocap_mode" default="false"/> <!-- if true, use mocap data to update world_T_ee -->
     
     <node name="$(anon pose_composer)" pkg="mur_control" type="pose_composer.py" output="screen">
@@ -19,5 +25,11 @@
         <param name="static_tf_included" value="$(arg static_tf_included)"/>
         <param name="static_tf_parent" value="$(arg static_tf_parent)"/>
         <param name="static_tf_child" value="$(arg static_tf_child)"/>
+        <param name="lift_enabled" value="$(arg lift_enabled)"/>
+        <param name="lift_joint_name" value="$(arg lift_joint_name)"/>
+        <param name="lift_joint_states_topic" value="$(arg lift_joint_states_topic)"/>
+        <param name="lift_bottom_frame" value="$(arg lift_bottom_frame)"/>
+        <param name="lift_top_frame" value="$(arg lift_top_frame)"/>
+        <param name="lift_axis" value="$(arg lift_axis)"/>
     </node>
 </launch>

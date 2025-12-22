@@ -70,7 +70,7 @@
     
     <!-- Bringup the left UR -->
     <group if="$(eval arg('launch_ur_l') ==true)"> 
-        <remap from="/$(arg tf_prefix)/$(arg left_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+        <!-- <remap from="/$(arg tf_prefix)/$(arg left_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/> -->
         <remap from="twist_controller/command" to="twist_controller/controller_input"/>
 
         <group ns= "$(arg tf_prefix)/$(arg left_arm_group_name)">
@@ -147,7 +147,7 @@
     <!-- Bringup the right UR -->   
     <group if="$(eval arg('launch_ur_r') ==true)">
 
-        <remap from="/$(arg tf_prefix)/$(arg right_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+        <!-- <remap from="/$(arg tf_prefix)/$(arg right_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/> -->
         <remap from="twist_controller/command" to="twist_controller/controller_input"/>
         
         <group ns= "$(arg tf_prefix)/$(arg right_arm_group_name)"> 
@@ -220,6 +220,16 @@
     </group>
 
     <group ns="$(arg tf_prefix)">
+
+        <node pkg="mur_launch_hardware" type="joint_state_aggregator.py" name="joint_state_aggregator" output="screen">
+            <param name="topic_mir"  value="/$(arg mur_ns)/joint_states_mir" />
+            <param name="topic_ur_l"   value="/$(arg mur_ns)/$(arg left_arm_group_name)/joint_states" />
+            <param name="topic_ur_r"   value="/$(arg mur_ns)/$(arg right_arm_group_name)/joint_states" />
+            <param name="topic_lift_l" value="/$(arg mur_ns)/$(arg left_arm_group_name)/ewellix_tlt_node_l/joint_states_lift" />
+            <param name="topic_lift_r" value="/$(arg mur_ns)/$(arg right_arm_group_name)/ewellix_tlt_node_r/joint_states_lift" />
+            <param name="out_topic"  value="/$(arg mur_ns)/joint_states" />
+        </node>
+
 
         <!-- if both arms are launched, turn on dual arm collision avoidance -->
         <!-- <group if="$(eval arg('launch_ur_l') ==true and arg('launch_ur_r') ==true)">

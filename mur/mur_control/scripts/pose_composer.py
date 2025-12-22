@@ -89,9 +89,11 @@ class TotalPose:
             rospy.logwarn("Lift integration requires static transforms. Disabling lift.")
             self.lift_enabled = False
 
+        self.world_T_ee_pub = rospy.Publisher("world_T_ee", PoseStamped, queue_size=1)
+        rospy.sleep(1.0)  # Allow publisher to set up
         self.world_T_base_sub = rospy.Subscriber("world_T_base", PoseStamped, self.world_T_base_callback)
         self.base_T_ee_sub = rospy.Subscriber("base_T_ee", PoseStamped, self.base_T_ee_callback)
-        self.world_T_ee_pub = rospy.Publisher("world_T_ee", PoseStamped, queue_size=1)
+
         self.lift_joint_sub = None
         if self.lift_enabled:
             self.lift_joint_sub = rospy.Subscriber(

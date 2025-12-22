@@ -1,0 +1,5 @@
+<launch>
+    
+    <node type="main.py" name="$(anon gui)" pkg="print_gui" output="screen"/> 
+
+  </launch>

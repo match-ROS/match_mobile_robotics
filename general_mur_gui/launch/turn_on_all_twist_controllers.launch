@@ -1,0 +1,10 @@
+<launch>
+    <!-- Argument für die Liste der Roboter -->
+    <arg name="robot_names" default="[]" />
+    <arg name="UR_prefixes" default="['UR10_l', 'UR10_r']" />
+
+    <node pkg="print_gui" type="turn_on_all_twist_controllers.py" name="turn_on_all_twist_controllers" output="screen">
+        <rosparam param="robot_names" subst_value="True">$(arg robot_names) </rosparam>
+        <rosparam param="UR_prefixes" subst_value="True">$(arg UR_prefixes) </rosparam>
+    </node>
+</launch>

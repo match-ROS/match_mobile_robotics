@@ -9,8 +9,8 @@
     <arg name="tf_prefix" default="mur620c"/>
     <arg name="left_arm_group_name" default="UR10_l"/>
     <arg name="right_arm_group_name" default="UR10_r"/>
-    <arg name="external_localization" default="false"/>
-    <arg name="localization_type" default="robot_pose" />
+    <arg name="external_localization" default="true"/>
+    <arg name="localization_type" default="mocap" />
     <arg name="tool"   default="bauschaum_ee" />
 
     <!-- calibrated pose -->

@@ -59,17 +59,12 @@ class ROSGui(QWidget):
     
     def __init__(self):
         super().__init__()
-        # state
-        self.ur_follow_settings = {'idx_metric': 'virtual line', 'threshold': 0.010}
-        self.servo_calib = self._load_servo_calibration_defaults()
+
         # ROS + window
-        self.path_idx.connect(self._update_spinbox)
-        self.medians.connect(self._update_medians)
         self.ros_interface = ROSInterface(self)
-        self._selected_component_name = self.ros_interface.get_cached_component_name()
-        self.setWindowTitle("Additive Manufacturing GUI")
+        self.setWindowTitle("General MuR GUI")
         self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), '../img/Logo.png')))
-        self.setGeometry(100, 100, 3200, 1700)
+        self.setGeometry(100, 100, 1600, 850)
         main_layout = QHBoxLayout()
         # Left column
         left_layout = QVBoxLayout()
@@ -87,69 +82,7 @@ class ROSGui(QWidget):
             row = QHBoxLayout(); row.addWidget(QLabel(robot)); mir_label = QLabel("MiR: –"); ur_label = QLabel("UR: –"); row.addWidget(mir_label); row.addWidget(ur_label); self.battery_labels[robot] = (mir_label, ur_label); self.battery_layout.addLayout(row)
         ur_layout = QVBoxLayout(); ur_layout.addWidget(QLabel("Select URs:")); self.ur10_l = QCheckBox("UR10_l"); self.ur10_r = QCheckBox("UR10_r"); self.ur10_l.setChecked(False); self.ur10_r.setChecked(True); ur_layout.addWidget(self.ur10_l); ur_layout.addWidget(self.ur10_r)
         selection_layout.addLayout(robot_layout); selection_layout.addLayout(ur_layout); selection_group.setLayout(selection_layout); left_layout.addWidget(selection_group)
-        # Override
-        override_layout = QVBoxLayout()
-        override_label = QLabel("Speed Override (%)")
-        self.override_slider = QSlider(Qt.Horizontal)
-        self.override_slider.setRange(0, 100)
-        self.override_slider.setValue(100)
-        self.override_slider.setTickInterval(10)
-        self.override_slider.setTickPosition(QSlider.TicksBelow)
-        self.override_value_label = QLabel("100%")
-        self.turbo_mode_checkbox = QCheckBox("Turbo Mode")
-        self.turbo_mode_checkbox.setChecked(False)
-        self.ludicrous_mode_checkbox = QCheckBox("Ludicrous Mode")
-        self.ludicrous_mode_checkbox.setChecked(False)
-
-        nozzle_label = QLabel("Nozzle Height Override (mm)")
-        self.nozzle_override_slider = QSlider(Qt.Horizontal)
-        self.nozzle_override_slider.setRange(-50, 50)
-        self.nozzle_override_slider.setValue(0)
-        self.nozzle_override_slider.setTickInterval(5)
-        self.nozzle_override_slider.setTickPosition(QSlider.TicksBelow)
-        self.nozzle_override_value_label = QLabel("0.0 mm")
-
-        self.turbo_mode_checkbox.toggled.connect(self._handle_turbo_mode_toggle)
-        self.ludicrous_mode_checkbox.toggled.connect(self._handle_ludicrous_mode_toggle)
-        self.ros_interface.init_override_velocity_slider()
-        self.ros_interface.init_nozzle_override_slider()
-
-        self.manual_override_radio = QRadioButton("Manual Override Control")
-        self.laser_override_radio = QRadioButton("Laser Override Control")
-        self.manual_override_radio.setChecked(True)
-
-        self.override_source_group = QButtonGroup(self)
-        self.override_source_group.setExclusive(True)
-        self.override_source_group.addButton(self.manual_override_radio)
-        self.override_source_group.addButton(self.laser_override_radio)
-
-        override_layout.addWidget(override_label)
-        override_layout.addWidget(self.override_slider)
-        override_layout.addWidget(self.override_value_label)
-
-        override_mode_row = QHBoxLayout()
-        override_mode_row.addWidget(self.turbo_mode_checkbox)
-        override_mode_row.addWidget(self.ludicrous_mode_checkbox)
-        override_mode_row.addWidget(self.manual_override_radio)
-        override_mode_row.addWidget(self.laser_override_radio)
-
-        override_layout.addLayout(override_mode_row)
-
-        override_layout.addWidget(nozzle_label)
-        override_layout.addWidget(self.nozzle_override_slider)
-        override_layout.addWidget(self.nozzle_override_value_label)
-        left_layout.addLayout(override_layout)
-        # Keyence profile medians
-        keyence_group = QGroupBox("Keyence Profile Medians")
-        keyence_layout = QHBoxLayout()
-        self.median_base_label = QLabel("base: —")
-        self.median_map_label = QLabel("map: —")
-        for w in (self.median_base_label, self.median_map_label):
-            w.setStyleSheet("border: 1px solid #999; padding: 4px;")
-        keyence_layout.addWidget(self.median_base_label)
-        keyence_layout.addWidget(self.median_map_label)
-        keyence_group.setLayout(keyence_layout)
-        left_layout.addWidget(keyence_group)
+        
         # Setup
         setup_group = QGroupBox("Setup Functions"); setup_layout = QVBoxLayout();
         setup_buttons = {
@@ -181,10 +114,7 @@ class ROSGui(QWidget):
             elif text == "Start Mocap": self.btn_mocap = b
             elif text == "Start Sync": self.btn_sync = b
             b.clicked.connect(lambda _, f=fn: f()); b.setStyleSheet("background-color: lightgray;"); setup_layout.addWidget(b)
-        spray_distance_box = QHBoxLayout(); spray_distance_box.addWidget(QLabel("Spray Distance (m):")); self.spray_distance_spin = QDoubleSpinBox(); self.spray_distance_spin.setRange(0.0, 1.0); self.spray_distance_spin.setDecimals(4); self.spray_distance_spin.setSingleStep(0.001); self.spray_distance_spin.setValue(self.ros_interface.get_cached_spray_distance());
-        self._spray_distance_timer = QTimer(self); self._spray_distance_timer.setSingleShot(True); self._spray_distance_timer.setInterval(700); self._spray_distance_timer.timeout.connect(self._persist_pending_spray_distance); self._pending_spray_distance = self.spray_distance_spin.value();
-        self.spray_distance_spin.valueChanged.connect(self._handle_spray_distance_changed); spray_distance_box.addWidget(self.spray_distance_spin); left_layout.addLayout(spray_distance_box)
-
+        
         self.workspace_input = QLineEdit(); default_path = self.get_relative_workspace_path(); self.workspace_input.setText(default_path); self.workspace_input.setPlaceholderText("Enter workspace name"); setup_layout.addWidget(QLabel("Workspace Name:")); setup_layout.addWidget(self.workspace_input); setup_group.setLayout(setup_layout); left_layout.addWidget(setup_group)
         main_layout.addLayout(left_layout)
         # Right column
@@ -197,158 +127,7 @@ class ROSGui(QWidget):
         }
         for text, fn in controller_buttons.items(): btn = QPushButton(text); btn.clicked.connect(lambda _, f=fn: f()); controller_layout.addWidget(btn)
         controller_group.setLayout(controller_layout); right_layout.addWidget(controller_group)
-        prepare_print_group = QGroupBox("Prepare Print Functions"); prepare_print_layout = QVBoxLayout()
-        self.component_select_button = QPushButton()
-        self.component_select_button.setStyleSheet("text-align: left;")
-        self.component_select_button.clicked.connect(self._open_component_dialog)
-        prepare_print_layout.addWidget(self.component_select_button)
-        self._update_component_button_label()
-        prepare_print_buttons = [
-            ("Parse MiR Path", lambda: parse_mir_path(self)),
-            ("Parse UR Path", lambda: parse_ur_path(self)),
-            ("Move MiR to Start Pose", lambda: move_mir_to_start_pose(self)),
-            ("Move UR to Start Pose", lambda: move_ur_to_start_pose(self)),
-            ("Broadcast Target Poses", lambda: target_broadcaster(self)),
-            ("Start Laser Profile Controller", lambda: self.ros_interface.launch_laser_orthogonal_controller()),
-        ]
-        for text, fn in prepare_print_buttons:
-            btn = QPushButton(text); btn.clicked.connect(lambda _, f=fn: f()); prepare_print_layout.addWidget(btn)
-            if text=="Parse MiR Path": self.btn_parse_mir=btn
-            if text=="Parse UR Path": self.btn_parse_ur=btn
-            if text=="Broadcast Target Poses": self.btn_target_broadcaster=btn
-            if text=="Start Laser Profile Controller": self.btn_laser_ctrl=btn
-        prepare_print_group.setLayout(prepare_print_layout); right_layout.addWidget(prepare_print_group)
-
-        print_functions_group = QGroupBox("Print Functions"); print_functions_layout = QVBoxLayout();
-
-        # Orthogonal PID row at top of controls
-        orth_pid_row = QHBoxLayout()
-        self.btn_orth_pid_settings = QPushButton("Set PID")
-        self.btn_orth_pid_settings.setToolTip("Edit and persist orthogonal PID gains")
-        self.btn_orth_pid_settings.clicked.connect(self._open_orth_pid_settings)
-        orth_pid_row.addWidget(self.btn_orth_pid_settings)
-
-        self.orth_pid_toggle = QCheckBox("Enable Orthogonal PID")
-        self.orth_pid_toggle.setChecked(False)
-        self.orth_pid_toggle.toggled.connect(self._handle_orth_pid_toggle)
-        orth_pid_row.addWidget(self.orth_pid_toggle)
-
-        self.orth_pid_state_label = QLabel("Off")
-        orth_pid_row.addWidget(self.orth_pid_state_label)
-
-        print_functions_layout.addLayout(orth_pid_row)
-
-        # Remaining print function buttons
-        print_function_buttons = {
-            "Increment Path Index": lambda: increment_path_index(self),
-            "Stop MiR Motion": lambda: stop_mir_motion(self),
-            "Stop UR Motion": lambda: stop_ur_motion(self),
-            "Stop All (Keep Drivers)": lambda: stop_all_but_drivers(self),
-        }
-        for text, fn in print_function_buttons.items():
-            btn = QPushButton(text)
-            if text == "Stop All (Keep Drivers)":
-                btn.setStyleSheet("background-color: #ff6666; color: black;")
-            btn.clicked.connect(lambda _, f=fn: f())
-            print_functions_layout.addWidget(btn)
-
-        self.btn_start_signal = QPushButton("Trigger Start Signal")
-        self.btn_start_signal.setStyleSheet("background-color: #4caf50; color: white;")
-        self.btn_start_signal.clicked.connect(self._handle_start_signal_button)
-        print_functions_layout.addWidget(self.btn_start_signal)
-        self.update_start_signal_visual(False)
         
-        mir_btn = QPushButton("MiR follow Trajectory")
-        mir_btn.clicked.connect(lambda _, f=mir_follow_trajectory: f(self))
-        print_functions_layout.addWidget(mir_btn)
-
-        ur_btn = QPushButton("UR Follow Trajectory"); ur_btn.clicked.connect(lambda _, f=ur_follow_trajectory: f(self, self.ur_follow_settings)); ur_settings_btn = QPushButton("Settings"); ur_settings_btn.clicked.connect(self.open_ur_settings); ur_settings_btn.setStyleSheet("background-color: lightgray;"); hbox = QHBoxLayout(); hbox.addWidget(ur_btn); hbox.addWidget(ur_settings_btn); print_functions_layout.addLayout(hbox)
-        # --- Rosbag recording ---
-        self.topic_settings = {
-            "/tf": {"local": False, "remote": False},
-            "/ur_path_transformed": {"local": True, "remote": False},
-            "/mir_path_transformed": {"local": True, "remote": False},
-            "/laser_profile_offset_cmd_vel": {"local": False, "remote": True},
-            "/profiles": {"local": False, "remote": True},
-            "/path_index": {"local": False, "remote": True},
-            "/orthogonal_error": {"local": False, "remote": True},
-            "/orthogonal_twist": {"local": False, "remote": True},
-            "/ur_error_world": {"local": False, "remote": True},
-            "/mur620c/UR10_r/twist_controller/command_collision_free": {"local": False, "remote": True},
-            "/mur620c/UR10_r/twist_controller/controller_input": {"local": False, "remote": True},
-            "/ur_twist_direction_world": {"local": False, "remote": True},
-            "/servo_target_pos_left": {"local": False, "remote": True},
-            "/servo_target_pos_right": {"local": False, "remote": True},
-            "/mur620c/UR10_r/ur_calibrated_pose": {"local": False, "remote": True},
-            "/mur620c/UR10_r/global_tcp_pose": {"local": False, "remote": True},
-            "/qualisys_map/mur620c/pose": {"local": True, "remote": False},
-            "/qualisys_map/nozzle/pose": {"local": True, "remote": False},
-            "/mur620c/UR10_r/global_tcp_pose_mocap": {"local": True, "remote": False},
-        }
-
-
-        # self.btn_rosbag_settings.clicked.connect(lambda: self.open_rosbag_settings())
-        # self.btn_rosbag_record.clicked.connect(lambda: self.ros_interface.toggle_rosbag_record(self))
-        self.btn_rosbag_record = QPushButton("Rosbag Record"); self.btn_rosbag_record.setStyleSheet("background-color: lightgray;");  self.btn_rosbag_settings = QPushButton("Settings")
-        h_rb = QHBoxLayout(); h_rb.addWidget(self.btn_rosbag_record); h_rb.addWidget(self.btn_rosbag_settings);  print_functions_layout.addLayout(h_rb)
-        self.btn_rosbag_record.clicked.connect(lambda: self.ros_interface.toggle_rosbag_record(self));  self.btn_rosbag_settings.clicked.connect(lambda: self.open_rosbag_settings())
-        
-        default_idx = self.ros_interface.get_cached_path_index()
-        idx_box = QHBoxLayout()
-        idx_box.addWidget(QLabel("Index:"))
-        self.idx_spin = QSpinBox()
-        self.idx_spin.setRange(0, 10000)
-        self.idx_spin.setValue(default_idx)
-        idx_box.addWidget(self.idx_spin)
-        publish_idx_btn = QPushButton("Publish Index"); publish_idx_btn.clicked.connect(self._publish_current_index); idx_box.addWidget(publish_idx_btn); stop_idx_btn = QPushButton("Stop Index Advancer"); stop_idx_btn.clicked.connect(lambda: stop_idx_advancer(self)); idx_box.addWidget(stop_idx_btn); print_functions_layout.addLayout(idx_box)
-        
-        # Servo section
-        servo_box = QGroupBox("Dynamixel Servo Targets"); servo_outer_layout = QVBoxLayout(); targets_row = QHBoxLayout();
-        left_percent, right_percent = self.ros_interface.get_cached_servo_targets()
-        left_col = QVBoxLayout(); left_col.addWidget(QLabel("Left target (%)")); self.servo_left_slider = QSlider(); self.servo_left_slider.setOrientation(Qt.Horizontal); self.servo_left_slider.setRange(0,100); self.servo_left_slider.setTickInterval(10); self.servo_left_slider.setTickPosition(QSlider.TicksBelow); self.servo_left_spin = EnterSpinBox(); self.servo_left_spin.setRange(-100,200); self.servo_left_spin.setValue(int(round(left_percent))); self.servo_left_slider.setValue(int(round(left_percent))); self.servo_left_slider.valueChanged.connect(self.servo_left_spin.setValue); self.servo_left_spin.valueChanged.connect(lambda v: 0 <= v <= 100 and self.servo_left_slider.setValue(v)); self.servo_left_spin.returnPressed.connect(self._send_percent_targets); left_col.addWidget(self.servo_left_slider); left_col.addWidget(self.servo_left_spin)
-        right_col = QVBoxLayout(); right_col.addWidget(QLabel("Right target (%)")); self.servo_right_slider = QSlider(); self.servo_right_slider.setOrientation(Qt.Horizontal); self.servo_right_slider.setRange(0,100); self.servo_right_slider.setTickInterval(10); self.servo_right_slider.setTickPosition(QSlider.TicksBelow); self.servo_right_spin = EnterSpinBox(); self.servo_right_spin.setRange(-100,200); self.servo_right_spin.setValue(int(round(right_percent))); self.servo_right_slider.setValue(int(round(right_percent))); self.servo_right_slider.valueChanged.connect(self.servo_right_spin.setValue); self.servo_right_spin.valueChanged.connect(lambda v: 0 <= v <= 100 and self.servo_right_slider.setValue(v)); self.servo_right_spin.returnPressed.connect(self._send_percent_targets); right_col.addWidget(self.servo_right_slider); right_col.addWidget(self.servo_right_spin)
-        self.servo_left_spin.valueChanged.connect(self._handle_servo_percent_change)
-        self.servo_right_spin.valueChanged.connect(self._handle_servo_percent_change)
-        self._servo_percent_timer = QTimer(self); self._servo_percent_timer.setSingleShot(True); self._servo_percent_timer.setInterval(700); self._servo_percent_timer.timeout.connect(self._persist_pending_servo_percentages); self._pending_servo_targets = (left_percent, right_percent)
-        send_col = QVBoxLayout(); send_btn = QPushButton("Send Targets"); send_btn.clicked.connect(self._send_percent_targets); send_col.addWidget(QLabel(" ")); send_col.addWidget(send_btn)
-        targets_row.addLayout(left_col); targets_row.addLayout(right_col); targets_row.addLayout(send_col); servo_outer_layout.addLayout(targets_row)
-        zero_row = QHBoxLayout(); zl = QVBoxLayout(); zl.addWidget(QLabel("Left zero (raw)")); self.servo_left_zero_spin = QSpinBox(); self.servo_left_zero_spin.setRange(0,4095); self.servo_left_zero_spin.setValue(self.servo_calib['left']['zero']); zl.addWidget(self.servo_left_zero_spin); zr = QVBoxLayout(); zr.addWidget(QLabel("Right zero (raw)")); self.servo_right_zero_spin = QSpinBox(); self.servo_right_zero_spin.setRange(0,4095); self.servo_right_zero_spin.setValue(self.servo_calib['right']['zero']); zr.addWidget(self.servo_right_zero_spin); zb = QVBoxLayout(); send_zero_btn = QPushButton("Send Zero Position"); send_zero_btn.clicked.connect(self._send_zero_positions); calib_btn = QPushButton("Servo Calibration..."); calib_btn.clicked.connect(self.open_servo_calibration); zb.addWidget(QLabel(" ")); zb.addWidget(send_zero_btn); zb.addWidget(calib_btn); zero_row.addLayout(zl); zero_row.addLayout(zr); zero_row.addLayout(zb); servo_outer_layout.addLayout(zero_row); servo_box.setLayout(servo_outer_layout); print_functions_layout.addWidget(servo_box)
-
-        nozzle_group = QGroupBox("Nozzle position")
-        nozzle_layout = QHBoxLayout()
-        nozzle_layout.addWidget(QLabel("TCP offset (m):"))
-        self.tcp_offset_spins = []
-        tcp_labels = ['x', 'y', 'z']
-        tcp_defaults = [0.0, 0.0, 0.63409]
-        for axis, default in zip(tcp_labels, tcp_defaults):
-            col = QVBoxLayout()
-            col.addWidget(QLabel(axis.upper()))
-            spin = QDoubleSpinBox()
-            spin.setRange(-2.0, 2.0)
-            spin.setDecimals(5)
-            spin.setSingleStep(0.001)
-            spin.setValue(default)
-            spin.setSuffix(" m")
-            col.addWidget(spin)
-            nozzle_layout.addLayout(col)
-            self.tcp_offset_spins.append(spin)
-        # orientation around z (phi)
-        phi_col = QVBoxLayout()
-        phi_col.addWidget(QLabel("φ (deg)"))
-        self.tcp_phi_spin = QDoubleSpinBox()
-        self.tcp_phi_spin.setRange(-180.0, 180.0)
-        self.tcp_phi_spin.setDecimals(3)
-        self.tcp_phi_spin.setSingleStep(0.5)
-        self.tcp_phi_spin.setValue(88.0)
-        self.tcp_phi_spin.setSuffix(" °")
-        phi_col.addWidget(self.tcp_phi_spin)
-        nozzle_layout.addLayout(phi_col)
-        nozzle_group.setLayout(nozzle_layout)
-        print_functions_layout.addWidget(nozzle_group)
-        print_functions_group.setLayout(print_functions_layout)
-        right_layout.addWidget(print_functions_group)
-        main_layout.addLayout(right_layout)
-
         # --- ROS log console on the far right ---
         log_group = QGroupBox("ROS Messages")
         log_layout = QVBoxLayout()
@@ -438,124 +217,6 @@ class ROSGui(QWidget):
             return
         self.ros_interface.publish_path_index(self.idx_spin.value())
 
-    def _handle_spray_distance_changed(self, value: float):
-        self._pending_spray_distance = value
-        if hasattr(self, "_spray_distance_timer"):
-            self._spray_distance_timer.start()
-
-    def _persist_pending_spray_distance(self):
-        value = getattr(self, "_pending_spray_distance", None)
-        if value is None:
-            return
-        try:
-            self.ros_interface.persist_spray_distance(value)
-        except Exception as exc:
-            print(f"Failed to persist spray distance: {exc}")
-
-    def _handle_servo_percent_change(self, _value):
-        if not hasattr(self, "servo_left_spin") or not hasattr(self, "servo_right_spin"):
-            return
-        self._pending_servo_targets = (
-            float(self.servo_left_spin.value()),
-            float(self.servo_right_spin.value())
-        )
-        if hasattr(self, "_servo_percent_timer"):
-            self._servo_percent_timer.start()
-
-    def _persist_pending_servo_percentages(self):
-        pending = getattr(self, "_pending_servo_targets", None)
-        if not pending:
-            return
-        left, right = pending
-        try:
-            self.ros_interface.persist_servo_targets(left, right)
-        except Exception as exc:
-            print(f"Failed to persist servo targets: {exc}")
-
-    def _open_component_dialog(self):
-        components = self._list_available_components()
-        if not components:
-            QMessageBox.warning(self, "Component Selection", "No components found in the component directory.")
-            return
-
-        current_name = self.get_selected_component_name()
-        dlg = ComponentTransformDialog(
-            self,
-            component_names=components,
-            selected_component=current_name,
-            transform_loader=lambda name: self.ros_interface.get_component_transform(name),
-        )
-        if dlg.exec_() != QDialog.Accepted:
-            return
-
-        selected_component, transform = dlg.get_selection()
-        if selected_component:
-            self._set_selected_component(selected_component)
-        try:
-            self.ros_interface.persist_component_transform(selected_component, transform)
-        except Exception as exc:
-            QMessageBox.warning(self, "Persist Transform Failed", f"Failed to save transform for {selected_component}:\n{exc}")
-
-    def _prompt_component_selection(self):
-        components = self._list_available_components()
-        if not components:
-            QMessageBox.warning(self, "Component Selection", "No components found in the component directory.")
-            return
-
-        current_name = self.get_selected_component_name()
-        try:
-            current_index = components.index(current_name)
-        except ValueError:
-            current_index = 0
-
-        choice, ok = QInputDialog.getItem(self, "Select Component", "Component:", components, current_index, False)
-        if ok and choice:
-            self._set_selected_component(choice)
-
-    def _list_available_components(self):
-        root = self._get_component_root()
-        try:
-            entries = sorted(
-                [entry for entry in os.listdir(root) if os.path.isdir(os.path.join(root, entry))]
-            )
-        except OSError as exc:
-            QMessageBox.critical(self, "Component Selection", f"Failed to read component directory:\n{exc}")
-            entries = []
-        return entries
-
-    def _get_component_root(self):
-        return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "component"))
-
-    def _set_selected_component(self, component_name):
-        normalized = (component_name or "").strip()
-        if not normalized:
-            return
-        self._selected_component_name = normalized
-        self._update_component_button_label()
-        try:
-            self.ros_interface.persist_component_choice(normalized)
-        except Exception as exc:
-            print(f"Failed to persist component choice: {exc}")
-
-    def _update_component_button_label(self):
-        button = getattr(self, "component_select_button", None)
-        if button is None:
-            return
-        name = getattr(self, "_selected_component_name", None)
-        if not name:
-            name = self.ros_interface.get_cached_component_name()
-            self._selected_component_name = name
-        button.setText(f"Component: {name}")
-
-    def get_selected_component_name(self):
-        name = getattr(self, "_selected_component_name", None)
-        if isinstance(name, str) and name.strip():
-            return name.strip()
-        fallback = self.ros_interface.get_cached_component_name()
-        self._selected_component_name = fallback
-        self._update_component_button_label()
-        return fallback
-
     def update_start_signal_visual(self, active: bool):
         button = getattr(self, "btn_start_signal", None)
         if button is None:
@@ -567,113 +228,7 @@ class ROSGui(QWidget):
             button.setText("Trigger Start Signal")
             button.setStyleSheet("background-color: #4caf50; color: white;")
 
-    def _load_servo_calibration_defaults(self):
-        """Load servo calibration defaults from config, falling back to baked values."""
-        base_defaults = {
-            'left': {'min': 2800, 'zero': 2300, 'max': 3357},
-            'right': {'min': 961, 'zero': 1461, 'max': 404},
-        }
-
-        def clone_defaults(src):
-            return {side: dict(values) for side, values in src.items()}
-
-        config_path = self._servo_calibration_config_path()
-
-        try:
-            with open(config_path, "r", encoding="utf-8") as cfg:
-                file_data = json.load(cfg)
-        except FileNotFoundError:
-            print(f"Servo calibration config not found at {config_path}. Using built-in defaults.")
-            return clone_defaults(base_defaults)
-        except (json.JSONDecodeError, OSError) as exc:
-            print(f"Failed to load servo calibration config: {exc}. Using built-in defaults.")
-            return clone_defaults(base_defaults)
-
-        if not isinstance(file_data, dict):
-            print("Servo calibration config is not a mapping. Using built-in defaults.")
-            return clone_defaults(base_defaults)
-
-        merged = clone_defaults(base_defaults)
-        for side in ('left', 'right'):
-            side_data = file_data.get(side)
-            if not isinstance(side_data, dict):
-                continue
-            for key in ('min', 'zero', 'max'):
-                value = side_data.get(key)
-                if isinstance(value, (int, float)):
-                    merged[side][key] = int(value)
-
-        return merged
-
-    def _servo_calibration_config_path(self) -> str:
-        return os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "..", "config", "servo_calibration_defaults.json")
-        )
-
-    def _save_servo_calibration_defaults(self, calib_data: dict):
-        config_path = self._servo_calibration_config_path()
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        normalized = {}
-        for side in ('left', 'right'):
-            values = calib_data.get(side, {}) if isinstance(calib_data, dict) else {}
-            normalized[side] = {
-                key: int(values.get(key, self.servo_calib[side][key]))
-                for key in ('min', 'zero', 'max')
-            }
-        with open(config_path, "w", encoding="utf-8") as cfg:
-            json.dump(normalized, cfg, indent=2, sort_keys=True)
-
-    def _percent_to_raw(self, percent: float, which: str) -> int:
-        c = self.servo_calib[which]
-        span = c['max'] - c['min']
-        if span == 0:
-            return int(c['min'])
-        raw = c['min'] + (percent / 100.0) * span
-        return max(0, min(4095, int(round(raw))))
-
-    def _send_percent_targets(self):
-        left_p = self.servo_left_spin.value()
-        right_p = self.servo_right_spin.value()
-        left_raw = self._percent_to_raw(left_p, 'left')
-        right_raw = self._percent_to_raw(right_p, 'right')
-        self.ros_interface.publish_servo_targets(left_raw, right_raw)
-
-    def _send_zero_positions(self):
-        # Use currently stored zero raw values (spin boxes display them)
-        self.ros_interface.publish_servo_targets(
-            int(self.servo_left_zero_spin.value()),
-            int(self.servo_right_zero_spin.value())
-        )
-
-    def open_servo_calibration(self):
-        dlg = ServoCalibrationDialog(
-            self,
-            self.servo_calib,
-            state_provider=self.ros_interface,
-            save_callback=self._save_servo_calibration_defaults,
-        )
-        if dlg.exec_() == QDialog.Accepted:
-            self.servo_calib = dlg.get_values()
-            # update zero spin boxes
-            self.servo_left_zero_spin.setValue(self.servo_calib['left']['zero'])
-            self.servo_right_zero_spin.setValue(self.servo_calib['right']['zero'])
-            # Optionally reset sliders/spins to zero percent
-            # self.servo_left_slider.setValue(0); self.servo_left_spin.setValue(0)
-            # self.servo_right_slider.setValue(0); self.servo_right_spin.setValue(0)
-
-    @pyqtSlot(int)
-    def _update_spinbox(self, idx):
-        # guaranteed to run in Qt (GUI) thread
-        self.idx_spin.setValue(idx)
-    
-    @pyqtSlot(float, float)
-    def _update_medians(self, med_base: float, med_map: float):
-        # guaranteed to run in Qt (GUI) thread
-        def fmt(v: float) -> str:
-            return "—" if (v != v) or math.isinf(v) else f"{v:.3f} m"
-        self.median_base_label.setText(f"base: {fmt(med_base)}")
-        self.median_map_label.setText(f"map: {fmt(med_map)}")
-
+  
     def _ros_log_level_enabled(self, level: str) -> bool:
         level = level.upper()
         if level == "ERROR":

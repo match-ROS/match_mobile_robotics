@@ -10,7 +10,7 @@ class ExternalLocalizationBroadcaster:
         self.tf_prefix = rospy.get_param('~tf_prefix', 'mur620d')
         self.pose_broadcaster = tf.TransformBroadcaster()
         self.localization_topic = rospy.get_param('~localization_topic', '/qualisys/mur620d/pose')
-        self.mocap_offset = rospy.get_param('~mocap_offset', [38.2691, 32.8942, 3.1656])
+        self.mocap_offset = rospy.get_param('~mocap_offset', [0.0, 0.0, 0.0])
         self.sub = rospy.Subscriber(self.localization_topic, PoseStamped, self.callback)
         self.timestamp = rospy.Time.now()
         rospy.spin()

@@ -1,0 +1,119 @@
+path_index:
+  updated_at: '2025-12-22 16:44:56'
+  value: 1200
+robots:
+  mur620b:
+    driver_nodes:
+    - /dummy_lift_mur620b_UR10_l
+    - /dummy_lift_mur620b_UR10_r
+    - /mur620b/UR10_r/UR10_r_enable
+    - /mur620b/UR10_r/controller_stopper
+    - /mur620b/UR10_r/gripper_interface
+    - /mur620b/UR10_r/pose_composer_rosmaster_40191_1833764174809868928
+    - /mur620b/UR10_r/pose_composer_rosmaster_40191_3353493515075907955
+    - /mur620b/UR10_r/ros_control_controller_spawner
+    - /mur620b/UR10_r/ros_control_stopped_spawner
+    - /mur620b/UR10_r/rosnode_killer
+    - /mur620b/UR10_r/ur_calibrated_pose_pub_node
+    - /mur620b/UR10_r/ur_hardware_interface
+    - /mur620b/UR10_r/ur_hardware_interface/ur_robot_state_helper
+    - /mur620b/UR10_r/ur_twist_limiter
+    - /mur620b/b_rep117_laser_filter
+    - /mur620b/bms_can_node
+    - /mur620b/external_localization_broadcaster
+    - /mur620b/f_rep117_laser_filter
+    - /mur620b/fake_mir_joint_publisher
+    - /mur620b/light_cmd_transcode
+    - /mur620b/light_cmd_transcode_local
+    - /mur620b/mir_battery_state_publisher
+    - /mur620b/mir_bridge
+    - /mur620b/mir_pose_simple
+    - /mur620b/move_base_node
+    - /mur620b/move_group
+    - /mur620b/odom_transformer
+    - /mur620b/remove_tf_frames
+    - /mur620b/rgb_control
+    - /mur620b/robot_state_publisher
+    - /mur620b/tf_remove_state_publisher_frames
+    updated_at: '2025-12-22 16:21:53'
+  mur620c:
+    driver_nodes:
+    - /mur620c/UR10_r/UR10_r_enable
+    - /mur620c/UR10_r/controller_stopper
+    - /mur620c/UR10_r/ewellix_tlt_node_r
+    - /mur620c/UR10_r/gripper_interface
+    - /mur620c/UR10_r/pose_composer_rosmaster_54388_6894020522162214424
+    - /mur620c/UR10_r/pose_composer_rosmaster_54388_7415755212050513050
+    - /mur620c/UR10_r/ros_control_controller_spawner
+    - /mur620c/UR10_r/ros_control_stopped_spawner
+    - /mur620c/UR10_r/rosnode_killer
+    - /mur620c/UR10_r/ur_calibrated_pose_pub_node
+    - /mur620c/UR10_r/ur_hardware_interface
+    - /mur620c/UR10_r/ur_hardware_interface/ur_robot_state_helper
+    - /mur620c/UR10_r/ur_twist_limiter
+    - /mur620c/b_rep117_laser_filter
+    - /mur620c/bms_can_node
+    - /mur620c/external_localization_broadcaster
+    - /mur620c/f_rep117_laser_filter
+    - /mur620c/fake_mir_joint_publisher
+    - /mur620c/joint_state_aggregator
+    - /mur620c/light_cmd_transcode
+    - /mur620c/light_cmd_transcode_local
+    - /mur620c/mir_battery_state_publisher
+    - /mur620c/mir_bridge
+    - /mur620c/mir_pose_simple
+    - /mur620c/move_base_node
+    - /mur620c/move_group
+    - /mur620c/odom_transformer
+    - /mur620c/remove_tf_frames
+    - /mur620c/rgb_control
+    - /mur620c/robot_state_publisher
+    - /mur620c/tf_remove_state_publisher_frames
+    spray_distance:
+      updated_at: '2025-12-22 16:24:34'
+      value: 0.3
+    updated_at: '2025-12-22 16:21:53'
+  mur620d:
+    driver_nodes:
+    - /mur620d/UR10_r/UR10_r_enable
+    - /mur620d/UR10_r/controller_stopper
+    - /mur620d/UR10_r/ewellix_tlt_node_r
+    - /mur620d/UR10_r/gripper_interface
+    - /mur620d/UR10_r/pose_composer_rosmaster_51674_1544232900518303808
+    - /mur620d/UR10_r/pose_composer_rosmaster_51674_7135075766973754761
+    - /mur620d/UR10_r/ros_control_controller_spawner
+    - /mur620d/UR10_r/ros_control_stopped_spawner
+    - /mur620d/UR10_r/rosnode_killer
+    - /mur620d/UR10_r/ur_calibrated_pose_pub_node
+    - /mur620d/UR10_r/ur_hardware_interface
+    - /mur620d/UR10_r/ur_hardware_interface/ur_robot_state_helper
+    - /mur620d/UR10_r/ur_twist_limiter
+    - /mur620d/b_rep117_laser_filter
+    - /mur620d/bms_can_node
+    - /mur620d/external_localization_broadcaster
+    - /mur620d/f_rep117_laser_filter
+    - /mur620d/fake_mir_joint_publisher
+    - /mur620d/joint_state_aggregator
+    - /mur620d/light_cmd_transcode
+    - /mur620d/light_cmd_transcode_local
+    - /mur620d/mir_battery_state_publisher
+    - /mur620d/mir_bridge
+    - /mur620d/mir_pose_simple
+    - /mur620d/move_base_node
+    - /mur620d/move_group
+    - /mur620d/odom_transformer
+    - /mur620d/remove_tf_frames
+    - /mur620d/rgb_control
+    - /mur620d/robot_state_publisher
+    - /mur620d/tf_remove_state_publisher_frames
+    spray_distance:
+      updated_at: '2025-12-22 16:26:12'
+      value: 0.9
+    updated_at: '2025-12-22 16:21:53'
+servo_targets:
+  left: 20.0
+  right: 100.0
+  updated_at: '2025-12-12 16:47:58'
+spray_distance:
+  updated_at: '2025-12-22 16:26:12'
+  value: 0.9

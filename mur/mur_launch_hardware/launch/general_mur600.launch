@@ -25,6 +25,8 @@
     <arg name="localization_type" default="mocap" /> <!-- mocap or amcl or robot_pose or odom-->
     <arg name="move_base_selector" default="move_base" doc="move_base or move_base_flex"/>
     <arg name="battery_node_id" default="0x0240" doc="Node ID of the BMS battery. Default is 0, which is the first battery."/>
+    <arg name="static_mode" default="false" /> <!-- if true, the global_tcp_pose_publisher will consider the mir static -->
+    <arg name="tcp_offset" default="[0.0, 0.0, 0.0, 0.0, 0.0, 0.0]"/>
 
     <!-- Bringup the base of the mur -->
 
@@ -68,7 +70,7 @@
     
     <!-- Bringup the left UR -->
     <group if="$(eval arg('launch_ur_l') ==true)"> 
-        <remap from="/$(arg tf_prefix)/$(arg left_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+        <!-- <remap from="/$(arg tf_prefix)/$(arg left_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/> -->
         <remap from="twist_controller/command" to="twist_controller/controller_input"/>
 
         <group ns= "$(arg tf_prefix)/$(arg left_arm_group_name)">
@@ -104,8 +106,9 @@
             <!-- Lift module -->
             <group if="$(eval arg('use_lift') ==true)">
                 <remap from="ewellix_tlt_node_l/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+                <remap from="/joy" to="/joy_ewellix_l"/>
                 <node name="ewellix_tlt_node_l" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                    <param name="ewellix/port" value="/dev/ttyUSB0" />
+                    <param name="ewellix/port" value="/dev/ttyUSB1" />
                     <param name="ewellix/joint_name" value="left_lift_joint" />
                 </node>
 
@@ -117,18 +120,25 @@
             </group>
 
             <!-- global pose publisher -->
-            <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
+            <!-- <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
                 <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link_inertia" />
                 <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
-            </node>
-            <!-- TODO: change, but has to be tested first! -->
-            <!-- <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <param name="static_mode" value="${arg static_mode}"/>
+            </node> -->
+            <!-- TODO: changed, but has to be tested first! -->
+            <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
                 <arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
                 <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
                 <arg name="world_T_ee_topic" value="global_tcp_pose"/>
                 <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
-                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base_link"/>
-            </include> -->
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg left_arm_group_name)/base"/>
+                <arg name="lift_enabled" value="$(arg use_lift)"/>
+                <arg name="lift_joint_name" value="left_lift_joint"/>
+                <arg name="lift_joint_states_topic" value="/$(arg tf_prefix)/joint_states"/>
+                <arg name="lift_bottom_frame" value="$(arg tf_prefix)/left_lift_bottom"/>
+                <arg name="lift_top_frame" value="$(arg tf_prefix)/left_lift_top"/>
+                <arg name="lift_axis" value="z"/>
+            </include>
 
 
         </group>
@@ -138,7 +148,7 @@
     <!-- Bringup the right UR -->   
     <group if="$(eval arg('launch_ur_r') ==true)">
 
-        <remap from="/$(arg tf_prefix)/$(arg right_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+        <!-- <remap from="/$(arg tf_prefix)/$(arg right_arm_group_name)/joint_states" to="/$(arg tf_prefix)/joint_states"/> -->
         <remap from="twist_controller/command" to="twist_controller/controller_input"/>
         
         <group ns= "$(arg tf_prefix)/$(arg right_arm_group_name)"> 
@@ -158,6 +168,7 @@
                 <arg name="UR_prefix" value="$(arg right_arm_group_name)/"/>
                 <arg name="tf_prefix" value="$(arg tf_prefix)"/>
                 <arg name="use_state_publisher" value="$(eval not arg('launch_mir'))"/> <!-- robot_state_pub is run by mir -->
+                <arg name="tcp_offset" value="$(arg tcp_offset)"/>
             </include> 
 
 
@@ -166,16 +177,36 @@
             </node>
 
             <!-- global pose publisher -->
-            <node name="global_tcp_pose_publisher" pkg="mur_control" type="global_tcp_pose_publisher.py" output="screen" respawn="true" >
-                <param name="UR_base_link_name" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base_link_inertia" />
-                <param name="local_TCP_pose_topic" value="ur_calibrated_pose" />
-            </node>
+            <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <arg name="world_T_base_topic" default="/$(arg tf_prefix)/mir_pose_stamped_simple"/>
+                <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base"/>
+                <arg name="lift_enabled" value="$(arg use_lift)"/>
+                <arg name="lift_joint_name" value="right_lift_joint"/>
+                <arg name="lift_joint_states_topic" value="/$(arg tf_prefix)/joint_states"/>
+                <arg name="lift_bottom_frame" value="$(arg tf_prefix)/right_lift_bottom"/>
+                <arg name="lift_top_frame" value="$(arg tf_prefix)/right_lift_top"/>
+                <arg name="lift_axis" value="z"/>
+            </include>
 
+            <!-- global pose publisher with mocap input -->
+            <include file="$(find mur_control)/launch/global_tcp_pose_publisher.launch">
+                <arg name="world_T_base_topic" default="/qualisys_map/$(arg tf_prefix)/pose"/>
+                <arg name="base_T_ee_topic" value="ur_calibrated_pose"/>
+                <arg name="world_T_ee_topic" value="global_tcp_pose_mocap"/>
+                <arg name="static_tf_parent" value="$(arg tf_prefix)/base_footprint"/>
+                <arg name="static_tf_child" value="$(arg tf_prefix)/$(arg right_arm_group_name)/base"/>
+                <arg name="mocap_mode" value="true"/>
+            </include>
+            
              <!-- Lift module -->
             <group if="$(eval arg('use_lift') ==true)"> 
                 <remap from="ewellix_tlt_node_r/joint_states" to="/$(arg tf_prefix)/joint_states"/>
+                <remap from="/joy" to="/joy_ewellix_r"/>
                 <node name="ewellix_tlt_node_r" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                    <param name="ewellix/port" value="/dev/ttyUSB1" />
+                    <param name="ewellix/port" value="/dev/ttyUSB0" />
                     <param name="ewellix/joint_name" value="right_lift_joint" />
                 </node>
 
@@ -191,6 +222,16 @@
     </group>
 
     <group ns="$(arg tf_prefix)">
+
+        <node pkg="mur_launch_hardware" type="joint_state_aggregator.py" name="joint_state_aggregator" output="screen">
+            <param name="topic_mir"  value="/$(arg mur_ns)/joint_states_mir" />
+            <param name="topic_ur_l"   value="/$(arg mur_ns)/$(arg left_arm_group_name)/joint_states" />
+            <param name="topic_ur_r"   value="/$(arg mur_ns)/$(arg right_arm_group_name)/joint_states" />
+            <param name="topic_lift_l" value="/$(arg mur_ns)/$(arg left_arm_group_name)/ewellix_tlt_node_l/joint_states_lift" />
+            <param name="topic_lift_r" value="/$(arg mur_ns)/$(arg right_arm_group_name)/ewellix_tlt_node_r/joint_states_lift" />
+            <param name="out_topic"  value="/$(arg mur_ns)/joint_states" />
+        </node>
+
 
         <!-- if both arms are launched, turn on dual arm collision avoidance -->
         <!-- <group if="$(eval arg('launch_ur_l') ==true and arg('launch_ur_r') ==true)">

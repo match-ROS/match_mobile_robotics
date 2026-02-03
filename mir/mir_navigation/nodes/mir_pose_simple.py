@@ -9,7 +9,7 @@ class Mir_pose_simple():
 
     def __init__(self):
         # Get params
-        self.localization_type = rospy.get_param("~localization_type", "amcl")
+        self.localization_type = rospy.get_param("~localization_type", "robot_pose")
         self.odom_topic = rospy.get_param("~odom_topic", "odom")
         self.amcl_pose_topic = rospy.get_param("~amcl_pose_topic", "amcl_pose")
         self.groud_truth_topic = rospy.get_param("~groud_truth_topic", "groud_truth")

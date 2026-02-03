@@ -3,7 +3,7 @@
 namespace ur_calibrated_pose_pub
 {
 	URCalibratedPosePub::URCalibratedPosePub(ros::NodeHandle nh,
-											 ros::NodeHandle private_nh) : nh_(nh), private_nh_(private_nh)
+												 ros::NodeHandle private_nh) : nh_(nh), private_nh_(private_nh), tcp_offset_transform_(Eigen::Matrix4d::Identity())
 	{ }
 
 	void URCalibratedPosePub::init()
@@ -21,7 +21,12 @@ namespace ur_calibrated_pose_pub
 
 	void URCalibratedPosePub::execute()
 	{
-		ros::Rate publish_rate = ros::Rate(100.0);
+		const std::string sanitized_namespace = this->sanitizeFrameId(ros::this_node::getNamespace());
+		const std::string default_base_frame_id = sanitized_namespace.empty() ? "base" : sanitized_namespace + "/base";
+		const std::string parent_frame_id = this->base_frame_id_.empty() ? default_base_frame_id : this->base_frame_id_;
+		const std::string child_frame_id = sanitized_namespace.empty() ? "calibrated_ee_pose" : sanitized_namespace + "/calibrated_ee_pose";
+
+		ros::Rate publish_rate = ros::Rate(500.0);
 		while(ros::ok())
 		{
 			// Debugging of each transformation by broadcasting it to tf
@@ -113,14 +118,11 @@ namespace ur_calibrated_pose_pub
 					complete_transformation_matrix = complete_transformation_matrix * dh_transformation.getTransformationMatrix();
 				}
 			}
+			complete_transformation_matrix = complete_transformation_matrix * this->tcp_offset_transform_;
 			
-			// Get namespace of the node:
-			std::string node_namespace = ros::this_node::getNamespace();
-			
-
 			geometry_msgs::PoseStamped ur_calibrated_pose_msg;
 			ur_calibrated_pose_msg.header.stamp = ros::Time::now();
-			ur_calibrated_pose_msg.header.frame_id = node_namespace + "/base";	// TODO: change to generic name
+			ur_calibrated_pose_msg.header.frame_id = parent_frame_id;
 			ur_calibrated_pose_msg.pose.position.x = complete_transformation_matrix(0, 3);
 			ur_calibrated_pose_msg.pose.position.y = complete_transformation_matrix(1, 3);
 			ur_calibrated_pose_msg.pose.position.z = complete_transformation_matrix(2, 3);
@@ -150,7 +152,7 @@ namespace ur_calibrated_pose_pub
 			q.setW(eigen_q.w());
 			transform.setRotation(q);
 
-			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), node_namespace + "/base", node_namespace + "/calibrated_ee_pose"));	// change to generic name
+			this->end_effector_broadcaster_.sendTransform(tf::StampedTransform(transform, ros::Time::now(), parent_frame_id, child_frame_id));
 
 			ros::spinOnce();
 			publish_rate.sleep();
@@ -182,6 +184,80 @@ namespace ur_calibrated_pose_pub
 			ROS_ERROR("No dh_parameter_switch parameter found");
 			return;
 		}
+
+		this->private_nh_.param<std::string>("base_frame_id", this->base_frame_id_, "");
+		this->base_frame_id_ = this->sanitizeFrameId(this->base_frame_id_);
+
+		std::vector<double> tcp_offset_vector(6, 0.0);
+		if(this->private_nh_.hasParam("tcp_offset"))
+		{
+			XmlRpc::XmlRpcValue tcp_offset_xml;
+			this->private_nh_.getParam("tcp_offset", tcp_offset_xml);
+			if(tcp_offset_xml.getType() == XmlRpc::XmlRpcValue::TypeArray && tcp_offset_xml.size() == 6)
+			{
+				for(int index = 0; index < tcp_offset_xml.size(); index++)
+				{
+					if(tcp_offset_xml[index].getType() == XmlRpc::XmlRpcValue::TypeDouble ||
+					   tcp_offset_xml[index].getType() == XmlRpc::XmlRpcValue::TypeInt)
+					{
+						double value = 0.0;
+						if(tcp_offset_xml[index].getType() == XmlRpc::XmlRpcValue::TypeDouble)
+						{
+							value = static_cast<double>(tcp_offset_xml[index]);
+						}
+						else
+						{
+							value = static_cast<int>(tcp_offset_xml[index]);
+						}
+						tcp_offset_vector[index] = value;
+						ROS_WARN_STREAM("tcp_offset[" << index << "] = " << value);
+					}
+					else
+					{
+						ROS_ERROR("tcp_offset parameter list is not well formed");
+						return;
+					}
+				}
+			}
+			else if (tcp_offset_xml.getType() == XmlRpc::XmlRpcValue::TypeString)
+			{
+				// Some callers pass the list as a single string (e.g. "[0,0,0.6,0,0,0]"). Try to parse that.
+				std::string s = static_cast<std::string>(tcp_offset_xml);
+				// remove brackets if present
+				if(!s.empty() && s.front() == '[' && s.back() == ']')
+				{
+					s = s.substr(1, s.size() - 2);
+				}
+				std::stringstream ss(s);
+				std::string item;
+				int idx = 0;
+				while (std::getline(ss, item, ',') && idx < 6)
+				{
+					try
+					{
+						tcp_offset_vector[idx] = std::stod(item);
+					}
+					catch(...) {
+						ROS_ERROR("Failed to parse tcp_offset string element to double");
+					}
+					idx++;
+				}
+				if(idx != 6)
+				{
+					ROS_ERROR("tcp_offset string did not contain 6 values");
+				}
+			}
+			else
+			{
+				ROS_ERROR("tcp_offset parameter must contain exactly 6 numeric values (array or string)");
+			}
+		}
+		this->tcp_offset_transform_ = this->buildTransformFromOffset(tcp_offset_vector);
+		// Log the parsed tcp_offset for visibility
+		ROS_INFO_STREAM("tcp_offset parsed: [" << tcp_offset_vector[0] << ", " << tcp_offset_vector[1] << ", " << tcp_offset_vector[2]
+		                << ", " << tcp_offset_vector[3] << ", " << tcp_offset_vector[4] << ", " << tcp_offset_vector[5] << "]");
+		ROS_INFO_STREAM("tcp_offset transform translation: x=" << this->tcp_offset_transform_(0,3)
+		                << ", y=" << this->tcp_offset_transform_(1,3) << ", z=" << this->tcp_offset_transform_(2,3));
 
 		// Get DH parameters from parameter server
 		XmlRpc::XmlRpcValue dh_param_list;
@@ -344,5 +420,36 @@ namespace ur_calibrated_pose_pub
 				this->calibrated_dh_transformations_list_[5].setJointState(joint_state_msg->position[joint_counter]);
 			}
 		}
+	}
+
+	Eigen::Matrix4d URCalibratedPosePub::buildTransformFromOffset(const std::vector<double>& offset_vector) const
+	{
+		Eigen::Matrix4d transform = Eigen::Matrix4d::Identity();
+		if(offset_vector.size() != 6)
+		{
+			return transform;
+		}
+
+		transform(0, 3) = offset_vector[0];
+		transform(1, 3) = offset_vector[1];
+		transform(2, 3) = offset_vector[2];
+
+		Eigen::AngleAxisd roll(offset_vector[3], Eigen::Vector3d::UnitX());
+		Eigen::AngleAxisd pitch(offset_vector[4], Eigen::Vector3d::UnitY());
+		Eigen::AngleAxisd yaw(offset_vector[5], Eigen::Vector3d::UnitZ());
+		Eigen::Matrix3d rotation = (roll * pitch * yaw).matrix();
+		transform.block<3,3>(0, 0) = rotation;
+
+		return transform;
+	}
+
+	std::string URCalibratedPosePub::sanitizeFrameId(const std::string& frame_id) const
+	{
+		std::string sanitized = frame_id;
+		while(!sanitized.empty() && sanitized.front() == '/')
+		{
+			sanitized.erase(0, 1);
+		}
+		return sanitized;
 	}
 }

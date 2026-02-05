@@ -34,32 +34,32 @@ joint_limits:
     max_acceleration: 0
 
 
-  $(arg prefix)_l//elbow_joint:
+  $(arg prefix)_l/elbow_joint:
     has_velocity_limits: true
     max_velocity: 3.15
     has_acceleration_limits: false
     max_acceleration: 0
-  $(arg prefix)_l//shoulder_lift_joint:
+  $(arg prefix)_l/shoulder_lift_joint:
     has_velocity_limits: true
     max_velocity: 3.15
     has_acceleration_limits: false
     max_acceleration: 0
-  $(arg prefix)_l//shoulder_pan_joint:
+  $(arg prefix)_l/shoulder_pan_joint:
     has_velocity_limits: true
     max_velocity: 3.15
     has_acceleration_limits: false
     max_acceleration: 0
-  $(arg prefix)_l//wrist_1_joint:
+  $(arg prefix)_l/wrist_1_joint:
     has_velocity_limits: true
     max_velocity: 3.2
     has_acceleration_limits: false
     max_acceleration: 0
-  $(arg prefix)_l//wrist_2_joint:
+  $(arg prefix)_l/wrist_2_joint:
     has_velocity_limits: true
     max_velocity: 3.2
     has_acceleration_limits: false
     max_acceleration: 0
-  $(arg prefix)_l//wrist_3_joint:
+  $(arg prefix)_l/wrist_3_joint:
     has_velocity_limits: true
     max_velocity: 3.2
     has_acceleration_limits: false

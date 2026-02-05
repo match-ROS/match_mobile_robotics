@@ -1,0 +1,29 @@
+<launch>
+    <!-- Select the big_square world before spawning the robot -->
+    <arg name="use_map_sim" default="true" />
+    <arg name="gui" default="true" />
+
+    <!-- Robot pose and namespace -->
+    <arg name="robot_name" default="mur620" />
+    <arg name="robot_x" default="0.0" />
+    <arg name="robot_y" default="0.0" />
+    <arg name="robot_yaw" default="0.0" />
+
+    <!-- Load the simulation world -->
+    <include file="$(find match_gazebo)/launch/big_square.launch">
+        <arg name="use_map_sim" value="$(arg use_map_sim)" />
+        <arg name="gui" value="$(arg gui)" />
+    </include>
+
+    <!-- Spawn a single MUR-620 robot at the origin -->
+    <include file="$(find mur_launch_sim)/launch/mur_620.launch">
+        <arg name="robot_x" value="$(arg robot_x)" />
+        <arg name="robot_y" value="$(arg robot_y)" />
+        <arg name="robot_yaw" value="$(arg robot_yaw)" />
+        <arg name="tf_prefix" value="$(arg robot_name)" />
+    </include>
+
+    <!-- Visualize the setup in RViz -->
+    <node type="rviz" name="rviz_handling" pkg="rviz" args="-d $(find mur_examples)/rviz/single_mur_handling.rviz" />
+</launch>
+

@@ -1,0 +1,27 @@
+<launch>
+  <arg name="mur_ns" default="mur620" />
+
+  <!-- Comma-separated list -->
+  <arg name="group_names" default="UR_arm_l,UR_arm_r" />
+  <arg name="target_name" default="Home_custom" />
+
+  <arg name="wait_timeout" default="120.0" />
+  <arg name="planning_time" default="10.0" />
+  <arg name="max_velocity_scaling_factor" default="0.3" />
+  <arg name="max_acceleration_scaling_factor" default="0.3" />
+
+  <group ns="$(arg mur_ns)">
+    <node name="move_to_named_target_dual"
+          pkg="mur_control"
+          type="move_to_named_target_dual.py"
+          output="screen">
+      <param name="group_names" value="$(arg group_names)" />
+      <param name="target_name" value="$(arg target_name)" />
+      <param name="wait_timeout" value="$(arg wait_timeout)" />
+      <param name="planning_time" value="$(arg planning_time)" />
+      <param name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+      <param name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    </node>
+  </group>
+</launch>
+

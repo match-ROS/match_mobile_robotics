@@ -17,7 +17,7 @@
   -->
 
   <!-- Arm selection: "left" or "right" -->
-  <arg name="arm" default="right" />
+  <arg name="arm" default="left" />
 
   <!-- Robot namespace WITHOUT leading slash (e.g. "mur620") -->
   <arg name="mur_ns" default="mur620" />

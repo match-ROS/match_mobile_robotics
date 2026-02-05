@@ -94,10 +94,13 @@ target_link_libraries(jacobian_solver
 )
 
 # GlobalPlanner component (new pipeline Level A)
-add_library(global_planner
+# NOTE: do NOT name this library "global_planner" because that collides with the
+# ROS navigation stack library `libglobal_planner.so` (pluginlib), which can
+# break runtime loading of the nav_core planner `global_planner/GlobalPlanner`.
+add_library(cvc_global_planner
   src/components/global_planner.cpp
 )
-target_link_libraries(global_planner
+target_link_libraries(cvc_global_planner
   ${catkin_LIBRARIES}
 )
 
@@ -245,7 +248,7 @@ target_link_libraries(cartesian_velocity_node
   repulsion_data_manager
   marker_publisher
   feedback_publisher
-  global_planner
+  cvc_global_planner
   local_planner
   pid_controller
   joint_safety_limiter

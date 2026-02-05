@@ -5,7 +5,8 @@
 
 planners:
   - name: 'GlobalPlanner'
-    type: 'global_planner/GlobalPlanner'
+    #type: 'global_planner/GlobalPlanner'
+    type: 'match_mbf_nav_core_adapters/GlobalPlanner'
   - name: 'NavfnROS'
     type: 'navfn/NavfnROS'
   - name: 'CarrotPlanner'

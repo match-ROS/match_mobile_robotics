@@ -104,7 +104,7 @@
           type="rviz"
           name="rviz_visualization"
           pkg="rviz"
-          args="-d $(find mur_examples)/rviz/single_mur620_visualization.rviz" />
+          args="-d $(find mur_examples)/rviz/single_mur620_visualization_custom.rviz" />
 
     <!-- RViz 2D navigation view (optional; separate RViz instance) -->
     <node if="$(arg rviz_nav2d)"

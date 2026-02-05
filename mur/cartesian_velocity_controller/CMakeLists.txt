@@ -74,8 +74,12 @@ include_directories(
   include
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
-  ${FUZZYLITE_INCLUDE_DIR}
 )
+
+# Add fuzzylite include directory only if found
+if(FUZZYLITE_FOUND)
+  include_directories(${FUZZYLITE_INCLUDE_DIR})
+endif()
 
 # =============================================================================
 # Component Libraries (built incrementally during refactoring)

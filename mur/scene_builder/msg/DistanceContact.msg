@@ -1,0 +1,8 @@
+string link_name
+string object_id
+float64 distance
+geometry_msgs/Point robot_point
+geometry_msgs/Point object_point
+geometry_msgs/Vector3 distance_vector
+geometry_msgs/Pose object_pose
+geometry_msgs/Vector3 object_velocity

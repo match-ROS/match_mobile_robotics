@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mur_bringup</name>
+  <version>0.0.0</version>
+  <description>Bringup package for MuR configurations and launch files.</description>
+
+  <maintainer email="rosmatch@todo.todo">rosmatch</maintainer>
+
+  <license>TODO</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <export>
+  </export>
+</package>

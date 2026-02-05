@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 1. Launch Cartesian Velocity Controller -->
+  <include file="$(find cartesian_velocity_controller)/launch/cartesian_velocity_controller.launch" />
+
+  <!-- 2. Launch PlotJuggler -->
+  <node name="plotjuggler" pkg="plotjuggler" type="plotjuggler" output="screen" />
+
+  <!-- 3. Launch RQT Reconfigure -->
+  <node name="rqt_reconfigure" pkg="rqt_reconfigure" type="rqt_reconfigure" output="screen" />
+
+  <!-- 4. Launch Interactive Control Script in a new terminal -->
+  <!-- Using xterm -e to open in a new window since it requires user input -->
+  <node name="robot_interactive_control" 
+        pkg="cartesian_velocity_controller" 
+        type="robot_interactive_control.py" 
+        output="screen" 
+        launch-prefix="gnome-terminal -- bash -c 'sleep 3; rosrun cartesian_velocity_controller robot_interactive_control.py; exec bash'" />
+
+</launch>
+

@@ -1,0 +1,41 @@
+# =============================================================================
+# Controller-only joint limits (rad) for cartesian_velocity_controller
+# =============================================================================
+#
+# Purpose:
+# - Reachability IK: reject targets/waypoints whose IK solution violates these limits
+# - Runtime guardrail: continuously brake joint velocity commands near limits
+#
+# Notes:
+# - Names MUST match the joint names in the MoveIt group (`manipulator` by default).
+# - Limits are applied ONLY to joints listed in `limits` AND with `enabled: true`.
+# - This file is intentionally separate from MoveIt/URDF limits.
+#
+
+controller_joint_limits:
+  enabled: false
+
+  limits:
+    # Example for UR robots. Keep disabled until you decide your controller-only bounds.
+    elbow_joint:
+      enabled: false
+      min: -2.9
+      max:  -0.3
+
+      runtime_guard:
+        enabled: false
+        soft_zone: 0.25
+        margin: 0.08
+        reentry_velocity: 0.3
+
+    # Add more joints as needed (same schema).
+    # shoulder_pan_joint:
+    #   enabled: true
+    #   min: -6.283185307179586
+    #   max:  6.283185307179586
+    #   runtime_guard:
+    #     enabled: true
+    #     soft_zone: 0.25
+    #     margin: 0.01
+    #     reentry_velocity: 0.05
+

@@ -1,0 +1,48 @@
+# =============================================================================
+# Level C: Motion Generator - Velocity Filter Configuration
+# =============================================================================
+
+
+# Enable/disable the velocity filter
+cartesian_filter_enabled: true
+
+# =============================================================================
+# Time Constant τ (tau)
+# =============================================================================
+# Small τ = more reactive (faster response, sharper motion)
+# Large τ = smoother motion (slower response, gentler motion)
+# Typical range: 0.02 - 0.5 seconds
+
+cartesian_filter_tau: 0.05              # seconds - unified time constant
+
+
+
+# =============================================================================
+# Linear Velocity Limits
+# =============================================================================
+cartesian_linear_max_acceleration: 1.8 # m/s²
+cartesian_linear_max_jerk: 18.0        # m/s³
+# NOTE: max velocity defaults to local_planner/max_linear_velocity (after applying velocity_scale_factor).
+#       Optionally, you can set an additional cap via cartesian_linear_max_velocity:
+#         v_filter_max = min(v_local_planner_max, cartesian_linear_max_velocity) * velocity_scale_factor
+# cartesian_linear_max_velocity: 0.5   # m/s
+
+# =============================================================================
+# Angular Velocity Limits
+# =============================================================================
+cartesian_angular_max_acceleration: 4.0 # rad/s²
+cartesian_angular_max_jerk: 40.0       # rad/s³
+# NOTE: max angular velocity defaults to local_planner/max_angular_velocity (after applying velocity_scale_factor).
+#       Optionally, you can set an additional cap via cartesian_angular_max_velocity:
+#         w_filter_max = min(w_local_planner_max, cartesian_angular_max_velocity) * velocity_scale_factor
+# cartesian_angular_max_velocity: 1.0  # rad/s
+
+# =============================================================================
+# Global Scaling
+# =============================================================================
+acceleration_scale_factor: 1.0          # Scales both linear and angular acceleration and jerk
+
+# =============================================================================
+# Filter Behavior
+# =============================================================================
+reset_filter_on_target_change: true     # Reset velocity filter internal state when target changes

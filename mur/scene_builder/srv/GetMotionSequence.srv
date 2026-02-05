@@ -1,0 +1,12 @@
+# Service to get the current motion sequence for an object
+
+string object_id
+---
+bool success
+string message
+bool loop_enabled
+bool loop_active
+geometry_msgs/Pose[] waypoints
+float64[] durations
+uint32 current_waypoint_index
+

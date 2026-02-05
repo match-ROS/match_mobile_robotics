@@ -1,0 +1,8 @@
+# Service to list all objects in the scene with their current state
+
+---
+string[] object_ids
+geometry_msgs/Pose[] poses
+string[] primitive_types
+bool[] loop_active
+

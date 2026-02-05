@@ -1,0 +1,7 @@
+<launch>
+  <!--
+    Entry-point bringup launch.
+    Metti qui include/arg per lanciare le tue configurazioni (sim/hardware, MoveIt, controller, ecc.).
+  -->
+</launch>
+

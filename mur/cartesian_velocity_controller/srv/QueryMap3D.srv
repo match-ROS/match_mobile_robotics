@@ -1,0 +1,11 @@
+# Query a point in the Map3D distance field
+# Returns distance, gradient, and closest point on the obstacle surface
+
+geometry_msgs/Point point
+string frame_id
+---
+bool valid
+bool inside_bounds
+float64 distance
+geometry_msgs/Vector3 gradient
+geometry_msgs/Point closest_point

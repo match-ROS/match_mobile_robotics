@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Robot namespace WITHOUT leading slash (default: "mur620") -->
+  <arg name="mur_ns" default="mur620" />
+
+  <!--
+    IMPORTANT:
+    - Run these nodes under the same robot namespace so MoveIt can resolve
+      'robot_description' (typically /<mur_ns>/robot_description).
+    - The script still receives the "mur-ns" argument to compute controller names/topics.
+  -->
+  <group ns="/$(arg mur_ns)">
+    <!-- Dual terminal / dual UI instances (one per arm), no sleep -->
+    <node name="robot_interactive_control_l"
+          pkg="cartesian_velocity_controller"
+          type="robot_interactive_control.py"
+          output="screen"
+          args="--mur-ns /$(arg mur_ns) --arm l"
+          launch-prefix="gnome-terminal -- bash -lc 'exec &quot;$0&quot; &quot;$@&quot;' " />
+
+    <node name="robot_interactive_control_r"
+          pkg="cartesian_velocity_controller"
+          type="robot_interactive_control.py"
+          output="screen"
+          args="--mur-ns /$(arg mur_ns) --arm r"
+          launch-prefix="gnome-terminal -- bash -lc 'exec &quot;$0&quot; &quot;$@&quot;' " />
+  </group>
+</launch>
+

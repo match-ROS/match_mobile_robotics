@@ -1,0 +1,27 @@
+<launch>
+  <!-- ================================================================== -->
+  <!-- Launch file per il nodo distance_monitor                          -->
+  <!-- Calcola le distanze tra robot e ostacoli in tempo reale           -->
+  <!-- ================================================================== -->
+
+  <!-- Argomenti configurabili -->
+  <arg name="start_delay" default="0.0" doc="Delay prima di avviare il nodo (secondi)" />
+  <arg name="config_file" default="$(find scene_builder)/config/scene_builder_params.yaml" 
+       doc="File di configurazione parametri" />
+  <arg name="scene_config_file" default="$(find scene_builder)/config/scene_config.yaml"
+       doc="File di configurazione oggetti e sequenze" />
+
+  <!-- Nodo distance_monitor -->
+  <node pkg="scene_builder" type="distance_monitor_node" name="scene_distance_monitor" output="screen"
+        launch-prefix="bash -c 'sleep $(arg start_delay); exec $0 $@' --">
+    
+    <!-- Carica file di configurazione parametri -->
+    <rosparam command="load" file="$(arg config_file)" />
+    
+    <!-- Carica file di configurazione oggetti e sequenze -->
+    <rosparam command="load" file="$(arg scene_config_file)" />
+    
+    <!-- Per debug, decommentare la linea seguente -->
+    <!-- <env name="ROSCONSOLE_MIN_SEVERITY" value="DEBUG" /> -->
+  </node>
+</launch>

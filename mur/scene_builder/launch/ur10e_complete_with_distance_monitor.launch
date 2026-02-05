@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 
+    Complete bringup launch file that:
+    1. Launches Gazebo with UR10e + MoveIt planning + RViz
+    2. Moves the robot to a named pose
+    3. Starts the distance monitor node
+  -->
+
+  <!-- Arguments -->
+  <arg name="move_to_pose" default="true" doc="Whether to move the robot to a named pose at startup" />
+  <arg name="target_pose" default="start" doc="Named pose to move the robot to" />
+  <arg name="move_group" default="manipulator" doc="MoveIt move group name" />
+  <arg name="start_delay" default="5.0" doc="Delay before moving the robot (seconds)" />
+  <arg name="distance_monitor_delay" default="6.0" doc="Delay after motion before starting distance monitor (seconds)" />
+  <arg name="gui" default="false" doc="Avvia Gazebo con interfaccia grafica" />
+
+  <!-- 1. Launch Gazebo with UR10e robot + MoveIt + RViz -->
+  <include file="$(find scene_builder)/launch/ur10e_complete_bringup.launch">
+    <arg name="rviz_config" value="$(find ur10e_moveit_config)/launch/my_moveit_2.rviz" />
+    <arg name="gui" value="$(arg gui)" />
+  </include>
+
+  <!-- 2. Move robot to named pose after system is ready -->
+  <node if="$(arg move_to_pose)"
+        pkg="scene_builder" 
+        type="move_to_pose.py" 
+        name="move_to_pose" 
+        output="screen"
+        launch-prefix="bash -c 'sleep $(arg start_delay); exec $0 $@' --">
+    <param name="target_pose" value="$(arg target_pose)" />
+    <param name="move_group" value="$(arg move_group)" />
+  </node>
+
+  <!-- 3. Launch distance monitor after robot has moved -->
+  <include file="$(find scene_builder)/launch/distance_monitor.launch">
+    <arg name="start_delay" value="$(eval arg('start_delay') + arg('distance_monitor_delay'))" />
+  </include>
+
+</launch>
+

@@ -1,0 +1,7 @@
+# Service to clear the motion sequence for an object (stops any running loop)
+
+string object_id
+---
+bool success
+string message
+

@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Arguments -->
+  <arg name="rviz_config" default="$(find ur10e_moveit_config)/launch/my_moveit.rviz" />
+  <arg name="gui" default="false" doc="Avvia Gazebo con interfaccia grafica" />
+
+  <!-- Launch Gazebo with UR10e robot -->
+  <include file="$(find ur_gazebo)/launch/my_ur10e_bringup.launch">
+    <arg name="gui" value="$(arg gui)" />
+  </include>
+  
+  <!-- Launch MoveIt planning and execution -->
+  <include file="$(find ur10e_moveit_config)/launch/my_moveit_planning_execution.launch">
+    <arg name="sim" value="true" />
+  </include>
+  
+  <!-- Launch MoveIt RViz visualization -->
+  <include file="$(find ur10e_moveit_config)/launch/my_moveit_rviz.launch">
+    <arg name="config" value="$(arg rviz_config)" />
+  </include>
+</launch>
+

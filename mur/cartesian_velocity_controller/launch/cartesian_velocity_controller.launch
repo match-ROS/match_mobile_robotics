@@ -1,0 +1,35 @@
+<launch>
+  <!-- ============================================================================
+       Cartesian Velocity Controller - Launch File
+       ============================================================================
+       Pipeline Architecture:
+       - Level A: Global Planner (waypoint management)
+       - Level B: Local Planner (attractive velocity computation)
+       - Level C: Motion Generator (Cartesian velocity filter)
+       - Level D: PID + IK (with feed forward + damped Jacobian inverse)
+       - Final: Joint Safety Limiter (uniform scaling)
+       
+       All parameters are loaded from YAML files:
+       - config/controller_params.yaml (main configuration)
+       - config/velocity_filter_params.yaml (velocity filter settings)
+       
+       Basic usage:
+         roslaunch cartesian_velocity_controller cartesian_velocity_controller.launch
+       ============================================================================ -->
+
+  <node pkg="cartesian_velocity_controller"
+        type="cartesian_velocity_node"
+        name="cartesian_velocity_controller"
+        output="screen">
+    
+    <!-- Load main configuration -->
+    <rosparam file="$(find cartesian_velocity_controller)/config/controller_params.yaml" command="load"/>
+    
+    <!-- Load velocity filter configuration -->
+    <rosparam file="$(find cartesian_velocity_controller)/config/velocity_filter_params.yaml" command="load"/>
+
+    <!-- Load controller-only joint limits (reachability + runtime guardrail) -->
+    <rosparam file="$(find cartesian_velocity_controller)/config/controller_joint_limits.yaml" command="load"/>
+    
+  </node>
+</launch>

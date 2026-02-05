@@ -1,0 +1,117 @@
+<launch>
+    <!-- Minimal launch: start Gazebo world + spawn ONE MUR-620.
+         No virtual_object, no handling setup, no additional scripts. -->
+
+    <!-- Simulation world -->
+    <arg name="world_name" default="big_square" />
+    <arg name="paused" default="false" />
+    <!-- Note: in match_gazebo there is no maps/big_square_lite.yaml (only big_square.yaml). -->
+    <arg name="use_map_sim" default="true" />
+    <arg name="gui" default="true" />
+
+    <!-- Robot pose and namespace -->
+    <!-- NOTE: The default RViz config we load (mur_examples/rviz/single_mur620_visualization.rviz)
+         is hard-coded for the namespace "mur620" (e.g. /mur620/robot_description and mur620/* TF frames). -->
+    <arg name="robot_name" default="mur620" />
+    <arg name="robot_x" default="0.0" />
+    <arg name="robot_y" default="0.0" />
+    <arg name="robot_yaw" default="0.0" />
+
+    <!-- Optional RViz (off by default) -->
+    <arg name="rviz" default="true" />
+    <!-- Optional second RViz instance focused on 2D navigation (map/costmaps) -->
+    <arg name="rviz_nav2d" default="true" />
+
+    <!-- After MoveIt starts, move both arms to Home_custom -->
+    <arg name="move_arms_to_home_custom" default="true" />
+
+    <!-- RViz tools in our default configs publish to global topics:
+         - /initialpose
+         - /move_base_simple/goal
+         But navigation/localization nodes run in the robot namespace (e.g. /mur620/...).
+         This bridge relays the RViz topics into the robot namespace for convenience. -->
+    <arg name="bridge_rviz_nav_topics" default="true" />
+
+    <!-- Navigation stack selector for the MiR base.
+         Valid values in this codebase: move_base, move_base_flex.
+         Any other value disables starting the navigation stack (lighter). -->
+    <!-- move_base_flex (MBF) needs planners registered for mbf_costmap_core::CostmapPlanner.
+         This workspace provides adapters (match_mbf_nav_core_adapters) to use classic nav_core planners
+         like global_planner/GlobalPlanner with MBF. -->
+    <arg name="move_base_selector" default="move_base_flex" />
+
+    <!-- Localization mode for the MiR base in simulation.
+         Valid values: amcl, ground_truth.
+         - amcl requires a /map (enable use_map_sim) and laser scans.
+         - ground_truth uses Gazebo ground truth + fake localization TF. -->
+    <arg name="localization_type" default="amcl" />
+
+    <!-- Start Gazebo world -->
+    <include file="$(find match_gazebo)/launch/match_world_common.launch">
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="world_name" value="$(arg world_name)" />
+        <arg name="use_map_sim" value="$(arg use_map_sim)" />
+        <arg name="gui" value="$(arg gui)" />
+    </include>
+
+    <!-- Bridge RViz navigation topics (global -> namespaced) -->
+    <node if="$(arg bridge_rviz_nav_topics)"
+          pkg="topic_tools"
+          type="relay"
+          name="rviz_initialpose_relay"
+          output="screen"
+          args="/initialpose /$(arg robot_name)/initialpose" />
+
+    <node if="$(arg bridge_rviz_nav_topics)"
+          pkg="topic_tools"
+          type="relay"
+          name="rviz_move_base_simple_goal_relay"
+          output="screen"
+          args="/move_base_simple/goal /$(arg robot_name)/move_base_simple/goal" />
+
+    <!-- Alias frame for MoveIt/RViz:
+         moveit_rviz_plugin often uses the unprefixed planning frame "base_footprint",
+         while this simulation publishes prefixed frames (e.g. mur620/base_footprint).
+         This static TF creates a compatible "base_footprint" frame in the tree. -->
+    <node pkg="tf2_ros"
+          type="static_transform_publisher"
+          name="tf_base_footprint_alias"
+          args="0 0 0 0 0 0 $(arg robot_name)/base_footprint base_footprint" />
+
+    <!-- Spawn a single MUR-620 robot -->
+    <include file="$(find mur_launch_sim)/launch/mur_620.launch">
+        <arg name="robot_x" value="$(arg robot_x)" />
+        <arg name="robot_y" value="$(arg robot_y)" />
+        <arg name="robot_yaw" value="$(arg robot_yaw)" />
+        <arg name="tf_prefix" value="$(arg robot_name)" />
+        <arg name="move_base_selector" value="$(arg move_base_selector)" />
+        <arg name="localization_type" value="$(arg localization_type)" />
+        <!-- keep this launch minimal: no MoveIt, no auto "home", no extra collision avoidance -->
+        <arg name="start_moveit" value="true" />
+        <arg name="move_to_home_pose" value="false" />
+        <arg name="enable_dual_collison_avoidance" value="false" />
+    </include>
+
+    <!-- Move both planning groups to Home_custom (one-shot) -->
+    <include if="$(arg move_arms_to_home_custom)" file="$(find mur_control)/launch/move_to_named_target_dual.launch">
+        <arg name="mur_ns" value="$(arg robot_name)" />
+        <arg name="group_names" value="UR_arm_l,UR_arm_r" />
+        <arg name="target_name" value="Home_custom" />
+    </include>
+
+    <!-- RViz visualization (optional) -->
+    <node if="$(arg rviz)"
+          type="rviz"
+          name="rviz_visualization"
+          pkg="rviz"
+          args="-d $(find mur_examples)/rviz/single_mur620_visualization.rviz" />
+
+    <!-- RViz 2D navigation view (optional; separate RViz instance) -->
+    <node if="$(arg rviz_nav2d)"
+          type="rviz"
+          name="rviz_navigation_2d"
+          pkg="rviz"
+          args="-d $(find mur_examples)/rviz/single_mur620_navigation_2d_from_navigation_mapping.rviz" />
+          <!-- args="-d $(find mur_examples)/rviz/single_mur620_navigation_2d.rviz" /> -->  
+</launch>
+

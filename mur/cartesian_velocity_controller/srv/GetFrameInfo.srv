@@ -1,0 +1,30 @@
+# GetFrameInfo.srv
+# Debug service to verify frame consistency between MoveIt model and controller configuration.
+# Returns information about the model root frame, configured global frame, and current TCP pose.
+
+---
+# MoveIt model root frame (URDF root link)
+string model_root_frame
+
+# Global frame configured in controller YAML
+string config_global_frame
+
+# TCP link name from configuration
+string tcp_link
+
+# Planning group name
+string group_name
+
+# Current TCP pose in model frame (from MoveIt forward kinematics)
+geometry_msgs/Pose tcp_pose_in_model_frame
+
+# TF transform from model_root_frame to config_global_frame (if available)
+bool tf_available
+geometry_msgs/Transform tf_model_to_global
+
+# Whether frames are effectively the same (identity transform)
+bool frames_match
+
+# Additional debug info
+string[] joint_names
+float64[] joint_positions

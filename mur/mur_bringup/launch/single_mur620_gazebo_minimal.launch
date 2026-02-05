@@ -1,0 +1,66 @@
+<launch>
+    <!-- Minimal launch: start Gazebo world + spawn ONE MUR-620.
+         No virtual_object, no handling setup, no additional scripts. -->
+
+    <!-- Simulation world -->
+    <arg name="world_name" default="big_square_lite" />
+    <arg name="paused" default="false" />
+    <!-- Note: in match_gazebo there is no maps/big_square_lite.yaml (only big_square.yaml). -->
+    <arg name="use_map_sim" default="false" />
+    <arg name="gui" default="true" />
+
+    <!-- Robot pose and namespace -->
+    <!-- NOTE: The default RViz config we load (mur_examples/rviz/single_mur620_visualization.rviz)
+         is hard-coded for the namespace "mur620" (e.g. /mur620/robot_description and mur620/* TF frames). -->
+    <arg name="robot_name" default="mur620" />
+    <arg name="robot_x" default="0.0" />
+    <arg name="robot_y" default="0.0" />
+    <arg name="robot_yaw" default="0.0" />
+
+    <!-- Optional RViz (off by default) -->
+    <arg name="rviz" default="true" />
+
+    <!-- After MoveIt starts, move both arms to Home_custom -->
+    <arg name="move_arms_to_home_custom" default="true" />
+
+    <!-- Navigation stack selector for the MiR base.
+         Valid values in this codebase: move_base, move_base_flex.
+         Any other value disables starting the navigation stack (lighter). -->
+    <arg name="move_base_selector" default="none" />
+
+    <!-- Start Gazebo world -->
+    <include file="$(find match_gazebo)/launch/match_world_common.launch">
+        <arg name="paused" value="$(arg paused)" />
+        <arg name="world_name" value="$(arg world_name)" />
+        <arg name="use_map_sim" value="$(arg use_map_sim)" />
+        <arg name="gui" value="$(arg gui)" />
+    </include>
+
+    <!-- Spawn a single MUR-620 robot -->
+    <include file="$(find mur_launch_sim)/launch/mur_620.launch">
+        <arg name="robot_x" value="$(arg robot_x)" />
+        <arg name="robot_y" value="$(arg robot_y)" />
+        <arg name="robot_yaw" value="$(arg robot_yaw)" />
+        <arg name="tf_prefix" value="$(arg robot_name)" />
+        <arg name="move_base_selector" value="$(arg move_base_selector)" />
+        <!-- keep this launch minimal: no MoveIt, no auto "home", no extra collision avoidance -->
+        <arg name="start_moveit" value="true" />
+        <arg name="move_to_home_pose" value="false" />
+        <arg name="enable_dual_collison_avoidance" value="false" />
+    </include>
+
+    <!-- Move both planning groups to Home_custom (one-shot) -->
+    <include if="$(arg move_arms_to_home_custom)" file="$(find mur_control)/launch/move_to_named_target_dual.launch">
+        <arg name="mur_ns" value="$(arg robot_name)" />
+        <arg name="group_names" value="UR_arm_l,UR_arm_r" />
+        <arg name="target_name" value="Home_custom" />
+    </include>
+
+    <!-- RViz visualization (optional) -->
+    <node if="$(arg rviz)"
+          type="rviz"
+          name="rviz_visualization"
+          pkg="rviz"
+          args="-d $(find mur_examples)/rviz/single_mur620_visualization.rviz" />
+</launch>
+

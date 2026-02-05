@@ -1,0 +1,85 @@
+<launch>
+  <!--
+    MUR620 Dual-Arm - Cartesian Velocity Controller (MVP)
+
+    Assumes the robot is already running (e.g. single_mur620_gazebo.launch).
+    This launch starts two independent instances:
+      /<mur_ns>/cartesian_velocity_controller_l
+      /<mur_ns>/cartesian_velocity_controller_r
+  -->
+
+  <!-- Robot namespace WITHOUT leading slash (e.g. "mur620") -->
+  <arg name="mur_ns" default="mur620" />
+
+  <!-- 
+    Frame override behavior:
+    - true (default): override global_frame and robot_description_param with namespace-prefixed values
+                      (e.g., global_frame="mur620/base_link", robot_description_param="/mur620/robot_description")
+    - false: use values defined in the YAML config files (e.g., global_frame="UR10_l/base_link")
+             Useful when launching a single arm without the mobile base.
+  -->
+  <arg name="override_global_frame" default="false" />
+
+  <!-- Startup automation -->
+  <arg name="auto_load_unsafe_velocity_controllers" default="true" />
+  <arg name="auto_switch_to_velocity" default="true" />
+
+  <group ns="/$(arg mur_ns)">
+
+    <!-- LEFT arm controller -->
+    <node pkg="cartesian_velocity_controller"
+          type="cartesian_velocity_node"
+          name="cartesian_velocity_controller_l"
+          output="screen">
+
+      <rosparam file="$(find cartesian_velocity_controller)/config/controller_params_mur620_ur10_l.yaml" command="load"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/velocity_filter_params.yaml" command="load"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/controller_joint_limits.yaml" command="load"/>
+
+      <!-- Override robot_description and global_frame only if override_global_frame is true -->
+      <param name="robot_description_param" value="/$(arg mur_ns)/robot_description" if="$(arg override_global_frame)" />
+      <param name="global_frame" value="$(arg mur_ns)/base_link" if="$(arg override_global_frame)" />
+
+    </node>
+
+    <!-- RIGHT arm controller -->
+    <node pkg="cartesian_velocity_controller"
+          type="cartesian_velocity_node"
+          name="cartesian_velocity_controller_r"
+          output="screen">
+
+      <rosparam file="$(find cartesian_velocity_controller)/config/controller_params_mur620_ur10_r.yaml" command="load"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/velocity_filter_params.yaml" command="load"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/controller_joint_limits.yaml" command="load"/>
+
+      <!-- Override robot_description and global_frame only if override_global_frame is true -->
+      <param name="robot_description_param" value="/$(arg mur_ns)/robot_description" if="$(arg override_global_frame)" />
+      <param name="global_frame" value="$(arg mur_ns)/base_link" if="$(arg override_global_frame)" />
+
+    </node>
+
+    <!-- Ensure controllers are loaded (stopped) and optionally switch to velocity on startup -->
+    <node pkg="cartesian_velocity_controller"
+          type="ensure_mur620_dual_arm_velocity_controllers.py"
+          name="ensure_mur620_dual_arm_velocity_controllers"
+          output="screen">
+      <!-- Relative ns (resolves inside /<mur_ns>/...) -->
+      <param name="controller_manager_ns" value="controller_manager" />
+      <param name="auto_load" value="$(arg auto_load_unsafe_velocity_controllers)" />
+      <param name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
+      <!-- Keep defaults for names, but make explicit for clarity -->
+      <rosparam param="velocity_controllers">
+        - joint_group_vel_controller_l/unsafe
+        - joint_group_vel_controller_r/unsafe
+      </rosparam>
+      <rosparam param="moveit_controllers">
+        - UR10_l/arm_controller
+        - UR10_r/arm_controller
+      </rosparam>
+      <!-- Align with docs: strict switch + timeout 0.0 -->
+      <param name="timeout_s" value="0.0" />
+    </node>
+
+  </group>
+</launch>
+

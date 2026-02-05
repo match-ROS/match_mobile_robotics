@@ -1,0 +1,11 @@
+# Service to set a motion sequence for an object
+# Set loop = true to repeat the sequence indefinitely
+
+string object_id
+geometry_msgs/Pose[] waypoints
+float64[] durations
+bool loop
+---
+bool success
+string message
+

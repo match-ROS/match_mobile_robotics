@@ -1,2 +1,3 @@
 *.pyc   #No python bytecode
 .vscode
+__pycache__/

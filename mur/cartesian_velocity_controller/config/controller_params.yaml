@@ -1,0 +1,343 @@
+# =============================================================================
+# Cartesian Velocity Controller - Main Configuration
+# =============================================================================
+# Pipeline Architecture:
+# - Level A: Global Planner (waypoint management)
+# - Level B: Local Planner (attractive velocity computation)
+# - Level C: Motion Generator (Cartesian velocity filter)
+# - Level D: PID + IK (with feed forward + damped Jacobian)
+# - Final: Joint Safety Limiter (uniform scaling)
+# =============================================================================
+
+# =============================================================================
+# Robot Configuration
+# =============================================================================
+group_name: "manipulator"
+tcp_link: "tool0"
+global_frame: "world"
+
+# TCP offset from link (position [x, y, z] in meters)
+tcp_offset_position: [0.0, 0.0, 0.0]
+# TCP offset orientation (roll, pitch, yaw in radians)
+tcp_offset_orientation_rpy: [0.0, 0.0, 0.0]
+
+# =============================================================================
+# ROS Topics and Controller Names
+# =============================================================================
+joint_state_topic: "/joint_states"
+velocity_command_topic: "/joint_group_vel_controller/command"
+distance_topic: "/distance_info"
+
+# Controller switching
+start_controller: "joint_group_vel_controller"
+stop_controller: "vel_joint_traj_controller"
+
+# =============================================================================
+# Control Loop Configuration
+# =============================================================================
+control_rate: 100.0           # Hz - main control loop frequency
+command_timeout: 0.5         # seconds - timeout for velocity commands
+pose_filter_alpha: 0.8      # EMA blending for TCP pose filtering (0=no filter, 1=raw)
+reset_filter_on_target_change: false  # keep filter state when target changes (continuity)
+
+# =============================================================================
+# Level C: Cartesian Velocity Filter dt policy (robust to loop jitter)
+# =============================================================================
+cartesian_velocity_filter:
+  # Fixed internal timestep used by the filter integrator (jerk->acc->vel).
+  # Set to 0 to disable and use raw dt (legacy behavior).
+  dt_nominal: 0.01               # seconds (100 Hz)
+  min_dt: 0.0005                 # seconds - clamp incoming dt (lower bound)
+  max_dt: 0.05                   # seconds - clamp incoming dt (upper bound)
+  max_substeps: 10               # CPU guardrail
+  reset_dt_threshold: 0.25       # seconds - treat dt as outlier above this
+  large_dt_policy: "hold_last"   # hold_last | reset_to_zero | reset_to_desired
+  uniform_scaling_enabled: true  # true: preserve direction, false: per-axis clamp
+
+# =============================================================================
+# Level A: Global Planner Configuration
+# =============================================================================
+global_planner:
+  waypoint_switch_distance: 0.02       # meters - switch to next waypoint when closer than this
+  orientation_switch_threshold: 0.05   # radians - orientation threshold for switching (~3 deg)
+  use_orientation_for_switch: true     # consider orientation when switching waypoints
+
+# =============================================================================
+# Level B: Local Planner Configuration (Attractive Component Only)
+# =============================================================================
+local_planner:
+  # Attractive gains (proportional to error)
+  attractive_gain: 2.0                 # linear velocity gain
+  
+  # Velocity limits for combined velocity
+  max_linear_velocity: &max_linear_velocity 0.5             # m/s
+  max_angular_velocity: &max_angular_velocity 2.0            # rad/s
+  velocity_scale_factor: 1.0           # Scales both linear and angular max velocity
+  # Freeze integration when velocities are very small (avoid chasing jitter)
+  integration_freeze_linear: 0.0001    # m/s
+  integration_freeze_angular: 0.001    # rad/s
+  
+  # Repulsive parameters (disabled for now)
+  repulsive_enabled: true
+  repulsive_obstacle_gain: 2.5
+  repulsive_link_gain: 2.0
+  influence_distance: 0.8              # meters
+  min_safe_distance: 0.1              # meters
+
+  # Repulsive velocity profile (3.4)
+  # Supported: LINEAR, QUADRATIC, SMOOTHSTEP, SMOOTHERSTEP
+  repulsive_velocity_profile: "QUADRATIC"
+
+  # Repulsive velocity smoothing (3.1 + extra asymmetry)
+  # Asymmetric EMA: fast reaction when repulsion increases (rise),
+  # slower release when repulsion decreases (fall). Set both to 0 to disable.
+  repulsive_filter_tau_rise: 0.00      # [s]
+  repulsive_filter_tau_fall: 0.00      # [s]
+
+  # Repulsive rate limiter (3.3 + extra asymmetry)
+  # Limit Δv via max acceleration. Set both to 0 to disable.
+  repulsive_max_acc_rise: 0.0          # [m/s^2]
+  repulsive_max_acc_fall: 0.0          # [m/s^2]
+
+  # Virtual Target Leash (Soft Leash)
+  leash_enabled: true
+  leash_start_distance: 0.10           # meters - start slowing down
+  leash_stop_distance: 0.20            # meters - stop completely
+  leash_reset_threshold: 0.50          # meters - hard reset distance
+
+# =============================================================================
+# Level D: PID Controller Configuration
+# =============================================================================
+pid_controller:
+  # Position PID (3D)
+  position:
+    kp: 2.0                            # Proportional gain
+    ki: 0.5                            # Integral gain (small for steady-state error)
+    kd: 0.0                           # Derivative gain (damping)
+    kff: 0.85                          # Feed-forward gain (0-1, 1=full velocity feed-forward)
+    output_limit: *max_linear_velocity # m/s - max velocity output (tied to local planner)
+    derivative_filter_tau: 0.02        # seconds - derivative low-pass filter
+    deadband: 0.0002                   # meters - zero small errors to avoid hunting (1e-4..1e-3)
+  
+  # Orientation PID (3D - axis-angle error)
+  orientation:
+    kp: 2.0                            # Proportional gain
+    ki: 0.5                          # Integral gain
+    kd: 0.0                           # Derivative gain
+    kff: 0.85                           # Feed-forward gain
+    output_limit: *max_angular_velocity # rad/s - max angular velocity output (tied to local planner)
+    derivative_filter_tau: 0.02        # seconds - derivative low-pass filter
+    deadband: 0.001                    # radians - zero small errors to avoid hunting
+
+# =============================================================================
+# Jacobian Solver Configuration (Damped Pseudo-Inverse)
+# =============================================================================
+jacobian_solver:
+  singularity_threshold: 0.05          # SVD threshold for singularity detection
+  max_damping: 0.3                     # maximum damping factor near singularity
+
+# =============================================================================
+# Joint Safety Limiter Configuration (Final Stage)
+# =============================================================================
+joint_safety_limiter:
+  enabled: true
+  max_joint_velocity: 2.0              # rad/s - uniform limit for all joints
+  max_joint_acceleration: 8.0          # rad/s² - uniform acceleration limit
+  velocity_limiting_enabled: true
+  acceleration_limiting_enabled: true
+
+# =============================================================================
+# Joint Velocity Filter (pre-safety smoothness stage)
+# =============================================================================
+joint_velocity_filter:
+  enabled: true
+  tau: 0.10                       # seconds (0.05-0.20 typical)
+  uniform_scaling_enabled: false  # likely prefer independent joints
+
+  # Per-joint limits. Example uses a 3+3 split (first 3 joints vs last 3 joints).
+  max_joint_velocity:     [1.0, 1.0, 1.0, 2.0, 2.0, 2.0]      # rad/s
+  max_joint_acceleration: [3.0, 3.0, 3.0, 6.0, 6.0, 6.0]      # rad/s^2
+  max_joint_jerk:         [30.0, 30.0, 30.0, 60.0, 60.0, 60.0] # rad/s^3
+
+  # Fixed internal timestep policy (same as cartesian filter)
+  dt_nominal: 0.01               # seconds (100 Hz)
+  min_dt: 0.0005
+  max_dt: 0.05
+  max_substeps: 10
+  reset_dt_threshold: 0.25
+  large_dt_policy: "hold_last"
+
+# =============================================================================
+# Target Reachability Configuration
+# =============================================================================
+block_unreachable_targets: true        # reject targets that IK cannot solve
+
+# =============================================================================
+# Singularity Avoidance Configuration
+# =============================================================================
+singularity_avoidance:
+  elbow_index: 2                       # Joint index for elbow (usually 2 for UR)
+  buffer_zone: 0.4                     # Radians from singularity to start weighting
+  max_weight_penalty: 1.0             # Max weight added when near singularity
+
+# =============================================================================
+# Elbow velocity injection (anti-singularity, controller-side)
+# =============================================================================
+elbow_injection:
+  enabled: true
+
+  # Prefer name-based mapping (more robust than hardcoded indices).
+  # If empty/not found, fallback to `elbow_index`.
+  elbow_joint_name: "elbow_joint"
+  elbow_index: 2
+
+  # Critical zone near controller-only MAX limit for the elbow joint
+  critical_zone: 0.30                  # rad
+
+  # Target gating: if IK solution for current target needs elbow near MAX
+  # (q_max - q_target < threshold) -> injection gate = 0
+  target_near_limit_threshold: 0.2   # rad
+
+  # Push profile parameters (pushes away from MAX, i.e. towards flexion)
+  k: 2.0
+  max_push_velocity: 0.20              # rad/s
+
+# =============================================================================
+# Joint Weights (for weighted pseudo-inverse, 1.0 = normal, >1.0 = less movement)
+# =============================================================================
+# Weights are dynamically calculated by Singularity Avoidance but can be initialized here
+# joint_weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+# =============================================================================
+# REPULSIVE POI CONFIGURATION
+# =============================================================================
+# Points of Interest for repulsive velocity computation.
+# POIs are defined as (link + offset) and queried against the local 3D map (EDT).
+# Each POI can be individually configured with weight, radius, and enabled state.
+# These values can be overridden at runtime via dynamic_reconfigure.
+
+repulsion:
+  stale_timeout: 0.3                    # seconds - map data older than this is ignored
+  tcp_point_name: "tcp"                 # POI name that acts as TCP
+
+  # 3.6 Gradient smoothing (EMA on direction). 0 = disabled (raw gradient)
+  gradient_filter_alpha: 0.0            # [0..1]
+
+  # 3.7 Predictive query (POI only)
+  poi_predict_enable: false
+  poi_predict_horizon: 0.06             # [s] if <=0: uses map update period; clamped internally
+  poi_velocity_filter_tau: 0.05         # [s] 0 = disabled (raw finite-difference)
+  poi_velocity_max: 1.5                 # [m/s] 0 = no clamp
+  poi_predict_conservative_min_distance: true
+
+  # POI definitions (same schema as scene_builder)
+  robot_points_of_interest:
+    tcp:
+      link: "tool0"
+      offset: [0.0, 0.0, 0.0]
+    elbow:
+      link: "forearm_link"
+      offset: [0.0, 0.0, 0.12]
+    wrist:
+      link: "wrist_1_link"
+      offset: [0.0, 0.0, -0.05]
+    forearm_mid:
+      link: "forearm_link"
+      offset: [-0.30, 0.0, 0.035]
+  
+  # Configurazione iniziale POI (sovrascrivibile da dynamic_reconfigure)
+  points:
+    tcp:
+      weight: 1.0
+      radius: 0.08                      # meters - inflates the POI sphere
+      enabled: false                    # disabled by default
+      is_tcp: true                      # generates ObstacleInfo (direct TCP repulsion)
+    elbow:
+      weight: 1.0
+      radius: 0.05
+      enabled: false
+      is_tcp: false                     # generates LinkPOI (via partial Jacobian)
+    wrist:
+      weight: 1.0
+      radius: 0.08
+      enabled: false
+      is_tcp: false
+    forearm_mid:
+      weight: 0.8
+      radius: 0.03
+      enabled: false
+      is_tcp: false
+
+# =============================================================================
+# MAP3D CONFIGURATION (local EDT map)
+# =============================================================================
+map3d:
+  frame_id: "base_link"
+  size_x: 3.5
+  size_y: 3.5
+  size_z: 2.0
+  resolution: 0.03
+  origin_offset: [0.0, 0.0, 1.0]
+
+  # Inflate obstacles by a fixed global margin (meters)
+  obstacle_margin: 0.02
+
+  # Gradient stability
+  gradient_clamp_distance: 0.02
+  min_distance_eps: 0.001
+  gradient_eps: 1e-6
+
+  # Update frequency (0 -> as fast as possible)
+  update_rate_hz: 15.0
+
+  # PlanningScene sources
+  robot_description_param: "robot_description"
+  joint_state_topic: "/joint_states"
+  planning_scene_topic: "planning_scene"
+  prefer_get_planning_scene_service: true
+  get_planning_scene_service: "/get_planning_scene"
+
+  # Debug RViz: publish occupied voxels as a PointCloud2
+  debug:
+    publish_occupied_cloud: true
+    occupied_cloud_topic: "map3d/occupied_voxels"
+    occupied_cloud_stride: 2          # >=1, increase if RViz gets heavy
+    occupied_cloud_max_points: 50000  # 0 = unlimited
+
+    # Debug RViz: show map bounds even if empty (wireframe box)
+    publish_bounds_marker: true
+    bounds_marker_topic: "map3d/bounds"
+    bounds_marker_line_width: 0.01
+    bounds_marker_alpha: 0.8
+    bounds_marker_color_r: 0.2
+    bounds_marker_color_g: 1.0
+    bounds_marker_color_b: 0.2
+
+    # Debug RViz: show spheres read from PlanningScene
+    publish_spheres_marker: true
+    spheres_marker_topic: "map3d/spheres"
+    spheres_marker_alpha: 0.7
+    spheres_marker_color_r: 0.2
+    spheres_marker_color_g: 0.4
+    spheres_marker_color_b: 1.0
+    spheres_marker_scale_multiplier: 5.0
+    spheres_marker_min_diameter: 0.15
+
+    # Debug: 2D slice with distance colormap + gradient arrows
+    publish_slice: true
+    slice_topic: "map3d/distance_slice"
+    slice_gradient_topic: "map3d/gradient_arrows"
+    slice_z: 1.0                    # [m] Z coordinate of slice in frame_id
+    slice_gradient_stride: 4        # sample gradient every N voxels
+    slice_gradient_scale: 0.08      # [m] arrow length scaling
+    slice_max_distance: 0.8         # [m] max distance for colormap
+
+    # Debug: voxel grid wireframe (show occupied cell borders)
+    publish_voxel_grid: true       # set true to enable (can be heavy with many voxels)
+    voxel_grid_topic: "map3d/voxel_grid"
+    voxel_grid_stride: 1            # sample every N voxels (increase if too heavy)
+    voxel_grid_line_width: 0.002    # [m] line thickness
+    voxel_grid_alpha: 0.6
+    voxel_grid_color_r: 1.0         # orange/yellow by default
+    voxel_grid_color_g: 0.5
+    voxel_grid_color_b: 0.0

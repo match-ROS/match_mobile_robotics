@@ -1,0 +1,29 @@
+<launch>
+  <!-- ================================================================== -->
+  <!-- Launch file per il nodo object_command                            -->
+  <!-- Gestisce comandi di movimento per oggetti dinamici nella scena    -->
+  <!-- ================================================================== -->
+
+  <!-- Argomenti configurabili -->
+  <arg name="autostart_loops" default="false" 
+       doc="Avvia automaticamente i loop di movimento all'avvio" />
+  <arg name="config_file" default="$(find scene_builder)/config/scene_builder_params.yaml" 
+       doc="File di configurazione parametri" />
+  <arg name="scene_config_file" default="$(find scene_builder)/config/scene_config.yaml"
+       doc="File di configurazione oggetti e sequenze" />
+  <arg name="start_delay" default="0.0" doc="Ritardo avvio nodo (secondi)" />
+
+  <!-- Nodo object_command -->
+  <node pkg="scene_builder" type="object_command_node" name="object_command_node" output="screen"
+        launch-prefix="bash -c 'sleep $(arg start_delay); $0 $@' ">
+    
+    <!-- Carica file di configurazione parametri -->
+    <rosparam command="load" file="$(arg config_file)" />
+    
+    <!-- Carica file di configurazione oggetti e sequenze -->
+    <rosparam command="load" file="$(arg scene_config_file)" />
+    
+    <!-- Override per autostart_loops da argomento launch -->
+    <param name="autostart_loops" value="$(arg autostart_loops)" />
+  </node>
+</launch>

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- 
+    Interactive Demo Launch File (without distance monitor)
+    Executes in sequence (parallel launch):
+    1. ur10e_complete_without_distance_monitor (Gazebo + MoveIt + RViz)
+    2. object_command.launch (Dynamic Object Controller)
+    3. scene_interactive_control.py (Interactive Terminal UI)
+  -->
+
+  <!-- Arguments -->
+  <arg name="gui" default="false" doc="Start Gazebo GUI" />
+  <arg name="move_to_pose" default="true" doc="Move robot to start pose" />
+  <arg name="target_pose" default="start" doc="Target pose name" />
+  <arg name="object_cmd_delay" default="15.0" doc="Delay for object command node" />
+  <arg name="interactive_offset" default="2.0" doc="Additional delay for interactive control" />
+  <arg name="interactive_start_delay" value="$(eval arg('object_cmd_delay') + arg('interactive_offset'))" />
+
+  <!-- 1. Launch UR10e Complete System (Gazebo, MoveIt, RViz) -->
+  <include file="$(find scene_builder)/launch/ur10e_complete_without_distance_monitor.launch">
+    <arg name="gui" value="$(arg gui)" />
+    <arg name="move_to_pose" value="$(arg move_to_pose)" />
+    <arg name="target_pose" value="$(arg target_pose)" />
+  </include>
+
+  <!-- 2. Launch Object Command Node -->
+  <include file="$(find scene_builder)/launch/object_command.launch">
+    <arg name="autostart_loops" value="false" />
+    <arg name="start_delay" value="$(arg object_cmd_delay)" />
+  </include>
+
+  <!-- 3. Launch Interactive Control Script in separate terminal -->
+  <node pkg="scene_builder" 
+        type="scene_interactive_control.py" 
+        name="scene_interactive_control" 
+        output="screen" 
+        launch-prefix="gnome-terminal -- bash -c 'sleep $(arg interactive_start_delay); rosrun scene_builder scene_interactive_control.py; exec bash'" />
+</launch>
+

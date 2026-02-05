@@ -1,0 +1,192 @@
+# ============================================================================
+# File di configurazione parametri per scene_builder
+# ============================================================================
+#
+# Questo file contiene tutti i parametri configurabili per i nodi del pacchetto
+# scene_builder. È organizzato in sezioni logiche con commenti esplicativi.
+#
+# UTILIZZO:
+#   Caricare questo file nel launch file con:
+#   <rosparam command="load" file="$(find scene_builder)/config/scene_builder_params.yaml" ns="~" />
+#
+# ============================================================================
+
+# ============================================================================
+# FREQUENZE DI AGGIORNAMENTO E CALCOLO
+# ============================================================================
+# Parametri critici per le prestazioni e la reattività del sistema
+
+# Frequenza di aggiornamento delle animazioni degli oggetti (Hz)
+# Usato da: object_command_node
+# Valori consigliati:
+#   - 30 Hz: sufficiente per animazioni lente, basso carico CPU
+#   - 60 Hz: buon compromesso (default)
+#   - 120 Hz: animazioni molto fluide, alto carico CPU
+update_rate: 50.0
+
+# Frequenza di calcolo delle distanze robot-ostacoli (Hz)
+# Usato da: distance_monitor_node
+# Valori consigliati:
+#   - 10 Hz: basso carico CPU, sufficiente per ostacoli lenti
+#   - 15 Hz: valore default nel codice
+#   - 30 Hz: buon compromesso per obstacle avoidance
+#   - 50 Hz: alta reattività per controllo in velocità (consigliato)
+computation_rate: 100.0
+
+# Frequenza di aggiornamento dello stato del robot nel PlanningSceneMonitor (Hz)
+# Usato da: distance_monitor_node
+# Controlla quanto spesso viene letto lo stato dei giunti
+# Valori consigliati:
+#   - 50 Hz: sufficiente per la maggior parte dei casi
+#   - 100 Hz: buon compromesso (default)
+#   - 200 Hz: alta precisione per movimenti veloci
+state_update_frequency: 200.0
+
+# ============================================================================
+# TIMEOUTS
+# ============================================================================
+# Configurazione dei timeout per varie operazioni
+
+# Timeout per attendere lo stato iniziale del robot (secondi)
+# Usato da: distance_monitor_node
+# Se il robot non pubblica joint_states entro questo tempo, il nodo procede
+state_wait_timeout: 2.0
+
+# Timeout di default per comandi di velocità agli oggetti (secondi)
+# Usato da: object_manager
+# Dopo questo tempo, la velocità viene azzerata automaticamente
+default_velocity_timeout: 1.0
+
+# ============================================================================
+# LIMITI DI VELOCITÀ
+# ============================================================================
+# Limiti per il movimento degli oggetti dinamici
+
+# Velocità massima consentita per gli oggetti (m/s per lineare, rad/s per angolare)
+# Usato da: object_manager
+# I comandi di velocità che superano questo limite vengono scalati proporzionalmente
+# 0.0 = nessun limite
+max_velocity_norm: 2.0
+
+# ============================================================================
+# PARAMETRI ANIMAZIONI
+# ============================================================================
+# Configurazione per le animazioni degli oggetti
+
+# Durata di default per i comandi waypoint (secondi)
+# Usato da: object_command_node
+# Usata quando non viene specificata una durata nel comando
+default_command_duration: 0.5
+
+# Avvia automaticamente i loop delle sequenze di movimento all'avvio
+# Usato da: object_command_node
+# true: le sequenze partono automaticamente
+# false: le sequenze devono essere avviate manualmente tramite servizio
+autostart_loops: false
+
+# ============================================================================
+# PARAMETRI GENERALI
+# ============================================================================
+# Configurazioni comuni a più nodi
+
+# Nome del MoveGroup MoveIt da utilizzare
+# Usato da: object_command_node, distance_monitor_node (object_loader_move_group)
+# Valori comuni: "manipulator", "arm", "panda_arm"
+move_group: "manipulator"
+object_loader_move_group: "manipulator"
+
+# Topic per la lettura degli stati dei giunti
+# Usato da: distance_monitor_node
+joint_state_topic: "/joint_states"
+
+# Topic su cui monitorare la planning scene
+# Usato da: distance_monitor_node
+monitor_planning_scene_topic: "planning_scene"
+
+# ============================================================================
+# PARAMETRI CARICAMENTO OGGETTI
+# ============================================================================
+# Configurazione per il caricamento di oggetti predefiniti
+
+# Nome del parametro ROS contenente la definizione degli oggetti di default
+# Usato da: object_command_node, distance_monitor_node
+# Questo parametro viene cercato nel namespace privato del nodo (~)
+default_objects_param: "objects"
+
+# Nome del parametro ROS contenente le sequenze di movimento predefinite
+# Usato da: object_command_node
+motion_sequences_param: "motion_sequences"
+
+# ============================================================================
+# PARAMETRI VISUALIZZAZIONE (RViz)
+# ============================================================================
+# Configurazione per la visualizzazione dei marker di distanza in RViz
+# Usati da: distance_monitor_node
+
+# Lunghezza delle frecce che indicano la direzione del vettore distanza (m)
+arrow_length: 0.15
+
+# Diametro dell'asta della freccia (m)
+arrow_shaft_diameter: 0.01
+
+# Diametro della punta della freccia (m)
+arrow_head_diameter: 0.02
+
+# Lunghezza della punta della freccia (m)
+arrow_head_length: 0.03
+
+# ============================================================================
+# PARAMETRI PLANNING SCENE MONITOR
+# ============================================================================
+# Configurazione aggiuntiva del monitor della planning scene di MoveIt
+# Usati da: distance_monitor_node
+
+# Risoluzione dell'octomap (per silenziare warning se non usato)
+octomap_resolution: 0.025
+
+# Frame dell'octomap (vuoto per disabilitare)
+octomap_frame: ""
+
+# ============================================================================
+# PUNTI DI INTERESSE SUL ROBOT
+# ============================================================================
+# Definizione dei punti di interesse da tracciare sul robot.
+# Per ogni punto vengono calcolate:
+# - Posizione nel world frame
+# - Velocità lineare (stimata con derivata filtrata)
+# - Distanza vettoriale al centro di ogni collision object
+#
+# Formato:
+#   robot_points_of_interest:
+#     nome_punto:
+#       link: "nome_link"           # Link del robot (obbligatorio)
+#       offset: [x, y, z]           # Offset nel frame del link (opzionale, default [0,0,0])
+#
+# I nomi dei link dipendono dal robot. Per UR10e tipicamente:
+# - forearm_link: gomito
+# - wrist_1_link, wrist_2_link, wrist_3_link: polso
+# - tool0: end effector
+#
+# Topic pubblicato: robot_points_info (scene_builder/RobotPointsInfo)
+
+robot_points_of_interest:
+  tcp:
+    link: "tool0"
+    offset: [0.0, 0.0, 0.0]
+  elbow:
+    link: "forearm_link"
+    offset: [0.0, 0.0, 0.12]
+  wrist:
+    link: "wrist_1_link"
+    offset: [0.0, 0.0, -0.05]
+  forearm_mid:
+    link: "forearm_link"
+    offset: [-0.30, 0.0, 0.035]  # 30cm lungo l'avambraccio
+
+# Nome del parametro contenente i punti di interesse (default: robot_points_of_interest)
+robot_points_param: "robot_points_of_interest"
+
+# Coefficiente del filtro passa-basso per la stima della velocità dei punti (0-1)
+# Valori più alti = meno filtraggio, più reattivo ma più rumoroso
+# Valori più bassi = più filtraggio, più smooth ma più lento
+robot_point_velocity_filter_alpha: 0.3

@@ -1,0 +1,197 @@
+objects:
+  sphere_1:
+    primitive:
+      type: sphere
+      dimensions:
+      - 0.1
+    pose:
+      position:
+      - 2.0
+      - 0.5
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+  sphere_2:
+    primitive:
+      type: sphere
+      dimensions:
+      - 0.1
+    pose:
+      position:
+      - 0.0
+      - 2.5
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+  sphere_3:
+    primitive:
+      type: sphere
+      dimensions:
+      - 0.1
+    pose:
+      position:
+      - 0.0
+      - -0.8
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+motion_sequences:
+  sphere_1:
+    loop: false
+    waypoints:
+    - position:
+      - 0.5
+      - 0.0
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 2.0
+    - position:
+      - 0.5
+      - 0.4
+      - 0.7
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 2.0
+    - position:
+      - 0.5
+      - -0.4
+      - 0.4
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 2.0
+  sphere_2:
+    loop: false
+    waypoints:
+    - position:
+      - 0.0
+      - 2.5
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 3.0
+    - position:
+      - -0.5
+      - 2.5
+      - 0.8
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 3.0
+    - position:
+      - 0.5
+      - 2.5
+      - 0.3
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 3.0
+  sphere_3:
+    loop: false
+    waypoints:
+    - position:
+      - 0.0
+      - -0.8
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - 0.566
+      - -0.566
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - 0.8
+      - 0.0
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - 0.566
+      - 0.566
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - 0.0
+      - 0.8
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - -0.566
+      - 0.566
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - -0.8
+      - 0.0
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+    - position:
+      - -0.566
+      - -0.566
+      - 0.5
+      orientation:
+      - 0.0
+      - 0.0
+      - 0.0
+      - 1.0
+      duration: 1.0
+disabled_objects: {}

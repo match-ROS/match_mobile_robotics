@@ -20,7 +20,7 @@ group_name: "UR_arm_l"
 # In mur_620.gazebo.xacro the left arm links are prefixed with "UR10_l/".
 tcp_link: "UR10_l/tool0"
 
-global_frame: "mur620/base_link"
+global_frame: "base_footprint"
 
 # =============================================================================
 # RViz Marker Visualization
@@ -126,10 +126,10 @@ pid_controller:
     derivative_filter_tau: 0.02
     deadband: 0.0002
   orientation:
-    kp: 2.0
-    ki: 0.5
+    kp: 0.0 #2.0
+    ki: 0.0 #0.5
     kd: 0.0
-    kff: 0.85
+    kff: 0.0 #0.85
     output_limit: *max_angular_velocity
     derivative_filter_tau: 0.02
     deadband: 0.001

@@ -51,7 +51,7 @@ reset_filter_on_target_change: false
 # Startup behavior:
 # - "hold_current_pose" (default): capture current TCP pose and hold it as initial target
 # - "zero_velocity": publish zero joint velocities and idle until a target_pose is received
-startup_behavior: "zero_velocity"
+startup_behavior: "hold_current_pose"
 
 # =============================================================================
 # Level C: Cartesian Velocity Filter dt policy (robust to loop jitter)
@@ -114,10 +114,10 @@ pid_controller:
     derivative_filter_tau: 0.02
     deadband: 0.0002
   orientation:
-    kp: 2.0
-    ki: 0.5
+    kp: 0.0 #2.0
+    ki: 0.0 #0.5
     kd: 0.0
-    kff: 0.85
+    kff: 0.0 #0.85
     output_limit: *max_angular_velocity
     derivative_filter_tau: 0.02
     deadband: 0.001

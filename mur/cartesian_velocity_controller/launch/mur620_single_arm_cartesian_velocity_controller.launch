@@ -21,6 +21,8 @@
 
   <!-- Robot namespace WITHOUT leading slash (e.g. "mur620") -->
   <arg name="mur_ns" default="mur620" />
+  <!-- Backward-compatible alias used by YAML configs (subst_value="true") -->
+  <arg name="robot_ns" default="$(arg mur_ns)" />
 
   <!-- 
     Frame override behavior:
@@ -49,9 +51,9 @@
           name="cartesian_velocity_controller_$(arg arm_suffix)"
           output="screen">
 
-      <rosparam file="$(find cartesian_velocity_controller)/config/$(arg config_file)" command="load"/>
-      <rosparam file="$(find cartesian_velocity_controller)/config/velocity_filter_params.yaml" command="load"/>
-      <rosparam file="$(find cartesian_velocity_controller)/config/controller_joint_limits.yaml" command="load"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/$(arg config_file)" command="load" subst_value="true"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/velocity_filter_params.yaml" command="load" subst_value="true"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/controller_joint_limits.yaml" command="load" subst_value="true"/>
 
       <!-- Override robot_description and global_frame only if override_global_frame is true -->
       <param name="robot_description_param" value="/$(arg mur_ns)/robot_description" if="$(arg override_global_frame)" />

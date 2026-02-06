@@ -192,6 +192,8 @@ private:
   Eigen::Isometry3d filterTcpPose(const Eigen::Isometry3d& measured_pose);
   static void applyDeadband(Eigen::Vector3d& vec, double threshold);
   bool resetVirtualTargetsToCurrentPose();
+  bool ensureJacobianFrameTransformReady();
+  bool applyJacobianFrameTransformIfConfigured(Eigen::MatrixXd& jacobian);
   void setupDynamicReconfigure();
   void dynamicReconfigureCallback(ControllerTuningConfig& config, uint32_t level);
   bool getFrameInfoCallback(GetFrameInfo::Request& req, GetFrameInfo::Response& res);
@@ -207,6 +209,12 @@ private:
   double tf_timeout_{0.1};
   bool reject_on_tf_failure_{true};
   bool accept_empty_frame_as_global_{true};
+
+  // Cached 6x6 rotation transform used to express Jacobian rows in jacobian_target_frame_.
+  // Cached once (static transform assumption); guarded for use by timer + services.
+  mutable std::mutex jacobian_frame_mutex_;
+  bool jacobian_frame_transform_ready_{false};
+  Eigen::Matrix<double, 6, 6> jacobian_frame_transform_{Eigen::Matrix<double, 6, 6>::Identity()};
 
   ros::Subscriber joint_state_sub_;
   ros::Subscriber target_pose_sub_;
@@ -257,6 +265,12 @@ private:
   std::string group_name_;
   std::string tcp_link_;
   std::string global_frame_;
+  // Jacobian frame conversion:
+  // - MoveIt may express the Jacobian in a "source" frame (e.g., chain root).
+  // - The controller can optionally rotate it into a "target" frame (default: global_frame_).
+  // If jacobian_source_frame_ is empty, no conversion is applied (legacy behavior).
+  std::string jacobian_source_frame_;
+  std::string jacobian_target_frame_;
   std::string joint_state_topic_;
   std::string velocity_command_topic_;
   std::string start_controller_name_;

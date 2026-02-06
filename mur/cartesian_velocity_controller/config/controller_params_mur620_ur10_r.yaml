@@ -14,7 +14,20 @@ group_name: "UR_arm_r"
 # In mur_620.gazebo.xacro the right arm links are prefixed with "UR10_r/".
 tcp_link: "UR10_r/tool0"
 
-global_frame: "mur620/base_link"
+global_frame: "$(arg robot_ns)/base_link"
+
+# =============================================================================
+# Jacobian Frame Conversion (optional)
+# =============================================================================
+# If set, the controller will rotate the Jacobian from jacobian_source_frame into
+# jacobian_target_frame (rotation only) and use that consistently in the control law.
+# Leave jacobian_source_frame empty to preserve legacy behavior (no conversion).
+#
+# TIP: set jacobian_source_frame to the frame/link that MoveIt uses as reference
+# when computing the Jacobian for this group (often the chain root / group base).
+jacobian_source_frame: "$(arg robot_ns)/UR10_r/base_link"
+# Target frame for the Jacobian (defaults to global_frame if omitted)
+jacobian_target_frame: "$(arg robot_ns)/base_link"
 robot_description_param: "robot_description"
 
 # =============================================================================

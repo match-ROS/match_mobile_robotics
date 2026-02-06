@@ -338,6 +338,11 @@ void CartesianVelocityController::loadParameters()
   pnh_.param<std::string>("group_name", group_name_, "manipulator");
   pnh_.param<std::string>("tcp_link", tcp_link_, "tool0");
   pnh_.param<std::string>("global_frame", global_frame_, "world");
+  // Optional Jacobian frame conversion (rotation only).
+  // If jacobian_source_frame is empty, the Jacobian is left untouched (legacy behavior).
+  // If set, the Jacobian rows are rotated into jacobian_target_frame (default: global_frame).
+  pnh_.param<std::string>("jacobian_source_frame", jacobian_source_frame_, "");
+  pnh_.param<std::string>("jacobian_target_frame", jacobian_target_frame_, global_frame_);
   pnh_.param<std::string>("joint_state_topic", joint_state_topic_, "/joint_states");
   pnh_.param<std::string>("velocity_command_topic", velocity_command_topic_, "/joint_group_vel_controller/command");
   pnh_.param<std::string>("start_controller", start_controller_name_, "joint_group_vel_controller");
@@ -2099,6 +2104,16 @@ void CartesianVelocityController::executePipeline(double dt)
     return;
   }
 
+  if (!applyJacobianFrameTransformIfConfigured(jacobian))
+  {
+    ROS_WARN_THROTTLE_NAMED(1.0, "cartesian_velocity_controller",
+                            "Failed to apply Jacobian frame transform (source='%s', target='%s').",
+                            jacobian_source_frame_.c_str(),
+                            (jacobian_target_frame_.empty() ? global_frame_ : jacobian_target_frame_).c_str());
+    publishZeroVelocity();
+    return;
+  }
+
   // Snapshot current joint positions (used by weights + guardrails)
   Eigen::VectorXd current_joint_positions;
   (void)robot_state_->getCurrentJointPositions(current_joint_positions);
@@ -3074,9 +3089,12 @@ bool CartesianVelocityController::resetVirtualTargetsToCurrentPose()
   if (robot_state_->getCurrentJointVelocities(joint_vels) &&
       robot_state_->getJacobian(tcp_link_, tcp_offset.translation(), jacobian))
   {
+    if (applyJacobianFrameTransformIfConfigured(jacobian))
+    {
       Eigen::VectorXd cart_vel = jacobian * joint_vels;
       current_lin_vel = cart_vel.head<3>();
       current_ang_vel = cart_vel.tail<3>();
+    }
   }
 
   if (local_planner_)
@@ -3102,6 +3120,104 @@ bool CartesianVelocityController::resetVirtualTargetsToCurrentPose()
 
   ROS_DEBUG_NAMED("cartesian_velocity_controller",
                   "Virtual targets reset to current TCP pose");
+  return true;
+}
+
+bool CartesianVelocityController::ensureJacobianFrameTransformReady()
+{
+  // Disabled: preserve legacy behavior (no conversion).
+  if (jacobian_source_frame_.empty())
+  {
+    return true;
+  }
+
+  // Fast path: already cached.
+  {
+    std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+    if (jacobian_frame_transform_ready_)
+    {
+      return true;
+    }
+  }
+
+  const std::string source = jacobian_source_frame_;
+  const std::string target = jacobian_target_frame_.empty() ? global_frame_ : jacobian_target_frame_;
+
+  // Identity case.
+  if (source == target)
+  {
+    std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+    jacobian_frame_transform_.setIdentity();
+    jacobian_frame_transform_ready_ = true;
+    return true;
+  }
+
+  try
+  {
+    const geometry_msgs::TransformStamped tf =
+        tf_buffer_.lookupTransform(target, source, ros::Time(0), ros::Duration(tf_timeout_));
+
+    const auto& r = tf.transform.rotation;
+    Eigen::Quaterniond q(r.w, r.x, r.y, r.z);
+    if (!std::isfinite(q.w()) || !std::isfinite(q.x()) || !std::isfinite(q.y()) || !std::isfinite(q.z()))
+    {
+      ROS_WARN_THROTTLE_NAMED(5.0, "cartesian_velocity_controller",
+                              "Jacobian frame TF rotation contains non-finite values (%s -> %s).",
+                              source.c_str(), target.c_str());
+      return false;
+    }
+
+    const Eigen::Matrix3d R = q.normalized().toRotationMatrix();
+    Eigen::Matrix<double, 6, 6> X = Eigen::Matrix<double, 6, 6>::Zero();
+    X.topLeftCorner<3, 3>() = R;
+    X.bottomRightCorner<3, 3>() = R;
+
+    {
+      std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+      jacobian_frame_transform_ = X;
+      jacobian_frame_transform_ready_ = true;
+    }
+
+    ROS_INFO_STREAM_NAMED("cartesian_velocity_controller",
+                          "Cached Jacobian frame rotation: '" << source << "' -> '" << target << "'");
+    return true;
+  }
+  catch (const tf2::TransformException& ex)
+  {
+    ROS_WARN_THROTTLE_NAMED(5.0, "cartesian_velocity_controller",
+                            "Jacobian frame TF lookup failed (%s -> %s): %s",
+                            source.c_str(), target.c_str(), ex.what());
+    return false;
+  }
+}
+
+bool CartesianVelocityController::applyJacobianFrameTransformIfConfigured(Eigen::MatrixXd& jacobian)
+{
+  if (jacobian_source_frame_.empty())
+  {
+    return true;  // disabled
+  }
+
+  if (jacobian.rows() != 6)
+  {
+    ROS_WARN_THROTTLE_NAMED(5.0, "cartesian_velocity_controller",
+                            "Jacobian has %ld rows (expected 6). Cannot apply frame transform.",
+                            static_cast<long>(jacobian.rows()));
+    return false;
+  }
+
+  if (!ensureJacobianFrameTransformReady())
+  {
+    return false;
+  }
+
+  Eigen::Matrix<double, 6, 6> X;
+  {
+    std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+    X = jacobian_frame_transform_;
+  }
+
+  jacobian = X * jacobian;
   return true;
 }
 
@@ -3265,7 +3381,15 @@ bool CartesianVelocityController::getJacobianCallback(GetJacobian::Request& /*re
     return true;
   }
 
-  res.frame_id = robot_state_->getModelRootFrame();
+  if (!applyJacobianFrameTransformIfConfigured(jacobian))
+  {
+    res.message = "Failed to apply Jacobian frame transform (TF not available or invalid).";
+    return true;
+  }
+
+  res.frame_id = jacobian_source_frame_.empty()
+                     ? robot_state_->getModelRootFrame()
+                     : (jacobian_target_frame_.empty() ? global_frame_ : jacobian_target_frame_);
   res.tcp_link = tcp_link_;
   res.rows = static_cast<uint32_t>(jacobian.rows());
   res.cols = static_cast<uint32_t>(jacobian.cols());

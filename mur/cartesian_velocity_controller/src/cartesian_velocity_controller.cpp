@@ -1021,6 +1021,9 @@ void CartesianVelocityController::setupRosInterfaces()
   // Debug service for frame verification
   get_frame_info_server_ = pnh_.advertiseService("get_frame_info",
                                                   &CartesianVelocityController::getFrameInfoCallback, this);
+  // Debug/utility service: retrieve the current Jacobian (per-node namespace via private NH)
+  get_jacobian_server_ = pnh_.advertiseService("get_jacobian",
+                                               &CartesianVelocityController::getJacobianCallback, this);
 
   const std::string cm_ns = controller_manager_ns_.empty() ? "controller_manager" : controller_manager_ns_;
   const std::string switch_srv = ros::names::append(cm_ns, "switch_controller");
@@ -3219,6 +3222,68 @@ bool CartesianVelocityController::getFrameInfoCallback(GetFrameInfo::Request& /*
     }
   }
 
+  return true;
+}
+
+// ============================================================================
+// Debug/Utility Service: Get Jacobian
+// ============================================================================
+
+bool CartesianVelocityController::getJacobianCallback(GetJacobian::Request& /*req*/,
+                                                      GetJacobian::Response& res)
+{
+  res.success = false;
+  res.message.clear();
+  res.frame_id.clear();
+  res.tcp_link = tcp_link_;
+  res.rows = 0;
+  res.cols = 0;
+  res.data.clear();
+
+  if (!robot_state_ || !robot_state_->isReady())
+  {
+    res.message = "Robot state not ready (no JointState received yet).";
+    return true;  // service call succeeded, request handled
+  }
+
+  Eigen::Isometry3d tcp_offset;
+  {
+    std::lock_guard<std::mutex> lock(tcp_mutex_);
+    tcp_offset = tcp_offset_;
+  }
+
+  Eigen::MatrixXd jacobian;
+  if (!robot_state_->getJacobian(tcp_link_, tcp_offset.translation(), jacobian))
+  {
+    res.message = "Failed to compute Jacobian for tcp_link='" + tcp_link_ + "'.";
+    return true;
+  }
+
+  if (jacobian.rows() == 0 || jacobian.cols() == 0)
+  {
+    res.message = "Jacobian is empty.";
+    return true;
+  }
+
+  res.frame_id = robot_state_->getModelRootFrame();
+  res.tcp_link = tcp_link_;
+  res.rows = static_cast<uint32_t>(jacobian.rows());
+  res.cols = static_cast<uint32_t>(jacobian.cols());
+  res.data.resize(static_cast<std::size_t>(res.rows) * static_cast<std::size_t>(res.cols));
+
+  // Row-major flattening
+  for (Eigen::Index r = 0; r < jacobian.rows(); ++r)
+  {
+    for (Eigen::Index c = 0; c < jacobian.cols(); ++c)
+    {
+      const std::size_t idx = static_cast<std::size_t>(r) * static_cast<std::size_t>(jacobian.cols()) +
+                              static_cast<std::size_t>(c);
+      res.data[idx] = jacobian(r, c);
+    }
+  }
+
+  res.success = true;
+  res.message = "OK";
   return true;
 }
 

@@ -20,6 +20,7 @@
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
 #include "cartesian_velocity_controller/GetFrameInfo.h"
+#include "cartesian_velocity_controller/GetJacobian.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -194,6 +195,7 @@ private:
   void setupDynamicReconfigure();
   void dynamicReconfigureCallback(ControllerTuningConfig& config, uint32_t level);
   bool getFrameInfoCallback(GetFrameInfo::Request& req, GetFrameInfo::Response& res);
+  bool getJacobianCallback(GetJacobian::Request& req, GetJacobian::Response& res);
 
   // ============== ROS Interfaces ==============
   ros::NodeHandle nh_;
@@ -212,6 +214,7 @@ private:
   ros::ServiceClient switch_client_;
   ros::ServiceClient list_client_;
   ros::ServiceServer get_frame_info_server_;
+  ros::ServiceServer get_jacobian_server_;
   ros::Timer control_timer_;
 
   // ============== Pipeline Components ==============

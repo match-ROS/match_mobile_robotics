@@ -1,0 +1,21 @@
+# GetJacobian.srv
+# Service to retrieve the current Jacobian used by the controller.
+#
+# Notes:
+# - The returned matrix is the geometric Jacobian \(6 x N\) mapping joint velocities to TCP spatial twist.
+# - The Jacobian is expressed in the MoveIt model root frame (URDF root link).
+# - Data is flattened row-major: data[r * cols + c] = J(r, c).
+
+---
+bool success
+string message
+
+# Frame in which the Jacobian is expressed (URDF root link / MoveIt model root frame)
+string frame_id
+
+# TCP link used for the Jacobian computation
+string tcp_link
+
+uint32 rows
+uint32 cols
+float64[] data

@@ -51,6 +51,7 @@ add_service_files(
   FILES
   QueryMap3D.srv
   GetFrameInfo.srv
+  GetJacobian.srv
 )
 
 generate_messages(
@@ -263,6 +264,7 @@ catkin_install_python(PROGRAMS
   scripts/robot_interactive_control.py
   scripts/ensure_mur620_dual_arm_velocity_controllers.py
   scripts/ensure_mur620_single_arm_velocity_controller.py
+  scripts/print_jacobian.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

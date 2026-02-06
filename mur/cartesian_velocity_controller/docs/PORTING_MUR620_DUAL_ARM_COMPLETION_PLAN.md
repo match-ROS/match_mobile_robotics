@@ -76,6 +76,8 @@ allora `spheres` risulta vuoto ⇒ la mappa è “vuota” ⇒ repulsione di fat
 
 **Azione**: verificare/garantire che il pipeline sensori/scene-builder pubblichi ostacoli come sfere (o estendere Map3D ad altri tipi).
 
+**Decisione (scope):** Per il momento **solo sfere**. In futuro integreremo anche altri tipi di geometria (backlog).
+
 ### G3) Parametri “assoluti”/risoluzione namespace da rendere deterministica
 
 Per dual-arm robusto servono convenzioni chiare (e default corretti) su:
@@ -102,6 +104,8 @@ Quindi oggi la UI “repulsione” è a rischio di essere **incoerente/non funzi
 
 **Azione**: aggiornare `RepulsiveManager` e il menu UI per usare dynamic reconfigure / param server coerenti con la nuova architettura POI+Map3D.
 
+**Decisione (cleanup):** Fare pulizia della parte legacy non utilizzata, per rendere il codice più chiaro e ridurre superfici di bug.
+
 ### G5) Performance: due istanze ⇒ due EDT (potenzialmente costoso)
 
 Con due controller, abilitare Map3D in entrambi significa:
@@ -109,6 +113,17 @@ Con due controller, abilitare Map3D in entrambi significa:
 - 2 thread che fanno voxelize+EDT, e potenzialmente 2 chiamate `get_planning_scene` per ciclo mappa.
 
 **Azione**: iniziare con parametri conservativi (bassa frequenza, griglia piccola), e pianificare un’opzione “Map3D condivisa” come miglioramento successivo.
+
+**Decisione (architettura desiderata):** creare una **mappa comune condivisa** con accesso **rapido** (evitare query via ROS service nel path ad alta frequenza, perché i POI vengono interrogati molte volte a frequenza elevata).
+
+---
+
+## Decisioni consolidate (dal feedback)
+
+- **Solo sfere (per ora)**: Map3D/repulsione considerano solo collision objects `SPHERE` dal PlanningScene.
+- **Cleanup legacy**: rimuovere/semplificare la parte legacy della UI repulsione che non corrisponde più all’architettura POI+Map3D.
+- **Map3D condivisa “fast”**: a regime preferire una Map3D comune con accesso in-process / zero-overhead nel loop (no service).
+- **Inter-arm avoidance**: aggiungere repulsione tra i due bracci usando approssimazione a sfere/POI (senza voxelizzare mesh dell’altro braccio).
 
 ---
 
@@ -219,7 +234,69 @@ Acceptance:
 
 - [ ] Le due istanze rispondono indipendentemente a query e generano repulsione coerente.
 
-### Step 6 — Porting tooling: aggiornare lo script interattivo per la nuova repulsione
+### Step 6 — Repulsione inter-braccio (L↔R) con “sfere/POI” (senza voxel/EDT)
+
+Obiettivo: far sì che i due bracci “si percepiscano” e si respingano tra loro, senza introdurre una seconda Map3D per voxelizzare la mesh dell’altro braccio.
+
+**Approccio scelto**: modellare l’altro braccio come un set di **sfere** (una per link/segmento o POI), calcolando distanze/gradienti **analiticamente** e generando gli stessi tipi di output già usati dal `LocalPlanner`:
+
+- per il POI TCP del braccio controllato → `ObstacleInfo`
+- per gli altri POI (gomito/polso/avambraccio, ecc.) → `LinkPOI`
+
+#### Step 6.1 — Prerequisito: stato robot “full” (entrambi i bracci) disponibile in ogni istanza
+
+Problema: l’attuale `RobotStateManager::updateFromJointState()` aggiorna solo i joint del proprio gruppo (filtra su `joint_index_map_`). Così ogni istanza non può ricostruire correttamente i transform dei link dell’altro braccio.
+
+Azioni:
+
+- [ ] Modificare `RobotStateManager` per **aggiornare tutte le variabili presenti nel `JointState`** che esistono nel modello MoveIt, non solo quelle del gruppo.
+- [ ] Mantenere comunque la nozione di “ready” legata al proprio gruppo (il controller deve partire solo quando i joint del gruppo sono arrivati almeno una volta).
+
+Deliverable:
+
+- `RobotStateManager` in grado di fornire `getGlobalLinkTransform()` corretto anche per link dell’altro braccio.
+
+#### Step 6.2 — Definizione configurabile delle sfere dell’altro braccio
+
+Azioni:
+
+- [ ] Aggiungere parametri (nel namespace del controller) tipo:
+  - `repulsion/inter_arm/enabled: true|false`
+  - `repulsion/inter_arm/other_arm_spheres`: elenco di sfere, ognuna con:
+    - `id` (string)
+    - `link` (string, link dell’altro braccio)
+    - `offset` (xyz nel frame del link)
+    - `radius` (m)
+- [ ] Prevedere configurazioni L/R distinte nei YAML MUR620 (le sfere dell’“other arm” cambiano prefisso link).
+
+Nota: questa configurazione può essere molto simile a `repulsion/robot_points_of_interest`, solo che qui il “POI” rappresenta **ostacoli** dell’altro braccio e include un raggio.
+
+#### Step 6.3 — Integrazione in `RepulsionDataManager`
+
+Azioni:
+
+- [ ] In `RepulsionDataManager::getRepulsionData()` aggiungere un secondo contributo “inter_arm”:
+  - calcolare posizione world di ogni sfera dell’altro braccio dal `RobotState` (link transform + offset)
+  - per ogni POI attivo del braccio controllato:
+    - trovare la sfera più vicina (o sommare contributi, iniziare con “closest only”)
+    - calcolare distanza effettiva \(d = \|p_{poi}-c\| - (r_{poi}+r_{sphere})\)
+    - calcolare direzione repulsiva (unit) \( \hat{g} = \frac{p_{poi}-c}{\|p_{poi}-c\|} \)
+    - generare:
+      - `ObstacleInfo` se `is_tcp: true`
+      - `LinkPOI` se `is_tcp: false`
+- [ ] Aggiungere un identificativo chiaro per debug, es. `closest_obstacle_id="inter_arm:<id>"`.
+
+Acceptance:
+
+- [ ] Attivando solo `poi_tcp_enabled`, il TCP viene respinto quando si avvicina all’altro braccio.
+- [ ] I marker/debug mostrano che l’ostacolo percepito è “inter_arm:*”.
+
+#### Step 6.4 — Tuning e sicurezza
+
+- [ ] Partire con guadagni piccoli e solo TCP, poi abilitare progressivamente POI su link (gomito/polso).
+- [ ] Definire `min_safe_distance`/`influence_distance` sensati per l’interazione tra bracci (tipicamente più conservativi dell’ambiente).
+
+### Step 7 — Porting tooling: aggiornare lo script interattivo per la nuova repulsione (+ cleanup legacy)
 
 Obiettivo: poter abilitare/tunare repulsione da UI senza API legacy.
 
@@ -232,13 +309,17 @@ Azioni:
     - `poi_tcp_enabled`, `poi_tcp_radius` (+ altri POI se si desidera)
     - `gradient_filter_alpha`, `poi_predict_enable`, `poi_predict_*`
     - `map3d_slice_z` (debug)
-- [ ] Rimuovere o nascondere le voci legacy (payload link / collision objects mode) se non mappabili sul design POI+Map3D attuale.
+- [ ] **Cleanup**: rimuovere (non solo nascondere) le parti legacy che non sono più supportate dall’architettura corrente:
+  - servizi `.../repulsive/set_enabled`, `.../repulsive/get_config` (se non esistono lato C++)
+  - topic `.../repulsive/set_target_link`, `.../repulsive/set_target_object`, payload link, collision objects mode “legacy”
+  - menu UI e parsing “legacy config message”
+  - mantenere solo ciò che è effettivamente collegato a dynamic reconfigure / parametri correnti
 
 Deliverable:
 
 - UI “repulsione” funzionante su entrambe le istanze (L/R) selezionando `--arm l|r`.
 
-### Step 7 — Hardening + performance (iterativo)
+### Step 8 — Hardening + performance (iterativo) + Map3D condivisa “fast”
 
 Azioni possibili (in ordine consigliato):
 
@@ -246,10 +327,30 @@ Azioni possibili (in ordine consigliato):
   - griglia più piccola
   - risoluzione più grossolana
   - `update_rate_hz` più basso
-- [ ] (Opzionale) progettare una **Map3D condivisa**:
-  - un nodo `map3d_server` sotto `/mur620`
-  - i due controller chiamano un service `QueryMap3D` esterno (invece di dipendenza in-process)
-  - tradeoff: latenza/serializzazione vs dimezzare CPU.
+- [ ] Progettare una **Map3D condivisa** con accesso rapido (no service nel loop). Opzioni:
+  - **Opzione A (ROS1 nodelet, consigliata se applicabile)**:
+    - eseguire `map3d` e i due controller come *nodelet* nello **stesso processo** (stesso nodelet manager)
+    - condividere un singolo oggetto `Map3DManager` (o direttamente la griglia double-buffer) tra i due controller
+    - query in C++ = chiamata diretta (come oggi), ma con **una sola EDT** per entrambe le istanze
+    - **Nota (threading pratico)**:
+      - `Map3DManager` nel codice attuale aggiorna la mappa in **un thread dedicato** (`std::thread` avviato da `Map3DManager::start()`), quindi può girare a ~15 Hz *in parallelo* al controllo.
+      - I loop di controllo a 100 Hz (timer callback) invece dipendono dal threading dello **spinner del nodelet manager**:
+        - con spinner a **1 thread** i callback ROS (timer L e timer R) vengono serviti **in coda** (uno alla volta);
+        - con spinner **multi-thread** (Async/MultiThreadedSpinner) i callback possono girare **in parallelo** (L e R non si bloccano a vicenda).
+      - Anche con spinner multi-thread, resta possibile contesa di CPU/cache: la EDT è “pesante”, quindi il tuning di `map3d/update_rate_hz` e delle dimensioni griglia rimane importante.
+  - **Opzione B (shared memory / mmap, più complessa)**:
+    - un processo aggiorna la griglia e la pubblica in memoria condivisa (double buffer + atomic index)
+    - i due controller leggono la griglia senza ROS serialization
+    - utile se si vuole restare in processi separati
+  - **Opzione C (service solo per debug/tooling)**:
+    - mantenere `~map3d/query` per ispezione/debug
+    - non usarlo nel path ad alta frequenza (che resta in-process)
+
+#### Checklist operativa (se scegli Opzione A per avere 15 Hz mappa + 100 Hz controllo)
+
+- [ ] Impostare `map3d/update_rate_hz: 15.0` (e verificare che non saturi CPU).
+- [ ] Avviare il nodelet manager con **spinner multi-thread** (>=2 thread; spesso 4 è un buon punto di partenza) per evitare che i due timer a 100 Hz vadano in coda.
+- [ ] Monitorare jitter del controllo (latenza timer) e `MapMetadata.t_total` per capire se la mappa sta “rubando” budget.
 
 ---
 
@@ -299,6 +400,15 @@ Se `spheres` è sempre vuoto:
   - service `map3d/query`,
   - dynamic reconfigure.
 
+### T5) Inter-arm repulsion
+
+- [ ] Abilitare `repulsion/inter_arm/enabled=true` su entrambi i controller.
+- [ ] Attivare solo `poi_tcp_enabled` e guadagni piccoli.
+- [ ] Comandare i due TCP a passarsi vicino:
+  - verificare che entrambi devino (repulsione “reciproca”)
+  - verificare assenza di oscillazioni (tuning smoothing se necessario)
+  - verificare che i debug identifichino l’ostacolo come `inter_arm:*`
+
 ---
 
 ## Definition of Done (repulsione “portata”)
@@ -308,6 +418,7 @@ Consideriamo completata la portabilità “repulsione dual-arm” quando:
 - [ ] Map3D può essere abilitata su L e R senza consumare CPU in modo anomalo.
 - [ ] `map3d/query` funziona per entrambe le istanze e restituisce dati validi.
 - [ ] Repulsione TCP funziona (almeno per ostacoli sferici) su entrambi i bracci.
+- [ ] Repulsione inter-braccio attiva e stabile (almeno TCP↔TCP con sfere/POI).
 - [ ] Lo script interattivo può abilitare/disabilitare e tunare repulsione via dynamic reconfigure su L e R.
 - [ ] Esiste una checklist di test riproducibile con output atteso.
 
@@ -316,6 +427,6 @@ Consideriamo completata la portabilità “repulsione dual-arm” quando:
 ## Backlog (non necessario per chiudere la portabilità, ma utile)
 
 - Repulsione rispetto a ostacoli non-sferici (box/mesh) o generazione automatica di sfere da mesh.
-- Repulsione/inter-arm avoidance (modellare l’altro braccio come ostacolo dinamico in mappa o altro schema).
-- Map3D condivisa tra istanze (server unico) per ridurre CPU.
+- Inter-arm avoidance “più accurata” (distanza mesh-mesh / FCL) o modellazione dinamica più ricca.
+- Map3D condivisa “productizzata” (nodelet o shared-memory) con metriche performance e monitor.
 

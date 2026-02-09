@@ -1,0 +1,62 @@
+teleoperation_slave_cartesian_vv_controller:
+  # Robot model
+  group_name: manipulator
+  tcp_link: tool0
+  robot_description_param: robot_description
+
+  # Topics
+  target_pose_topic: target_pose
+  feedforward_twist_topic: feedforward_twist
+  joint_state_topic: joint_states
+  velocity_command_topic: velocity_command_topic
+
+  # Control loop
+  control_rate: 250.0
+  k_ff: 1.0
+
+  # Input freshness
+  target_pose_timeout: 0.2
+  feedforward_timeout: 0.2
+
+  # TCP pose smoothing (EMA on measured FK pose)
+  tcp_pose_filter_alpha: 0.2
+
+  # Deadband (DISATTIVABILE)
+  deadband:
+    enabled: false
+    position_m: 0.0
+    orientation_rad: 0.0
+
+  # Jacobian / SDLS-DLS
+  jacobian:
+    singularity_threshold: 0.05
+    max_damping: 0.2
+    # joint_weights: [1, 1, 1, 1, 1, 1]
+
+  # Small correction PID (output_limit clamps vector norm)
+  pid:
+    position:
+      kp: 1.0
+      ki: 0.0
+      kd: 0.0
+      output_limit: 0.05
+      derivative_filter_tau: 0.02
+    orientation:
+      kp: 1.0
+      ki: 0.0
+      kd: 0.0
+      output_limit: 0.15
+      derivative_filter_tau: 0.02
+
+  limits:
+    # These must match joint order of the MoveIt group.
+    # max_joint_velocities: [1, 1, 1, 1, 1, 1]
+    # Either provide the full vector above, or use a scalar uniform limit:
+    max_joint_velocity: 1.0
+    # Acc limiting is DISATTIVABILE
+    acceleration_limiting_enabled: false
+    # max_joint_accelerations: [5, 5, 5, 5, 5, 5]
+    max_joint_acceleration: 5.0
+
+  queue_size: 1
+

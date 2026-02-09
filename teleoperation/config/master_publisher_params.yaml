@@ -1,0 +1,11 @@
+teleop_master_state_publisher:
+  master_global_frame: world
+  master_ee_frame: tool0
+
+  target_pose_topic: target_pose
+  feedforward_twist_topic: feedforward_twist
+
+  rate: 250.0
+  k_twist: 1.0
+  twist_ema_alpha: 0.0
+

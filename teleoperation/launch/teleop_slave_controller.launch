@@ -1,0 +1,13 @@
+<launch>
+  <arg name="ns" default=""/>
+
+  <group ns="$(arg ns)">
+    <rosparam command="load" file="$(find teleoperation)/config/slave_controller_params.yaml"/>
+
+    <node pkg="teleoperation"
+          type="teleoperation_slave_cartesian_vv_controller"
+          name="teleoperation_slave_cartesian_vv_controller"
+          output="screen"/>
+  </group>
+</launch>
+

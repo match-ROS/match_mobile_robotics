@@ -1,0 +1,13 @@
+<launch>
+  <arg name="ns" default=""/>
+
+  <group ns="$(arg ns)">
+    <rosparam command="load" file="$(find teleoperation)/config/master_publisher_params.yaml"/>
+
+    <node pkg="teleoperation"
+          type="teleop_master_state_publisher.py"
+          name="teleop_master_state_publisher"
+          output="screen"/>
+  </group>
+</launch>
+

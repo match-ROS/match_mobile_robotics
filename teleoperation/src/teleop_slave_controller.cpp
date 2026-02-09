@@ -137,6 +137,11 @@ void TeleopSlaveController::loadParameters()
   pnh_.param("tcp_link", tcp_link_, std::string("tool0"));
   pnh_.param("robot_description_param", robot_description_param_, robot_description_param_);
 
+  // Optional Jacobian frame conversion (rotation only).
+  // If jacobian_source_frame is empty, preserve legacy behavior (no conversion).
+  pnh_.param<std::string>("jacobian_source_frame", jacobian_source_frame_, "");
+  pnh_.param<std::string>("jacobian_target_frame", jacobian_target_frame_, "");
+
   pnh_.param("target_pose_topic", target_pose_topic_, target_pose_topic_);
   pnh_.param("feedforward_twist_topic", feedforward_twist_topic_, feedforward_twist_topic_);
   pnh_.param("joint_state_topic", joint_state_topic_, joint_state_topic_);
@@ -154,6 +159,114 @@ void TeleopSlaveController::loadParameters()
 
   pnh_.param("tcp_pose_filter_alpha", tcp_pose_filter_alpha_, tcp_pose_filter_alpha_);
   pnh_.param("queue_size", queue_size_, queue_size_);
+}
+
+bool TeleopSlaveController::ensureJacobianFrameTransformReady(const std::string& target_frame)
+{
+  if (jacobian_source_frame_.empty())
+  {
+    return true;  // disabled
+  }
+
+  // Fast path: already cached.
+  {
+    std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+    if (jacobian_frame_transform_ready_)
+    {
+      return true;
+    }
+  }
+
+  const std::string source = jacobian_source_frame_;
+  const std::string target = jacobian_target_frame_.empty() ? target_frame : jacobian_target_frame_;
+
+  if (source.empty() || target.empty())
+  {
+    ROS_WARN_THROTTLE_NAMED(2.0, "teleop_slave_controller",
+                           "Jacobian frame conversion enabled but frames are empty (source='%s', target='%s').",
+                           source.c_str(), target.c_str());
+    return false;
+  }
+
+  // Identity case.
+  if (source == target)
+  {
+    std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+    jacobian_frame_transform_.setIdentity();
+    jacobian_frame_transform_ready_ = true;
+    return true;
+  }
+
+  try
+  {
+    const geometry_msgs::TransformStamped tf =
+        tf_buffer_.lookupTransform(target, source, ros::Time(0), ros::Duration(0.02));
+
+    const auto& r = tf.transform.rotation;
+    Eigen::Quaterniond q(r.w, r.x, r.y, r.z);
+    if (!std::isfinite(q.w()) || !std::isfinite(q.x()) || !std::isfinite(q.y()) || !std::isfinite(q.z()))
+    {
+      ROS_WARN_THROTTLE_NAMED(2.0, "teleop_slave_controller",
+                              "Jacobian frame TF rotation contains non-finite values (%s -> %s).",
+                              source.c_str(), target.c_str());
+      return false;
+    }
+
+    const Eigen::Matrix3d R = q.normalized().toRotationMatrix();
+    Eigen::Matrix<double, 6, 6> X = Eigen::Matrix<double, 6, 6>::Zero();
+    X.topLeftCorner<3, 3>() = R;
+    X.bottomRightCorner<3, 3>() = R;
+
+    {
+      std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+      jacobian_frame_transform_ = X;
+      jacobian_frame_transform_ready_ = true;
+    }
+
+    ROS_INFO_STREAM_NAMED("teleop_slave_controller",
+                          "Cached Jacobian frame rotation: '" << source << "' -> '" << target << "'");
+    return true;
+  }
+  catch (const tf2::TransformException& ex)
+  {
+    ROS_WARN_THROTTLE_NAMED(2.0, "teleop_slave_controller",
+                            "Jacobian frame TF lookup failed (%s -> %s): %s",
+                            jacobian_source_frame_.c_str(),
+                            (jacobian_target_frame_.empty() ? target_frame : jacobian_target_frame_).c_str(),
+                            ex.what());
+    return false;
+  }
+}
+
+bool TeleopSlaveController::applyJacobianFrameTransformIfConfigured(Eigen::MatrixXd& jacobian,
+                                                                    const std::string& target_frame)
+{
+  if (jacobian_source_frame_.empty())
+  {
+    return true;  // disabled
+  }
+
+  if (jacobian.rows() != 6)
+  {
+    ROS_WARN_THROTTLE_NAMED(2.0, "teleop_slave_controller",
+                            "Jacobian has %ld rows (expected 6). Cannot apply frame transform.",
+                            static_cast<long>(jacobian.rows()));
+    return false;
+  }
+
+  if (!ensureJacobianFrameTransformReady(target_frame))
+  {
+    return false;
+  }
+
+  Eigen::Matrix<double, 6, 6> X;
+  {
+    std::lock_guard<std::mutex> lock(jacobian_frame_mutex_);
+    X = jacobian_frame_transform_;
+  }
+
+  jacobian = X * jacobian;
+  return true;
 }
 
 void TeleopSlaveController::setupRosInterfaces()
@@ -468,6 +581,12 @@ void TeleopSlaveController::controlLoopCb(const ros::TimerEvent& ev)
   if (J.rows() != 6 || J.cols() <= 0)
   {
     publishZeroVelocity("Jacobian size invalid");
+    return;
+  }
+
+  if (!applyJacobianFrameTransformIfConfigured(J, model_frame))
+  {
+    publishZeroVelocity("Jacobian frame transform failure");
     return;
   }
 

@@ -12,6 +12,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <Eigen/Dense>
 
 #include <mutex>
 #include <memory>
@@ -44,6 +45,10 @@ private:
   void controlLoopCb(const ros::TimerEvent& ev);
 
   void publishZeroVelocity(const std::string& reason);
+
+  // Optional Jacobian frame conversion (rotation only), to match the frame used for v_cmd.
+  bool ensureJacobianFrameTransformReady(const std::string& target_frame);
+  bool applyJacobianFrameTransformIfConfigured(Eigen::MatrixXd& jacobian, const std::string& target_frame);
 
   bool tryGetInputs(geometry_msgs::PoseStamped& target_pose,
                     geometry_msgs::TwistStamped& ff_twist,
@@ -134,6 +139,16 @@ private:
   double tcp_pose_filter_alpha_{0.2};
 
   // Jacobian
+  // If jacobian_source_frame is empty, no conversion is applied (legacy behavior).
+  // If set, the controller rotates the Jacobian rows from jacobian_source_frame into
+  // jacobian_target_frame (if set) or into the model_frame used for v_cmd.
+  std::string jacobian_source_frame_{""};
+  std::string jacobian_target_frame_{""};
+
+  // Cached 6x6 rotation transform used to express Jacobian rows in target frame.
+  std::mutex jacobian_frame_mutex_;
+  bool jacobian_frame_transform_ready_{false};
+  Eigen::Matrix<double, 6, 6> jacobian_frame_transform_{Eigen::Matrix<double, 6, 6>::Identity()};
 
   // Limits
   Eigen::VectorXd max_joint_velocities_;

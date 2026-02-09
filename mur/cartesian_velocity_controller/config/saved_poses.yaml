@@ -122,16 +122,10 @@ loop_config:
   dwell_time: 0.8
   orientation_tolerance: 0.05
   poses:
-  - avanti_alto
-  - avanti_basso
-  - avanti_alto
-  - sinistra_alto
-  - sinistra_basso
-  - sinistra_alto
-  - avanti_alto
-  - destra_alto
-  - destra_basso
-  - destra_alto
+  - home_r
+  - r_laterale_1
+  - r_laterale_2
+  - r_laterale_1
   position_tolerance: 0.1
 r_laterale_1:
   description: ''

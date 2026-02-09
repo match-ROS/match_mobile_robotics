@@ -44,6 +44,12 @@
           output="screen">
       <!-- TF prefix for multi-robot setups -->
       <param name="tf_prefix" value="$(arg ns)" />
+      <!-- Optional Jacobian frame conversion (rotation only).
+           MoveIt may express the Jacobian in the arm chain root frame (e.g. UR10_r/base_link),
+           while teleop commands are expressed in the slave base frame ($(arg ns)/base_link). -->
+      <param name="jacobian_source_frame" value="$(arg ns)/UR10_r/base_link" if="$(eval arm == 'right')" />
+      <param name="jacobian_source_frame" value="$(arg ns)/UR10_l/base_link" if="$(eval arm == 'left')" />
+      <param name="jacobian_target_frame" value="$(arg ns)/base_link" />
       <!-- Ensure the node always uses the correct namespaced robot description -->
       <param name="robot_description_param" value="/$(arg ns)/robot_description" />
       <!-- Override teleop input topics from launch (absolute by default) -->

@@ -6,7 +6,33 @@
   <arg name="target_pose_topic" default="/mur620/target_pose" />
   <arg name="feedforward_twist_topic" default="/mur620/feedforward_twist" />
 
+  <!-- Ensure/switch velocity controller on the SLAVE robot (recommended) -->
+  <arg name="ensure_velocity_controller" default="true" />
+  <arg name="arm" default="right" />
+  <arg name="auto_load_velocity_controller" default="true" />
+  <arg name="auto_switch_to_velocity" default="true" />
+
   <group ns="$(arg ns)">
+    <!-- Switch slave from MoveIt arm_controller to joint_group_vel_controller_(l|r)/unsafe -->
+    <!-- IMPORTANT: we DO NOT start cartesian_velocity_controller on the slave to avoid
+         having two nodes publishing to the same */unsafe/command topic. -->
+    <node if="$(arg ensure_velocity_controller)"
+          pkg="cartesian_velocity_controller"
+          type="ensure_mur620_single_arm_velocity_controller.py"
+          name="ensure_mur620_single_arm_velocity_controller"
+          output="screen">
+      <param name="controller_manager_ns" value="controller_manager" />
+      <param name="auto_load" value="$(arg auto_load_velocity_controller)" />
+      <param name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
+      <param name="arm" value="$(arg arm)" />
+      <!-- Defaults match the script, but keep them explicit for clarity -->
+      <param name="velocity_controller" value="joint_group_vel_controller_r/unsafe" if="$(eval arm == 'right')" />
+      <param name="velocity_controller" value="joint_group_vel_controller_l/unsafe" if="$(eval arm == 'left')" />
+      <param name="moveit_controller" value="UR10_r/arm_controller" if="$(eval arm == 'right')" />
+      <param name="moveit_controller" value="UR10_l/arm_controller" if="$(eval arm == 'left')" />
+      <param name="timeout_s" value="0.0" />
+    </node>
+
     <!-- Enable subst so YAML can use $(arg ...) -->
     <rosparam command="load"
               file="$(find teleoperation)/config/slave_controller_params.yaml"

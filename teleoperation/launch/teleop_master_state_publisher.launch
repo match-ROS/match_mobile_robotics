@@ -1,8 +1,18 @@
 <launch>
-  <arg name="ns" default=""/>
+  <!--
+    Master robot namespace.
+    In two_mur620_gazebo.launch robot1 is spawned as "mur620", robot2 as "mur620_s".
+    Defaulting to "mur620" makes the master publisher subscribe/publish in the
+    correct namespace for the "first robot".
+  -->
+  <arg name="ns" default="mur620"/>
+  <!-- Slave robot namespace used to stamp frame_id_override (e.g. mur620_s/base_link). -->
+  <arg name="slave_ns" default="mur620_s"/>
 
   <group ns="$(arg ns)">
-    <rosparam command="load" file="$(find teleoperation)/config/master_publisher_params.yaml"/>
+    <rosparam command="load"
+              file="$(find teleoperation)/config/master_publisher_params.yaml"
+              subst_value="true"/>
 
     <node pkg="teleoperation"
           type="teleop_master_state_publisher.py"

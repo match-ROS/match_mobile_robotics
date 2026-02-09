@@ -5,8 +5,17 @@ teleop_master_state_publisher:
   pipeline_debug_topic: cartesian_velocity_controller_r/pipeline_debug
 
   # Optional override; if empty, use msg.header.frame_id from PipelineDebug
-  frame_id_override: ""
+  # In teleoperation we want the published target pose / twist to be expressed in the
+  # SLAVE robot base frame (namespaced TF), so the slave controller can consume it
+  # without requiring a TF connection between master and slave.
+  # Example: "mur620_s/base_link"
+  frame_id_override: "$(arg slave_ns)/base_link"
 
-  target_pose_topic: target_pose_teleop
-  feedforward_twist_topic: feedforward_twist_teleop
+  # Output topics (relative to this node namespace).
+  # In the default multi-robot workflow we run this node under the master robot
+  # namespace (e.g. /mur620) so these become:
+  #   /mur620/target_pose
+  #   /mur620/feedforward_twist
+  target_pose_topic: target_pose
+  feedforward_twist_topic: feedforward_twist
 

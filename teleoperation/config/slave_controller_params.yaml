@@ -21,7 +21,7 @@ teleoperation_slave_cartesian_vv_controller:
   velocity_command_topic: joint_group_vel_controller_r/unsafe/command
 
   # Control loop
-  control_rate: 250.0
+  control_rate: 100.0
   k_ff: 1.0
 
   # Input freshness

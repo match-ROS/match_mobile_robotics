@@ -1,11 +1,12 @@
 teleop_master_state_publisher:
-  master_global_frame: world
-  master_ee_frame: tool0
+  # PipelineDebug source topic (relative to this node namespace).
+  # Typical (single-arm right): "cartesian_velocity_controller_r/pipeline_debug"
+  # Typical (single-arm left):  "cartesian_velocity_controller_l/pipeline_debug"
+  pipeline_debug_topic: cartesian_velocity_controller_r/pipeline_debug
 
-  target_pose_topic: target_pose
-  feedforward_twist_topic: feedforward_twist
+  # Optional override; if empty, use msg.header.frame_id from PipelineDebug
+  frame_id_override: ""
 
-  rate: 250.0
-  k_twist: 1.0
-  twist_ema_alpha: 0.0
+  target_pose_topic: target_pose_teleop
+  feedforward_twist_topic: feedforward_twist_teleop
 

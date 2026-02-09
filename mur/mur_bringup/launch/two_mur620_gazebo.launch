@@ -1,0 +1,110 @@
+<launch>
+  <!--
+    Spawn TWO MUR-620 in Gazebo, each with its own namespace/tf_prefix.
+    This launch intentionally does NOT start base navigation (move_base / MBF).
+    It DOES start MoveIt (move_group) for each robot to move the arms, and RViz for visualization.
+  -->
+
+  <!-- Gazebo world -->
+  <arg name="world_name" default="big_square" />
+  <arg name="paused" default="false" />
+  <arg name="use_map_sim" default="false" />
+  <arg name="gui" default="true" />
+
+  <!-- Robot 1 -->
+  <arg name="robot1_name" default="mur620" />
+  <arg name="robot1_x" default="0.0" />
+  <arg name="robot1_y" default="0.0" />
+  <arg name="robot1_yaw" default="0.0" />
+
+  <!-- Robot 2 -->
+  <arg name="robot2_name" default="mur620_s" />
+  <arg name="robot2_x" default="0.0" />
+  <arg name="robot2_y" default="2.0" />
+  <arg name="robot2_yaw" default="0.0" />
+
+  <!-- Disable base navigation -->
+  <arg name="move_base_selector" default="none" />
+  <!-- Keep localization lightweight (no AMCL); "ground_truth" triggers fake localization in sim. -->
+  <arg name="localization_type" default="ground_truth" />
+
+  <!-- Start MoveIt for each robot (move_group) -->
+  <arg name="start_moveit" default="true" />
+
+  <!-- Optional: move both arms to Home_custom after MoveIt is up -->
+  <arg name="move_arms_to_home_custom" default="true" />
+
+  <!-- RViz -->
+  <arg name="rviz" default="true" />
+  <!-- NOTE: this RViz config assumes robot1_name=mur620_1 and robot2_name=mur620_2.
+       If you change the names, also pass a different rviz_config or update the file. -->
+  <arg name="rviz_config" default="$(find mur_examples)/rviz/single_mur620_visualization_custom.rviz" />
+
+  <!-- Start Gazebo world -->
+  <include file="$(find match_gazebo)/launch/match_world_common.launch">
+    <arg name="paused" value="$(arg paused)" />
+    <arg name="world_name" value="$(arg world_name)" />
+    <arg name="use_map_sim" value="$(arg use_map_sim)" />
+    <arg name="gui" value="$(arg gui)" />
+  </include>
+
+  <!-- <node pkg="tf2_ros"
+          type="static_transform_publisher"
+          name="tf_base_footprint_alias"
+          args="0 0 0 0 0 0 $(arg robot1_name)/base_footprint base_footprint" />
+  <node pkg="tf2_ros"
+          type="static_transform_publisher"
+          name="tf_base_footprint_alias"
+          args="0 0 0 0 0 0 $(arg robot2_name)/base_footprint base_footprint" /> -->
+
+  <!-- Spawn robot 1 -->
+  <include file="$(find mur_launch_sim)/launch/mur_620.launch">
+    <arg name="tf_prefix" value="$(arg robot1_name)" />
+    <arg name="mur_ns" value="$(arg robot1_name)" />
+    <arg name="gazebo_model_name" value="$(arg robot1_name)" />
+    <arg name="robot_x" value="$(arg robot1_x)" />
+    <arg name="robot_y" value="$(arg robot1_y)" />
+    <arg name="robot_yaw" value="$(arg robot1_yaw)" />
+    <arg name="move_base_selector" value="$(arg move_base_selector)" />
+    <arg name="localization_type" value="$(arg localization_type)" />
+    <arg name="start_moveit" value="$(arg start_moveit)" />
+    <arg name="move_to_home_pose" value="false" />
+    <arg name="enable_dual_collison_avoidance" value="false" />
+  </include>
+
+  <!-- Spawn robot 2 -->
+  <include file="$(find mur_launch_sim)/launch/mur_620.launch">
+    <arg name="tf_prefix" value="$(arg robot2_name)" />
+    <arg name="mur_ns" value="$(arg robot2_name)" />
+    <arg name="gazebo_model_name" value="$(arg robot2_name)" />
+    <arg name="robot_x" value="$(arg robot2_x)" />
+    <arg name="robot_y" value="$(arg robot2_y)" />
+    <arg name="robot_yaw" value="$(arg robot2_yaw)" />
+    <arg name="move_base_selector" value="$(arg move_base_selector)" />
+    <arg name="localization_type" value="$(arg localization_type)" />
+    <arg name="start_moveit" value="$(arg start_moveit)" />
+    <arg name="move_to_home_pose" value="false" />
+    <arg name="enable_dual_collison_avoidance" value="false" />
+  </include>
+
+  <!-- Optional: send both arms to Home_custom (one-shot) -->
+  <include if="$(arg move_arms_to_home_custom)" file="$(find mur_control)/launch/move_to_named_target_dual.launch">
+    <arg name="mur_ns" value="$(arg robot1_name)" />
+    <arg name="group_names" value="UR_arm_l,UR_arm_r" />
+    <arg name="target_name" value="Home_custom" />
+  </include>
+
+  <include if="$(arg move_arms_to_home_custom)" file="$(find mur_control)/launch/move_to_named_target_dual.launch">
+    <arg name="mur_ns" value="$(arg robot2_name)" />
+    <arg name="group_names" value="UR_arm_l,UR_arm_r" />
+    <arg name="target_name" value="Home_custom" />
+  </include>
+
+  <!-- RViz visualization -->
+  <node if="$(arg rviz)"
+        pkg="rviz"
+        type="rviz"
+        name="rviz_visualization"
+        args="-d $(arg rviz_config)" />
+</launch>
+

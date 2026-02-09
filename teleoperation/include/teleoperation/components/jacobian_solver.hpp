@@ -12,7 +12,7 @@ namespace teleoperation
 /**
  * @brief Computes Jacobian pseudo-inverse and null space projections.
  *
- * - Damped weighted pseudo-inverse computation (SDLS/DLS-like)
+ * - Damped pseudo-inverse computation (SDLS/DLS-like)
  * - Null space projector computation
  * - Task space masking for partial DOF control
  */
@@ -31,15 +31,12 @@ public:
   const JacobianSolverConfig& getConfig() const { return config_; }
 
   /**
-   * @brief Compute damped weighted pseudo-inverse of Jacobian.
+   * @brief Compute damped pseudo-inverse of Jacobian.
    *
    * @param jacobian The Jacobian matrix (m x n, task space x joints)
-   * @param weights Joint weights (higher weight = less movement for that joint)
    * @return Pseudo-inverse matrix (n x m)
    */
-  Eigen::MatrixXd computeDampedWeightedPseudoInverse(
-      const Eigen::MatrixXd& jacobian,
-      const Eigen::VectorXd& weights) const;
+  Eigen::MatrixXd computeDampedPseudoInverse(const Eigen::MatrixXd& jacobian) const;
 
   /**
    * @brief Compute null space projector.
@@ -47,9 +44,7 @@ public:
    * Computes N = I - J⁺ * J, which projects velocities into the null space
    * of the primary task.
    */
-  Eigen::MatrixXd computeNullSpaceProjector(
-      const Eigen::MatrixXd& jacobian,
-      const Eigen::VectorXd& weights) const;
+  Eigen::MatrixXd computeNullSpaceProjector(const Eigen::MatrixXd& jacobian) const;
 
   /**
    * @brief Build a masked Jacobian with only selected DOFs.

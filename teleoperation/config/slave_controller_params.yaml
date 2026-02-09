@@ -1,14 +1,24 @@
 teleoperation_slave_cartesian_vv_controller:
   # Robot model
-  group_name: manipulator
-  tcp_link: tool0
-  robot_description_param: robot_description
+  #
+  # NOTE (multi-robot): on MUR620 the MoveIt group and link names are prefixed
+  # (e.g. group_name="UR_arm_r", tcp_link="UR10_r/tool0"). These must match
+  # the URDF/MoveIt RobotModel, not the TF frame names.
+  #
+  # Defaults below are for the RIGHT arm.
+  group_name: UR_arm_r
+  tcp_link: UR10_r/tool0
+  # MoveIt RobotModelLoader looks up this parameter in the GLOBAL namespace,
+  # so this MUST be an absolute name in multi-robot setups.
+  robot_description_param: /$(arg ns)/robot_description
 
   # Topics
-  target_pose_topic: target_pose
-  feedforward_twist_topic: feedforward_twist
+  # These are typically published by the master side; use absolute topics.
+  target_pose_topic: $(arg target_pose_topic)
+  feedforward_twist_topic: $(arg feedforward_twist_topic)
   joint_state_topic: joint_states
-  velocity_command_topic: velocity_command_topic
+  # Must match the running (unsafe) joint velocity controller command topic.
+  velocity_command_topic: joint_group_vel_controller_r/unsafe/command
 
   # Control loop
   control_rate: 250.0
@@ -31,7 +41,7 @@ teleoperation_slave_cartesian_vv_controller:
   jacobian:
     singularity_threshold: 0.05
     max_damping: 0.2
-    # joint_weights: [1, 1, 1, 1, 1, 1]
+
 
   # Small correction PID (output_limit clamps vector norm)
   pid:

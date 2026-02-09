@@ -1,6 +1,6 @@
 /**
  * @file jacobian_solver.cpp
- * @brief Implementation of JacobianSolver (damped weighted pseudo-inverse).
+ * @brief Implementation of JacobianSolver (damped pseudo-inverse).
  */
 
 #include "teleoperation/components/jacobian_solver.hpp"
@@ -44,34 +44,15 @@ double JacobianSolver::computeDampingSquare(const Eigen::MatrixXd& jacobian) con
   return result;
 }
 
-Eigen::MatrixXd JacobianSolver::computeDampedWeightedPseudoInverse(
-    const Eigen::MatrixXd& jacobian,
-    const Eigen::VectorXd& weights) const
+Eigen::MatrixXd JacobianSolver::computeDampedPseudoInverse(const Eigen::MatrixXd& jacobian) const
 {
   if (jacobian.rows() == 0 || jacobian.cols() == 0)
   {
     return Eigen::MatrixXd();
   }
 
-  const int n_joints = jacobian.cols();
-
-  // Build W^{-1/2} from weights (higher weight -> less movement)
-  Eigen::VectorXd w_inv_sqrt(n_joints);
-  for (int i = 0; i < n_joints; ++i)
-  {
-    const double w = (i < weights.size()) ? weights[i] : 1.0;
-    w_inv_sqrt[i] = 1.0 / std::sqrt(std::max(w, kEpsilon));
-  }
-
-  // Weight the Jacobian columns with W^{-1/2}
-  Eigen::MatrixXd weighted_jacobian = jacobian;
-  for (int i = 0; i < n_joints; ++i)
-  {
-    weighted_jacobian.col(i) *= w_inv_sqrt[i];
-  }
-
   Eigen::JacobiSVD<Eigen::MatrixXd> svd(
-      weighted_jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
+      jacobian, Eigen::ComputeThinU | Eigen::ComputeThinV);
 
   const Eigen::VectorXd& singular_values = svd.singularValues();
   if (singular_values.size() == 0)
@@ -116,12 +97,8 @@ Eigen::MatrixXd JacobianSolver::computeDampedWeightedPseudoInverse(
 
   last_damping_factor_ = max_lambda_used;
 
-  // Pseudo-inverse of weighted Jacobian with selective damping
-  const Eigen::MatrixXd weighted_pinv = svd.matrixV() * damped_sigma * svd.matrixU().transpose();
-
-  // Unweight: J⁺ = W^{-1/2} * (J W^{-1/2})⁺
-  const Eigen::MatrixXd Winv_sqrt = w_inv_sqrt.asDiagonal();
-  return Winv_sqrt * weighted_pinv;
+  // Pseudo-inverse of Jacobian with selective damping
+  return svd.matrixV() * damped_sigma * svd.matrixU().transpose();
 }
 
 Eigen::MatrixXd JacobianSolver::buildMaskedJacobian(
@@ -160,8 +137,7 @@ Eigen::MatrixXd JacobianSolver::buildMaskedJacobian(
 }
 
 Eigen::MatrixXd JacobianSolver::computeNullSpaceProjector(
-    const Eigen::MatrixXd& jacobian,
-    const Eigen::VectorXd& weights) const
+    const Eigen::MatrixXd& jacobian) const
 {
   const int n_joints = jacobian.cols();
   if (jacobian.rows() == 0 || n_joints == 0)
@@ -169,7 +145,7 @@ Eigen::MatrixXd JacobianSolver::computeNullSpaceProjector(
     return Eigen::MatrixXd::Identity(n_joints, n_joints);
   }
 
-  const Eigen::MatrixXd J_pinv = computeDampedWeightedPseudoInverse(jacobian, weights);
+  const Eigen::MatrixXd J_pinv = computeDampedPseudoInverse(jacobian);
   if (J_pinv.size() == 0)
   {
     return Eigen::MatrixXd::Identity(n_joints, n_joints);

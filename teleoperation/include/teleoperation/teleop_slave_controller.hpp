@@ -105,6 +105,11 @@ private:
   Eigen::Isometry3d filtered_tcp_pose_{Eigen::Isometry3d::Identity()};
 
   // Parameters
+  // TF prefix for multi-robot setups (e.g. "mur620_s"). If set, the controller
+  // will use "<tf_prefix>/<robot_model_root_link>" as the TF target frame when
+  // transforming target pose / twist inputs.
+  std::string tf_prefix_{""};
+
   std::string group_name_;
   std::string tcp_link_;
   std::string robot_description_param_{"robot_description"};
@@ -128,8 +133,7 @@ private:
   // TCP pose EMA filter (MANTIENI)
   double tcp_pose_filter_alpha_{0.2};
 
-  // Jacobian & weights
-  Eigen::VectorXd joint_weights_;
+  // Jacobian
 
   // Limits
   Eigen::VectorXd max_joint_velocities_;

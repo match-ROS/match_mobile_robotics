@@ -74,23 +74,6 @@ TeleopSlaveController::TeleopSlaveController(ros::NodeHandle& nh, ros::NodeHandl
   const std::size_t n = robot_state_manager_->getJointCount();
   joint_safety_limiter_ = std::make_unique<JointSafetyLimiter>(n);
 
-  // Joint weights
-  joint_weights_ = Eigen::VectorXd::Ones(static_cast<int>(n));
-  std::vector<double> weights_vec;
-  if (pnh_.getParam("jacobian/joint_weights", weights_vec))
-  {
-    if (weights_vec.size() == n)
-    {
-      for (std::size_t i = 0; i < n; ++i) joint_weights_[static_cast<Eigen::Index>(i)] = weights_vec[i];
-    }
-    else
-    {
-      ROS_WARN_NAMED("teleop_slave_controller",
-                    "Param jacobian/joint_weights has size %zu, expected %zu. Using ones.",
-                    weights_vec.size(), n);
-    }
-  }
-
   // Joint velocity limits (required)
   max_joint_velocities_ = Eigen::VectorXd::Constant(static_cast<int>(n), 1.0);
   std::vector<double> vmax;
@@ -148,6 +131,8 @@ TeleopSlaveController::TeleopSlaveController(ros::NodeHandle& nh, ros::NodeHandl
 
 void TeleopSlaveController::loadParameters()
 {
+  pnh_.param("tf_prefix", tf_prefix_, tf_prefix_);
+
   pnh_.param("group_name", group_name_, std::string("manipulator"));
   pnh_.param("tcp_link", tcp_link_, std::string("tool0"));
   pnh_.param("robot_description_param", robot_description_param_, robot_description_param_);
@@ -386,11 +371,26 @@ void TeleopSlaveController::controlLoopCb(const ros::TimerEvent& ev)
     return;
   }
 
-  const std::string model_frame = robot_state_manager_->getModelRootFrame();
-  if (model_frame.empty())
+  const std::string model_root = robot_state_manager_->getModelRootFrame();
+  if (model_root.empty())
   {
     publishZeroVelocity("empty model root frame");
     return;
+  }
+
+  // In multi-robot setups, TF frames are typically prefixed (e.g. "mur620_s/base_footprint"),
+  // while the MoveIt RobotModel root link name is not. If tf_prefix is provided, use it
+  // for TF lookups when transforming inputs to the model frame.
+  std::string model_frame = model_root;
+  if (!tf_prefix_.empty())
+  {
+    std::string p = tf_prefix_;
+    while (!p.empty() && p.front() == '/') p.erase(0, 1);
+    while (!p.empty() && p.back() == '/') p.pop_back();
+    if (!p.empty())
+    {
+      model_frame = p + "/" + model_root;
+    }
   }
 
   geometry_msgs::PoseStamped target_pose_model;
@@ -471,7 +471,7 @@ void TeleopSlaveController::controlLoopCb(const ros::TimerEvent& ev)
     return;
   }
 
-  const Eigen::MatrixXd J_pinv = jacobian_solver_.computeDampedWeightedPseudoInverse(J, joint_weights_);
+  const Eigen::MatrixXd J_pinv = jacobian_solver_.computeDampedPseudoInverse(J);
   if (J_pinv.size() == 0)
   {
     publishZeroVelocity("pseudo-inverse failure");

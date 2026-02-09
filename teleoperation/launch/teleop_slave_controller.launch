@@ -1,13 +1,29 @@
 <launch>
-  <arg name="ns" default=""/>
+  <!-- Slave robot namespace (spawned as "mur620_s" in two_mur620_gazebo.launch) -->
+  <arg name="ns" default="mur620_s"/>
+
+  <!-- Teleop input topics (usually published by the master side) -->
+  <arg name="target_pose_topic" default="/mur620/target_pose" />
+  <arg name="feedforward_twist_topic" default="/mur620/feedforward_twist" />
 
   <group ns="$(arg ns)">
-    <rosparam command="load" file="$(find teleoperation)/config/slave_controller_params.yaml"/>
+    <!-- Enable subst so YAML can use $(arg ...) -->
+    <rosparam command="load"
+              file="$(find teleoperation)/config/slave_controller_params.yaml"
+              subst_value="true"/>
 
     <node pkg="teleoperation"
           type="teleoperation_slave_cartesian_vv_controller"
           name="teleoperation_slave_cartesian_vv_controller"
-          output="screen"/>
+          output="screen">
+      <!-- TF prefix for multi-robot setups -->
+      <param name="tf_prefix" value="$(arg ns)" />
+      <!-- Ensure the node always uses the correct namespaced robot description -->
+      <param name="robot_description_param" value="/$(arg ns)/robot_description" />
+      <!-- Override teleop input topics from launch (absolute by default) -->
+      <param name="target_pose_topic" value="$(arg target_pose_topic)" />
+      <param name="feedforward_twist_topic" value="$(arg feedforward_twist_topic)" />
+    </node>
   </group>
 </launch>
 

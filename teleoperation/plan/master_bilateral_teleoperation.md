@@ -20,12 +20,12 @@ Questo documento è scritto per il contesto del tuo workspace:
 
 ## Controllo bilaterale: cosa significa “chiudere il loop” sul master
 
-Se lo slave tocca l’ambiente e misura una forza \(F_{ext}\), vuoi che sul master compaia un “effetto resistivo” (o guida) proporzionale a \(F_{ext}\).
+Se lo slave tocca l’ambiente e misura una forza $F_{ext}$, vuoi che sul master compaia un “effetto resistivo” (o guida) proporzionale a $F_{ext}$.
 
 Ci sono due modi concettuali:
 
-- **(A) Solo misura → nessuna aptica reale**: muovi il master in freedrive, leggi la posa e comandala allo slave. Usi \(F_{ext}\) solo per logging/UI. È “unilaterale” dal punto di vista aptico.
-- **(B) Aptica con robot master**: il master *non è semplicemente libero*, ma gira un controllore che genera comandi (tipicamente velocità cartesiana) tali da creare, tramite i servo interni del robot, un comportamento “massa-smorzatore” e una reazione alla forza remota. Questo è ciò che, in pratica, permette all’operatore di “sentire” \(F_{ext}\).
+- **(A) Solo misura → nessuna aptica reale**: muovi il master in freedrive, leggi la posa e comandala allo slave. Usi $F_{ext}$ solo per logging/UI. È “unilaterale” dal punto di vista aptico.
+- **(B) Aptica con robot master**: il master *non è semplicemente libero*, ma gira un controllore che genera comandi (tipicamente velocità cartesiana) tali da creare, tramite i servo interni del robot, un comportamento “massa-smorzatore” e una reazione alla forza remota. Questo è ciò che, in pratica, permette all’operatore di “sentire” $F_{ext}$.
 
 Nel tuo caso, con UR10e + ROS-control, l’approccio **più pragmatico** è (B) usando un controllore **in velocità cartesiana** (meglio `twist_controller`) oppure in velocità giunti (`joint_group_vel_controller`) con IK via Jacobiano.
 
@@ -97,11 +97,12 @@ flowchart LR
 
   subgraph SLAVE["Slave: /ur_slave_l"]
     Ws["/ur_slave_l/wrench\n(WrenchStamped)"]
-    Cs["teleoperation_slave_cartesian_vv_controller\n(C++: FF-dominant)"]
-    Qd["/ur_slave_l/joint_group_vel_controller/command\n(Float64MultiArray)"]
+    Cs["teleop_slave_outer_loop\n(tracking + compliance)"]
+    Qd["/ur_slave_l/twist_controller/command\n(TwistStamped)"]
   end
 
   TFm --> S -->|target_pose + feedforward_twist| Cs
+  Ws --> Cs
   Ws --> H
   Wm --> H
   H --> Cm
@@ -135,6 +136,15 @@ Svantaggi / cautele:
 - il controller non “capisce” da solo limiti/ambiente: devi mettere **limiti, filtri, watchdog**;
 - un twist sbagliato può portare a protective stop (workspace/config change).
 
+#### Nota importante (vale soprattutto per lo slave)
+
+Usare `twist_controller` **non** elimina automaticamente il problema “spinge all’infinito”: se continui a comandare un twist verso un ostacolo, lo slave continuerà a provarci.
+
+Quindi la scelta “migliore” è:
+
+- usare `twist_controller` per avere una **porta cartesiana** pulita verso l’hardware;
+- implementare sopra (outer loop) una legge `force-aware` che **modula** il twist in base a `/<slave_ns>/wrench`.
+
 #### Come attivarlo (controller_manager)
 
 Con `ur_robot_driver` i controller si switchano via `controller_manager/switch_controller`. Esempio tipico (ferma la traiettoria in posizione e avvia twist):
@@ -151,12 +161,12 @@ timeout: 0.0"
 
 Vantaggi:
 
-- semplice “pass-through” di \(\dot{q}\), prevedibile;
+- semplice “pass-through” di $\dot{q}$, prevedibile;
 - si integra con il tuo codice Jacobiano già nel repo (`teleoperation/components/jacobian_solver.*`).
 
 Svantaggi:
 
-- devi gestire tu \(J^+\), damping, frame, limiti, ecc. (ma lo state già facendo sullo slave).
+- devi gestire tu $J^+$, damping, frame, limiti, ecc. (ma lo state già facendo sullo slave).
 
 #### Come attivarlo (controller_manager)
 
@@ -171,6 +181,31 @@ timeout: 0.0"
 ### Perché NON cito “effort controller” come prima scelta
 
 Un vero rendering aptico “ideale” sarebbe con un controllore a **coppia** (impedance/torque). Ma con UR + `ur_robot_driver` standard il percorso più usato in ROS1 resta: controllo in posizione/velocità + modalità force/servo interne. Quindi, per restare sullo stack che avete già, twist/velocity è la via pratica.
+
+---
+
+## Scelta consigliata “best practice” per lo slave
+
+Per “fare bene” una teleoperazione cartesiana, la soluzione che consiglio è:
+
+- **SLAVE comandato in cartesiano** con **`twist_controller`**
+- un **outer-loop teleop** che calcola un twist sicuro:
+  - tracking pose (errore posa)
+  - feedforward twist dal master
+  - **compliance/guard basati su `/<slave_ns>/wrench`**
+
+In altre parole: lo slave non riceve direttamente un passthrough di $\dot q$ o di $v_{ff}$, ma un twist già “filtrato dalla forza”.
+
+Vantaggi principali:
+
+- architettura più semplice e coerente (Twist ovunque)
+- niente IK/jacobiano nello strato teleop (meno failure mode)
+- più facile garantire che “in contatto rallenta/si ferma”
+
+Quando scegliere invece $\dot q$ (`joint_group_vel_controller`):
+
+- se vuoi controllare tu in modo fine SDLS/limiti joint-level e gestire esplicitamente singolarità/configurazioni
+- se devi usare vincoli joint-specific non esprimibili bene in twist
 
 ---
 
@@ -190,27 +225,29 @@ Limite: lo slave può misurare forze, ma **non le sentirai** sul master (il mast
 
 ### Modalità 2 (bilaterale vera): Master in servo (twist/vel) + loop di ammettenza
 
+**Risposta:** Voglio questa modalità
+
 Qui il master *viene comandato* per risultare “leggero” e muovibile a mano, ma anche per opporsi quando lo slave sente contatto.
 
 #### Idea fisica: “admittance” sul master
 
 Usi una dinamica virtuale tipo massa-smorzatore nello spazio cartesiano:
 
-\[
+$$
 M_m \ddot{x}_m + D_m \dot{x}_m = F_{hand} - K_f \, F_{ext}
-\]
+$$
 
-- \(F_{hand}\): wrench misurata al TCP del **master** (forza mano sull’EE).
-- \(F_{ext}\): wrench al TCP dello **slave** (forza ambiente).
-- \(K_f\): scala della forza riflessa (e.g. 0.2–1.0).
-- \(M_m, D_m\): parametri aptici (inerzia e smorzamento “percepiti”).
+- $F_{hand}$: wrench misurata al TCP del **master** (forza mano sull’EE).
+- $F_{ext}$: wrench al TCP dello **slave** (forza ambiente).
+- $K_f$: scala della forza riflessa (e.g. 0.2–1.0).
+- $M_m, D_m$: parametri aptici (inerzia e smorzamento “percepiti”).
 
 Poi integri in discreto e generi un comando di velocità cartesiana:
 
-- \(a = M^{-1}(F_{hand} - K_fF_{ext} - D v)\)
-- \(v \leftarrow v + a \Delta t\)
-- clamp \(v\) (limiti sicurezza)
-- pubblica \(v\) al controller del master (`twist_controller`) **oppure** converti in \(\dot{q}\) e pubblica a `joint_group_vel_controller`.
+- $a = M^{-1}(F_{hand} - K_fF_{ext} - D v)$
+- $v \leftarrow v + a \Delta t$
+- clamp $v$ (limiti sicurezza)
+- pubblica $v$ al controller del master (`twist_controller`) **oppure** converti in $\dot{q}$ e pubblica a `joint_group_vel_controller`.
 
 #### Pseudocodice (loop discreto)
 
@@ -245,32 +282,32 @@ loop every dt:
 
 Valori “safe” per partire (poi si tarano sul feeling):
 
-- \(K_f\): 0.2 → 0.5 (inizia basso, aumenta finché senti ma non vibra)
-- \(M_m\) (lineare): 2–8 kg (più grande = più “pesante”)
-- \(D_m\) (lineare): 20–80 N·s/m (più grande = più smorzato/stabile)
+- $K_f$: 0.2 → 0.5 (inizia basso, aumenta finché senti ma non vibra)
+- $M_m$ (lineare): 2–8 kg (più grande = più “pesante”)
+- $D_m$ (lineare): 20–80 N·s/m (più grande = più smorzato/stabile)
 - clamp velocità master: 0.1–0.3 m/s
 - filtro wrench: 20–50 Hz
 
-Se hai ritardo rete non trascurabile, aumenta \(D_m\) e riduci \(K_f\).
+Se hai ritardo rete non trascurabile, aumenta $D_m$ e riduci $K_f$.
 
 In questa modalità:
 
-- se lo slave “spinge” contro un ostacolo, \(F_{ext}\) cresce;
-- il termine \(-K_fF_{ext}\) riduce/inverte \(v\): il master “tira indietro” o si irrigidisce;
+- se lo slave “spinge” contro un ostacolo, $F_{ext}$ cresce;
+- il termine $-K_fF_{ext}$ riduce/inverte $v$: il master “tira indietro” o si irrigidisce;
 - l’operatore deve applicare più forza per continuare → percezione aptica.
 
-#### Variante utile se non vuoi usare \(F_{hand}\) (sconsigliata, ma possibile)
+#### Variante utile se non vuoi usare $F_{hand}$ (sconsigliata, ma possibile)
 
-Puoi rendere il master “quasi libero” e applicare solo una velocità opposta al moto quando \(F_{ext}\) cresce, ad esempio:
+Puoi rendere il master “quasi libero” e applicare solo una velocità opposta al moto quando $F_{ext}$ cresce, ad esempio:
 
-\[
+$$
 v_{cmd} = v_{free} - K_v F_{ext}
-\]
+$$
 
 ma:
 
 - non misura la forza mano reale → sensazione meno naturale;
-- più rischio di instabilità se \(F_{ext}\) è rumorosa.
+- più rischio di instabilità se $F_{ext}$ è rumorosa.
 
 ---
 
@@ -319,17 +356,17 @@ Indicativamente:
 - loop master aptico: 250–500 Hz (se riesci); sotto ~100 Hz tende a “sentirsi” gommoso/instabile.
 - loop slave tracking: 100 Hz (come già config in `slave_controller_params.yaml`) ok.
 
-Se non puoi salire di rate, aumenta smorzamento \(D_m\) e riduci \(K_f\).
+Se non puoi salire di rate, aumenta smorzamento $D_m$ e riduci $K_f$.
 
 ### Passività / energia (nota pratica)
 
 I loop bilaterali possono diventare instabili con ritardi rete e filtri. Se noti vibrazioni:
 
-- abbassa \(K_f\)
-- aumenta \(D_m\)
-- limita la banda del filtro su \(F_{ext}\)
-- limita la banda su \(v\)
-- aggiungi “leaky integrator” o reset di \(v\) quando il master è fermo.
+- abbassa $K_f$
+- aumenta $D_m$
+- limita la banda del filtro su $F_{ext}$
+- limita la banda su $v$
+- aggiungi “leaky integrator” o reset di $v$ quando il master è fermo.
 
 ---
 
@@ -337,7 +374,7 @@ I loop bilaterali possono diventare instabili con ritardi rete e filtri. Se noti
 
 ### 1) Nuovo publisher di stato master “misurato” (TF/joint_states)
 
-Crea un nodo (Python va benissimo all’inizio) che pubblichi:
+Crea un nodo che pubblichi:
 
 - `~target_pose_topic` (`PoseStamped`)
 - `~feedforward_twist_topic` (`TwistStamped`)
@@ -376,17 +413,17 @@ Nodo ROS (C++ o Python) che:
 - sottoscrive:
   - `/<master_ns>/wrench` (opzionale ma raccomandato)
   - `/<slave_ns>/wrench` (forza ambiente)
-  - (opzionale) `/<master_ns>/joint_states` o TF per stimare \(v\) misurata
+  - (opzionale) `/<master_ns>/joint_states` o TF per stimare $v$ misurata
 - pubblica comando al master:
   - **se usi `twist_controller`**: `/<master_ns>/<twist_controller_name>/command` (`TwistStamped` o `Twist` a seconda della config)
   - **se usi `joint_group_vel_controller`**: `/<master_ns>/joint_group_vel_controller/command` (`Float64MultiArray`)
 
 Logica:
 
-- filtra \(F_{hand}\) e \(F_{ext}\)
-- calcola \(a\), integra \(v\)
-- clamp \(v\)
-- pubblica \(v\)
+- filtra $F_{hand}$ e $F_{ext}$
+- calcola $a$, integra $v$
+- clamp $v$
+- pubblica $v$
 
 #### Nota pratica sul topic di comando
 
@@ -396,16 +433,146 @@ Quindi:
 - verifica con `rostopic list` quali sono i topic `.../command` del master (`twist_controller` o `joint_group_vel_controller`);
 - imposta il nodo “master haptic controller” per pubblicare lì.
 
-### 3) Slave controller: resta com’è (ma aggiungi lettura wrench)
+### 3) Slave controller (consigliato): `twist_controller` + outer-loop teleop force-aware
 
-Il tuo `teleoperation_slave_cartesian_vv_controller` oggi fa:
+Scelta consigliata: usa `twist_controller` anche sullo **slave** e realizza un nodo/controller “outer-loop” che calcola un twist cartesiano sicuro.
 
-- \(v_{cmd} = k_{ff} v_{ff} + PID(e)\)
+Concettualmente lo slave diventa:
 
-Per bilaterale “completa” puoi:
+- **inner loop (hardware)**: `twist_controller` esegue il twist al TCP
+- **outer loop (teleop)**: tracking + feedforward + compliance/guard da forza
 
-- continuare così (tracking robusto);
-- in aggiunta pubblicare/forwardare `/<slave_ns>/wrench` verso il master controller (o farla leggere direttamente dal master controller).
+Legge di controllo consigliata:
+
+$$
+v_{cmd} =
+\alpha(F_{ext}) \, k_{ff} v_{ff}
+\;+\;
+K_p \, e_{pose}
+\;-\;
+K_{adm} \, F_{ext}
+$$
+
+dove:
+
+- $v_{ff}$: feedforward twist dal master
+- $e_{pose}$: errore posa (posizione + orientamento) tra target e posa corrente dello slave
+- $F_{ext}$: wrench dello slave (`/<slave_ns>/wrench`) filtrata e clampata
+- $\alpha(\cdot)\in[0,1]$: scala che riduce l’avanzamento quando aumenta la forza (vedi Strategia 1)
+
+Output:
+
+- pubblichi `v_{cmd}` su `/<slave_ns>/twist_controller/command`.
+
+#### Problema: “lo slave spinge all’infinito” (vale anche con `twist_controller`)
+
+È reale: se lo slave è in **velocity control puro** e tu continui a mandare $v_{ff}$ verso un ostacolo, lui proverà a mantenere quella velocità finché:
+
+- va in protective stop / limite di forza interno,
+- oppure satura per limiti di velocità/accelerazione,
+- oppure “struscia” generando forze alte.
+
+La soluzione pratica è rendere lo slave **force-aware**, cioè modulare $v_{cmd}$ in funzione della wrench che lo slave misura.
+
+Qui sotto ti elenco 3 strategie (compatibili con il tuo controller attuale). In pratica, io partirei da **(1)+(2)** insieme: scaling + ammettenza.
+
+---
+
+#### Strategia 1 — Scaling del feedforward in funzione della forza (la più semplice e robusta)
+
+Molto efficace: quando cresce la forza di contatto, **riduci** la componente “dominante” $k_{ff} v_{ff}$.
+
+Definisci una scala $\alpha \in [0,1]$ che dipende dalla norma della forza (o dalla forza lungo la direzione di moto):
+
+$$
+\alpha(F) =
+\begin{cases}
+1 & \|F\| \le F_{start}\\
+\text{smoothstep}(F_{start}, F_{stop}, \|F\|) & F_{start} < \|F\| < F_{stop}\\
+0 & \|F\| \ge F_{stop}
+\end{cases}
+$$
+
+e poi:
+
+$$
+v_{cmd} = \alpha(F_{ext}) \, k_{ff} v_{ff} + PID(e)
+$$
+
+Note pratiche:
+
+- usa $F_{start}$ per non reagire al rumore (es. 5–10 N);
+- usa $F_{stop}$ per “fermarsi” prima di arrivare a forze pericolose (es. 20–50 N, dipende dall’applicazione);
+- preferisci un filtro passa-basso su $F_{ext}$ (20–50 Hz) e un clamp su valori massimi.
+
+**Variante migliore**: scala solo lungo la direzione di moto (così non “congeli” movimenti laterali utili).
+
+Sia $\hat{d}$ la direzione del moto comandato (ad es. $\hat{d} = v_{ff,lin}/\|v_{ff,lin}\|$). Allora:
+
+- $F_\parallel = \hat{d}^\top F_{ext,lin}$
+- usa $\alpha(|F_\parallel|)$ invece di $\alpha(\|F\|)$.
+
+---
+
+#### Strategia 2 — Termine di ammettenza sullo slave (lo rende “cedevole” al contatto)
+
+Aggiungi un termine che “spinge indietro” o devia il comando quando cresce la forza:
+
+$$
+v_{cmd} = \alpha(F_{ext}) \, k_{ff} v_{ff} + PID(e) - K_{adm} \, F_{ext}
+$$
+
+Dove:
+
+- $F_{ext}$ è la wrench dello **slave** (tipicamente inizi con solo forza lineare XYZ),
+- $K_{adm}$ è una matrice/guadagno (dimensione $ \frac{m}{N\cdot s} $ se lo interpreti come ammettenza istantanea in velocità).
+
+Due consigli importanti per non destabilizzare:
+
+- **proiezione**: applica $-K_{adm}F$ solo sugli assi che vuoi “compliant” (es. solo Z o solo lungo la normale del contatto);
+- **saturazione**: limita la velocità generata dal termine di compliance, ad es. $\|K_{adm}F\| \le v_{comp,max}$.
+
+Regola “da campo”:
+
+- in aria libera vuoi: $\alpha\approx 1$ e $K_{adm}F \approx 0$;
+- in contatto vuoi: $\alpha \downarrow$ e $K_{adm}F$ che ti “smorza”/allontana dal contatto.
+
+---
+
+#### Strategia 3 — Contact guard: stop o retreat oltre soglia
+
+Oltre a scaling/ammettenza, metti un guardrail duro:
+
+- se $\|F_{ext}\| > F_{hard}$ per più di $T_{hard}$ ms → **override** del comando:
+  - opzione A: $v_{cmd}=0$ (stop morbido)
+  - opzione B: “retreat” lungo la direzione opposta al contatto per un tempo breve:
+    - $v_{cmd,lin} = -v_{ret} \, \hat{n}$ (se stimi una normale $\hat{n}$)
+    - oppure $v_{cmd,lin} = -v_{ret} \, \hat{d}$ (opposto alla direzione di avanzamento)
+
+Questo evita la situazione “spinge e accumula forza” se qualcosa va storto (latenza, errore pose, ecc.).
+
+---
+
+#### Dove implementarla (best practice)
+
+Nel nodo/controller outer-loop dello slave:
+
+- sottoscrivi:
+  - `target_pose` (`PoseStamped`)
+  - `feedforward_twist` (`TwistStamped`)
+  - `/<slave_ns>/wrench` (`WrenchStamped`)
+  - (opzionale ma utile) posa/twist misurati dello slave (TF o FK) per calcolare $e_{pose}$
+- applica:
+  - filtro + clamp su $F_{ext}$
+  - Strategia 1 + 2 + 3 (scaling + ammettenza + guard)
+- pubblica:
+  - `/<slave_ns>/twist_controller/command`
+
+In questo modo la “porta” verso l’hardware è sempre twist, e tutta la logica di contatto è nel tuo outer-loop.
+
+#### Alternativa (se vuoi tenere l’uscita in $\dot{q}$)
+
+Se per motivi tuoi preferisci mantenere `joint_group_vel_controller` sullo slave, puoi applicare le stesse Strategie 1–3 **in cartesiano** (calcoli $v_{cmd}$ force-aware) e poi convertire \(v_{cmd}\rightarrow \dot q\) con Jacobiano smorzato come già fate.
 
 ---
 
@@ -414,7 +581,7 @@ Per bilaterale “completa” puoi:
 Se vuoi un comportamento tipo “contatto duro → mano si ferma”, senza complicarti troppo:
 
 - usa solo la componente di forza lungo la direzione di moto:
-  - proietta \(F_{ext}\) lungo \(v\) e crea un termine dissipativo.
+  - proietta $F_{ext}$ lungo $v$ e crea un termine dissipativo.
 
 Oppure, più semplice e spesso efficace:
 
@@ -429,14 +596,14 @@ Oppure, più semplice e spesso efficace:
   - `/ur_master_l`, `/ur_master_r`, `/ur_slave_l`, `/ur_slave_r`
 - Ogni UR bringup:
   - `force_torque_sensor_controller` attivo (così hai `/<ns>/wrench`)
-  - un controller di comando attivo sul master:
-    - preferito: `twist_controller`
-    - alternativo: `joint_group_vel_controller`
+  - un controller di comando attivo:
+    - **master**: preferito `twist_controller` (alternativa `joint_group_vel_controller`)
+    - **slave**: preferito `twist_controller` (alternativa `joint_group_vel_controller`)
 - Prima di teleop:
   - chiamare `/<ns>/zero_ftsensor` su master e slave (a bracci fermi)
 - Lati L/R:
   - 1 loop master_haptic per lato
-  - 1 slave_controller per lato
+  - 1 slave_outer_loop force-aware per lato (pubblica twist allo slave)
   - 1 master_state_publisher “misurato” per lato
 
 ---
@@ -451,5 +618,5 @@ Nello stack UR ROS che hai già, la combinazione più pulita è:
 - master command: **`twist_controller`**
 - master sensing: `/<master_ns>/wrench` + TF/joint_states
 - slave sensing: `/<slave_ns>/wrench`
-- teleop coupling: ammettenza sul master + tracking FF-dominant sullo slave
+- teleop coupling: ammettenza sul master + slave force-aware (scaling + ammettenza + guard) che pubblica twist allo slave
 

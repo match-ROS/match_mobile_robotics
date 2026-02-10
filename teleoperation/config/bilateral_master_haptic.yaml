@@ -1,0 +1,42 @@
+teleop_master_haptic_controller:
+  # Input wrenches (absolute or relative; typical for UR: "<ns>/wrench")
+  master_wrench_topic: wrench
+  slave_wrench_topic: ""
+
+  # Optional (phase2): additional coupling wrench already expressed in wrench_target_frame
+  coupling_wrench_topic: ""
+
+  # Express wrenches in this frame (within the master TF tree)
+  wrench_target_frame: base_link
+  tf_timeout_s: 0.02
+
+  # Output command (typically remapped to ".../twist_controller/controller_input" or passed through ur_twist_limiter)
+  command_topic: twist_controller/command
+  control_rate: 250.0
+
+  # Virtual dynamics
+  mass_linear: 4.0
+  damping_linear: 40.0
+  mass_angular: 1.0
+  damping_angular: 5.0
+
+  # Force reflection (start low)
+  force_reflection_scale: 0.3
+  torque_reflection_scale: 0.0
+  use_torques: false
+
+  # Wrench filtering/clamps
+  wrench_filter_alpha: 0.07
+  force_deadband: 1.0
+  torque_deadband: 0.2
+  max_force: 150.0
+  max_torque: 20.0
+
+  # Command clamps
+  max_linear_speed: 0.25
+  max_angular_speed: 0.4
+
+  # Watchdog
+  wrench_timeout_s: 0.2
+  reset_on_stale: true
+

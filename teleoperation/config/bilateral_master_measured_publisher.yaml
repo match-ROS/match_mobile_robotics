@@ -1,0 +1,23 @@
+teleop_master_measured_state_publisher:
+  # TF frames (within the master robot namespace TF tree)
+  base_frame: base_link
+  tcp_frame: tool0
+
+  # Outputs (relative)
+  target_pose_topic: target_pose
+  feedforward_twist_topic: feedforward_twist
+
+  # Relabel-only mode: if set, the published header.frame_id will be this value
+  # (e.g. "<slave_ns>/base_link")
+  frame_id_override: ""
+
+  publish_rate: 250.0
+  tf_timeout_s: 0.02
+
+  # Finite-difference twist smoothing/limits
+  twist_filter_alpha: 0.2
+  twist_deadband_linear: 0.0
+  twist_deadband_angular: 0.0
+  max_linear_speed: 0.3
+  max_angular_speed: 0.6
+

@@ -1,0 +1,67 @@
+teleop_slave_twist_outer_loop:
+  # TF frames (within the slave robot namespace TF tree)
+  base_frame: base_link
+  tcp_frame: tool0
+
+  # Inputs
+  target_pose_topic: $(arg target_pose_topic)
+  feedforward_twist_topic: $(arg feedforward_twist_topic)
+  wrench_topic: wrench
+
+  # Output command (typically remapped to ".../twist_controller/controller_input" or passed through ur_twist_limiter)
+  command_topic: twist_controller/command
+
+  # Loop & timeouts
+  control_rate: 250.0
+  tf_timeout_s: 0.02
+  target_pose_timeout: 0.2
+  feedforward_timeout: 0.2
+  wrench_timeout: 0.2
+
+  # Feedforward dominance
+  k_ff: 1.0
+
+  # Force-aware scaling alpha(F)
+  alpha_mode: parallel   # "parallel" or "norm"
+  force_start: 8.0       # N
+  force_stop: 30.0       # N
+
+  # Compliance term: v_comp = -k_adm * F
+  k_adm_linear: 0.0015   # m/(N*s)
+  k_adm_angular: 0.0
+  use_torques: false
+
+  # Wrench filtering/clamps
+  wrench_filter_alpha: 0.07
+  force_deadband: 1.0
+  torque_deadband: 0.2
+  max_force: 150.0
+  max_torque: 20.0
+
+  # Velocity limits
+  max_linear_speed: 0.20
+  max_angular_speed: 0.30
+  max_compliance_linear_speed: 0.08
+  max_compliance_angular_speed: 0.15
+
+  # Hard guard (extra safety)
+  hard_force_threshold: 60.0   # N
+  hard_force_duration: 0.03    # s
+  hard_guard_action: stop      # "stop" or "retreat"
+  retreat_speed: 0.03          # m/s (if retreat)
+
+  # Small correction PID (output_limit clamps vector norm)
+  pid:
+    position:
+      kp: 1.0
+      ki: 0.0
+      kd: 0.0
+      output_limit: 0.05
+      derivative_filter_tau: 0.02
+    orientation:
+      kp: 1.0
+      ki: 0.0
+      kd: 0.0
+      output_limit: 0.15
+      derivative_filter_tau: 0.02
+

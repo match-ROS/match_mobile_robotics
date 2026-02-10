@@ -1,0 +1,40 @@
+<launch>
+  <!-- Left pair -->
+  <arg name="master_l_ns" default="ur_master_l"/>
+  <arg name="slave_l_ns" default="ur_slave_l"/>
+  <arg name="master_l_cmd_topic" default="/$(arg master_l_ns)/twist_controller/command"/>
+  <arg name="slave_l_cmd_topic" default="/$(arg slave_l_ns)/twist_controller/command"/>
+
+  <!-- Right pair -->
+  <arg name="master_r_ns" default="ur_master_r"/>
+  <arg name="slave_r_ns" default="ur_slave_r"/>
+  <arg name="master_r_cmd_topic" default="/$(arg master_r_ns)/twist_controller/command"/>
+  <arg name="slave_r_cmd_topic" default="/$(arg slave_r_ns)/twist_controller/command"/>
+
+  <!-- Common frames -->
+  <arg name="base_frame" default="base_link"/>
+  <arg name="tcp_frame" default="tool0"/>
+
+  <include file="$(find teleoperation)/launch/bilateral_pair.launch">
+    <arg name="master_ns" value="$(arg master_l_ns)"/>
+    <arg name="slave_ns" value="$(arg slave_l_ns)"/>
+    <arg name="master_base_frame" value="$(arg base_frame)"/>
+    <arg name="master_tcp_frame" value="$(arg tcp_frame)"/>
+    <arg name="slave_base_frame" value="$(arg base_frame)"/>
+    <arg name="slave_tcp_frame" value="$(arg tcp_frame)"/>
+    <arg name="master_cmd_topic" value="$(arg master_l_cmd_topic)"/>
+    <arg name="slave_cmd_topic" value="$(arg slave_l_cmd_topic)"/>
+  </include>
+
+  <include file="$(find teleoperation)/launch/bilateral_pair.launch">
+    <arg name="master_ns" value="$(arg master_r_ns)"/>
+    <arg name="slave_ns" value="$(arg slave_r_ns)"/>
+    <arg name="master_base_frame" value="$(arg base_frame)"/>
+    <arg name="master_tcp_frame" value="$(arg tcp_frame)"/>
+    <arg name="slave_base_frame" value="$(arg base_frame)"/>
+    <arg name="slave_tcp_frame" value="$(arg tcp_frame)"/>
+    <arg name="master_cmd_topic" value="$(arg master_r_cmd_topic)"/>
+    <arg name="slave_cmd_topic" value="$(arg slave_r_cmd_topic)"/>
+  </include>
+</launch>
+

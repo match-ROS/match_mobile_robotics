@@ -5,29 +5,14 @@
 
 #include <Eigen/Core>
 
-#include <algorithm>
 #include <cmath>
 #include <mutex>
 #include <string>
 
+#include "teleoperation/core/math_utils.hpp"
+
 namespace
 {
-constexpr double kEps = 1e-12;
-
-Eigen::Vector3d clampNorm3(const Eigen::Vector3d& v, double max_norm)
-{
-  if (max_norm <= kEps) return Eigen::Vector3d::Zero();
-  const double n = v.norm();
-  if (n > max_norm && n > kEps) return v * (max_norm / n);
-  return v;
-}
-
-Eigen::Vector3d ema3(const Eigen::Vector3d& prev, const Eigen::Vector3d& curr, double alpha)
-{
-  const double a = std::clamp(alpha, 0.0, 1.0);
-  return a * curr + (1.0 - a) * prev;
-}
-
 Eigen::Vector3d pFromPose(const geometry_msgs::PoseStamped& p)
 {
   return Eigen::Vector3d(p.pose.position.x, p.pose.position.y, p.pose.position.z);
@@ -193,7 +178,7 @@ private:
 
     const Eigen::Vector3d u_l_to_r = d_s.normalized();  // direction on slave geometry
     Eigen::Vector3d F = (k_virt_ * eps_eff) * u_l_to_r; // N (virtual)
-    F = clampNorm3(F, max_coupling_force_);
+    F = teleoperation::clampNorm3(F, max_coupling_force_);
 
     if (!has_filtered_)
     {
@@ -202,7 +187,7 @@ private:
     }
     else if (filter_alpha_ > 0.0)
     {
-      F_filt_ = ema3(F_filt_, F, filter_alpha_);
+      F_filt_ = teleoperation::ema3(F_filt_, F, filter_alpha_);
     }
     else
     {

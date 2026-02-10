@@ -31,65 +31,22 @@ include_directories(
 )
 
 # =============================================================================
-# Component libraries
+# Core libraries
 # =============================================================================
-
-add_library(teleop_jacobian_solver
-  src/components/jacobian_solver.cpp
-)
-target_link_libraries(teleop_jacobian_solver
-  ${catkin_LIBRARIES}
-)
-
-add_library(teleop_robot_state_manager
-  src/components/robot_state_manager.cpp
-)
-add_dependencies(teleop_robot_state_manager
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(teleop_robot_state_manager
-  ${catkin_LIBRARIES}
-)
 
 add_library(teleop_pid_controller
   src/components/pid_controller.cpp
 )
+add_dependencies(teleop_pid_controller
+  ${catkin_EXPORTED_TARGETS}
+)
 target_link_libraries(teleop_pid_controller
-  ${catkin_LIBRARIES}
-)
-
-add_library(teleop_joint_safety_limiter
-  src/components/joint_safety_limiter.cpp
-)
-target_link_libraries(teleop_joint_safety_limiter
-  ${catkin_LIBRARIES}
-)
-
-add_library(teleop_slave_controller
-  src/teleop_slave_controller.cpp
-)
-target_link_libraries(teleop_slave_controller
-  teleop_robot_state_manager
-  teleop_jacobian_solver
-  teleop_pid_controller
-  teleop_joint_safety_limiter
   ${catkin_LIBRARIES}
 )
 
 # =============================================================================
 # Nodes
 # =============================================================================
-
-add_executable(teleoperation_slave_cartesian_vv_controller
-  src/teleop_slave_controller_node.cpp
-)
-add_dependencies(teleoperation_slave_cartesian_vv_controller
-  ${catkin_EXPORTED_TARGETS}
-)
-target_link_libraries(teleoperation_slave_cartesian_vv_controller
-  teleop_slave_controller
-  ${catkin_LIBRARIES}
-)
 
 add_executable(teleop_master_measured_state_publisher
   src/teleop_master_measured_state_publisher_node.cpp
@@ -136,18 +93,8 @@ target_link_libraries(teleop_bimanual_coupling
 # Install
 # =============================================================================
 
-catkin_install_python(PROGRAMS
-  scripts/teleop_master_state_publisher.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
 install(TARGETS
-  #teleop_jacobian_solver
-  #teleop_robot_state_manager
-  #teleop_pid_controller
-  #teleop_joint_safety_limiter
-  #teleop_slave_controller
-  #teleoperation_slave_cartesian_vv_controller
+  teleop_pid_controller
   teleop_master_measured_state_publisher
   teleop_master_haptic_controller
   teleop_slave_twist_outer_loop

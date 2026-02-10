@@ -11,40 +11,10 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <algorithm>
 #include <cmath>
 #include <string>
 
-namespace
-{
-constexpr double kEps = 1e-12;
-
-Eigen::Vector3d clampNorm3(const Eigen::Vector3d& v, double max_norm)
-{
-  if (max_norm <= kEps) return Eigen::Vector3d::Zero();
-  const double n = v.norm();
-  if (n > max_norm && n > kEps) return v * (max_norm / n);
-  return v;
-}
-
-Eigen::Vector3d applyDeadbandAbs3(const Eigen::Vector3d& v, double deadband_abs)
-{
-  if (deadband_abs <= 0.0) return v;
-  Eigen::Vector3d out = v;
-  for (int i = 0; i < 3; ++i)
-  {
-    if (std::abs(out[i]) < deadband_abs) out[i] = 0.0;
-  }
-  return out;
-}
-
-Eigen::Vector3d ema3(const Eigen::Vector3d& prev, const Eigen::Vector3d& curr, double alpha)
-{
-  const double a = std::clamp(alpha, 0.0, 1.0);
-  return a * curr + (1.0 - a) * prev;
-}
-
-}  // namespace
+#include "teleoperation/core/math_utils.hpp"
 
 class TeleopMasterMeasuredStatePublisher
 {
@@ -108,7 +78,7 @@ private:
     Eigen::Vector3d p(T.transform.translation.x, T.transform.translation.y, T.transform.translation.z);
     Eigen::Quaterniond q(T.transform.rotation.w, T.transform.rotation.x, T.transform.rotation.y, T.transform.rotation.z);
     if (!std::isfinite(q.w()) || !std::isfinite(q.x()) || !std::isfinite(q.y()) || !std::isfinite(q.z()) ||
-        q.norm() < kEps)
+        q.norm() < teleoperation::kMathEps)
     {
       ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_measured_state_publisher", "Non-finite TCP quaternion.");
       return;
@@ -145,8 +115,8 @@ private:
     has_prev_pose_ = true;
 
     // Deadband, filter, clamp.
-    v_lin = applyDeadbandAbs3(v_lin, twist_deadband_linear_);
-    v_ang = applyDeadbandAbs3(v_ang, twist_deadband_angular_);
+    v_lin = teleoperation::applyDeadbandAbs3(v_lin, twist_deadband_linear_);
+    v_ang = teleoperation::applyDeadbandAbs3(v_ang, twist_deadband_angular_);
 
     if (!has_filtered_twist_)
     {
@@ -156,8 +126,8 @@ private:
     }
     else if (twist_filter_alpha_ > 0.0)
     {
-      v_lin_filt_ = ema3(v_lin_filt_, v_lin, twist_filter_alpha_);
-      v_ang_filt_ = ema3(v_ang_filt_, v_ang, twist_filter_alpha_);
+      v_lin_filt_ = teleoperation::ema3(v_lin_filt_, v_lin, twist_filter_alpha_);
+      v_ang_filt_ = teleoperation::ema3(v_ang_filt_, v_ang, twist_filter_alpha_);
     }
     else
     {
@@ -165,8 +135,8 @@ private:
       v_ang_filt_ = v_ang;
     }
 
-    v_lin_filt_ = clampNorm3(v_lin_filt_, max_linear_speed_);
-    v_ang_filt_ = clampNorm3(v_ang_filt_, max_angular_speed_);
+    v_lin_filt_ = teleoperation::clampNorm3(v_lin_filt_, max_linear_speed_);
+    v_ang_filt_ = teleoperation::clampNorm3(v_ang_filt_, max_angular_speed_);
 
     geometry_msgs::TwistStamped twist_msg;
     twist_msg.header.stamp = now;

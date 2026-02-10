@@ -19,42 +19,23 @@
 #include <string>
 
 #include "teleoperation/components/pid_controller.hpp"
-#include "teleoperation/math_utils.hpp"
+#include "teleoperation/core/math_utils.hpp"
+#include "teleoperation/core/types.hpp"
 
 namespace
 {
-constexpr double kEps = 1e-12;
-
-Eigen::Vector3d clampNorm3(const Eigen::Vector3d& v, double max_norm)
-{
-  if (max_norm <= kEps) return Eigen::Vector3d::Zero();
-  const double n = v.norm();
-  if (n > max_norm && n > kEps) return v * (max_norm / n);
-  return v;
-}
+using Wrench3 = teleoperation::Wrench3;
 
 Eigen::Vector3d vec3FromMsg(const geometry_msgs::Vector3& v)
 {
   return Eigen::Vector3d(v.x, v.y, v.z);
 }
 
-struct Wrench3
-{
-  Eigen::Vector3d f{Eigen::Vector3d::Zero()};
-  Eigen::Vector3d tau{Eigen::Vector3d::Zero()};
-};
-
-Eigen::Vector3d ema3(const Eigen::Vector3d& prev, const Eigen::Vector3d& curr, double alpha)
-{
-  const double a = std::clamp(alpha, 0.0, 1.0);
-  return a * curr + (1.0 - a) * prev;
-}
-
 Wrench3 emaWrench3(const Wrench3& prev, const Wrench3& curr, double alpha, bool use_torques)
 {
   Wrench3 out;
-  out.f = ema3(prev.f, curr.f, alpha);
-  out.tau = use_torques ? ema3(prev.tau, curr.tau, alpha) : Eigen::Vector3d::Zero();
+  out.f = teleoperation::ema3(prev.f, curr.f, alpha);
+  out.tau = use_torques ? teleoperation::ema3(prev.tau, curr.tau, alpha) : Eigen::Vector3d::Zero();
   return out;
 }
 
@@ -304,7 +285,7 @@ private:
     Eigen::Isometry3d out = Eigen::Isometry3d::Identity();
     out.translation() = Eigen::Vector3d(T.transform.translation.x, T.transform.translation.y, T.transform.translation.z);
     Eigen::Quaterniond q(T.transform.rotation.w, T.transform.rotation.x, T.transform.rotation.y, T.transform.rotation.z);
-    if (q.norm() < kEps) return false;
+    if (q.norm() < teleoperation::kMathEps) return false;
     q.normalize();
     out.linear() = q.toRotationMatrix();
     T_base_tcp = out;
@@ -423,7 +404,7 @@ private:
                              target_pose_base.pose.orientation.x,
                              target_pose_base.pose.orientation.y,
                              target_pose_base.pose.orientation.z);
-    if (q_tgt.norm() < kEps)
+    if (q_tgt.norm() < teleoperation::kMathEps)
     {
       publishZero("bad target quaternion");
       return;
@@ -452,11 +433,11 @@ private:
       wrench_filt_ = w;
     }
     wrench_filt_.f = teleoperation::applyDeadbandAbs(wrench_filt_.f, force_deadband_);
-    wrench_filt_.f = clampNorm3(wrench_filt_.f, max_force_);
+    wrench_filt_.f = teleoperation::clampNorm3(wrench_filt_.f, max_force_);
     if (use_torques_)
     {
       wrench_filt_.tau = teleoperation::applyDeadbandAbs(wrench_filt_.tau, torque_deadband_);
-      wrench_filt_.tau = clampNorm3(wrench_filt_.tau, max_torque_);
+      wrench_filt_.tau = teleoperation::clampNorm3(wrench_filt_.tau, max_torque_);
     }
     else
     {
@@ -490,13 +471,13 @@ private:
 
     // Compliance term (velocity from force)
     Eigen::Vector3d v_comp_lin = -k_adm_linear_ * wrench_filt_.f;
-    v_comp_lin = clampNorm3(v_comp_lin, max_compliance_linear_speed_);
+    v_comp_lin = teleoperation::clampNorm3(v_comp_lin, max_compliance_linear_speed_);
     v_cmd_lin += v_comp_lin;
 
     if (use_torques_)
     {
       Eigen::Vector3d v_comp_ang = -k_adm_angular_ * wrench_filt_.tau;
-      v_comp_ang = clampNorm3(v_comp_ang, max_compliance_angular_speed_);
+      v_comp_ang = teleoperation::clampNorm3(v_comp_ang, max_compliance_angular_speed_);
       v_cmd_ang += v_comp_ang;
     }
 
@@ -531,8 +512,8 @@ private:
       }
     }
 
-    v_cmd_lin = clampNorm3(v_cmd_lin, max_linear_speed_);
-    v_cmd_ang = clampNorm3(v_cmd_ang, max_angular_speed_);
+    v_cmd_lin = teleoperation::clampNorm3(v_cmd_lin, max_linear_speed_);
+    v_cmd_ang = teleoperation::clampNorm3(v_cmd_ang, max_angular_speed_);
 
     geometry_msgs::Twist cmd;
     cmd.linear.x = v_cmd_lin.x();

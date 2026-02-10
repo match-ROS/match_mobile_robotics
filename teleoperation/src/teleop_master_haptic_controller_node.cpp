@@ -15,42 +15,10 @@
 #include <mutex>
 #include <string>
 
-namespace
-{
-constexpr double kEps = 1e-12;
+#include "teleoperation/core/math_utils.hpp"
+#include "teleoperation/core/types.hpp"
 
-Eigen::Vector3d clampNorm3(const Eigen::Vector3d& v, double max_norm)
-{
-  if (max_norm <= kEps) return Eigen::Vector3d::Zero();
-  const double n = v.norm();
-  if (n > max_norm && n > kEps) return v * (max_norm / n);
-  return v;
-}
-
-Eigen::Vector3d deadbandAbs3(const Eigen::Vector3d& v, double db)
-{
-  if (db <= 0.0) return v;
-  Eigen::Vector3d out = v;
-  for (int i = 0; i < 3; ++i)
-  {
-    if (std::abs(out[i]) < db) out[i] = 0.0;
-  }
-  return out;
-}
-
-Eigen::Vector3d ema3(const Eigen::Vector3d& prev, const Eigen::Vector3d& curr, double alpha)
-{
-  const double a = std::clamp(alpha, 0.0, 1.0);
-  return a * curr + (1.0 - a) * prev;
-}
-
-struct Wrench3
-{
-  Eigen::Vector3d f{Eigen::Vector3d::Zero()};
-  Eigen::Vector3d tau{Eigen::Vector3d::Zero()};
-};
-
-}  // namespace
+using Wrench3 = teleoperation::Wrench3;
 
 class TeleopMasterHapticController
 {
@@ -219,16 +187,16 @@ private:
   {
     Wrench3 out;
 
-    const Eigen::Vector3d f0 = use_filter ? ema3(prev.f, curr.f, alpha) : curr.f;
-    const Eigen::Vector3d t0 = use_filter ? ema3(prev.tau, curr.tau, alpha) : curr.tau;
+    const Eigen::Vector3d f0 = use_filter ? teleoperation::ema3(prev.f, curr.f, alpha) : curr.f;
+    const Eigen::Vector3d t0 = use_filter ? teleoperation::ema3(prev.tau, curr.tau, alpha) : curr.tau;
 
-    out.f = deadbandAbs3(f0, force_db);
-    out.f = clampNorm3(out.f, max_f);
+    out.f = teleoperation::applyDeadbandAbs3(f0, force_db);
+    out.f = teleoperation::clampNorm3(out.f, max_f);
 
     if (use_torques)
     {
-      out.tau = deadbandAbs3(t0, torque_db);
-      out.tau = clampNorm3(out.tau, max_tau);
+      out.tau = teleoperation::applyDeadbandAbs3(t0, torque_db);
+      out.tau = teleoperation::clampNorm3(out.tau, max_tau);
     }
     else
     {
@@ -372,13 +340,13 @@ private:
 
     const Eigen::Vector3d a_lin = (F_hand - F_feedback - d_lin * v_lin_cmd_) / m_lin;
     v_lin_cmd_ = v_lin_cmd_ + a_lin * dt;
-    v_lin_cmd_ = clampNorm3(v_lin_cmd_, max_linear_speed_);
+    v_lin_cmd_ = teleoperation::clampNorm3(v_lin_cmd_, max_linear_speed_);
 
     if (use_torques_)
     {
       const Eigen::Vector3d a_ang = (Tau_hand - Tau_feedback - d_ang * v_ang_cmd_) / m_ang;
       v_ang_cmd_ = v_ang_cmd_ + a_ang * dt;
-      v_ang_cmd_ = clampNorm3(v_ang_cmd_, max_angular_speed_);
+      v_ang_cmd_ = teleoperation::clampNorm3(v_ang_cmd_, max_angular_speed_);
     }
     else
     {

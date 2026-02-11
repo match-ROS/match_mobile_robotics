@@ -25,12 +25,12 @@
   <arg name="wrench_frame_id" default="$(eval arg('robot_name') + '/' + arg('arm_ns') + '/' + arg('base_frame'))" />
 
   <!-- Publish wrench fast enough to satisfy teleop watchdog -->
-  <arg name="wrench_publish_rate" default="250.0" />
+  <arg name="wrench_publish_rate" default="100.0" />
 
   <!-- Admittance controller params (start conservative) -->
   <arg name="mass_linear" default="6.0" />
   <arg name="damping_linear" default="60.0" />
-  <arg name="max_linear_speed" default="0.3" />
+  <arg name="max_linear_speed" default="0.2" />
 
   <node pkg="teleoperation"
         type="teleop_master_haptic_controller"

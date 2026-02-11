@@ -1,0 +1,73 @@
+<launch>
+  <!--
+    Test-only launch to move the *simulated* left UR arm using the teleoperation admittance controller.
+
+    Assumes you already started:
+      roslaunch mur_bringup single_mur620_gazebo.launch robot_name:=mur620
+      roslaunch mur_bringup mur620_twist_control_sim.launch robot_name:=mur620 use_dual_arm:=false single_arm:=left
+
+    This launch does NOT require real load-cell data: it publishes a held fake WrenchStamped.
+  -->
+
+  <arg name="robot_name" default="mur620" />
+  <arg name="arm_ns" default="UR10_l" />
+
+  <!-- Where to send the twist command (input of safe_velocity_relay) -->
+  <arg name="command_topic" default="/$(arg robot_name)/$(arg arm_ns)/commanded_twist_safe" />
+
+  <!-- Fake wrench interface -->
+  <arg name="wrench_topic" default="/teleop_test/master_wrench" />
+  <arg name="wrench_setpoint_topic" default="/teleop_test/master_wrench_setpoint" />
+  <!-- Frame naming:
+       TF frame ids are NOT automatically namespaced like topics. Build a full TF id here, and reuse it everywhere.
+       Override wrench_frame_id at runtime if your TF tree uses a different convention. -->
+  <arg name="base_frame" default="base_link" />
+  <arg name="wrench_frame_id" default="$(eval arg('robot_name') + '/' + arg('arm_ns') + '/' + arg('base_frame'))" />
+
+  <!-- Publish wrench fast enough to satisfy teleop watchdog -->
+  <arg name="wrench_publish_rate" default="250.0" />
+
+  <!-- Admittance controller params (start conservative) -->
+  <arg name="mass_linear" default="6.0" />
+  <arg name="damping_linear" default="60.0" />
+  <arg name="max_linear_speed" default="0.3" />
+
+  <node pkg="teleoperation"
+        type="teleop_master_haptic_controller"
+        name="teleop_master_haptic_controller"
+        output="screen">
+    <rosparam command="load"
+              file="$(find teleoperation)/config/bilateral_master_haptic.yaml"
+              subst_value="true" />
+
+    <!-- Inputs -->
+    <param name="master_wrench_topic" value="$(arg wrench_topic)" />
+    <param name="slave_wrench_topic" value="" />
+    <param name="coupling_wrench_topic" value="" />
+    <param name="wrench_target_frame" value="$(arg wrench_frame_id)" />
+
+    <!-- Output -->
+    <param name="command_topic" value="$(arg command_topic)" />
+
+    <!-- Conservative dynamics -->
+    <param name="mass_linear" value="$(arg mass_linear)" />
+    <param name="damping_linear" value="$(arg damping_linear)" />
+    <param name="max_linear_speed" value="$(arg max_linear_speed)" />
+
+    <!-- For this test: keep angular part off -->
+    <param name="use_torques" value="false" />
+    <param name="torque_reflection_scale" value="0.0" />
+  </node>
+
+  <node pkg="teleoperation"
+        type="fake_wrench_hold_publisher.py"
+        name="fake_wrench_hold_publisher"
+        output="screen">
+    <param name="wrench_topic" value="$(arg wrench_topic)" />
+    <param name="setpoint_topic" value="$(arg wrench_setpoint_topic)" />
+    <param name="publish_rate" value="$(arg wrench_publish_rate)" />
+    <param name="frame_id" value="$(arg wrench_frame_id)" />
+    <param name="use_msg_frame_id" value="false" />
+  </node>
+</launch>
+

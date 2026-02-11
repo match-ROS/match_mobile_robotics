@@ -1,0 +1,97 @@
+<launch>
+  <!--
+    Helper launch to enable Twist control for the UR arms in Gazebo.
+
+    Intended usage (example):
+      roslaunch mur_bringup single_mur620_gazebo.launch
+      roslaunch mur_bringup mur620_twist_control_sim.launch
+
+    What it does:
+      - switches the arm controllers from MoveIt trajectory controllers to joint group velocity controllers
+      - starts the Twist->joint-velocity simulator nodes (one per arm) that listen on:
+          /<robot_name>/UR10_l/commanded_twist
+          /<robot_name>/UR10_r/commanded_twist
+  -->
+
+  <arg name="robot_name" default="mur620" />
+
+  <!-- Controller switching mode -->
+  <arg name="use_dual_arm" default="false" doc="If true, switch both arms to velocity control. If false, switch only one arm."/>
+  <arg name="single_arm" default="left" doc="Used only when use_dual_arm:=false. Values: left or right."/>
+
+  <!-- Ensure/switch script params -->
+  <arg name="controller_manager_ns" default="controller_manager" doc="Controller manager namespace, relative to the robot namespace (e.g. /mur620)." />
+  <arg name="auto_load" default="true" />
+  <arg name="auto_switch_to_velocity" default="true" />
+
+  <!-- Twist simulator startup delay (MoveIt + controllers need time) -->
+  <arg name="twist_start_delay" default="8.0" />
+
+  <!-- Naming conventions in this workspace -->
+  <arg name="ur_prefix_l" default="UR10_l" />
+  <arg name="ur_prefix_r" default="UR10_r" />
+  <arg name="move_group_name_l" default="UR_arm_l" />
+  <arg name="move_group_name_r" default="UR_arm_r" />
+
+  <!-- 1) Ensure/switch controllers -->
+  <node if="$(arg use_dual_arm)"
+        ns="$(arg robot_name)"
+        pkg="cartesian_velocity_controller"
+        type="ensure_mur620_dual_arm_velocity_controllers.py"
+        name="ensure_dual_arm_velocity_controllers"
+        output="screen">
+    <param name="controller_manager_ns" value="$(arg controller_manager_ns)" />
+    <param name="auto_load" value="$(arg auto_load)" />
+    <param name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
+  </node>
+
+  <node unless="$(arg use_dual_arm)"
+        ns="$(arg robot_name)"
+        pkg="cartesian_velocity_controller"
+        type="ensure_mur620_single_arm_velocity_controller.py"
+        name="ensure_single_arm_velocity_controller"
+        output="screen">
+    <param name="controller_manager_ns" value="$(arg controller_manager_ns)" />
+    <param name="arm" value="$(arg single_arm)" />
+    <param name="auto_load" value="$(arg auto_load)" />
+    <param name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
+  </node>
+
+  <!-- 2) Twist simulators (one per arm, unless single-arm mode is requested) -->
+  <include if="$(eval arg('use_dual_arm') or arg('single_arm') == 'left')"
+           file="$(find mur_control)/launch/twist_controller_sim.launch">
+    <arg name="robot_name" value="$(arg robot_name)" />
+    <arg name="group_vel_controller_topic" value="/$(arg robot_name)/joint_group_vel_controller_l/unsafe/command" />
+    <arg name="commanded_twist_topic" value="/$(arg robot_name)/$(arg ur_prefix_l)/commanded_twist" />
+    <arg name="move_group_name" value="$(arg move_group_name_l)" />
+    <arg name="start_delay" value="$(arg twist_start_delay)" />
+  </include>
+
+  <include if="$(eval arg('use_dual_arm') or arg('single_arm') == 'right')"
+           file="$(find mur_control)/launch/twist_controller_sim.launch">
+    <arg name="robot_name" value="$(arg robot_name)" />
+    <arg name="group_vel_controller_topic" value="/$(arg robot_name)/joint_group_vel_controller_r/unsafe/command" />
+    <arg name="commanded_twist_topic" value="/$(arg robot_name)/$(arg ur_prefix_r)/commanded_twist" />
+    <arg name="move_group_name" value="$(arg move_group_name_r)" />
+    <arg name="start_delay" value="$(arg twist_start_delay)" />
+  </include>
+
+  <!-- 3) Safety relay (publish to commanded_twist; user publishes to commanded_twist_safe) -->
+  <include if="$(eval arg('use_dual_arm') or arg('single_arm') == 'left')"
+           file="$(find safe_velocity_relay)/launch/safe_velocity_relay_robot_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_name)" />
+    <arg name="arm_ns" value="$(arg ur_prefix_l)" />
+    <arg name="name" value="safe_velocity_relay_commanded_twist" />
+    <arg name="yaml_file" value="$(find safe_velocity_relay)/config/mur620_commanded_twist_safe.yaml" />
+  </include>
+
+  <include if="$(eval arg('use_dual_arm') or arg('single_arm') == 'right')"
+           file="$(find safe_velocity_relay)/launch/safe_velocity_relay_robot_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_name)" />
+    <arg name="arm_ns" value="$(arg ur_prefix_r)" />
+    <arg name="name" value="safe_velocity_relay_commanded_twist" />
+    <arg name="yaml_file" value="$(find safe_velocity_relay)/config/mur620_commanded_twist_safe.yaml" />
+  </include>
+
+</launch>
+

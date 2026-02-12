@@ -10,6 +10,8 @@
 #include <string>
 
 #include "teleoperation/core/math_utils.hpp"
+#include "teleoperation/core/types.hpp"
+#include "teleoperation/core/wrench_debug_publisher.hpp"
 
 namespace
 {
@@ -75,6 +77,10 @@ public:
 
     pub_l_ = nh_.advertise<geometry_msgs::WrenchStamped>(coupling_left_wrench_topic_, 1);
     pub_r_ = nh_.advertise<geometry_msgs::WrenchStamped>(coupling_right_wrench_topic_, 1);
+    debug_left_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
+                              "filtered_coupling_left_wrench_topic", "debug/coupling_wrench_left_filtered");
+    debug_right_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
+                               "filtered_coupling_right_wrench_topic", "debug/coupling_wrench_right_filtered");
 
     const double period = (rate_ > 0.0) ? (1.0 / rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopBimanualCoupling::tick, this);
@@ -208,6 +214,15 @@ private:
 
     pub_l_.publish(wl);
     pub_r_.publish(wr);
+
+    teleoperation::Wrench3 wl_dbg;
+    wl_dbg.f = F_filt_;
+    wl_dbg.tau.setZero();
+    teleoperation::Wrench3 wr_dbg;
+    wr_dbg.f = -F_filt_;
+    wr_dbg.tau.setZero();
+    debug_left_filt_pub_.publish(wl_dbg, now, output_frame_id_);
+    debug_right_filt_pub_.publish(wr_dbg, now, output_frame_id_);
   }
 
 private:
@@ -238,6 +253,8 @@ private:
   ros::Subscriber sub_s_r_;
   ros::Publisher pub_l_;
   ros::Publisher pub_r_;
+  teleoperation::WrenchDebugPublisher debug_left_filt_pub_;
+  teleoperation::WrenchDebugPublisher debug_right_filt_pub_;
   ros::Timer timer_;
 
   // State

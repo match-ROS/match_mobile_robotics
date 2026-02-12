@@ -13,6 +13,7 @@
 #include <string>
 
 #include "teleoperation/core/math_utils.hpp"
+#include "teleoperation/core/wrench_debug_publisher.hpp"
 #include "teleoperation/core/tf_utils.hpp"
 #include "teleoperation/core/types.hpp"
 #include "teleoperation/core/wrench_utils.hpp"
@@ -30,6 +31,8 @@ public:
     pnh_.param<std::string>("master_wrench_topic", master_wrench_topic_, "wrench");
     pnh_.param<std::string>("slave_wrench_topic", slave_wrench_topic_, "");
     pnh_.param<std::string>("coupling_wrench_topic", coupling_wrench_topic_, "");
+    pnh_.param<std::string>("wrench_source_frame_override", wrench_source_frame_override_, "");
+    pnh_.param<bool>("use_latest_tf_for_wrench", use_latest_tf_for_wrench_, use_latest_tf_for_wrench_);
 
     pnh_.param<std::string>("wrench_target_frame", wrench_target_frame_, "base_link");
     pnh_.param<double>("tf_timeout_s", tf_timeout_s_, tf_timeout_s_);
@@ -79,6 +82,12 @@ public:
     }
 
     pub_cmd_ = nh_.advertise<geometry_msgs::Twist>(command_topic_, 1);
+    debug_master_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
+                                "filtered_master_wrench_topic", "debug/master_wrench_filtered");
+    debug_slave_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
+                               "filtered_slave_wrench_topic", "debug/slave_wrench_filtered");
+    debug_coupling_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
+                                  "filtered_coupling_wrench_topic", "debug/coupling_wrench_filtered");
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopMasterHapticController::tick, this);
@@ -91,8 +100,8 @@ private:
     const Eigen::Vector3d t_src = teleoperation::vector3MsgToEigen(msg.wrench.torque);
 
     Eigen::Vector3d f_tgt, t_tgt;
-    const std::string src_frame = msg.header.frame_id;
-    const ros::Time stamp = msg.header.stamp;
+    const std::string src_frame = wrench_source_frame_override_.empty() ? msg.header.frame_id : wrench_source_frame_override_;
+    const ros::Time stamp = use_latest_tf_for_wrench_ ? ros::Time(0) : msg.header.stamp;
 
     if (!teleoperation::rotateVectorToFrame(tf_buffer_, wrench_target_frame_, src_frame, stamp, tf_timeout_s_,
                                             f_src, f_tgt, "teleop_master_haptic_controller"))
@@ -263,6 +272,10 @@ private:
       coupling_filt_.tau.setZero();
     }
 
+    debug_master_filt_pub_.publish(master_filt_, now, wrench_target_frame_);
+    debug_slave_filt_pub_.publish(slave_filt_, now, wrench_target_frame_);
+    debug_coupling_filt_pub_.publish(coupling_filt_, now, wrench_target_frame_);
+
     // Admittance dynamics (linear + optional angular).
     const Eigen::Vector3d F_hand = master_filt_.f;
     const Eigen::Vector3d Tau_hand = master_filt_.tau;
@@ -311,12 +324,17 @@ private:
   ros::Subscriber sub_slave_wrench_;
   ros::Subscriber sub_coupling_wrench_;
   ros::Publisher pub_cmd_;
+  teleoperation::WrenchDebugPublisher debug_master_filt_pub_;
+  teleoperation::WrenchDebugPublisher debug_slave_filt_pub_;
+  teleoperation::WrenchDebugPublisher debug_coupling_filt_pub_;
   ros::Timer timer_;
 
   // Params
   std::string master_wrench_topic_;
   std::string slave_wrench_topic_;
   std::string coupling_wrench_topic_;
+  std::string wrench_source_frame_override_;
+  bool use_latest_tf_for_wrench_{false};
   std::string wrench_target_frame_;
   double tf_timeout_s_{0.02};
 

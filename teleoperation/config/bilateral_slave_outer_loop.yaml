@@ -37,6 +37,8 @@ teleop_slave_twist_outer_loop:
   torque_deadband: 0.2
   max_force: 150.0
   max_torque: 20.0
+  publish_filtered_wrench_debug: false
+  filtered_wrench_topic: debug/wrench_filtered
 
   # Velocity limits
   max_linear_speed: 0.20

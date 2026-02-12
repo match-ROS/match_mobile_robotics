@@ -1,0 +1,38 @@
+teleop_master_haptic_controller:
+  master_wrench_topic: /mur620b/UR10_l/wrench
+  slave_wrench_topic: ""
+  coupling_wrench_topic: ""
+
+  # Use the real TCP frame when incoming wrench header.frame_id is not valid in TF.
+  wrench_source_frame_override: mur620b/UR10_l/tool0
+  use_latest_tf_for_wrench: true
+  wrench_target_frame: mur620b/UR10_l/base_link_inertia
+  tf_timeout_s: 0.02
+
+  command_topic: /mur620b/UR10_l/twist_controller/command_collision_free
+  control_rate: 100.0
+
+  # Conservative master-only admittance for first real tests.
+  mass_linear: 8.0
+  damping_linear: 90.0
+  mass_angular: 1.0
+  damping_angular: 8.0
+  force_reflection_scale: 0.0
+  torque_reflection_scale: 0.0
+  use_torques: false
+
+  wrench_filter_alpha: 0.5
+  force_deadband: 5.0
+  torque_deadband: 0.8
+  max_force: 150.0
+  max_torque: 20.0
+  publish_filtered_wrench_debug: true
+  filtered_master_wrench_topic: /teleop_debug/mur620b_UR10_l/master_wrench_filtered
+  #filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
+  #filtered_coupling_wrench_topic: /teleop_debug/mur620b_UR10_l/coupling_wrench_filtered
+
+  max_linear_speed: 0.15
+  max_angular_speed: 0.3
+
+  wrench_timeout_s: 0.2
+  reset_on_stale: true

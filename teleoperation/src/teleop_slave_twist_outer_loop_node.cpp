@@ -22,6 +22,7 @@
 #include "teleoperation/core/math_utils.hpp"
 #include "teleoperation/core/tf_utils.hpp"
 #include "teleoperation/core/types.hpp"
+#include "teleoperation/core/wrench_debug_publisher.hpp"
 #include "teleoperation/core/wrench_utils.hpp"
 
 namespace
@@ -117,6 +118,8 @@ public:
                                 ros::TransportHints().tcpNoDelay());
 
     pub_cmd_ = nh_.advertise<geometry_msgs::Twist>(command_topic_, 1);
+    debug_wrench_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
+                                "filtered_wrench_topic", "debug/wrench_filtered");
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopSlaveTwistOuterLoop::tick, this);
@@ -394,6 +397,7 @@ private:
                                                                wrench_filter_alpha_, force_deadband_, torque_deadband_,
                                                                max_force_, max_torque_, use_torques_);
     }
+    debug_wrench_filt_pub_.publish(wrench_filt_, now, base_frame_);
 
     // Hard guard logic (force)
     const double f_norm = wrench_filt_.f.norm();
@@ -490,6 +494,7 @@ private:
   ros::Subscriber sub_ff_twist_;
   ros::Subscriber sub_wrench_;
   ros::Publisher pub_cmd_;
+  teleoperation::WrenchDebugPublisher debug_wrench_filt_pub_;
   ros::Timer timer_;
 
   // Params

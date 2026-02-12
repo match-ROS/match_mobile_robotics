@@ -20,6 +20,12 @@ teleop_master_haptic_controller:
   # - Topics can be relative (resolved in node namespace) or absolute (/...).
   master_wrench_topic: wrench
   slave_wrench_topic: ""
+  # Optional source-frame override for incoming wrench messages. Useful when
+  # header.frame_id is wrong or unavailable in TF.
+  wrench_source_frame_override: ""
+  # If true, TF rotation uses latest available transform (ros::Time(0)) instead
+  # of wrench message stamp. Useful when sensor/TF timestamps are slightly skewed.
+  use_latest_tf_for_wrench: false
 
   # Optional external coupling wrench.
   # Expected in the same physical convention as the other wrenches and expressed
@@ -63,6 +69,12 @@ teleop_master_haptic_controller:
   torque_deadband: 0.2
   max_force: 150.0
   max_torque: 20.0
+
+  # Optional debug publishers for filtered wrench channels (master/slave/coupling).
+  publish_filtered_wrench_debug: false
+  filtered_master_wrench_topic: debug/master_wrench_filtered
+  filtered_slave_wrench_topic: debug/slave_wrench_filtered
+  filtered_coupling_wrench_topic: debug/coupling_wrench_filtered
 
   # Safety limits on generated twist command.
   max_linear_speed: 0.25

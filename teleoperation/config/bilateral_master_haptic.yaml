@@ -1,42 +1,76 @@
 teleop_master_haptic_controller:
+  # ---------------------------------------------------------------------------
+  # Master haptic admittance controller parameters (private namespace: "~").
+  #
+  # How this file is used:
+  # - Typical flow: a launch file does <rosparam load ...bilateral_master_haptic.yaml>
+  #   and then overrides a subset of params with <param ...>.
+  # - In this repo, this happens in:
+  #   - launch/bilateral_pair.launch
+  #   - launch/mur620_left_master_admittance_test.launch
+  #
+  # Practical note:
+  # - Keep conservative defaults here.
+  # - Set robot/topic specific values (topic names, frames, command topic) in launch.
+  # ---------------------------------------------------------------------------
+
   # Input wrenches (absolute or relative; typical for UR: "<ns>/wrench")
+  # - master_wrench_topic: required, otherwise the node only publishes zero.
+  # - slave_wrench_topic: optional, if empty force reflection is disabled.
+  # - Topics can be relative (resolved in node namespace) or absolute (/...).
   master_wrench_topic: wrench
   slave_wrench_topic: ""
 
-  # Optional (phase2): additional coupling wrench already expressed in wrench_target_frame
+  # Optional external coupling wrench.
+  # Expected in the same physical convention as the other wrenches and expressed
+  # in wrench_target_frame (or transformable to it via TF).
   coupling_wrench_topic: ""
 
-  # Express wrenches in this frame (within the master TF tree)
+  # Frame where all wrench vectors are expressed before control.
+  # For reliability, pass this from launch to match your TF tree.
   wrench_target_frame: base_link
+  # TF lookup timeout used when rotating wrench vectors between frames.
   tf_timeout_s: 0.02
 
-  # Output command (typically remapped to ".../twist_controller/controller_input" or passed through ur_twist_limiter)
+  # Output twist command.
+  # Usually set/remapped in launch to your velocity pipeline (for example
+  # twist limiter / relay input topic).
   command_topic: twist_controller/command
+  # Main control loop frequency [Hz].
   control_rate: 250.0
 
-  # Virtual dynamics
+  # Virtual admittance dynamics:
+  #   a = (F_hand - F_feedback - D*v) / M
+  # Higher mass/damping => slower, smoother response.
   mass_linear: 4.0
   damping_linear: 40.0
   mass_angular: 1.0
   damping_angular: 5.0
 
-  # Force reflection (start low)
+  # Reflection gains from slave wrench (plus optional coupling wrench).
+  # Start low and increase carefully.
   force_reflection_scale: 0.3
   torque_reflection_scale: 0.0
+  # If false, torque channel is ignored (angular command part set to zero).
   use_torques: false
 
-  # Wrench filtering/clamps
+  # Wrench preprocessing:
+  # - EMA filter on incoming wrench (alpha in [0,1], 0 = no filtering).
+  # - Deadband removes small noise.
+  # - Norm clamps bound force/torque magnitude.
   wrench_filter_alpha: 0.07
   force_deadband: 1.0
   torque_deadband: 0.2
   max_force: 150.0
   max_torque: 20.0
 
-  # Command clamps
+  # Safety limits on generated twist command.
   max_linear_speed: 0.25
   max_angular_speed: 0.4
 
-  # Watchdog
+  # Watchdog on wrench freshness.
+  # If a required input becomes stale, the node publishes zero twist.
   wrench_timeout_s: 0.2
+  # If true, also reset internal controller state on stale data.
   reset_on_stale: true
 

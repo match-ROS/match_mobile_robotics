@@ -3,9 +3,6 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/WrenchStamped.h>
 
-#include <tf2/LinearMath/Quaternion.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <Eigen/Core>
@@ -16,7 +13,9 @@
 #include <string>
 
 #include "teleoperation/core/math_utils.hpp"
+#include "teleoperation/core/tf_utils.hpp"
 #include "teleoperation/core/types.hpp"
+#include "teleoperation/core/wrench_utils.hpp"
 
 using Wrench3 = teleoperation::Wrench3;
 
@@ -86,56 +85,25 @@ public:
   }
 
 private:
-  static Eigen::Vector3d vecFromMsg(const geometry_msgs::Vector3& v)
-  {
-    return Eigen::Vector3d(v.x, v.y, v.z);
-  }
-
-  bool rotateToTargetFrame(const std::string& source_frame,
-                           const ros::Time& stamp,
-                           const Eigen::Vector3d& v_in,
-                           Eigen::Vector3d& v_out) const
-  {
-    if (source_frame.empty() || source_frame == wrench_target_frame_)
-    {
-      v_out = v_in;
-      return true;
-    }
-
-    try
-    {
-      const geometry_msgs::TransformStamped tf =
-          tf_buffer_.lookupTransform(wrench_target_frame_, source_frame,
-                                     stamp.isZero() ? ros::Time(0) : stamp,
-                                     ros::Duration(tf_timeout_s_));
-      tf2::Quaternion q;
-      tf2::fromMsg(tf.transform.rotation, q);
-      tf2::Matrix3x3 R(q);
-      const tf2::Vector3 vin(v_in.x(), v_in.y(), v_in.z());
-      const tf2::Vector3 vout = R * vin;
-      v_out = Eigen::Vector3d(vout.x(), vout.y(), vout.z());
-      return true;
-    }
-    catch (const tf2::TransformException& ex)
-    {
-      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
-                              "TF rotate failed (%s -> %s): %s",
-                              source_frame.c_str(), wrench_target_frame_.c_str(), ex.what());
-      return false;
-    }
-  }
-
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
   {
-    const Eigen::Vector3d f_src = vecFromMsg(msg.wrench.force);
-    const Eigen::Vector3d t_src = vecFromMsg(msg.wrench.torque);
+    const Eigen::Vector3d f_src = teleoperation::vector3MsgToEigen(msg.wrench.force);
+    const Eigen::Vector3d t_src = teleoperation::vector3MsgToEigen(msg.wrench.torque);
 
     Eigen::Vector3d f_tgt, t_tgt;
     const std::string src_frame = msg.header.frame_id;
     const ros::Time stamp = msg.header.stamp;
 
-    if (!rotateToTargetFrame(src_frame, stamp, f_src, f_tgt)) return false;
-    if (!rotateToTargetFrame(src_frame, stamp, t_src, t_tgt)) return false;
+    if (!teleoperation::rotateVectorToFrame(tf_buffer_, wrench_target_frame_, src_frame, stamp, tf_timeout_s_,
+                                            f_src, f_tgt, "teleop_master_haptic_controller"))
+    {
+      return false;
+    }
+    if (!teleoperation::rotateVectorToFrame(tf_buffer_, wrench_target_frame_, src_frame, stamp, tf_timeout_s_,
+                                            t_src, t_tgt, "teleop_master_haptic_controller"))
+    {
+      return false;
+    }
 
     out.f = f_tgt;
     out.tau = t_tgt;
@@ -173,37 +141,6 @@ private:
     coupling_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
     coupling_wrench_raw_ = w;
     has_coupling_ = true;
-  }
-
-  static Wrench3 filterClampDeadbandWrench(const Wrench3& prev,
-                                           const Wrench3& curr,
-                                           bool use_filter,
-                                           double alpha,
-                                           double force_db,
-                                           double torque_db,
-                                           double max_f,
-                                           double max_tau,
-                                           bool use_torques)
-  {
-    Wrench3 out;
-
-    const Eigen::Vector3d f0 = use_filter ? teleoperation::ema3(prev.f, curr.f, alpha) : curr.f;
-    const Eigen::Vector3d t0 = use_filter ? teleoperation::ema3(prev.tau, curr.tau, alpha) : curr.tau;
-
-    out.f = teleoperation::applyDeadbandAbs3(f0, force_db);
-    out.f = teleoperation::clampNorm3(out.f, max_f);
-
-    if (use_torques)
-    {
-      out.tau = teleoperation::applyDeadbandAbs3(t0, torque_db);
-      out.tau = teleoperation::clampNorm3(out.tau, max_tau);
-    }
-    else
-    {
-      out.tau.setZero();
-    }
-
-    return out;
   }
 
   void publishZero()
@@ -281,9 +218,9 @@ private:
     }
     else
     {
-      master_filt_ = filterClampDeadbandWrench(master_filt_, master_raw, wrench_filter_alpha_ > 0.0,
-                                               wrench_filter_alpha_, force_deadband_, torque_deadband_,
-                                               max_force_, max_torque_, use_torques_);
+      master_filt_ = teleoperation::filterClampDeadbandWrench(master_filt_, master_raw, wrench_filter_alpha_ > 0.0,
+                                                               wrench_filter_alpha_, force_deadband_, torque_deadband_,
+                                                               max_force_, max_torque_, use_torques_);
     }
 
     if (has_slave)
@@ -295,9 +232,9 @@ private:
       }
       else
       {
-        slave_filt_ = filterClampDeadbandWrench(slave_filt_, slave_raw, wrench_filter_alpha_ > 0.0,
-                                                wrench_filter_alpha_, force_deadband_, torque_deadband_,
-                                                max_force_, max_torque_, use_torques_);
+        slave_filt_ = teleoperation::filterClampDeadbandWrench(slave_filt_, slave_raw, wrench_filter_alpha_ > 0.0,
+                                                                wrench_filter_alpha_, force_deadband_, torque_deadband_,
+                                                                max_force_, max_torque_, use_torques_);
       }
     }
     else
@@ -315,9 +252,9 @@ private:
       }
       else
       {
-        coupling_filt_ = filterClampDeadbandWrench(coupling_filt_, coupling_raw, wrench_filter_alpha_ > 0.0,
-                                                   wrench_filter_alpha_, force_deadband_, torque_deadband_,
-                                                   max_force_, max_torque_, use_torques_);
+        coupling_filt_ = teleoperation::filterClampDeadbandWrench(coupling_filt_, coupling_raw, wrench_filter_alpha_ > 0.0,
+                                                                   wrench_filter_alpha_, force_deadband_, torque_deadband_,
+                                                                   max_force_, max_torque_, use_torques_);
       }
     }
     else

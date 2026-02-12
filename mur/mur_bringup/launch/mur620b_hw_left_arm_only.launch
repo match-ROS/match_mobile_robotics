@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find mur_launch_hardware)/launch/mur620b.launch">
+    <arg name="launch_mir" value="false"/>
+    <arg name="launch_ur_l" value="true"/>
+    <arg name="launch_ur_r" value="false"/>
+  </include>
+</launch>

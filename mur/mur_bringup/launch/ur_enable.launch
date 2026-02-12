@@ -1,0 +1,12 @@
+<launch>
+  <!-- Set unique names to launch multiple instances -->
+  <arg name="node_name" default="UR_enable"/>
+
+  <!-- Robot and arm namespaces -->
+  <arg name="robot_ns" default="mur620b"/>
+  <arg name="arm_ns" default="UR10_l"/>
+
+  <node pkg="ur_utilities" type="UR_enable.py" name="$(arg node_name)" output="screen">
+    <param name="ur_hardware_interface_topic" value="$(arg robot_ns)/$(arg arm_ns)/ur_hardware_interface"/>
+  </node>
+</launch>

@@ -9,8 +9,8 @@ robots:
     - /mur620b/UR10_r/UR10_r_enable
     - /mur620b/UR10_r/controller_stopper
     - /mur620b/UR10_r/gripper_interface
-    - /mur620b/UR10_r/pose_composer_rosmaster_40191_1833764174809868928
-    - /mur620b/UR10_r/pose_composer_rosmaster_40191_3353493515075907955
+    - /mur620b/UR10_r/pose_composer_pantanetti_ssd_19324_3278662620335744232
+    - /mur620b/UR10_r/pose_composer_pantanetti_ssd_19324_5687651619463880121
     - /mur620b/UR10_r/ros_control_controller_spawner
     - /mur620b/UR10_r/ros_control_stopped_spawner
     - /mur620b/UR10_r/rosnode_killer
@@ -23,6 +23,7 @@ robots:
     - /mur620b/external_localization_broadcaster
     - /mur620b/f_rep117_laser_filter
     - /mur620b/fake_mir_joint_publisher
+    - /mur620b/joint_state_aggregator
     - /mur620b/light_cmd_transcode
     - /mur620b/light_cmd_transcode_local
     - /mur620b/mir_battery_state_publisher
@@ -35,7 +36,7 @@ robots:
     - /mur620b/rgb_control
     - /mur620b/robot_state_publisher
     - /mur620b/tf_remove_state_publisher_frames
-    updated_at: '2025-12-22 16:21:53'
+    updated_at: '2026-02-12 12:26:03'
   mur620c:
     driver_nodes:
     - /mur620c/UR10_r/UR10_r_enable
@@ -72,7 +73,7 @@ robots:
     spray_distance:
       updated_at: '2025-12-22 16:24:34'
       value: 0.3
-    updated_at: '2025-12-22 16:21:53'
+    updated_at: '2026-02-12 12:26:03'
   mur620d:
     driver_nodes:
     - /mur620d/UR10_r/UR10_r_enable
@@ -109,7 +110,7 @@ robots:
     spray_distance:
       updated_at: '2025-12-22 16:26:12'
       value: 0.9
-    updated_at: '2025-12-22 16:21:53'
+    updated_at: '2026-02-12 12:26:03'
 servo_targets:
   left: 20.0
   right: 100.0

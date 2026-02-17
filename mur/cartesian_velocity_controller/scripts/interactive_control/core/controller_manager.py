@@ -102,6 +102,35 @@ class ControllerManager:
             self._active_controller = self.TYPE_UNKNOWN
             return self._active_controller
         
+        def _aliases(name: str) -> list:
+            """
+            Return a small set of equivalent controller names.
+
+            On real robots it's common to use topics like "<controller>/unsafe/command"
+            (e.g. from a safety relay), while the *controller_manager* controller name
+            is just "<controller>" (without "/unsafe").
+            """
+            n = str(name or "").strip()
+            if not n:
+                return []
+
+            out = [n]
+
+            # Normalize a common pattern: "<name>/unsafe" controller name vs "<name>"
+            # Note: we only strip a trailing path segment "/unsafe" (not any "unsafe" substring).
+            if n.endswith("/unsafe"):
+                out.append(n[: -len("/unsafe")])
+            # Also handle the (less common) "<name>/unsafe/..." in case user passes a nested name.
+            if "/unsafe/" in n:
+                out.append(n.split("/unsafe/")[0])
+
+            # Remove duplicates, preserve order
+            dedup = []
+            for x in out:
+                if x and x not in dedup:
+                    dedup.append(x)
+            return dedup
+
         def _matches(configured: str, reported: str) -> bool:
             """
             Match controller names robustly.
@@ -110,10 +139,17 @@ class ControllerManager:
             We primarily expect exact matches, but allow suffix matches on path
             boundaries (e.g. "/mur620/<name>" vs "<name>").
             """
-            if configured == reported:
-                return True
-            # Suffix match on slash boundary only
-            return reported.endswith(f"/{configured}")
+            rep = str(reported or "").strip()
+            if not rep:
+                return False
+
+            for cfg in _aliases(configured):
+                if cfg == rep:
+                    return True
+                # Suffix match on slash boundary only
+                if rep.endswith(f"/{cfg}"):
+                    return True
+            return False
 
         try:
             response = self._list_srv()
@@ -191,10 +227,10 @@ class ControllerManager:
             rospy.logerr("Controller manager not initialized")
             return False
         
-        try:
+        def _try_switch(start_name: str, stop_name: str) -> bool:
             request = SwitchControllerRequest()
-            request.start_controllers = [start]
-            request.stop_controllers = [stop]
+            request.start_controllers = [start_name]
+            request.stop_controllers = [stop_name]
             # STRICT: atomic operation - if start fails, stop won't execute
             request.strictness = SwitchControllerRequest.STRICT
             request.start_asap = False
@@ -202,20 +238,48 @@ class ControllerManager:
             # (0.0 means "no timeout" in practice for many setups)
             # controller_manager_msgs/SwitchController.srv expects float64 timeout (seconds), not rospy.Duration.
             request.timeout = max(0.0, float(self.switch_timeout_s))
-            
             response = self._switch_srv(request)
-            
             if response.ok:
                 self.update_active_controller()
-                rospy.loginfo(f"Switched controller: stopped {stop}, started {start}")
+                rospy.loginfo(f"Switched controller: stopped {stop_name}, started {start_name}")
                 return True
-            else:
-                rospy.logerr(
-                    f"Controller switch failed. Make sure both controllers are loaded. "
-                    f"Tried to start: {start}, stop: {stop}"
-                )
-                return False
-                
+            return False
+
+        try:
+            # Try the configured names first, then common aliases (e.g. strip "/unsafe").
+            start_candidates = []
+            stop_candidates = []
+            # Reuse alias logic from update_active_controller via local small helper.
+            def _aliases_local(n: str) -> list:
+                n = str(n or "").strip()
+                if not n:
+                    return []
+                out = [n]
+                if n.endswith("/unsafe"):
+                    out.append(n[: -len("/unsafe")])
+                if "/unsafe/" in n:
+                    out.append(n.split("/unsafe/")[0])
+                dedup = []
+                for x in out:
+                    if x and x not in dedup:
+                        dedup.append(x)
+                return dedup
+
+            start_candidates = _aliases_local(start)
+            stop_candidates = _aliases_local(stop)
+
+            for s in start_candidates:
+                for t in stop_candidates:
+                    if _try_switch(s, t):
+                        return True
+
+            rospy.logerr(
+                "Controller switch failed. Make sure both controllers are loaded and that the names "
+                "match controller_manager/list_controllers. "
+                f"Tried start={start_candidates}, stop={stop_candidates}"
+            )
+            return False
+
         except rospy.ServiceException as e:
             rospy.logerr(f"Controller switch service call failed: {e}")
             return False

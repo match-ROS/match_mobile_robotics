@@ -1,0 +1,321 @@
+# =============================================================================
+# Cartesian Velocity Controller - MUR620 Dual-Arm (LEFT) - MVP configuration
+# =============================================================================
+#
+# Notes:
+# - Designed to be launched under the robot namespace (default: /mur620)
+# - Intended for two independent controller instances (L/R)
+# - For MVP: Map3D is disabled (map3d/enabled: false) and repulsion is disabled
+# - Verify frame/link names (tcp_link, repulsion links) against the real URDF/SRDF
+#
+# =============================================================================
+
+# =============================================================================
+# Robot Configuration
+# =============================================================================
+group_name: "UR_arm_l"
+
+# IMPORTANT: verify this on the real model (may be prefixed)
+# NOTE: this must match the URDF link name (MoveIt RobotModel), not the TF-prefixed frame.
+# In mur_620.gazebo.xacro the left arm links are prefixed with "UR10_l/".
+tcp_link: "UR10_l/tool0"
+
+global_frame: "$(arg robot_ns)/base_link"
+
+# =============================================================================
+# Jacobian Frame Conversion (optional)
+# =============================================================================
+# If set, the controller will rotate the Jacobian from jacobian_source_frame into
+# jacobian_target_frame (rotation only) and use that consistently in the control law.
+# Leave jacobian_source_frame empty to preserve legacy behavior (no conversion).
+#
+# TIP: set jacobian_source_frame to the frame/link that MoveIt uses as reference
+# when computing the Jacobian for this group (often the chain root / group base).
+jacobian_source_frame: "$(arg robot_ns)/UR10_l/base_link"
+# Target frame for the Jacobian (defaults to global_frame if omitted)
+jacobian_target_frame: "$(arg robot_ns)/base_link"
+
+# =============================================================================
+# RViz Marker Visualization
+# =============================================================================
+# Prefix added to visualization_msgs/Marker.ns so RViz can group markers per-arm.
+marker_publisher:
+  ns_prefix: "UR10_l"
+
+# Parameter used by MoveIt RobotModelLoader
+# (usually overridden in the launch to point to /mur620/robot_description)
+robot_description_param: "robot_description"
+
+# TCP offset from link (position [x, y, z] in meters)
+tcp_offset_position: [0.0, 0.0, 0.0]
+# TCP offset orientation (roll, pitch, yaw in radians)
+tcp_offset_orientation_rpy: [0.0, 0.0, 0.0]
+
+# =============================================================================
+# ROS Topics and Controller Names
+# =============================================================================
+joint_state_topic: "joint_states"
+velocity_command_topic: "UR10_l/cmd_joint_vel_safe"
+distance_topic: "distance_info"
+
+# Controller switching (MVP: disabled, do it manually)
+start_controller: ""
+stop_controller: ""
+
+# controller_manager namespace (relative to the node namespace)
+controller_manager_ns: "controller_manager"
+
+# =============================================================================
+# Control Loop Configuration
+# =============================================================================
+control_rate: 250.0           # Hz - main control loop frequency
+command_timeout: 0.5         # seconds - timeout for velocity commands
+pose_filter_alpha: 0.8       # EMA blending for TCP pose filtering (0=no filter, 1=raw)
+reset_filter_on_target_change: false  # keep filter state when target changes (continuity)
+
+# Startup behavior:
+# - "hold_current_pose" (default): capture current TCP pose and hold it as initial target
+# - "zero_velocity": publish zero joint velocities and idle until a target_pose is received
+startup_behavior: "hold_current_pose"
+
+# =============================================================================
+# Level C: Cartesian Velocity Filter dt policy (robust to loop jitter)
+# =============================================================================
+cartesian_velocity_filter:
+  dt_nominal: 0.01
+  min_dt: 0.0005
+  max_dt: 0.05
+  max_substeps: 10
+  reset_dt_threshold: 0.25
+  large_dt_policy: "hold_last"
+  uniform_scaling_enabled: true
+
+# =============================================================================
+# Level A: Global Planner Configuration
+# =============================================================================
+global_planner:
+  waypoint_switch_distance: 0.02
+  orientation_switch_threshold: 0.05
+  use_orientation_for_switch: true
+
+# =============================================================================
+# Level B: Local Planner Configuration (Attractive Component Only)
+# =============================================================================
+local_planner:
+  attractive_gain: 2.0
+  max_linear_velocity: &max_linear_velocity 0.25
+  max_angular_velocity: &max_angular_velocity 1.0
+  velocity_scale_factor: 1.0
+  integration_freeze_linear: 0.0001
+  integration_freeze_angular: 0.001
+
+  # MVP: disable repulsion
+  repulsive_enabled: false
+  repulsive_obstacle_gain: 0.0
+  repulsive_link_gain: 0.0
+  influence_distance: 0.8
+  min_safe_distance: 0.1
+  repulsive_velocity_profile: "QUADRATIC"
+  repulsive_filter_tau_rise: 0.00
+  repulsive_filter_tau_fall: 0.00
+  repulsive_max_acc_rise: 0.0
+  repulsive_max_acc_fall: 0.0
+
+  leash_enabled: true
+  leash_start_distance: 0.10
+  leash_stop_distance: 0.20
+  leash_reset_threshold: 0.50
+
+# =============================================================================
+# Level D: PID Controller Configuration
+# =============================================================================
+pid_controller:
+  position:
+    kp: 2.0
+    ki: 0.5
+    kd: 0.0
+    kff: 0.85
+    output_limit: *max_linear_velocity
+    derivative_filter_tau: 0.02
+    deadband: 0.0002
+  orientation:
+    kp: 2.0
+    ki: 0.5
+    kd: 0.0
+    kff: 0.85
+    output_limit: *max_angular_velocity
+    derivative_filter_tau: 0.02
+    deadband: 0.001
+
+# =============================================================================
+# Jacobian Solver Configuration (Damped Pseudo-Inverse)
+# =============================================================================
+jacobian_solver:
+  singularity_threshold: 0.05
+  max_damping: 0.3
+
+# =============================================================================
+# Joint Safety Limiter Configuration (Final Stage)
+# =============================================================================
+joint_safety_limiter:
+  enabled: true
+  max_joint_velocity: 2.0
+  max_joint_acceleration: 8.0
+  velocity_limiting_enabled: true
+  acceleration_limiting_enabled: true
+
+# =============================================================================
+# Joint Velocity Filter (pre-safety smoothness stage)
+# =============================================================================
+joint_velocity_filter:
+  enabled: true
+  tau: 0.10
+  uniform_scaling_enabled: false
+  max_joint_velocity:     [1.0, 1.0, 1.0, 2.0, 2.0, 2.0]
+  max_joint_acceleration: [3.0, 3.0, 3.0, 6.0, 6.0, 6.0]
+  max_joint_jerk:         [30.0, 30.0, 30.0, 60.0, 60.0, 60.0]
+  dt_nominal: 0.01
+  min_dt: 0.0005
+  max_dt: 0.05
+  max_substeps: 10
+  reset_dt_threshold: 0.25
+  large_dt_policy: "hold_last"
+
+# =============================================================================
+# Target Reachability Configuration
+# =============================================================================
+block_unreachable_targets: true
+
+# =============================================================================
+# Singularity Avoidance Configuration
+# =============================================================================
+singularity_avoidance:
+  elbow_index: 2
+  buffer_zone: 0.4
+  max_weight_penalty: 1.0
+
+# =============================================================================
+# Elbow velocity injection (anti-singularity, controller-side)
+# =============================================================================
+elbow_injection:
+  enabled: false
+  elbow_joint_name: "elbow_joint"
+  elbow_index: 2
+  critical_zone: 0.30
+  target_near_limit_threshold: 0.2
+  k: 2.0
+  max_push_velocity: 0.20
+
+# =============================================================================
+# REPULSIVE POI CONFIGURATION (kept for compatibility; repulsion disabled in MVP)
+# =============================================================================
+repulsion:
+  stale_timeout: 0.3
+  tcp_point_name: "tcp"
+  gradient_filter_alpha: 0.0
+  poi_predict_enable: false
+  poi_predict_horizon: 0.06
+  poi_velocity_filter_tau: 0.05
+  poi_velocity_max: 1.5
+  poi_predict_conservative_min_distance: true
+
+  robot_points_of_interest:
+    tcp:
+      link: "UR10_l/tool0"
+      offset: [0.0, 0.0, 0.0]
+    elbow:
+      link: "UR10_l/forearm_link"
+      offset: [0.0, 0.0, 0.12]
+    wrist:
+      link: "UR10_l/wrist_1_link"
+      offset: [0.0, 0.0, -0.05]
+    forearm_mid:
+      link: "UR10_l/forearm_link"
+      offset: [-0.30, 0.0, 0.035]
+
+  points:
+    tcp:
+      weight: 1.0
+      radius: 0.08
+      enabled: false
+      is_tcp: true
+    elbow:
+      weight: 1.0
+      radius: 0.05
+      enabled: false
+      is_tcp: false
+    wrist:
+      weight: 1.0
+      radius: 0.08
+      enabled: false
+      is_tcp: false
+    forearm_mid:
+      weight: 0.8
+      radius: 0.03
+      enabled: false
+      is_tcp: false
+
+# =============================================================================
+# MAP3D CONFIGURATION (MVP: disabled)
+# =============================================================================
+map3d:
+  enabled: false
+
+  frame_id: "mur620/base_link"
+  size_x: 3.5
+  size_y: 3.5
+  size_z: 2.0
+  resolution: 0.03
+  origin_offset: [0.0, 0.0, 1.0]
+  obstacle_margin: 0.02
+  gradient_clamp_distance: 0.02
+  min_distance_eps: 0.001
+  gradient_eps: 1e-6
+  update_rate_hz: 0.0
+
+  robot_description_param: "robot_description"
+  joint_state_topic: "joint_states"
+  planning_scene_topic: "planning_scene"
+  prefer_get_planning_scene_service: true
+  get_planning_scene_service: "get_planning_scene"
+
+  debug:
+    publish_occupied_cloud: false
+    occupied_cloud_topic: "map3d/occupied_voxels"
+    occupied_cloud_stride: 2
+    occupied_cloud_max_points: 50000
+
+    publish_bounds_marker: false
+    bounds_marker_topic: "map3d/bounds"
+    bounds_marker_line_width: 0.01
+    bounds_marker_alpha: 0.8
+    bounds_marker_color_r: 0.2
+    bounds_marker_color_g: 1.0
+    bounds_marker_color_b: 0.2
+
+    publish_spheres_marker: false
+    spheres_marker_topic: "map3d/spheres"
+    spheres_marker_alpha: 0.7
+    spheres_marker_color_r: 0.2
+    spheres_marker_color_g: 0.4
+    spheres_marker_color_b: 1.0
+    spheres_marker_scale_multiplier: 5.0
+    spheres_marker_min_diameter: 0.15
+
+    publish_slice: false
+    slice_topic: "map3d/distance_slice"
+    slice_gradient_topic: "map3d/gradient_arrows"
+    slice_z: 1.0
+    slice_gradient_stride: 4
+    slice_gradient_scale: 0.08
+    slice_max_distance: 0.8
+
+    publish_voxel_grid: false
+    voxel_grid_topic: "map3d/voxel_grid"
+    voxel_grid_stride: 1
+    voxel_grid_line_width: 0.002
+    voxel_grid_alpha: 0.6
+    voxel_grid_color_r: 1.0
+    voxel_grid_color_g: 0.5
+    voxel_grid_color_b: 0.0
+

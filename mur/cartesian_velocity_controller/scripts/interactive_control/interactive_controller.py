@@ -297,14 +297,36 @@ class InteractiveController:
         Returns:
             True if started successfully
         """
-        # Make sure velocity controller is active for loop
-        self.controller_mgr.update_active_controller()
-        if not self.controller_mgr.is_velocity_active():
-            print_warning("Switching to velocity controller for loop...")
-            if not self.controller_mgr.switch_to_velocity():
-                print_error("Cannot switch to velocity controller")
+        # Make sure velocity controller is active for loop.
+        #
+        # On some real-robot setups the cartesian velocity pipeline is wired through
+        # safety relays/topics (e.g. ".../unsafe/command") and controller_manager may:
+        # - not be available in the expected namespace, or
+        # - report controller names without "/unsafe"
+        #
+        # In those cases, forcing a switch would fail even though publishing poses works.
+        if self.controller_mgr and self.controller_mgr.is_initialized():
+            self.controller_mgr.update_active_controller()
+
+            if not self.controller_mgr.is_velocity_active():
+                print_warning("Switching to velocity controller for loop...")
+                if not self.controller_mgr.switch_to_velocity():
+                    # Fallback: if the velocity topic is actually connected, allow the loop anyway.
+                    if self.velocity_ctrl and self.velocity_ctrl.is_controller_connected():
+                        print_warning(
+                            "Cannot switch via controller_manager, but the velocity controller topic is connected. "
+                            "Starting loop anyway."
+                        )
+                    else:
+                        print_error("Cannot switch to velocity controller (and no subscriber detected on target_pose)")
+                        return False
+        else:
+            # No controller_manager available: rely on topic connectivity
+            if self.velocity_ctrl and not self.velocity_ctrl.is_controller_connected():
+                print_error("Velocity controller not connected (no subscriber on target_pose). Cannot start loop.")
                 return False
-        
+            print_warning("controller_manager not available; starting loop using velocity topic only.")
+
         return self.loop.start()
     
     # =========================================================================

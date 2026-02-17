@@ -72,7 +72,7 @@ dietro_basso:
   - 0.0990986414541912
 home_l:
   description: Posa home braccio sinistro
-  frame_id: mur620/base_link
+  frame_id: mur620b/base_link
   orientation:
   - 0.7070834317256576
   - 0.707126796330847
@@ -96,7 +96,7 @@ home_r:
   - 1.5733576781502947
 l_laterale_1:
   description: ''
-  frame_id: mur620/base_link
+  frame_id: mur620b/base_link
   orientation:
   - 0.7075932651171569
   - 0.7066151016114826
@@ -108,7 +108,7 @@ l_laterale_1:
   - 1.127615536353082
 l_laterale_2:
   description: ''
-  frame_id: mur620/base_link
+  frame_id: mur620b/base_link
   orientation:
   - -0.7072690763181927
   - -0.7069430178011494
@@ -122,10 +122,10 @@ loop_config:
   dwell_time: 0.8
   orientation_tolerance: 0.05
   poses:
-  - home_r
-  - r_laterale_1
-  - r_laterale_2
-  - r_laterale_1
+  - l_laterale_1
+  - l_laterale_2
+  - l_laterale_1
+  - home_l
   position_tolerance: 0.1
 r_laterale_1:
   description: ''

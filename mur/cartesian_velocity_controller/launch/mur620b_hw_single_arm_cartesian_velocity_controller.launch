@@ -1,0 +1,66 @@
+<launch>
+  <!--
+    MUR620 Single-Arm - Cartesian Velocity Controller
+
+    Launch a single arm controller (left or right).
+    Can be used with the full MUR620 robot or a standalone arm.
+
+    Usage:
+      # Left arm on MUR620:
+      roslaunch cartesian_velocity_controller mur620_single_arm_cartesian_velocity_controller.launch arm:=left
+
+      # Right arm on MUR620:
+      roslaunch cartesian_velocity_controller mur620_single_arm_cartesian_velocity_controller.launch arm:=right
+
+      # Standalone arm (no mobile base, uses YAML frames):
+      roslaunch cartesian_velocity_controller mur620_single_arm_cartesian_velocity_controller.launch arm:=left override_global_frame:=false
+  -->
+
+  <!-- Arm selection: "left" or "right" -->
+  <arg name="arm" default="left" />
+
+  <!-- Robot namespace WITHOUT leading slash (e.g. "mur620") -->
+  <arg name="mur_ns" default="mur620b" />
+  <!-- Backward-compatible alias used by YAML configs (subst_value="true") -->
+  <arg name="robot_ns" default="$(arg mur_ns)" />
+
+  <!-- 
+    Frame override behavior:
+    - true (default): override global_frame and robot_description_param with namespace-prefixed values
+                      (e.g., global_frame="mur620/base_link", robot_description_param="/mur620/robot_description")
+    - false: use values defined in the YAML config files (e.g., global_frame="UR10_l/base_link")
+             Useful when launching a standalone arm without the mobile base.
+  -->
+  <arg name="override_global_frame" default="false" />
+
+  <!-- Startup automation -->
+  <arg name="auto_load_unsafe_velocity_controllers" default="false" />
+  <arg name="auto_switch_to_velocity" default="false" />
+
+  <!-- Derived arguments based on arm selection -->
+  <arg name="arm_suffix" value="l" if="$(eval arm == 'left')" />
+  <arg name="arm_suffix" value="r" if="$(eval arm == 'right')" />
+  <arg name="config_file" value="controller_params_hw_mur620b_ur10_l.yaml" if="$(eval arm == 'left')" />
+  <arg name="config_file" value="controller_params_hw_mur620b_ur10_r.yaml" if="$(eval arm == 'right')" />
+
+  <group ns="/$(arg mur_ns)">
+
+    <!-- Single arm controller -->
+    <node pkg="cartesian_velocity_controller"
+          type="cartesian_velocity_node"
+          name="cartesian_velocity_controller_$(arg arm_suffix)"
+          output="screen">
+
+      <rosparam file="$(find cartesian_velocity_controller)/config/$(arg config_file)" command="load" subst_value="true"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/velocity_filter_params.yaml" command="load" subst_value="true"/>
+      <rosparam file="$(find cartesian_velocity_controller)/config/controller_joint_limits.yaml" command="load" subst_value="true"/>
+
+      <!-- Override robot_description and global_frame only if override_global_frame is true -->
+      <param name="robot_description_param" value="/$(arg mur_ns)/robot_description" if="$(arg override_global_frame)" />
+      <param name="global_frame" value="$(arg mur_ns)/base_link" if="$(arg override_global_frame)" />
+
+    </node>
+
+
+  </group>
+</launch>

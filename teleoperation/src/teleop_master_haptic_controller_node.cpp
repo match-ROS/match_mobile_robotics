@@ -56,6 +56,7 @@ public:
     pnh_.param<double>("force_reflection_scale", kf_force_, kf_force_);
     pnh_.param<double>("torque_reflection_scale", kf_torque_, kf_torque_);
 
+    pnh_.param<bool>("use_forces", use_forces_, use_forces_);
     pnh_.param<bool>("use_torques", use_torques_, use_torques_);
 
     // Filtering
@@ -498,6 +499,11 @@ private:
     }
     master_filt_.f = softDeadzoneNormWithHysteresis(master_filt_.f, force_deadband_enter_, force_deadband_exit_, f_master_active_);
     master_filt_.f = teleoperation::clampNorm3(master_filt_.f, (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_));
+    if (!use_forces_)
+    {
+      master_filt_.f.setZero();
+      f_master_active_ = false;
+    }
     if (use_torques_)
     {
       master_filt_.tau = softDeadzoneNormWithHysteresis(master_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_master_active_);
@@ -529,6 +535,11 @@ private:
       }
       slave_filt_.f = softDeadzoneNormWithHysteresis(slave_filt_.f, force_deadband_enter_, force_deadband_exit_, f_slave_active_);
       slave_filt_.f = teleoperation::clampNorm3(slave_filt_.f, (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_));
+      if (!use_forces_)
+      {
+        slave_filt_.f.setZero();
+        f_slave_active_ = false;
+      }
       if (use_torques_)
       {
         slave_filt_.tau = softDeadzoneNormWithHysteresis(slave_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_slave_active_);
@@ -568,6 +579,11 @@ private:
       }
       coupling_filt_.f = softDeadzoneNormWithHysteresis(coupling_filt_.f, force_deadband_enter_, force_deadband_exit_, f_coupling_active_);
       coupling_filt_.f = teleoperation::clampNorm3(coupling_filt_.f, (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_));
+      if (!use_forces_)
+      {
+        coupling_filt_.f.setZero();
+        f_coupling_active_ = false;
+      }
       if (use_torques_)
       {
         coupling_filt_.tau =
@@ -681,6 +697,12 @@ private:
       {
         v_ang_cmd_.setZero();
         a_ang_limiter_.reset();
+      }
+
+      if (!use_forces_)
+      {
+        v_lin_cmd_.setZero();
+        a_lin_limiter_.reset();
       }
     }
 
@@ -800,6 +822,7 @@ private:
 
   double kf_force_{0.3};
   double kf_torque_{0.0};
+  bool use_forces_{true};
   bool use_torques_{false};
 
   double wrench_filter_alpha_{0.07};

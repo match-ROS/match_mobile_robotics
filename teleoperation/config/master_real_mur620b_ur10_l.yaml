@@ -12,26 +12,55 @@ command_topic: /mur620b/UR10_l/twist_controller/command_collision_free
 control_rate: 250.0
 
 # Conservative master-only admittance for first real tests.
-mass_linear: 4.0
-damping_linear: 45.0
+mass_linear: 3.0
+damping_linear: 10.0
 mass_angular: 0.35
 damping_angular: 3.5
 force_reflection_scale: 0.0
 torque_reflection_scale: 0.0
 use_torques: false
 
+# Wrench filtering
+# - Use either *alpha* (0..1) OR *cutoff_hz* (recommended). If cutoff_hz>0 it overrides alpha.
+wrench_filter_cutoff_hz: 30.0
 wrench_filter_alpha: 0.5
-force_deadband: 5.0
-torque_deadband: 0.3
-max_force: 150.0
-max_torque: 20.0
+
+# Soft deadzone on the norm + optional hysteresis latch
+force_deadband_enter: 2.0
+force_deadband_exit: 1.0
+torque_deadband_enter: 0.3
+torque_deadband_exit: 0.2
+max_force: 80.0
+max_torque: 10.0
 publish_filtered_wrench_debug: true
 filtered_master_wrench_topic: /teleop_debug/mur620b_UR10_l/master_wrench_filtered
 #filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 #filtered_coupling_wrench_topic: /teleop_debug/mur620b_UR10_l/coupling_wrench_filtered
 
-max_linear_speed: 0.2
+max_linear_speed: 0.4
 max_angular_speed: 0.3
+
+# dt sanitization (measured dt from TimerEvent, then clamp/substep)
+dt_min_factor: 0.5
+dt_max_factor: 2.0
+dt_use_substepping: true
+dt_max_substeps: 10
+
+# Smoothness limits (set >0 to enable). Consider starting conservative.
+max_linear_accel: 0.6
+max_linear_jerk: 6.0
+max_angular_accel: 1.2
+max_angular_jerk: 10.0
+
+# Optional per-axis admittance (uncomment to use)
+#mass_linear_xyz: [4.0, 4.0, 6.0]
+#damping_linear_xyz: [45.0, 45.0, 70.0]
+#mass_angular_xyz: [0.35, 0.35, 0.35]
+#damping_angular_xyz: [3.5, 3.5, 3.5]
 
 wrench_timeout_s: 0.2
 reset_on_stale: true
+
+# Diagnostics (topics under ~debug/*)
+publish_diagnostics: true
+diagnostics_rate: 100.0

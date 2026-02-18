@@ -1,7 +1,9 @@
 #include <ros/ros.h>
 
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <std_msgs/Float64MultiArray.h>
 
 #include <tf2_ros/transform_listener.h>
 
@@ -9,10 +11,16 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
+#include <limits>
 #include <mutex>
 #include <string>
+#include <vector>
+
+#include <XmlRpcValue.h>
 
 #include "teleoperation/core/math_utils.hpp"
+#include "teleoperation/core/jerk_limiter.hpp"
 #include "teleoperation/core/wrench_debug_publisher.hpp"
 #include "teleoperation/core/tf_utils.hpp"
 #include "teleoperation/core/types.hpp"
@@ -50,17 +58,63 @@ public:
 
     pnh_.param<bool>("use_torques", use_torques_, use_torques_);
 
+    // Filtering
     pnh_.param<double>("wrench_filter_alpha", wrench_filter_alpha_, wrench_filter_alpha_);
-    pnh_.param<double>("force_deadband", force_deadband_, force_deadband_);
-    pnh_.param<double>("torque_deadband", torque_deadband_, torque_deadband_);
+    pnh_.param<double>("wrench_filter_cutoff_hz", wrench_filter_cutoff_hz_, wrench_filter_cutoff_hz_);
+    pnh_.param<double>("master_wrench_filter_alpha", master_wrench_filter_alpha_, master_wrench_filter_alpha_);
+    pnh_.param<double>("master_wrench_filter_cutoff_hz", master_wrench_filter_cutoff_hz_, master_wrench_filter_cutoff_hz_);
+    pnh_.param<double>("feedback_wrench_filter_alpha", feedback_wrench_filter_alpha_, feedback_wrench_filter_alpha_);
+    pnh_.param<double>("feedback_wrench_filter_cutoff_hz", feedback_wrench_filter_cutoff_hz_, feedback_wrench_filter_cutoff_hz_);
+
+    // Deadzone on norm (soft) + optional hysteresis
+    pnh_.param<double>("force_deadband", force_deadband_enter_, force_deadband_enter_);
+    pnh_.param<double>("torque_deadband", torque_deadband_enter_, torque_deadband_enter_);
+    (void)pnh_.getParam("force_deadband_enter", force_deadband_enter_);
+    (void)pnh_.getParam("force_deadband_exit", force_deadband_exit_);
+    (void)pnh_.getParam("torque_deadband_enter", torque_deadband_enter_);
+    (void)pnh_.getParam("torque_deadband_exit", torque_deadband_exit_);
+    if (!(force_deadband_exit_ >= 0.0)) force_deadband_exit_ = force_deadband_enter_;
+    if (!(torque_deadband_exit_ >= 0.0)) torque_deadband_exit_ = torque_deadband_enter_;
+
     pnh_.param<double>("max_force", max_force_, max_force_);
     pnh_.param<double>("max_torque", max_torque_, max_torque_);
+    pnh_.param<double>("max_force_hand", max_force_hand_, max_force_hand_);
+    pnh_.param<double>("max_torque_hand", max_torque_hand_, max_torque_hand_);
+    pnh_.param<double>("max_force_feedback", max_force_feedback_, max_force_feedback_);
+    pnh_.param<double>("max_torque_feedback", max_torque_feedback_, max_torque_feedback_);
 
     pnh_.param<double>("max_linear_speed", max_linear_speed_, max_linear_speed_);
     pnh_.param<double>("max_angular_speed", max_angular_speed_, max_angular_speed_);
 
+    // dt sanitization (measured dt from TimerEvent, then clamp/substep).
+    pnh_.param<double>("dt_min_factor", dt_min_factor_, dt_min_factor_);
+    pnh_.param<double>("dt_max_factor", dt_max_factor_, dt_max_factor_);
+    pnh_.param<bool>("dt_use_substepping", dt_use_substepping_, dt_use_substepping_);
+    pnh_.param<int>("dt_max_substeps", dt_max_substeps_, dt_max_substeps_);
+
+    // Limits for smoothness (anti-windup coherent with jerk-limited acceleration).
+    pnh_.param<double>("max_linear_accel", max_linear_accel_, max_linear_accel_);
+    pnh_.param<double>("max_linear_jerk", max_linear_jerk_, max_linear_jerk_);
+    pnh_.param<double>("max_angular_accel", max_angular_accel_, max_angular_accel_);
+    pnh_.param<double>("max_angular_jerk", max_angular_jerk_, max_angular_jerk_);
+    pnh_.param<double>("speed_saturation_eps", speed_saturation_eps_, speed_saturation_eps_);
+
+    // Per-axis parameters (optional): override scalar mass/damping if provided.
+    (void)tryGetVector3Param(pnh_, "mass_linear_xyz", mass_linear_xyz_);
+    (void)tryGetVector3Param(pnh_, "damping_linear_xyz", damping_linear_xyz_);
+    (void)tryGetVector3Param(pnh_, "mass_angular_xyz", mass_angular_xyz_);
+    (void)tryGetVector3Param(pnh_, "damping_angular_xyz", damping_angular_xyz_);
+    (void)tryGetVector3Param(pnh_, "max_linear_accel_xyz", max_linear_accel_xyz_);
+    (void)tryGetVector3Param(pnh_, "max_linear_jerk_xyz", max_linear_jerk_xyz_);
+    (void)tryGetVector3Param(pnh_, "max_angular_accel_xyz", max_angular_accel_xyz_);
+    (void)tryGetVector3Param(pnh_, "max_angular_jerk_xyz", max_angular_jerk_xyz_);
+
     pnh_.param<double>("wrench_timeout_s", wrench_timeout_s_, wrench_timeout_s_);
     pnh_.param<bool>("reset_on_stale", reset_on_stale_, reset_on_stale_);
+
+    // Diagnostics
+    pnh_.param<bool>("publish_diagnostics", publish_diagnostics_, publish_diagnostics_);
+    pnh_.param<double>("diagnostics_rate", diagnostics_rate_, diagnostics_rate_);
 
     sub_master_wrench_ = nh_.subscribe(master_wrench_topic_, 1, &TeleopMasterHapticController::masterWrenchCb, this,
                                       ros::TransportHints().tcpNoDelay());
@@ -82,6 +136,14 @@ public:
     }
 
     pub_cmd_ = nh_.advertise<geometry_msgs::Twist>(command_topic_, 1);
+    pub_cmd_stamped_ = nh_.advertise<geometry_msgs::TwistStamped>(command_topic_ + "_stamped", 1);
+    if (publish_diagnostics_)
+    {
+      pub_debug_stats_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/admittance_stats", 1);
+      pub_debug_dt_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/dt_stats", 1);
+      pub_debug_v_pre_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_pre", 1);
+      pub_debug_v_post_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_post", 1);
+    }
     debug_master_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
                                 "filtered_master_wrench_topic", "debug/master_wrench_filtered");
     debug_slave_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
@@ -94,6 +156,142 @@ public:
   }
 
 private:
+  static bool xmlRpcToDouble(const XmlRpc::XmlRpcValue& v, double& out)
+  {
+    if (v.getType() == XmlRpc::XmlRpcValue::TypeInt)
+    {
+      out = static_cast<int>(v);
+      return std::isfinite(out);
+    }
+    if (v.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+    {
+      out = static_cast<double>(v);
+      return std::isfinite(out);
+    }
+    return false;
+  }
+
+  static bool tryGetVector3Param(ros::NodeHandle& pnh, const std::string& name, Eigen::Vector3d& out)
+  {
+    if (!pnh.hasParam(name))
+    {
+      return false;
+    }
+    XmlRpc::XmlRpcValue v;
+    if (!pnh.getParam(name, v))
+    {
+      return false;
+    }
+    if (v.getType() != XmlRpc::XmlRpcValue::TypeArray || v.size() != 3)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "Param '%s' exists but is not a 3-element array. Ignoring.", name.c_str());
+      return false;
+    }
+
+    double x = 0.0, y = 0.0, z = 0.0;
+    if (!xmlRpcToDouble(v[0], x) || !xmlRpcToDouble(v[1], y) || !xmlRpcToDouble(v[2], z))
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "Param '%s' array must contain only int/double values. Ignoring.", name.c_str());
+      return false;
+    }
+    out = Eigen::Vector3d(x, y, z);
+    return out.allFinite();
+  }
+
+  static Eigen::Vector3d expandScalarTo3(double x)
+  {
+    return Eigen::Vector3d(x, x, x);
+  }
+
+  static Eigen::Vector3d sanitizePositiveVec(const Eigen::Vector3d& v, double min_val)
+  {
+    Eigen::Vector3d out = v;
+    for (int i = 0; i < 3; ++i)
+    {
+      if (!std::isfinite(out[i]) || out[i] < min_val)
+      {
+        out[i] = min_val;
+      }
+    }
+    return out;
+  }
+
+  static Eigen::Vector3d sanitizeNonNegativeVec(const Eigen::Vector3d& v)
+  {
+    Eigen::Vector3d out = v;
+    for (int i = 0; i < 3; ++i)
+    {
+      if (!std::isfinite(out[i]) || out[i] < 0.0)
+      {
+        out[i] = 0.0;
+      }
+    }
+    return out;
+  }
+
+  static Eigen::Vector3d softDeadzoneNormWithHysteresis(const Eigen::Vector3d& v,
+                                                        double db_enter,
+                                                        double db_exit,
+                                                        bool& active)
+  {
+    const double n = v.norm();
+    if (!std::isfinite(n))
+    {
+      active = false;
+      return Eigen::Vector3d::Zero();
+    }
+
+    const double enter = std::max(0.0, db_enter);
+    const double exit = std::max(0.0, db_exit);
+
+    if (!active)
+    {
+      if (n <= enter)
+      {
+        return Eigen::Vector3d::Zero();
+      }
+      active = true;
+      return teleoperation::softDeadzoneNorm3(v, enter);
+    }
+
+    if (n <= exit)
+    {
+      active = false;
+      return Eigen::Vector3d::Zero();
+    }
+    return teleoperation::softDeadzoneNorm3(v, exit);
+  }
+
+  static double computeFilterAlpha(double dt, double alpha_param, double cutoff_hz_param)
+  {
+    if (cutoff_hz_param > 0.0 && std::isfinite(cutoff_hz_param))
+    {
+      return teleoperation::lowpassAlphaFromCutoffHz(dt, cutoff_hz_param);
+    }
+    return std::clamp(alpha_param, 0.0, 1.0);
+  }
+
+  void resetControllerState()
+  {
+    v_lin_cmd_.setZero();
+    v_ang_cmd_.setZero();
+    a_lin_limiter_.reset();
+    a_ang_limiter_.reset();
+
+    has_filtered_master_ = false;
+    has_filtered_slave_ = false;
+    has_filtered_coupling_ = false;
+
+    f_master_active_ = false;
+    tau_master_active_ = false;
+    f_slave_active_ = false;
+    tau_slave_active_ = false;
+    f_coupling_active_ = false;
+    tau_coupling_active_ = false;
+  }
+
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
   {
     const Eigen::Vector3d f_src = teleoperation::vector3MsgToEigen(msg.wrench.force);
@@ -122,7 +320,14 @@ private:
   void masterWrenchCb(const geometry_msgs::WrenchStampedConstPtr& msg)
   {
     Wrench3 w;
-    if (!wrenchMsgToWrench3(*msg, w)) return;
+    if (!wrenchMsgToWrench3(*msg, w))
+    {
+      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
+                              "masterWrenchCb: wrenchMsgToWrench3 failed (TF rotation from '%s' to '%s'). Dropping message.",
+                              (wrench_source_frame_override_.empty() ? msg->header.frame_id : wrench_source_frame_override_).c_str(),
+                              wrench_target_frame_.c_str());
+      return;
+    }
 
     std::lock_guard<std::mutex> lock(mutex_);
     master_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
@@ -156,11 +361,19 @@ private:
   {
     geometry_msgs::Twist cmd;
     pub_cmd_.publish(cmd);
+    if (pub_cmd_stamped_)
+    {
+      geometry_msgs::TwistStamped stamped;
+      stamped.header.stamp = ros::Time::now();
+      stamped.header.frame_id = wrench_target_frame_;
+      stamped.twist = cmd;
+      pub_cmd_stamped_.publish(stamped);
+    }
   }
 
-  void tick(const ros::TimerEvent& /*ev*/)
+  void tick(const ros::TimerEvent& ev)
   {
-    const ros::Time now = ros::Time::now();
+    const ros::Time now = ev.current_real.isZero() ? ros::Time::now() : ev.current_real;
 
     Wrench3 master_raw, slave_raw, coupling_raw;
     ros::Time master_stamp, slave_stamp, coupling_stamp;
@@ -197,29 +410,75 @@ private:
       publishZero();
       if (reset_on_stale_)
       {
-        v_lin_cmd_.setZero();
-        v_ang_cmd_.setZero();
-        has_filtered_master_ = false;
-        has_filtered_slave_ = false;
-        has_filtered_coupling_ = false;
+        resetControllerState();
       }
       last_time_ = now;
       return;
     }
 
-    double dt = 0.0;
-    if (!last_time_.isZero())
+    const double dt_nominal = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
+    const double dt_min = std::max(0.0, dt_min_factor_) * dt_nominal;
+    const double dt_max = std::max(0.0, dt_max_factor_) * dt_nominal;
+
+    double dt_raw = 0.0;
+    if (!ev.last_real.isZero() && !ev.current_real.isZero())
     {
-      dt = (now - last_time_).toSec();
+      dt_raw = (ev.current_real - ev.last_real).toSec();
+    }
+    else if (!last_time_.isZero())
+    {
+      dt_raw = (now - last_time_).toSec();
     }
     last_time_ = now;
-    if (!(dt > 1e-5) || !std::isfinite(dt))
+
+    if (!(dt_raw > 0.0) || !std::isfinite(dt_raw))
     {
       publishZero();
       return;
     }
 
-    // Filter + clamp + deadband.
+    double dt_used = dt_raw;
+    if (dt_min > 0.0 && dt_used < dt_min)
+    {
+      dt_used = dt_nominal;
+    }
+
+    int n_substeps = 1;
+    if (dt_max > 0.0 && dt_used > dt_max)
+    {
+      if (dt_use_substepping_)
+      {
+        n_substeps = static_cast<int>(std::ceil(dt_used / dt_max));
+        n_substeps = std::clamp(n_substeps, 1, std::max(1, dt_max_substeps_));
+      }
+      else
+      {
+        dt_used = dt_max;
+        n_substeps = 1;
+      }
+    }
+    const double dt_step = dt_used / static_cast<double>(n_substeps);
+    if (!(dt_step > 0.0) || !std::isfinite(dt_step))
+    {
+      publishZero();
+      return;
+    }
+
+    // Filter + soft deadzone (norm, with optional hysteresis) + clamp on norm.
+    // NOTE: 3.4 is intentionally rotation-only: wrenchMsgToWrench3 rotates vectors but does not apply p x f.
+    const double dt_for_filter = std::clamp(dt_raw, std::max(1e-6, dt_min), (dt_max > 0.0 ? dt_max : dt_raw));
+    const double alpha_master =
+        computeFilterAlpha(dt_for_filter,
+                           (master_wrench_filter_alpha_ >= 0.0 ? master_wrench_filter_alpha_ : wrench_filter_alpha_),
+                           (master_wrench_filter_cutoff_hz_ > 0.0 ? master_wrench_filter_cutoff_hz_ : wrench_filter_cutoff_hz_));
+    const double alpha_feedback =
+        computeFilterAlpha(dt_for_filter,
+                           (feedback_wrench_filter_alpha_ >= 0.0 ? feedback_wrench_filter_alpha_ : wrench_filter_alpha_),
+                           (feedback_wrench_filter_cutoff_hz_ > 0.0 ? feedback_wrench_filter_cutoff_hz_ : wrench_filter_cutoff_hz_));
+
+    const bool use_master_filter = (alpha_master > 0.0) && (alpha_master < 1.0);
+    const bool use_feedback_filter = (alpha_feedback > 0.0) && (alpha_feedback < 1.0);
+
     if (!has_filtered_master_)
     {
       master_filt_ = master_raw;
@@ -227,9 +486,26 @@ private:
     }
     else
     {
-      master_filt_ = teleoperation::filterClampDeadbandWrench(master_filt_, master_raw, wrench_filter_alpha_ > 0.0,
-                                                               wrench_filter_alpha_, force_deadband_, torque_deadband_,
-                                                               max_force_, max_torque_, use_torques_);
+      if (use_master_filter)
+      {
+        master_filt_.f = teleoperation::ema3(master_filt_.f, master_raw.f, alpha_master);
+        master_filt_.tau = teleoperation::ema3(master_filt_.tau, master_raw.tau, alpha_master);
+      }
+      else
+      {
+        master_filt_ = master_raw;
+      }
+    }
+    master_filt_.f = softDeadzoneNormWithHysteresis(master_filt_.f, force_deadband_enter_, force_deadband_exit_, f_master_active_);
+    master_filt_.f = teleoperation::clampNorm3(master_filt_.f, (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_));
+    if (use_torques_)
+    {
+      master_filt_.tau = softDeadzoneNormWithHysteresis(master_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_master_active_);
+      master_filt_.tau = teleoperation::clampNorm3(master_filt_.tau, (max_torque_hand_ > 0.0 ? max_torque_hand_ : max_torque_));
+    }
+    else
+    {
+      master_filt_.tau.setZero();
     }
 
     if (has_slave)
@@ -241,15 +517,34 @@ private:
       }
       else
       {
-        slave_filt_ = teleoperation::filterClampDeadbandWrench(slave_filt_, slave_raw, wrench_filter_alpha_ > 0.0,
-                                                                wrench_filter_alpha_, force_deadband_, torque_deadband_,
-                                                                max_force_, max_torque_, use_torques_);
+        if (use_feedback_filter)
+        {
+          slave_filt_.f = teleoperation::ema3(slave_filt_.f, slave_raw.f, alpha_feedback);
+          slave_filt_.tau = teleoperation::ema3(slave_filt_.tau, slave_raw.tau, alpha_feedback);
+        }
+        else
+        {
+          slave_filt_ = slave_raw;
+        }
+      }
+      slave_filt_.f = softDeadzoneNormWithHysteresis(slave_filt_.f, force_deadband_enter_, force_deadband_exit_, f_slave_active_);
+      slave_filt_.f = teleoperation::clampNorm3(slave_filt_.f, (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_));
+      if (use_torques_)
+      {
+        slave_filt_.tau = softDeadzoneNormWithHysteresis(slave_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_slave_active_);
+        slave_filt_.tau = teleoperation::clampNorm3(slave_filt_.tau, (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_));
+      }
+      else
+      {
+        slave_filt_.tau.setZero();
       }
     }
     else
     {
       slave_filt_.f.setZero();
       slave_filt_.tau.setZero();
+      f_slave_active_ = false;
+      tau_slave_active_ = false;
     }
 
     if (has_coupling)
@@ -261,15 +556,35 @@ private:
       }
       else
       {
-        coupling_filt_ = teleoperation::filterClampDeadbandWrench(coupling_filt_, coupling_raw, wrench_filter_alpha_ > 0.0,
-                                                                   wrench_filter_alpha_, force_deadband_, torque_deadband_,
-                                                                   max_force_, max_torque_, use_torques_);
+        if (use_feedback_filter)
+        {
+          coupling_filt_.f = teleoperation::ema3(coupling_filt_.f, coupling_raw.f, alpha_feedback);
+          coupling_filt_.tau = teleoperation::ema3(coupling_filt_.tau, coupling_raw.tau, alpha_feedback);
+        }
+        else
+        {
+          coupling_filt_ = coupling_raw;
+        }
+      }
+      coupling_filt_.f = softDeadzoneNormWithHysteresis(coupling_filt_.f, force_deadband_enter_, force_deadband_exit_, f_coupling_active_);
+      coupling_filt_.f = teleoperation::clampNorm3(coupling_filt_.f, (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_));
+      if (use_torques_)
+      {
+        coupling_filt_.tau =
+            softDeadzoneNormWithHysteresis(coupling_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_coupling_active_);
+        coupling_filt_.tau = teleoperation::clampNorm3(coupling_filt_.tau, (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_));
+      }
+      else
+      {
+        coupling_filt_.tau.setZero();
       }
     }
     else
     {
       coupling_filt_.f.setZero();
       coupling_filt_.tau.setZero();
+      f_coupling_active_ = false;
+      tau_coupling_active_ = false;
     }
 
     debug_master_filt_pub_.publish(master_filt_, now, wrench_target_frame_);
@@ -283,24 +598,90 @@ private:
     const Eigen::Vector3d F_feedback = (kf_force_ * slave_filt_.f) + coupling_filt_.f;
     const Eigen::Vector3d Tau_feedback = (kf_torque_ * slave_filt_.tau) + coupling_filt_.tau;
 
-    const double m_lin = std::max(1e-6, mass_linear_);
-    const double d_lin = std::max(0.0, damping_linear_);
-    const double m_ang = std::max(1e-6, mass_angular_);
-    const double d_ang = std::max(0.0, damping_angular_);
+    // Per-axis admittance: M dv + D v = (F_hand - F_feedback)
+    const Eigen::Vector3d M_lin = sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);
+    const Eigen::Vector3d D_lin = sanitizeNonNegativeVec((damping_linear_xyz_.allFinite() ? damping_linear_xyz_ : expandScalarTo3(damping_linear_)));
+    const Eigen::Vector3d M_ang = sanitizePositiveVec((mass_angular_xyz_.allFinite() ? mass_angular_xyz_ : expandScalarTo3(mass_angular_)), 1e-6);
+    const Eigen::Vector3d D_ang = sanitizeNonNegativeVec((damping_angular_xyz_.allFinite() ? damping_angular_xyz_ : expandScalarTo3(damping_angular_)));
 
-    const Eigen::Vector3d a_lin = (F_hand - F_feedback - d_lin * v_lin_cmd_) / m_lin;
-    v_lin_cmd_ = v_lin_cmd_ + a_lin * dt;
-    v_lin_cmd_ = teleoperation::clampNorm3(v_lin_cmd_, max_linear_speed_);
+    // Limits (accel/jerk). Scalars are expanded unless *_xyz override exists.
+    const Eigen::Vector3d max_a_lin = sanitizeNonNegativeVec((max_linear_accel_xyz_.allFinite() ? max_linear_accel_xyz_ : expandScalarTo3(max_linear_accel_)));
+    const Eigen::Vector3d max_j_lin = sanitizeNonNegativeVec((max_linear_jerk_xyz_.allFinite() ? max_linear_jerk_xyz_ : expandScalarTo3(max_linear_jerk_)));
+    const Eigen::Vector3d max_a_ang = sanitizeNonNegativeVec((max_angular_accel_xyz_.allFinite() ? max_angular_accel_xyz_ : expandScalarTo3(max_angular_accel_)));
+    const Eigen::Vector3d max_j_ang = sanitizeNonNegativeVec((max_angular_jerk_xyz_.allFinite() ? max_angular_jerk_xyz_ : expandScalarTo3(max_angular_jerk_)));
 
-    if (use_torques_)
+    Eigen::Vector3d v_lin_pre = v_lin_cmd_;
+    Eigen::Vector3d v_ang_pre = v_ang_cmd_;
+
+    Eigen::Vector3d a_lin_des_normed = Eigen::Vector3d::Zero();
+    Eigen::Vector3d a_ang_des_normed = Eigen::Vector3d::Zero();
+    Eigen::Vector3d a_lin_cmd = Eigen::Vector3d::Zero();
+    Eigen::Vector3d a_ang_cmd = Eigen::Vector3d::Zero();
+    bool lin_saturated = false;
+    bool ang_saturated = false;
+
+    for (int k = 0; k < n_substeps; ++k)
     {
-      const Eigen::Vector3d a_ang = (Tau_hand - Tau_feedback - d_ang * v_ang_cmd_) / m_ang;
-      v_ang_cmd_ = v_ang_cmd_ + a_ang * dt;
-      v_ang_cmd_ = teleoperation::clampNorm3(v_ang_cmd_, max_angular_speed_);
-    }
-    else
-    {
-      v_ang_cmd_.setZero();
+      const Eigen::Vector3d rhs_lin = (F_hand - F_feedback) - D_lin.cwiseProduct(v_lin_cmd_);
+      a_lin_des_normed = rhs_lin.cwiseQuotient(M_lin);
+
+      // 3.1 + 3.2: jerk-limited acceleration + anti-windup against speed saturation.
+      const Eigen::Vector3d max_a_lin_eff = (max_a_lin.maxCoeff() > 0.0 ? max_a_lin : expandScalarTo3(1e9));
+      const Eigen::Vector3d max_j_lin_eff = (max_j_lin.maxCoeff() > 0.0 ? max_j_lin : expandScalarTo3(1e9));
+      a_lin_cmd = a_lin_limiter_.step(a_lin_des_normed, dt_step, max_a_lin_eff, max_j_lin_eff);
+
+      if (max_linear_speed_ > 0.0 && v_lin_cmd_.norm() >= (max_linear_speed_ - std::max(0.0, speed_saturation_eps_)))
+      {
+        const double vn = v_lin_cmd_.norm();
+        if (vn > teleoperation::kMathEps)
+        {
+          const Eigen::Vector3d u = v_lin_cmd_ / vn;
+          const double a_rad = u.dot(a_lin_cmd);
+          if (a_rad > 0.0)
+          {
+            a_lin_cmd = a_lin_cmd - a_rad * u;
+          }
+        }
+      }
+
+      const Eigen::Vector3d v_lin_next = v_lin_cmd_ + a_lin_cmd * dt_step;
+      const Eigen::Vector3d v_lin_sat = teleoperation::clampNorm3(v_lin_next, max_linear_speed_);
+      lin_saturated = lin_saturated || ((v_lin_next - v_lin_sat).norm() > 1e-12);
+      v_lin_cmd_ = v_lin_sat;
+
+      if (use_torques_)
+      {
+        const Eigen::Vector3d rhs_ang = (Tau_hand - Tau_feedback) - D_ang.cwiseProduct(v_ang_cmd_);
+        a_ang_des_normed = rhs_ang.cwiseQuotient(M_ang);
+
+        const Eigen::Vector3d max_a_ang_eff = (max_a_ang.maxCoeff() > 0.0 ? max_a_ang : expandScalarTo3(1e9));
+        const Eigen::Vector3d max_j_ang_eff = (max_j_ang.maxCoeff() > 0.0 ? max_j_ang : expandScalarTo3(1e9));
+        a_ang_cmd = a_ang_limiter_.step(a_ang_des_normed, dt_step, max_a_ang_eff, max_j_ang_eff);
+
+        if (max_angular_speed_ > 0.0 && v_ang_cmd_.norm() >= (max_angular_speed_ - std::max(0.0, speed_saturation_eps_)))
+        {
+          const double wn = v_ang_cmd_.norm();
+          if (wn > teleoperation::kMathEps)
+          {
+            const Eigen::Vector3d u = v_ang_cmd_ / wn;
+            const double a_rad = u.dot(a_ang_cmd);
+            if (a_rad > 0.0)
+            {
+              a_ang_cmd = a_ang_cmd - a_rad * u;
+            }
+          }
+        }
+
+        const Eigen::Vector3d v_ang_next = v_ang_cmd_ + a_ang_cmd * dt_step;
+        const Eigen::Vector3d v_ang_sat = teleoperation::clampNorm3(v_ang_next, max_angular_speed_);
+        ang_saturated = ang_saturated || ((v_ang_next - v_ang_sat).norm() > 1e-12);
+        v_ang_cmd_ = v_ang_sat;
+      }
+      else
+      {
+        v_ang_cmd_.setZero();
+        a_ang_limiter_.reset();
+      }
     }
 
     geometry_msgs::Twist cmd;
@@ -311,6 +692,68 @@ private:
     cmd.angular.y = v_ang_cmd_.y();
     cmd.angular.z = v_ang_cmd_.z();
     pub_cmd_.publish(cmd);
+
+    if (pub_cmd_stamped_)
+    {
+      geometry_msgs::TwistStamped stamped;
+      stamped.header.stamp = now;
+      stamped.header.frame_id = wrench_target_frame_;
+      stamped.twist = cmd;
+      pub_cmd_stamped_.publish(stamped);
+    }
+
+    // 3.8 diagnostics
+    if (publish_diagnostics_)
+    {
+      // Throttle diagnostics to diagnostics_rate_
+      const double diag_period = (diagnostics_rate_ > 0.0) ? (1.0 / diagnostics_rate_) : 0.0;
+      if (diag_period <= 0.0 || (now - last_diag_pub_).toSec() >= diag_period)
+      {
+        last_diag_pub_ = now;
+
+        dt_min_seen_ = (dt_count_ == 0) ? dt_raw : std::min(dt_min_seen_, dt_raw);
+        dt_max_seen_ = (dt_count_ == 0) ? dt_raw : std::max(dt_max_seen_, dt_raw);
+        dt_count_ += 1;
+        dt_mean_ += (dt_raw - dt_mean_) / static_cast<double>(dt_count_);
+
+        std_msgs::Float64MultiArray dt_msg;
+        dt_msg.data = {dt_raw, dt_used, dt_step, static_cast<double>(n_substeps), dt_min_seen_, dt_max_seen_, dt_mean_};
+        pub_debug_dt_.publish(dt_msg);
+
+        std_msgs::Float64MultiArray st_msg;
+        st_msg.data = {
+            F_hand.norm(),
+            F_feedback.norm(),
+            a_lin_des_normed.norm(),
+            a_lin_cmd.norm(),
+            v_lin_pre.norm(),
+            v_lin_cmd_.norm(),
+            lin_saturated ? 1.0 : 0.0,
+            Tau_hand.norm(),
+            Tau_feedback.norm(),
+            a_ang_des_normed.norm(),
+            a_ang_cmd.norm(),
+            v_ang_pre.norm(),
+            v_ang_cmd_.norm(),
+            ang_saturated ? 1.0 : 0.0};
+        pub_debug_stats_.publish(st_msg);
+
+        geometry_msgs::TwistStamped vpre, vpost;
+        vpre.header.stamp = now;
+        vpre.header.frame_id = wrench_target_frame_;
+        vpre.twist.linear.x = v_lin_pre.x();
+        vpre.twist.linear.y = v_lin_pre.y();
+        vpre.twist.linear.z = v_lin_pre.z();
+        vpre.twist.angular.x = v_ang_pre.x();
+        vpre.twist.angular.y = v_ang_pre.y();
+        vpre.twist.angular.z = v_ang_pre.z();
+        pub_debug_v_pre_.publish(vpre);
+
+        vpost.header = vpre.header;
+        vpost.twist = cmd;
+        pub_debug_v_post_.publish(vpost);
+      }
+    }
   }
 
 private:
@@ -324,9 +767,14 @@ private:
   ros::Subscriber sub_slave_wrench_;
   ros::Subscriber sub_coupling_wrench_;
   ros::Publisher pub_cmd_;
+  ros::Publisher pub_cmd_stamped_;
   teleoperation::WrenchDebugPublisher debug_master_filt_pub_;
   teleoperation::WrenchDebugPublisher debug_slave_filt_pub_;
   teleoperation::WrenchDebugPublisher debug_coupling_filt_pub_;
+  ros::Publisher pub_debug_stats_;
+  ros::Publisher pub_debug_dt_;
+  ros::Publisher pub_debug_v_pre_;
+  ros::Publisher pub_debug_v_post_;
   ros::Timer timer_;
 
   // Params
@@ -345,22 +793,57 @@ private:
   double damping_linear_{40.0};
   double mass_angular_{1.0};
   double damping_angular_{5.0};
+  Eigen::Vector3d mass_linear_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d damping_linear_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d mass_angular_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d damping_angular_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
 
   double kf_force_{0.3};
   double kf_torque_{0.0};
   bool use_torques_{false};
 
   double wrench_filter_alpha_{0.07};
-  double force_deadband_{1.0};
-  double torque_deadband_{0.2};
+  double wrench_filter_cutoff_hz_{0.0};
+  double master_wrench_filter_alpha_{-1.0};
+  double master_wrench_filter_cutoff_hz_{0.0};
+  double feedback_wrench_filter_alpha_{-1.0};
+  double feedback_wrench_filter_cutoff_hz_{0.0};
+
+  double force_deadband_enter_{1.0};
+  double force_deadband_exit_{std::numeric_limits<double>::quiet_NaN()};
+  double torque_deadband_enter_{0.2};
+  double torque_deadband_exit_{std::numeric_limits<double>::quiet_NaN()};
+
   double max_force_{150.0};
   double max_torque_{20.0};
+  double max_force_hand_{-1.0};
+  double max_torque_hand_{-1.0};
+  double max_force_feedback_{-1.0};
+  double max_torque_feedback_{-1.0};
 
   double max_linear_speed_{0.25};
   double max_angular_speed_{0.4};
 
+  double dt_min_factor_{0.25};
+  double dt_max_factor_{2.0};
+  bool dt_use_substepping_{true};
+  int dt_max_substeps_{10};
+
+  double max_linear_accel_{0.0};
+  double max_linear_jerk_{0.0};
+  double max_angular_accel_{0.0};
+  double max_angular_jerk_{0.0};
+  Eigen::Vector3d max_linear_accel_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d max_linear_jerk_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d max_angular_accel_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d max_angular_jerk_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  double speed_saturation_eps_{1e-3};
+
   double wrench_timeout_s_{0.2};
   bool reset_on_stale_{true};
+
+  bool publish_diagnostics_{true};
+  double diagnostics_rate_{50.0};
 
   // Inputs (raw)
   mutable std::mutex mutex_;
@@ -384,8 +867,24 @@ private:
 
   // Controller state
   ros::Time last_time_{0};
+  ros::Time last_diag_pub_{0};
+  double dt_min_seen_{0.0};
+  double dt_max_seen_{0.0};
+  double dt_mean_{0.0};
+  uint64_t dt_count_{0};
+
   Eigen::Vector3d v_lin_cmd_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d v_ang_cmd_{Eigen::Vector3d::Zero()};
+
+  teleoperation::JerkLimiter3 a_lin_limiter_;
+  teleoperation::JerkLimiter3 a_ang_limiter_;
+
+  bool f_master_active_{false};
+  bool tau_master_active_{false};
+  bool f_slave_active_{false};
+  bool tau_slave_active_{false};
+  bool f_coupling_active_{false};
+  bool tau_coupling_active_{false};
 };
 
 int main(int argc, char** argv)

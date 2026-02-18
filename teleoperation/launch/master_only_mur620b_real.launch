@@ -2,11 +2,24 @@
   <arg name="robot_ns" default="mur620b" />
   <arg name="arm_ns" default="UR10_l" />
 
+  <!-- Optional: zero/tare UR10e FT sensor ("load cell") at startup -->
+  <arg name="do_ur10e_zero_loadcell" default="true" />
+  <arg name="ur10e_zero_loadcell_delay_s" default="0.5" />
+  <arg name="ur10e_zero_loadcell_wait_timeout_s" default="10.0" />
+
   <arg name="master_wrench_topic" default="/$(arg robot_ns)/$(arg arm_ns)/wrench" />
   <arg name="command_topic" default="/$(arg robot_ns)/$(arg arm_ns)/twist_controller/command_collision_free" />
   <arg name="wrench_source_frame_override" default="$(eval arg('robot_ns') + '/' + arg('arm_ns') + '/tool0')" />
   <arg name="wrench_target_frame" default="$(eval arg('robot_ns') + '/' + arg('arm_ns') + '/base_link_inertia')" />
   <arg name="use_latest_tf_for_wrench" default="true" />
+
+  <include file="$(find teleoperation)/launch/ur10e_zero_loadcell.launch"
+           if="$(arg do_ur10e_zero_loadcell)">
+    <arg name="robot_ns" value="$(arg robot_ns)" />
+    <arg name="arm_ns" value="$(arg arm_ns)" />
+    <arg name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+    <arg name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+  </include>
 
   <node pkg="teleoperation"
         type="teleop_master_haptic_controller"

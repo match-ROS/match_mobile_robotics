@@ -1,0 +1,26 @@
+<launch>
+  <!-- Namespace wiring matches the pattern used in teleoperation:
+       /<robot_ns>/<arm_ns>/ur_hardware_interface/zero_ftsensor -->
+  <arg name="robot_ns" default="mur620b" />
+  <arg name="arm_ns" default="UR10_l" />
+
+  <!-- Default service name for Universal_Robots_ROS_Driver (ROS1) -->
+  <arg name="zero_ftsensor_service"
+       default="/$(arg robot_ns)/$(arg arm_ns)/ur_hardware_interface/zero_ftsensor" />
+
+  <!-- Optional delay after service becomes available (helps settle readings) -->
+  <arg name="delay_s" default="0.5" />
+  <!-- Timeout waiting for the service. Set <=0 to wait forever -->
+  <arg name="wait_timeout_s" default="10.0" />
+
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell"
+        output="screen"
+        required="false">
+    <param name="service" value="$(arg zero_ftsensor_service)" />
+    <param name="delay_s" value="$(arg delay_s)" />
+    <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+  </node>
+</launch>
+

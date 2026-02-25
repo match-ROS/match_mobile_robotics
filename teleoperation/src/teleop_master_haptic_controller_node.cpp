@@ -287,7 +287,7 @@ private:
       active = false;
       return Eigen::Vector3d::Zero();
     }
-    return teleoperation::softDeadzoneNorm3(v, exit);
+    return teleoperation::softDeadzoneNorm3(v, enter);
   }
 
   static double computeFilterAlpha(double dt, double alpha_param, double cutoff_hz_param)

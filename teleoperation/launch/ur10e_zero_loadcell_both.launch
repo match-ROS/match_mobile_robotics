@@ -1,0 +1,37 @@
+<launch>
+  <!-- Zero/tare both UR10e FT sensors (left + right) -->
+  <arg name="robot_ns" default="mur620b" />
+  <arg name="left_arm_ns" default="UR10_l" />
+  <arg name="right_arm_ns" default="UR10_r" />
+
+  <arg name="do_left" default="true" />
+  <arg name="do_right" default="true" />
+
+  <!-- Optional delay after service becomes available (helps settle readings) -->
+  <arg name="delay_s" default="0.5" />
+  <!-- Timeout waiting for the service. Set <=0 to wait forever -->
+  <arg name="wait_timeout_s" default="10.0" />
+
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell_left"
+        output="screen"
+        required="false"
+        if="$(arg do_left)">
+    <param name="service" value="/$(arg robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/zero_ftsensor" />
+    <param name="delay_s" value="$(arg delay_s)" />
+    <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+  </node>
+
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell_right"
+        output="screen"
+        required="false"
+        if="$(arg do_right)">
+    <param name="service" value="/$(arg robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/zero_ftsensor" />
+    <param name="delay_s" value="$(arg delay_s)" />
+    <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+  </node>
+</launch>
+

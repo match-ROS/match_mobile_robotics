@@ -108,8 +108,8 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## Command saturation (safety)
 ## ----------------------------
 # Saturate commanded twist norm.
-max_linear_speed: 0.4     # m/s
-max_angular_speed: 0.8    # rad/s
+max_linear_speed: 0.2     # m/s
+max_angular_speed: 0.4    # rad/s
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)

@@ -94,7 +94,7 @@ wrench_filter_cutoff_hz: 30.0
 wrench_filter_alpha: 0.07
 
 # Soft deadband on norms (N / Nm).
-force_deadband: 1.0
+force_deadband: 2.0
 torque_deadband: 0.2
 
 # Saturation of wrench norms (safety).

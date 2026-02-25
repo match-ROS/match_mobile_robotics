@@ -79,10 +79,11 @@
     <param name="slave_target_pose_topic" value="$(arg target_pose_topic)" />
     <param name="slave_feedforward_twist_topic" value="$(arg feedforward_twist_topic)" />
 
-    <!-- Publish master TCP pose expressed in a common frame -->
-    <param name="slave_base_frame" value="$(arg common_base_frame)" />
+    <!-- Publish master TCP pose in master's own base frame, but label it as slave's base frame.
+         Since the arms are identical, the numerical pose is directly valid for the slave. -->
+    <param name="slave_base_frame" value="$(arg master_base_inertia_frame)" />
     <param name="slave_tcp_frame" value="$(arg master_tool_frame)" />
-    <param name="slave_frame_id_override" value="" />
+    <param name="slave_frame_id_override" value="$(arg slave_base_inertia_frame)" />
   </node>
 
   <!-- SLAVE: right arm outer-loop -->

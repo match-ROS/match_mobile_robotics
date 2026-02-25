@@ -689,8 +689,10 @@ private:
     const Eigen::Vector3d F_hand = master_filt_.f;
     const Eigen::Vector3d Tau_hand = master_filt_.tau;
 
-    const Eigen::Vector3d F_feedback = (kf_force_ * slave_filt_.f) + coupling_filt_.f;
-    const Eigen::Vector3d Tau_feedback = (kf_torque_ * slave_filt_.tau) + coupling_filt_.tau;
+    // Force reflection: slave FT typically measures the wrench applied *on the slave tool* by the environment.
+    // To obtain an opposing reflected contribution at the master, we invert the slave wrench sign here.
+    const Eigen::Vector3d F_feedback = (-kf_force_ * slave_filt_.f) + coupling_filt_.f;
+    const Eigen::Vector3d Tau_feedback = (-kf_torque_ * slave_filt_.tau) + coupling_filt_.tau;
 
     // Per-axis admittance: M dv + D v = (F_hand - F_feedback)
     const Eigen::Vector3d M_lin = sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);

@@ -67,8 +67,8 @@ damping_angular: 0.8
 #
 # **force_reflection_scale / torque_reflection_scale**:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
-force_reflection_scale: 0.5
-torque_reflection_scale: 0.5
+force_reflection_scale: 0.3
+torque_reflection_scale: 0.3
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true

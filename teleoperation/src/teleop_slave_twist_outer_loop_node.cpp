@@ -76,6 +76,7 @@ public:
 
     // Wrench filtering & clamps
     pnh_.param("wrench_filter_alpha", wrench_filter_alpha_, wrench_filter_alpha_);
+    pnh_.param("wrench_filter_cutoff_hz", wrench_filter_cutoff_hz_, wrench_filter_cutoff_hz_);
     pnh_.param("force_deadband", force_deadband_, force_deadband_);
     pnh_.param("torque_deadband", torque_deadband_, torque_deadband_);
     pnh_.param("max_force", max_force_, max_force_);
@@ -277,6 +278,15 @@ private:
     return x * x * (3.0 - 2.0 * x);
   }
 
+  static double computeFilterAlpha(double dt, double alpha_param, double cutoff_hz_param)
+  {
+    if (cutoff_hz_param > 0.0 && std::isfinite(cutoff_hz_param))
+    {
+      return teleoperation::lowpassAlphaFromCutoffHz(dt, cutoff_hz_param);
+    }
+    return std::clamp(alpha_param, 0.0, 1.0);
+  }
+
   double computeAlpha(const Eigen::Vector3d& F_ext_lin, const Eigen::Vector3d& v_ff_lin) const
   {
     double metric = F_ext_lin.norm();
@@ -410,17 +420,20 @@ private:
     const Eigen::VectorXd corr_o = pid_ori_.compute(e_o, dt);
 
     // Wrench filtering + deadband + clamp
+    const double dt_for_filter = std::clamp(dt, std::max(1e-6, dt_min), (dt_max > 0.0 ? dt_max : dt));
+    const double alpha_wrench = computeFilterAlpha(dt_for_filter, wrench_filter_alpha_, wrench_filter_cutoff_hz_);
+    const bool do_filter = (alpha_wrench > 0.0) && (alpha_wrench < 1.0);
     if (!has_wrench_filt_)
     {
       wrench_filt_ = teleoperation::filterClampDeadbandWrench(wrench_raw, wrench_raw, false,
-                                                               wrench_filter_alpha_, force_deadband_, torque_deadband_,
+                                                               alpha_wrench, force_deadband_, torque_deadband_,
                                                                max_force_, max_torque_, use_torques_);
       has_wrench_filt_ = true;
     }
     else
     {
-      wrench_filt_ = teleoperation::filterClampDeadbandWrench(wrench_filt_, wrench_raw, wrench_filter_alpha_ > 0.0,
-                                                               wrench_filter_alpha_, force_deadband_, torque_deadband_,
+      wrench_filt_ = teleoperation::filterClampDeadbandWrench(wrench_filt_, wrench_raw, do_filter,
+                                                               alpha_wrench, force_deadband_, torque_deadband_,
                                                                max_force_, max_torque_, use_torques_);
     }
     debug_wrench_filt_pub_.publish(wrench_filt_, now, base_frame_);
@@ -551,6 +564,7 @@ private:
   double force_stop_{30.0};
 
   double wrench_filter_alpha_{0.07};
+  double wrench_filter_cutoff_hz_{0.0};
   double force_deadband_{1.0};
   double torque_deadband_{0.2};
   double max_force_{150.0};

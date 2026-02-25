@@ -36,6 +36,8 @@ teleop_slave_twist_outer_loop:
   use_latest_tf_for_wrench: false
 
   # Wrench filtering/clamps
+  # - If wrench_filter_cutoff_hz > 0, it overrides wrench_filter_alpha.
+  wrench_filter_cutoff_hz: 30.0
   wrench_filter_alpha: 0.07
   force_deadband: 1.0
   torque_deadband: 0.2

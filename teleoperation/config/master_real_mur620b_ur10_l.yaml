@@ -1,57 +1,136 @@
+## Teleoperation MASTER (haptic/admittance) config for real MUR620b + UR10e left arm.
+## This YAML is loaded inside the node private namespace (rosparam in <node>), so keys become:
+##   /teleop_master_haptic_controller/<key>
+##
+## NOTE (master_slave_mur620b_real.launch):
+## - In that launch file, several of these keys are overwritten via <param ...> AFTER this YAML is loaded.
+##   (See launch for the authoritative runtime wiring.)
+
+## ----------------------------
+## I/O wiring (topics)
+## ----------------------------
+# **master_wrench_topic**: where we read the MASTER wrench (force/torque) measurement (geometry_msgs/WrenchStamped).
 master_wrench_topic: /mur620b/UR10_l/wrench
-slave_wrench_topic: ""  # Set in bilateral launch (e.g. /mur620b/UR10_r/wrench)
+
+# **slave_wrench_topic**: optional wrench fed back for force-reflection.
+# - Empty string disables force reflection (safer for first tests).
+# - If enabled, set e.g. "/mur620b/UR10_r/wrench".
+slave_wrench_topic: "/mur620b/UR10_r/wrench"
+
+# **coupling_wrench_topic**: optional additional wrench source (e.g. bimanual coupling). Usually empty.
 coupling_wrench_topic: ""
 
-# Use the real TCP frame when incoming wrench header.frame_id is not valid in TF.
+## ----------------------------
+## Wrench TF handling (frame alignment)
+## ----------------------------
+# The node rotates the incoming wrench into **wrench_target_frame** using TF.
+# Many real load-cells publish with a header.frame_id that may be missing / wrong in TF; in that case:
+#
+# **wrench_source_frame_override**:
+# - If non-empty, the node ignores msg->header.frame_id and uses this TF frame as the wrench "source".
+# - Typical value: the tool frame (TCP) of the arm that carries the FT sensor.
 wrench_source_frame_override: mur620b/UR10_l/tool0
+
+# **use_latest_tf_for_wrench**:
+# - true: use TF at time=0 (latest), more robust when stamps are not synchronized.
+# - false: use the message stamp (or now if stamp is zero).
 use_latest_tf_for_wrench: true
+
+# **wrench_target_frame**: frame in which the wrench is expressed internally (often base inertia frame).
 wrench_target_frame: mur620b/UR10_l/base_link_inertia
+
+# **tf_timeout_s**: TF lookup timeout (s). Keep small; failure just skips that sample.
 tf_timeout_s: 0.02
 
+## ----------------------------
+## Output command
+## ----------------------------
+# **command_topic**: where the node publishes the master twist command (geometry_msgs/Twist).
 command_topic: /mur620b/UR10_l/twist_controller/command_collision_free
+
+# **control_rate**: control loop frequency (Hz).
 control_rate: 250.0
 
-# Conservative master-only admittance for first real tests.
+## ----------------------------
+## Admittance / haptic dynamics
+## ----------------------------
+# The master side implements a (virtual) mass-damper admittance driven by measured wrench.
+# Start conservative on real hardware.
+#
+# **mass_linear / damping_linear**: translational virtual dynamics.
 mass_linear: 3.0
 damping_linear: 10.0
+#
+# **mass_angular / damping_angular**: rotational virtual dynamics.
 mass_angular: 0.10
 damping_angular: 0.8
-force_reflection_scale: 0.3
-torque_reflection_scale: 0.0
+#
+# **force_reflection_scale / torque_reflection_scale**:
+# scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
+force_reflection_scale: 0.5
+torque_reflection_scale: 0.5
+#
+# **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
 use_torques: true
 
-# Wrench filtering
-# - Use either *alpha* (0..1) OR *cutoff_hz* (recommended). If cutoff_hz>0 it overrides alpha.
+## ----------------------------
+## Wrench filtering
+## ----------------------------
+# The node supports low-pass filtering either via:
+# - **wrench_filter_alpha** (simple 1st-order IIR, 0..1; smaller = more smoothing), or
+# - **wrench_filter_cutoff_hz** (preferred; if >0 it overrides alpha internally).
 wrench_filter_cutoff_hz: 30.0
 wrench_filter_alpha: 0.5
 
-# Soft deadzone on the norm + optional hysteresis latch
-force_deadband_enter: 2.0
-force_deadband_exit: 1.0
-torque_deadband_enter: 0.2
-torque_deadband_exit: 0.12
-max_force: 80.0
-max_torque: 10.0
+## ----------------------------
+## Deadbands, clamps, and debug of filtered wrench
+## ----------------------------
+# Deadband is applied on the wrench norm (soft), with optional hysteresis:
+# - enter: threshold to start "considering" force/torque
+# - exit: lower threshold to go back to zero (avoids chattering)
+force_deadband_enter: 2.0     # N
+force_deadband_exit: 1.0      # N
+torque_deadband_enter: 0.2    # Nm
+torque_deadband_exit: 0.12    # Nm
+#
+# Saturation limits applied to the wrench norm (safety + robustness).
+max_force: 80.0               # N
+max_torque: 10.0              # Nm
+#
+# If true, publish filtered wrench topics for inspection.
 publish_filtered_wrench_debug: true
 filtered_master_wrench_topic: /teleop_debug/mur620b_UR10_l/master_wrench_filtered
-#filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
+filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 #filtered_coupling_wrench_topic: /teleop_debug/mur620b_UR10_l/coupling_wrench_filtered
 
-max_linear_speed: 0.4
-max_angular_speed: 0.8
+## ----------------------------
+## Command saturation (safety)
+## ----------------------------
+# Saturate commanded twist norm.
+max_linear_speed: 0.4     # m/s
+max_angular_speed: 0.8    # rad/s
 
-# dt sanitization (measured dt from TimerEvent, then clamp/substep)
+## ----------------------------
+## dt sanitization (real-time robustness)
+## ----------------------------
+# The node measures dt from ROS timers, then clamps it to avoid unstable spikes.
+# **dt_min_factor / dt_max_factor** are multiplicative bounds relative to nominal dt (1/control_rate).
 dt_min_factor: 0.5
 dt_max_factor: 2.0
+#
+# If enabled, large dt are split into smaller internal steps (improves stability when CPU jitters).
 dt_use_substepping: true
 dt_max_substeps: 10
 
-# Smoothness limits (set >0 to enable). Consider starting conservative.
-max_linear_accel: 0.6
-max_linear_jerk: 6.0
-max_angular_accel: 1.5
-max_angular_jerk: 15.0
+## ----------------------------
+## Smoothness limits (optional jerk-limited shaping)
+## ----------------------------
+# If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
+max_linear_accel: 0.6      # m/s^2
+max_linear_jerk: 6.0       # m/s^3
+max_angular_accel: 1.5     # rad/s^2
+max_angular_jerk: 15.0     # rad/s^3
 
 # Optional per-axis admittance (uncomment to use)
 #mass_linear_xyz: [4.0, 4.0, 6.0]
@@ -59,17 +138,41 @@ max_angular_jerk: 15.0
 #mass_angular_xyz: [0.35, 0.35, 0.35]
 #damping_angular_xyz: [3.5, 3.5, 3.5]
 
-wrench_timeout_s: 0.2
+## ----------------------------
+## Safety on stale data
+## ----------------------------
+# If no wrench arrives for this duration, treat it as stale.
+wrench_timeout_s: 0.2     # s
+#
+# If true, reset internal state when stale (avoids drifting / integrating garbage).
 reset_on_stale: true
 
-# Diagnostics (topics under ~debug/*)
+## ----------------------------
+## Diagnostics / debug topics (~debug/*)
+## ----------------------------
 publish_diagnostics: true
-diagnostics_rate: 100.0
+diagnostics_rate: 100.0   # Hz
 
-# Slave target publishing (enable in bilateral launch)
-publish_slave_targets: false
-slave_base_frame: mur620b/UR10_l/base_link_inertia
-slave_tcp_frame: mur620b/UR10_l/tool0
-slave_frame_id_override: ""
+## ----------------------------
+## Publishing targets for the slave (pose + feedforward twist)
+## ----------------------------
+# If true, the master publishes:
+# - a target pose (PoseStamped) and
+# - an optional feedforward twist (TwistStamped)
+# that the slave outer-loop consumes.
+publish_slave_targets: true
+#
+# Frames used to compute/publish the pose:
+# - **slave_base_frame**: frame in which the pose is expressed (common base frame).
+# - **slave_tcp_frame**: TCP frame whose pose is published (often the MASTER TCP when teleoperating).
+# In `master_slave_mur620b_real.launch` these are intentionally overridden to publish
+# the MASTER TCP pose expressed in a common base frame.
+slave_base_frame: mur620b/UR10_r/base_link_inertia
+slave_tcp_frame: mur620b/UR10_r/tool0
+#
+# Optional: force the outgoing PoseStamped.header.frame_id (empty = use slave_base_frame).
+# slave_frame_id_override: ""
+#
+# Publishing rate for the slave targets (Hz).
 slave_publish_rate: 250.0
 

@@ -86,3 +86,13 @@ teleop_master_haptic_controller:
   # If true, also reset internal controller state on stale data.
   reset_on_stale: true
 
+  # Slave target publishing (optional: pose + twist from master to slave).
+  # Enable in bilateral launch; disabled by default for standalone master use.
+  publish_slave_targets: false
+  slave_target_pose_topic: target_pose
+  slave_feedforward_twist_topic: feedforward_twist
+  slave_base_frame: base_link
+  slave_tcp_frame: tool0
+  slave_frame_id_override: ""
+  slave_publish_rate: 250.0
+

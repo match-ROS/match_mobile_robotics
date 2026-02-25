@@ -1,5 +1,6 @@
 #include <ros/ros.h>
 
+#include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/WrenchStamped.h>
@@ -113,6 +114,15 @@ public:
     pnh_.param<double>("wrench_timeout_s", wrench_timeout_s_, wrench_timeout_s_);
     pnh_.param<bool>("reset_on_stale", reset_on_stale_, reset_on_stale_);
 
+    // Slave target publishing (optional: pose + twist from master to slave)
+    pnh_.param<bool>("publish_slave_targets", publish_slave_targets_, publish_slave_targets_);
+    pnh_.param<std::string>("slave_target_pose_topic", slave_target_pose_topic_, slave_target_pose_topic_);
+    pnh_.param<std::string>("slave_feedforward_twist_topic", slave_ff_twist_topic_, slave_ff_twist_topic_);
+    pnh_.param<std::string>("slave_base_frame", slave_base_frame_, slave_base_frame_);
+    pnh_.param<std::string>("slave_tcp_frame", slave_tcp_frame_, slave_tcp_frame_);
+    pnh_.param<std::string>("slave_frame_id_override", slave_frame_id_override_, slave_frame_id_override_);
+    pnh_.param<double>("slave_publish_rate", slave_publish_rate_, slave_publish_rate_);
+
     // Diagnostics
     pnh_.param<bool>("publish_diagnostics", publish_diagnostics_, publish_diagnostics_);
     pnh_.param<double>("diagnostics_rate", diagnostics_rate_, diagnostics_rate_);
@@ -151,6 +161,21 @@ public:
                                "filtered_slave_wrench_topic", "debug/slave_wrench_filtered");
     debug_coupling_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
                                   "filtered_coupling_wrench_topic", "debug/coupling_wrench_filtered");
+
+    if (publish_slave_targets_)
+    {
+      pub_slave_pose_ = nh_.advertise<geometry_msgs::PoseStamped>(slave_target_pose_topic_, 1);
+      pub_slave_twist_ = nh_.advertise<geometry_msgs::TwistStamped>(slave_ff_twist_topic_, 1);
+
+      const double slave_period = (slave_publish_rate_ > 0.0) ? (1.0 / slave_publish_rate_) : 0.01;
+      slave_timer_ = nh_.createTimer(ros::Duration(slave_period),
+                                     &TeleopMasterHapticController::slaveTargetTick, this);
+
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Slave targets enabled: pose='%s', twist='%s' at %.0f Hz, TF %s->%s",
+                     slave_target_pose_topic_.c_str(), slave_ff_twist_topic_.c_str(),
+                     slave_publish_rate_, slave_base_frame_.c_str(), slave_tcp_frame_.c_str());
+    }
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopMasterHapticController::tick, this);
@@ -370,6 +395,59 @@ private:
       stamped.twist = cmd;
       pub_cmd_stamped_.publish(stamped);
     }
+  }
+
+  void slaveTargetTick(const ros::TimerEvent& /*ev*/)
+  {
+    const ros::Time now = ros::Time::now();
+
+    // Lookup master TCP pose in its own base frame
+    geometry_msgs::TransformStamped T;
+    try
+    {
+      T = tf_buffer_.lookupTransform(slave_base_frame_, slave_tcp_frame_, ros::Time(0),
+                                     ros::Duration(tf_timeout_s_));
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
+                              "Slave target TF lookup failed (%s -> %s): %s",
+                              slave_base_frame_.c_str(), slave_tcp_frame_.c_str(), ex.what());
+      return;
+    }
+
+    const std::string frame_out = slave_frame_id_override_.empty()
+                                      ? slave_base_frame_
+                                      : slave_frame_id_override_;
+
+    // Publish PoseStamped
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.header.stamp = now;
+    pose_msg.header.frame_id = frame_out;
+    pose_msg.pose.position.x = T.transform.translation.x;
+    pose_msg.pose.position.y = T.transform.translation.y;
+    pose_msg.pose.position.z = T.transform.translation.z;
+    pose_msg.pose.orientation = T.transform.rotation;
+    pub_slave_pose_.publish(pose_msg);
+
+    // Publish commanded twist (already computed by admittance loop)
+    Eigen::Vector3d v_lin, v_ang;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      v_lin = v_lin_cmd_;
+      v_ang = v_ang_cmd_;
+    }
+
+    geometry_msgs::TwistStamped twist_msg;
+    twist_msg.header.stamp = now;
+    twist_msg.header.frame_id = frame_out;
+    twist_msg.twist.linear.x = v_lin.x();
+    twist_msg.twist.linear.y = v_lin.y();
+    twist_msg.twist.linear.z = v_lin.z();
+    twist_msg.twist.angular.x = v_ang.x();
+    twist_msg.twist.angular.y = v_ang.y();
+    twist_msg.twist.angular.z = v_ang.z();
+    pub_slave_twist_.publish(twist_msg);
   }
 
   void tick(const ros::TimerEvent& ev)
@@ -799,6 +877,11 @@ private:
   ros::Publisher pub_debug_v_post_;
   ros::Timer timer_;
 
+  // Slave target publishers
+  ros::Publisher pub_slave_pose_;
+  ros::Publisher pub_slave_twist_;
+  ros::Timer slave_timer_;
+
   // Params
   std::string master_wrench_topic_;
   std::string slave_wrench_topic_;
@@ -864,6 +947,15 @@ private:
 
   double wrench_timeout_s_{0.2};
   bool reset_on_stale_{true};
+
+  // Slave target publishing
+  bool publish_slave_targets_{false};
+  std::string slave_target_pose_topic_{"target_pose"};
+  std::string slave_ff_twist_topic_{"feedforward_twist"};
+  std::string slave_base_frame_{"base_link"};
+  std::string slave_tcp_frame_{"tool0"};
+  std::string slave_frame_id_override_;
+  double slave_publish_rate_{250.0};
 
   bool publish_diagnostics_{true};
   double diagnostics_rate_{50.0};

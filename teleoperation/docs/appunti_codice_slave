@@ -3,6 +3,5 @@ punti da verificare:
 - La posa verso lo slave deve essere inviata senza frame, o deve essere il master ad indicare il frame corretto per lo slave. Quindi lo slave riceve già la posa e il frame corretti
 - Per quanto riguarda la wrench dello slave puoi prendere spunto dalle operazioni svolte su quella del master, compresa la rotazione per applicare l'ammettenza sullo slave.
 - Il master, credo sia meglio che legga direttamente i valori della cella dello slave e faccia le sue operazioni internamente.
-- I launch file vanno verificati
 - Il base frame e il tcp frame per il master e per lo slave sono uguali, cambia solo il namespace del braccio
 - sullo slave va 

@@ -6,7 +6,7 @@
   <!-- Robot slots: set namespace and enable desired arms -->
   <arg name="robot_1_ns" default="mur620b"/>
   <arg name="enable_robot_1_left" default="true"/>
-  <arg name="enable_robot_1_right" default="false"/>
+  <arg name="enable_robot_1_right" default="true"/>
 
   <arg name="robot_2_ns" default="mur620c"/>
   <arg name="enable_robot_2_left" default="false"/>

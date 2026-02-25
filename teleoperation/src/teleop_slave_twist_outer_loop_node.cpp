@@ -65,6 +65,10 @@ public:
     pnh_.param("k_adm_angular", k_adm_angular_, k_adm_angular_);
     pnh_.param("use_torques", use_torques_, use_torques_);
 
+    // Wrench TF options (matching master pattern)
+    pnh_.param<std::string>("wrench_source_frame_override", wrench_source_frame_override_, wrench_source_frame_override_);
+    pnh_.param<bool>("use_latest_tf_for_wrench", use_latest_tf_for_wrench_, use_latest_tf_for_wrench_);
+
     // Scaling alpha(F)
     pnh_.param<std::string>("alpha_mode", alpha_mode_, alpha_mode_);
     pnh_.param("force_start", force_start_, force_start_);
@@ -88,6 +92,10 @@ public:
     pnh_.param("hard_force_duration", hard_force_duration_, hard_force_duration_);
     pnh_.param<std::string>("hard_guard_action", hard_guard_action_, hard_guard_action_);
     pnh_.param("retreat_speed", retreat_speed_, retreat_speed_);
+
+    // dt sanitization
+    pnh_.param("dt_min_factor", dt_min_factor_, dt_min_factor_);
+    pnh_.param("dt_max_factor", dt_max_factor_, dt_max_factor_);
 
     // PID params (reuse existing component)
     teleoperation::PIDConfig pcfg;
@@ -148,13 +156,18 @@ private:
     const Eigen::Vector3d f_src = teleoperation::vector3MsgToEigen(msg->wrench.force);
     const Eigen::Vector3d t_src = teleoperation::vector3MsgToEigen(msg->wrench.torque);
     Eigen::Vector3d f_base, t_base;
-    const ros::Time stamp = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
-    if (!teleoperation::rotateVectorToFrame(tf_buffer_, base_frame_, msg->header.frame_id, stamp, tf_timeout_s_,
+    const std::string src_frame = wrench_source_frame_override_.empty()
+                                      ? msg->header.frame_id
+                                      : wrench_source_frame_override_;
+    const ros::Time stamp = use_latest_tf_for_wrench_
+                                ? ros::Time(0)
+                                : (msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp);
+    if (!teleoperation::rotateVectorToFrame(tf_buffer_, base_frame_, src_frame, stamp, tf_timeout_s_,
                                             f_src, f_base, "teleop_slave_twist_outer_loop"))
     {
       return;
     }
-    if (!teleoperation::rotateVectorToFrame(tf_buffer_, base_frame_, msg->header.frame_id, stamp, tf_timeout_s_,
+    if (!teleoperation::rotateVectorToFrame(tf_buffer_, base_frame_, src_frame, stamp, tf_timeout_s_,
                                             t_src, t_base, "teleop_slave_twist_outer_loop"))
     {
       return;
@@ -164,7 +177,7 @@ private:
 
     std::lock_guard<std::mutex> lock(mutex_);
     wrench_raw_ = w;
-    wrench_stamp_ = stamp;
+    wrench_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
     has_wrench_ = true;
   }
 
@@ -340,6 +353,19 @@ private:
       return;
     }
 
+    // dt clamping (robustness against timer jitter)
+    const double dt_nominal = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
+    const double dt_min = std::max(0.0, dt_min_factor_) * dt_nominal;
+    const double dt_max = std::max(0.0, dt_max_factor_) * dt_nominal;
+    if (dt_min > 0.0 && dt < dt_min)
+    {
+      dt = dt_nominal;
+    }
+    if (dt_max > 0.0 && dt > dt_max)
+    {
+      dt = dt_max;
+    }
+
     // Transform inputs to base frame (within this robot TF tree).
     geometry_msgs::PoseStamped target_pose_base;
     if (!transformPoseToBase(target_pose_msg, target_pose_base))
@@ -439,6 +465,10 @@ private:
     // Hard guard override (stop or retreat)
     if (guard_active)
     {
+      // Reset PID integrators to avoid accumulation during guard
+      pid_pos_.reset();
+      pid_ori_.reset();
+
       if (hard_guard_action_ == "stop")
       {
         v_cmd_lin.setZero();
@@ -535,6 +565,14 @@ private:
   double hard_force_duration_{0.03};
   std::string hard_guard_action_{"stop"};  // "stop" or "retreat"
   double retreat_speed_{0.03};
+
+  // dt sanitization
+  double dt_min_factor_{0.5};
+  double dt_max_factor_{2.0};
+
+  // Wrench TF options
+  std::string wrench_source_frame_override_;
+  bool use_latest_tf_for_wrench_{false};
 
   // State
   mutable std::mutex mutex_;

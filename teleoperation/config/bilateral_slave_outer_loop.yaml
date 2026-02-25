@@ -31,6 +31,10 @@ teleop_slave_twist_outer_loop:
   k_adm_angular: 0.0
   use_torques: false
 
+  # Wrench TF options
+  wrench_source_frame_override: ""
+  use_latest_tf_for_wrench: false
+
   # Wrench filtering/clamps
   wrench_filter_alpha: 0.07
   force_deadband: 1.0
@@ -51,6 +55,10 @@ teleop_slave_twist_outer_loop:
   hard_force_duration: 0.03    # s
   hard_guard_action: stop      # "stop" or "retreat"
   retreat_speed: 0.03          # m/s (if retreat)
+
+  # dt sanitization
+  dt_min_factor: 0.5
+  dt_max_factor: 2.0
 
   # Small correction PID (output_limit clamps vector norm)
   pid:

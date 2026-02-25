@@ -13,33 +13,15 @@
   <arg name="target_pose_topic" default="/$(arg master_ns)/target_pose"/>
   <arg name="feedforward_twist_topic" default="/$(arg master_ns)/feedforward_twist"/>
 
-  <!-- Relabel-only: publish master state stamped as slave base frame -->
-  <arg name="frame_id_override" default="$(arg slave_ns)/$(arg slave_base_frame)"/>
-
   <!-- Wrench topics -->
   <arg name="master_wrench_topic" default="/$(arg master_ns)/wrench"/>
   <arg name="slave_wrench_topic" default="/$(arg slave_ns)/wrench"/>
 
-  <!-- Twist command topics (you will typically remap these to .../twist_controller/controller_input or through ur_twist_limiter) -->
+  <!-- Twist command topics -->
   <arg name="master_cmd_topic" default="/$(arg master_ns)/twist_controller/command"/>
   <arg name="slave_cmd_topic" default="/$(arg slave_ns)/twist_controller/command"/>
 
-  <!-- Master measured state publisher -->
-  <group ns="$(arg master_ns)">
-    <rosparam command="load"
-              file="$(find teleoperation)/config/bilateral_master_measured_publisher.yaml"
-              subst_value="true"/>
-    <param name="base_frame" value="$(arg master_base_frame)"/>
-    <param name="tcp_frame" value="$(arg master_tcp_frame)"/>
-    <param name="frame_id_override" value="$(arg frame_id_override)"/>
-
-    <node pkg="teleoperation"
-          type="teleop_master_measured_state_publisher"
-          name="teleop_master_measured_state_publisher"
-          output="screen"/>
-  </group>
-
-  <!-- Master haptic controller -->
+  <!-- Master haptic controller (admittance + slave target publishing + force reflection) -->
   <group ns="$(arg master_ns)">
     <rosparam command="load"
               file="$(find teleoperation)/config/bilateral_master_haptic.yaml"
@@ -49,6 +31,15 @@
     <param name="slave_wrench_topic" value="$(arg slave_wrench_topic)"/>
     <param name="wrench_target_frame" value="$(arg master_base_frame)"/>
     <param name="command_topic" value="$(arg master_cmd_topic)"/>
+
+    <!-- Enable slave target publishing (pose + twist from master to slave) -->
+    <param name="publish_slave_targets" value="true"/>
+    <param name="slave_target_pose_topic" value="$(arg target_pose_topic)"/>
+    <param name="slave_feedforward_twist_topic" value="$(arg feedforward_twist_topic)"/>
+    <param name="slave_base_frame" value="$(arg master_base_frame)"/>
+    <param name="slave_tcp_frame" value="$(arg master_tcp_frame)"/>
+    <!-- frame_id_override: empty means use slave_base_frame as-is -->
+    <param name="slave_frame_id_override" value=""/>
 
     <node pkg="teleoperation"
           type="teleop_master_haptic_controller"
@@ -75,4 +66,3 @@
           output="screen"/>
   </group>
 </launch>
-

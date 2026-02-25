@@ -1,5 +1,5 @@
 master_wrench_topic: /mur620b/UR10_l/wrench
-slave_wrench_topic: ""
+slave_wrench_topic: ""  # Set in bilateral launch (e.g. /mur620b/UR10_r/wrench)
 coupling_wrench_topic: ""
 
 # Use the real TCP frame when incoming wrench header.frame_id is not valid in TF.
@@ -16,7 +16,7 @@ mass_linear: 3.0
 damping_linear: 10.0
 mass_angular: 0.10
 damping_angular: 0.8
-force_reflection_scale: 0.0
+force_reflection_scale: 0.3
 torque_reflection_scale: 0.0
 use_forces: true
 use_torques: true
@@ -65,3 +65,11 @@ reset_on_stale: true
 # Diagnostics (topics under ~debug/*)
 publish_diagnostics: true
 diagnostics_rate: 100.0
+
+# Slave target publishing (enable in bilateral launch)
+publish_slave_targets: false
+slave_base_frame: mur620b/UR10_l/base_link_inertia
+slave_tcp_frame: mur620b/UR10_l/tool0
+slave_frame_id_override: ""
+slave_publish_rate: 250.0
+

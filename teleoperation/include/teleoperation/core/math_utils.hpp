@@ -125,6 +125,39 @@ inline Eigen::Vector3d orientationErrorAxisAngle(const Eigen::Quaterniond& q_cur
   return angle * aa.axis();
 }
 
+inline Eigen::Vector3d softDeadzoneNormWithHysteresis(const Eigen::Vector3d& v,
+                                                       double db_enter,
+                                                       double db_exit,
+                                                       bool& active)
+{
+  const double n = v.norm();
+  if (!std::isfinite(n))
+  {
+    active = false;
+    return Eigen::Vector3d::Zero();
+  }
+
+  const double enter = std::max(0.0, db_enter);
+  const double exit = std::max(0.0, db_exit);
+
+  if (!active)
+  {
+    if (n <= enter)
+    {
+      return Eigen::Vector3d::Zero();
+    }
+    active = true;
+    return softDeadzoneNorm3(v, enter);
+  }
+
+  if (n <= exit)
+  {
+    active = false;
+    return Eigen::Vector3d::Zero();
+  }
+  return softDeadzoneNorm3(v, enter);
+}
+
 // Compatibility alias used by existing code.
 inline Eigen::Vector3d applyDeadbandAbs(const Eigen::Vector3d& v, double deadband_abs)
 {

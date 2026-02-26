@@ -77,8 +77,17 @@ public:
     // Wrench filtering & clamps
     pnh_.param("wrench_filter_alpha", wrench_filter_alpha_, wrench_filter_alpha_);
     pnh_.param("wrench_filter_cutoff_hz", wrench_filter_cutoff_hz_, wrench_filter_cutoff_hz_);
-    pnh_.param("force_deadband", force_deadband_, force_deadband_);
-    pnh_.param("torque_deadband", torque_deadband_, torque_deadband_);
+
+    // Deadband: prefer enter/exit; fall back to legacy scalar
+    double force_db_legacy = 1.0;
+    double torque_db_legacy = 0.2;
+    pnh_.param("force_deadband", force_db_legacy, force_db_legacy);
+    pnh_.param("torque_deadband", torque_db_legacy, torque_db_legacy);
+    pnh_.param("force_deadband_enter", force_deadband_enter_, force_db_legacy);
+    pnh_.param("force_deadband_exit", force_deadband_exit_, force_deadband_enter_ * 0.7);
+    pnh_.param("torque_deadband_enter", torque_deadband_enter_, torque_db_legacy);
+    pnh_.param("torque_deadband_exit", torque_deadband_exit_, torque_deadband_enter_ * 0.7);
+
     pnh_.param("max_force", max_force_, max_force_);
     pnh_.param("max_torque", max_torque_, max_torque_);
 
@@ -97,6 +106,8 @@ public:
     // dt sanitization
     pnh_.param("dt_min_factor", dt_min_factor_, dt_min_factor_);
     pnh_.param("dt_max_factor", dt_max_factor_, dt_max_factor_);
+    pnh_.param("dt_use_substepping", dt_use_substepping_, dt_use_substepping_);
+    pnh_.param("dt_max_substeps", dt_max_substeps_, dt_max_substeps_);
 
     // PID params (reuse existing component)
     teleoperation::PIDConfig pcfg;
@@ -344,10 +355,12 @@ private:
         (now - t_wrench).toSec() > wrench_timeout_)
     {
       publishZero("stale inputs");
-      // Reset PID integrators to avoid jumps after input returns.
+      // Reset PID integrators and deadband state to avoid jumps after input returns.
       pid_pos_.reset();
       pid_ori_.reset();
       hard_guard_active_since_ = ros::Time(0);
+      wrench_db_state_ = teleoperation::WrenchDeadbandState{};
+      has_wrench_filt_ = false;
       return;
     }
 
@@ -371,10 +384,21 @@ private:
     {
       dt = dt_nominal;
     }
+
+    int n_substeps = 1;
     if (dt_max > 0.0 && dt > dt_max)
     {
-      dt = dt_max;
+      if (dt_use_substepping_)
+      {
+        n_substeps = static_cast<int>(std::ceil(dt / dt_max));
+        n_substeps = std::clamp(n_substeps, 1, std::max(1, dt_max_substeps_));
+      }
+      else
+      {
+        dt = dt_max;
+      }
     }
+    const double dt_step = dt / static_cast<double>(n_substeps);
 
     // Transform inputs to base frame (within this robot TF tree).
     geometry_msgs::PoseStamped target_pose_base;
@@ -416,25 +440,29 @@ private:
     const Eigen::Vector3d e_p = p_tgt - p_curr;
     const Eigen::Vector3d e_o = teleoperation::orientationErrorAxisAngle(q_curr, q_tgt);
 
-    const Eigen::VectorXd corr_p = pid_pos_.compute(e_p, dt);
-    const Eigen::VectorXd corr_o = pid_ori_.compute(e_o, dt);
+    const Eigen::VectorXd corr_p = pid_pos_.compute(e_p, dt_step);
+    const Eigen::VectorXd corr_o = pid_ori_.compute(e_o, dt_step);
 
-    // Wrench filtering + deadband + clamp
-    const double dt_for_filter = std::clamp(dt, std::max(1e-6, dt_min), (dt_max > 0.0 ? dt_max : dt));
+    // Wrench filtering + soft norm deadband with hysteresis + clamp
+    const double dt_for_filter = std::clamp(dt_step, std::max(1e-6, dt_min), (dt_max > 0.0 ? dt_max : dt_step));
     const double alpha_wrench = computeFilterAlpha(dt_for_filter, wrench_filter_alpha_, wrench_filter_cutoff_hz_);
     const bool do_filter = (alpha_wrench > 0.0) && (alpha_wrench < 1.0);
     if (!has_wrench_filt_)
     {
-      wrench_filt_ = teleoperation::filterClampDeadbandWrench(wrench_raw, wrench_raw, false,
-                                                               alpha_wrench, force_deadband_, torque_deadband_,
-                                                               max_force_, max_torque_, use_torques_);
+      wrench_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+          wrench_raw, wrench_raw, false, alpha_wrench,
+          force_deadband_enter_, force_deadband_exit_,
+          torque_deadband_enter_, torque_deadband_exit_,
+          max_force_, max_torque_, use_torques_, wrench_db_state_);
       has_wrench_filt_ = true;
     }
     else
     {
-      wrench_filt_ = teleoperation::filterClampDeadbandWrench(wrench_filt_, wrench_raw, do_filter,
-                                                               alpha_wrench, force_deadband_, torque_deadband_,
-                                                               max_force_, max_torque_, use_torques_);
+      wrench_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+          wrench_filt_, wrench_raw, do_filter, alpha_wrench,
+          force_deadband_enter_, force_deadband_exit_,
+          torque_deadband_enter_, torque_deadband_exit_,
+          max_force_, max_torque_, use_torques_, wrench_db_state_);
     }
     debug_wrench_filt_pub_.publish(wrench_filt_, now, base_frame_);
 
@@ -565,8 +593,10 @@ private:
 
   double wrench_filter_alpha_{0.07};
   double wrench_filter_cutoff_hz_{0.0};
-  double force_deadband_{1.0};
-  double torque_deadband_{0.2};
+  double force_deadband_enter_{1.0};
+  double force_deadband_exit_{0.7};
+  double torque_deadband_enter_{0.2};
+  double torque_deadband_exit_{0.14};
   double max_force_{150.0};
   double max_torque_{20.0};
 
@@ -583,6 +613,8 @@ private:
   // dt sanitization
   double dt_min_factor_{0.5};
   double dt_max_factor_{2.0};
+  bool dt_use_substepping_{false};
+  int dt_max_substeps_{10};
 
   // Wrench TF options
   std::string wrench_source_frame_override_;
@@ -602,6 +634,7 @@ private:
 
   bool has_wrench_filt_{false};
   Wrench3 wrench_filt_;
+  teleoperation::WrenchDeadbandState wrench_db_state_;
 
   ros::Time last_time_{0};
   ros::Time hard_guard_active_since_{0};

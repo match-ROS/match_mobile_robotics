@@ -94,8 +94,13 @@ wrench_filter_cutoff_hz: 30.0
 wrench_filter_alpha: 0.07
 
 # Soft deadband on norms (N / Nm).
-force_deadband: 2.0
-torque_deadband: 0.2
+force_deadband: 1.0            # legacy fallback if enter/exit not set
+force_deadband_enter: 1.0
+force_deadband_exit: 0.7
+
+torque_deadband: 0.2           # legacy fallback
+torque_deadband_enter: 0.2
+torque_deadband_exit: 0.14
 
 # Saturation of wrench norms (safety).
 max_force: 80.0
@@ -131,6 +136,8 @@ retreat_speed: 0.03          # m/s (if retreat)
 # Clamp dt relative to nominal (1/control_rate).
 dt_min_factor: 0.5
 dt_max_factor: 2.0
+dt_use_substepping: true
+dt_max_substeps: 10
 
 ## ----------------------------
 ## Small correction PID (stabilizes pose error)

@@ -257,38 +257,7 @@ private:
     return out;
   }
 
-  static Eigen::Vector3d softDeadzoneNormWithHysteresis(const Eigen::Vector3d& v,
-                                                        double db_enter,
-                                                        double db_exit,
-                                                        bool& active)
-  {
-    const double n = v.norm();
-    if (!std::isfinite(n))
-    {
-      active = false;
-      return Eigen::Vector3d::Zero();
-    }
-
-    const double enter = std::max(0.0, db_enter);
-    const double exit = std::max(0.0, db_exit);
-
-    if (!active)
-    {
-      if (n <= enter)
-      {
-        return Eigen::Vector3d::Zero();
-      }
-      active = true;
-      return teleoperation::softDeadzoneNorm3(v, enter);
-    }
-
-    if (n <= exit)
-    {
-      active = false;
-      return Eigen::Vector3d::Zero();
-    }
-    return teleoperation::softDeadzoneNorm3(v, enter);
-  }
+  // softDeadzoneNormWithHysteresis is now in teleoperation::math_utils.hpp
 
   static double computeFilterAlpha(double dt, double alpha_param, double cutoff_hz_param)
   {
@@ -310,12 +279,9 @@ private:
     has_filtered_slave_ = false;
     has_filtered_coupling_ = false;
 
-    f_master_active_ = false;
-    tau_master_active_ = false;
-    f_slave_active_ = false;
-    tau_slave_active_ = false;
-    f_coupling_active_ = false;
-    tau_coupling_active_ = false;
+    master_db_state_ = teleoperation::WrenchDeadbandState{};
+    slave_db_state_ = teleoperation::WrenchDeadbandState{};
+    coupling_db_state_ = teleoperation::WrenchDeadbandState{};
   }
 
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
@@ -558,127 +524,106 @@ private:
     const bool use_master_filter = (alpha_master > 0.0) && (alpha_master < 1.0);
     const bool use_feedback_filter = (alpha_feedback > 0.0) && (alpha_feedback < 1.0);
 
+    // Master wrench: EMA + soft norm deadband with hysteresis + clamp
     if (!has_filtered_master_)
     {
-      master_filt_ = master_raw;
+      master_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+          master_raw, master_raw, false, alpha_master,
+          force_deadband_enter_, force_deadband_exit_,
+          torque_deadband_enter_, torque_deadband_exit_,
+          (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_),
+          (max_torque_hand_ > 0.0 ? max_torque_hand_ : max_torque_),
+          use_torques_, master_db_state_);
       has_filtered_master_ = true;
     }
     else
     {
-      if (use_master_filter)
-      {
-        master_filt_.f = teleoperation::ema3(master_filt_.f, master_raw.f, alpha_master);
-        master_filt_.tau = teleoperation::ema3(master_filt_.tau, master_raw.tau, alpha_master);
-      }
-      else
-      {
-        master_filt_ = master_raw;
-      }
+      master_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+          master_filt_, master_raw, use_master_filter, alpha_master,
+          force_deadband_enter_, force_deadband_exit_,
+          torque_deadband_enter_, torque_deadband_exit_,
+          (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_),
+          (max_torque_hand_ > 0.0 ? max_torque_hand_ : max_torque_),
+          use_torques_, master_db_state_);
     }
-    master_filt_.f = softDeadzoneNormWithHysteresis(master_filt_.f, force_deadband_enter_, force_deadband_exit_, f_master_active_);
-    master_filt_.f = teleoperation::clampNorm3(master_filt_.f, (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_));
     if (!use_forces_)
     {
       master_filt_.f.setZero();
-      f_master_active_ = false;
-    }
-    if (use_torques_)
-    {
-      master_filt_.tau = softDeadzoneNormWithHysteresis(master_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_master_active_);
-      master_filt_.tau = teleoperation::clampNorm3(master_filt_.tau, (max_torque_hand_ > 0.0 ? max_torque_hand_ : max_torque_));
-    }
-    else
-    {
-      master_filt_.tau.setZero();
+      master_db_state_.f_active = false;
     }
 
+    // Slave wrench
     if (has_slave)
     {
       if (!has_filtered_slave_)
       {
-        slave_filt_ = slave_raw;
+        slave_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+            slave_raw, slave_raw, false, alpha_feedback,
+            force_deadband_enter_, force_deadband_exit_,
+            torque_deadband_enter_, torque_deadband_exit_,
+            (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
+            (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
+            use_torques_, slave_db_state_);
         has_filtered_slave_ = true;
       }
       else
       {
-        if (use_feedback_filter)
-        {
-          slave_filt_.f = teleoperation::ema3(slave_filt_.f, slave_raw.f, alpha_feedback);
-          slave_filt_.tau = teleoperation::ema3(slave_filt_.tau, slave_raw.tau, alpha_feedback);
-        }
-        else
-        {
-          slave_filt_ = slave_raw;
-        }
+        slave_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+            slave_filt_, slave_raw, use_feedback_filter, alpha_feedback,
+            force_deadband_enter_, force_deadband_exit_,
+            torque_deadband_enter_, torque_deadband_exit_,
+            (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
+            (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
+            use_torques_, slave_db_state_);
       }
-      slave_filt_.f = softDeadzoneNormWithHysteresis(slave_filt_.f, force_deadband_enter_, force_deadband_exit_, f_slave_active_);
-      slave_filt_.f = teleoperation::clampNorm3(slave_filt_.f, (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_));
       if (!use_forces_)
       {
         slave_filt_.f.setZero();
-        f_slave_active_ = false;
-      }
-      if (use_torques_)
-      {
-        slave_filt_.tau = softDeadzoneNormWithHysteresis(slave_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_slave_active_);
-        slave_filt_.tau = teleoperation::clampNorm3(slave_filt_.tau, (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_));
-      }
-      else
-      {
-        slave_filt_.tau.setZero();
+        slave_db_state_.f_active = false;
       }
     }
     else
     {
       slave_filt_.f.setZero();
       slave_filt_.tau.setZero();
-      f_slave_active_ = false;
-      tau_slave_active_ = false;
+      slave_db_state_ = teleoperation::WrenchDeadbandState{};
     }
 
+    // Coupling wrench
     if (has_coupling)
     {
       if (!has_filtered_coupling_)
       {
-        coupling_filt_ = coupling_raw;
+        coupling_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+            coupling_raw, coupling_raw, false, alpha_feedback,
+            force_deadband_enter_, force_deadband_exit_,
+            torque_deadband_enter_, torque_deadband_exit_,
+            (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
+            (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
+            use_torques_, coupling_db_state_);
         has_filtered_coupling_ = true;
       }
       else
       {
-        if (use_feedback_filter)
-        {
-          coupling_filt_.f = teleoperation::ema3(coupling_filt_.f, coupling_raw.f, alpha_feedback);
-          coupling_filt_.tau = teleoperation::ema3(coupling_filt_.tau, coupling_raw.tau, alpha_feedback);
-        }
-        else
-        {
-          coupling_filt_ = coupling_raw;
-        }
+        coupling_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+            coupling_filt_, coupling_raw, use_feedback_filter, alpha_feedback,
+            force_deadband_enter_, force_deadband_exit_,
+            torque_deadband_enter_, torque_deadband_exit_,
+            (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
+            (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
+            use_torques_, coupling_db_state_);
       }
-      coupling_filt_.f = softDeadzoneNormWithHysteresis(coupling_filt_.f, force_deadband_enter_, force_deadband_exit_, f_coupling_active_);
-      coupling_filt_.f = teleoperation::clampNorm3(coupling_filt_.f, (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_));
       if (!use_forces_)
       {
         coupling_filt_.f.setZero();
-        f_coupling_active_ = false;
-      }
-      if (use_torques_)
-      {
-        coupling_filt_.tau =
-            softDeadzoneNormWithHysteresis(coupling_filt_.tau, torque_deadband_enter_, torque_deadband_exit_, tau_coupling_active_);
-        coupling_filt_.tau = teleoperation::clampNorm3(coupling_filt_.tau, (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_));
-      }
-      else
-      {
-        coupling_filt_.tau.setZero();
+        coupling_db_state_.f_active = false;
       }
     }
     else
     {
       coupling_filt_.f.setZero();
       coupling_filt_.tau.setZero();
-      f_coupling_active_ = false;
-      tau_coupling_active_ = false;
+      coupling_db_state_ = teleoperation::WrenchDeadbandState{};
     }
 
     debug_master_filt_pub_.publish(master_filt_, now, wrench_target_frame_);
@@ -996,12 +941,9 @@ private:
   teleoperation::JerkLimiter3 a_lin_limiter_;
   teleoperation::JerkLimiter3 a_ang_limiter_;
 
-  bool f_master_active_{false};
-  bool tau_master_active_{false};
-  bool f_slave_active_{false};
-  bool tau_slave_active_{false};
-  bool f_coupling_active_{false};
-  bool tau_coupling_active_{false};
+  teleoperation::WrenchDeadbandState master_db_state_;
+  teleoperation::WrenchDeadbandState slave_db_state_;
+  teleoperation::WrenchDeadbandState coupling_db_state_;
 };
 
 int main(int argc, char** argv)

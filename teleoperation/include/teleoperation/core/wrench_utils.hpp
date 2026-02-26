@@ -46,4 +46,45 @@ inline Wrench3 filterClampDeadbandWrench(const Wrench3& prev,
   return out;
 }
 
+struct WrenchDeadbandState
+{
+  bool f_active{false};
+  bool tau_active{false};
+};
+
+inline Wrench3 filterClampDeadbandWrenchNorm(const Wrench3& prev,
+                                              const Wrench3& curr,
+                                              bool use_filter,
+                                              double alpha,
+                                              double force_db_enter,
+                                              double force_db_exit,
+                                              double torque_db_enter,
+                                              double torque_db_exit,
+                                              double max_f,
+                                              double max_tau,
+                                              bool use_torques,
+                                              WrenchDeadbandState& db_state)
+{
+  Wrench3 out;
+
+  const Eigen::Vector3d f0 = use_filter ? ema3(prev.f, curr.f, alpha) : curr.f;
+  const Eigen::Vector3d t0 = use_filter ? ema3(prev.tau, curr.tau, alpha) : curr.tau;
+
+  out.f = softDeadzoneNormWithHysteresis(f0, force_db_enter, force_db_exit, db_state.f_active);
+  out.f = clampNorm3(out.f, max_f);
+
+  if (use_torques)
+  {
+    out.tau = softDeadzoneNormWithHysteresis(t0, torque_db_enter, torque_db_exit, db_state.tau_active);
+    out.tau = clampNorm3(out.tau, max_tau);
+  }
+  else
+  {
+    out.tau.setZero();
+    db_state.tau_active = false;
+  }
+
+  return out;
+}
+
 }  // namespace teleoperation

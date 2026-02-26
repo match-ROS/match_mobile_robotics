@@ -65,6 +65,18 @@ public:
     pnh_.param("k_adm_angular", k_adm_angular_, k_adm_angular_);
     pnh_.param("use_torques", use_torques_, use_torques_);
 
+    // Spring control (alternative to PID)
+    pnh_.param<bool>("use_spring_control", use_spring_control_, use_spring_control_);
+    pnh_.param("spring_stiffness_linear", spring_k_lin_, spring_k_lin_);
+    pnh_.param("spring_stiffness_angular", spring_k_ang_, spring_k_ang_);
+    pnh_.param("spring_ki_linear", spring_ki_lin_, spring_ki_lin_);
+    pnh_.param("spring_ki_angular", spring_ki_ang_, spring_ki_ang_);
+    pnh_.param("integral_max_linear", integral_max_lin_, integral_max_lin_);
+    pnh_.param("integral_max_angular", integral_max_ang_, integral_max_ang_);
+    pnh_.param("integral_force_freeze", integral_force_freeze_, integral_force_freeze_);
+    pnh_.param("max_spring_linear_speed", max_spring_lin_speed_, max_spring_lin_speed_);
+    pnh_.param("max_spring_angular_speed", max_spring_ang_speed_, max_spring_ang_speed_);
+
     // Wrench TF options (matching master pattern)
     pnh_.param<std::string>("wrench_source_frame_override", wrench_source_frame_override_, wrench_source_frame_override_);
     pnh_.param<bool>("use_latest_tf_for_wrench", use_latest_tf_for_wrench_, use_latest_tf_for_wrench_);
@@ -109,26 +121,37 @@ public:
     pnh_.param("dt_use_substepping", dt_use_substepping_, dt_use_substepping_);
     pnh_.param("dt_max_substeps", dt_max_substeps_, dt_max_substeps_);
 
-    // PID params (reuse existing component)
-    teleoperation::PIDConfig pcfg;
-    pnh_.param("pid/position/kp", pcfg.kp, pcfg.kp);
-    pnh_.param("pid/position/ki", pcfg.ki, pcfg.ki);
-    pnh_.param("pid/position/kd", pcfg.kd, pcfg.kd);
-    pnh_.param("pid/position/output_limit", pcfg.output_limit, pcfg.output_limit);
-    pnh_.param("pid/position/derivative_filter_tau", pcfg.derivative_filter_tau, pcfg.derivative_filter_tau);
-    pcfg.kff = 0.0;
-    pcfg.enabled = true;
-    pid_pos_.setConfig(pcfg);
+    // PID params (legacy mode, used when use_spring_control=false)
+    if (!use_spring_control_)
+    {
+      teleoperation::PIDConfig pcfg;
+      pnh_.param("pid/position/kp", pcfg.kp, pcfg.kp);
+      pnh_.param("pid/position/ki", pcfg.ki, pcfg.ki);
+      pnh_.param("pid/position/kd", pcfg.kd, pcfg.kd);
+      pnh_.param("pid/position/output_limit", pcfg.output_limit, pcfg.output_limit);
+      pnh_.param("pid/position/derivative_filter_tau", pcfg.derivative_filter_tau, pcfg.derivative_filter_tau);
+      pcfg.kff = 0.0;
+      pcfg.enabled = true;
+      pid_pos_.setConfig(pcfg);
 
-    teleoperation::PIDConfig ocfg;
-    pnh_.param("pid/orientation/kp", ocfg.kp, ocfg.kp);
-    pnh_.param("pid/orientation/ki", ocfg.ki, ocfg.ki);
-    pnh_.param("pid/orientation/kd", ocfg.kd, ocfg.kd);
-    pnh_.param("pid/orientation/output_limit", ocfg.output_limit, ocfg.output_limit);
-    pnh_.param("pid/orientation/derivative_filter_tau", ocfg.derivative_filter_tau, ocfg.derivative_filter_tau);
-    ocfg.kff = 0.0;
-    ocfg.enabled = true;
-    pid_ori_.setConfig(ocfg);
+      teleoperation::PIDConfig ocfg;
+      pnh_.param("pid/orientation/kp", ocfg.kp, ocfg.kp);
+      pnh_.param("pid/orientation/ki", ocfg.ki, ocfg.ki);
+      pnh_.param("pid/orientation/kd", ocfg.kd, ocfg.kd);
+      pnh_.param("pid/orientation/output_limit", ocfg.output_limit, ocfg.output_limit);
+      pnh_.param("pid/orientation/derivative_filter_tau", ocfg.derivative_filter_tau, ocfg.derivative_filter_tau);
+      ocfg.kff = 0.0;
+      ocfg.enabled = true;
+      pid_ori_.setConfig(ocfg);
+    }
+
+    // Master feedback publishing (reverse of master→slave target publishing).
+    // The slave publishes its actual TCP pose so the master can compute the
+    // virtual spring coupling force.
+    pnh_.param<bool>("publish_master_feedback", publish_master_feedback_, publish_master_feedback_);
+    pnh_.param<std::string>("master_feedback_pose_topic", master_fb_pose_topic_, master_fb_pose_topic_);
+    pnh_.param<std::string>("master_feedback_frame_override", master_fb_frame_override_, master_fb_frame_override_);
+    pnh_.param("master_feedback_publish_rate", master_fb_rate_, master_fb_rate_);
 
     sub_target_pose_ = nh_.subscribe(target_pose_topic_, 1, &TeleopSlaveTwistOuterLoop::targetPoseCb, this,
                                      ros::TransportHints().tcpNoDelay());
@@ -140,6 +163,27 @@ public:
     pub_cmd_ = nh_.advertise<geometry_msgs::Twist>(command_topic_, 1);
     debug_wrench_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
                                 "filtered_wrench_topic", "debug/wrench_filtered");
+
+    if (publish_master_feedback_)
+    {
+      pub_master_fb_pose_ = nh_.advertise<geometry_msgs::PoseStamped>(master_fb_pose_topic_, 1);
+
+      const double fb_period = (master_fb_rate_ > 0.0) ? (1.0 / master_fb_rate_) : 0.01;
+      master_fb_timer_ = nh_.createTimer(ros::Duration(fb_period),
+                                          &TeleopSlaveTwistOuterLoop::masterFeedbackTick, this);
+
+      ROS_INFO_NAMED("teleop_slave_twist_outer_loop",
+                     "Master feedback enabled: pose='%s' at %.0f Hz, frame_override='%s'",
+                     master_fb_pose_topic_.c_str(), master_fb_rate_,
+                     master_fb_frame_override_.c_str());
+    }
+
+    if (use_spring_control_)
+    {
+      ROS_INFO_NAMED("teleop_slave_twist_outer_loop",
+                     "Spring control active: K_lin=%.2f K_ang=%.2f Ki_lin=%.3f Ki_ang=%.3f freeze=%.1f N",
+                     spring_k_lin_, spring_k_ang_, spring_ki_lin_, spring_ki_ang_, integral_force_freeze_);
+    }
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopSlaveTwistOuterLoop::tick, this);
@@ -324,6 +368,36 @@ private:
     pub_cmd_.publish(cmd);
   }
 
+  // Publish the slave's actual TCP pose back to the master (reverse of master→slave).
+  // Uses the same approach: lookupTransform for own TCP, publish with frame override.
+  void masterFeedbackTick(const ros::TimerEvent& /*ev*/)
+  {
+    Eigen::Isometry3d T_base_tcp;
+    if (!getTcpPose(T_base_tcp))
+    {
+      return;
+    }
+
+    const std::string frame_out = master_fb_frame_override_.empty()
+                                      ? base_frame_
+                                      : master_fb_frame_override_;
+
+    Eigen::Quaterniond q(T_base_tcp.rotation());
+    q.normalize();
+
+    geometry_msgs::PoseStamped pose_msg;
+    pose_msg.header.stamp = ros::Time::now();
+    pose_msg.header.frame_id = frame_out;
+    pose_msg.pose.position.x = T_base_tcp.translation().x();
+    pose_msg.pose.position.y = T_base_tcp.translation().y();
+    pose_msg.pose.position.z = T_base_tcp.translation().z();
+    pose_msg.pose.orientation.w = q.w();
+    pose_msg.pose.orientation.x = q.x();
+    pose_msg.pose.orientation.y = q.y();
+    pose_msg.pose.orientation.z = q.z();
+    pub_master_fb_pose_.publish(pose_msg);
+  }
+
   void tick(const ros::TimerEvent& /*ev*/)
   {
     const ros::Time now = ros::Time::now();
@@ -355,9 +429,17 @@ private:
         (now - t_wrench).toSec() > wrench_timeout_)
     {
       publishZero("stale inputs");
-      // Reset PID integrators and deadband state to avoid jumps after input returns.
-      pid_pos_.reset();
-      pid_ori_.reset();
+      // Reset controller state to avoid jumps after input returns.
+      if (use_spring_control_)
+      {
+        pos_integral_.setZero();
+        ori_integral_.setZero();
+      }
+      else
+      {
+        pid_pos_.reset();
+        pid_ori_.reset();
+      }
       hard_guard_active_since_ = ros::Time(0);
       wrench_db_state_ = teleoperation::WrenchDeadbandState{};
       has_wrench_filt_ = false;
@@ -440,9 +522,6 @@ private:
     const Eigen::Vector3d e_p = p_tgt - p_curr;
     const Eigen::Vector3d e_o = teleoperation::orientationErrorAxisAngle(q_curr, q_tgt);
 
-    const Eigen::VectorXd corr_p = pid_pos_.compute(e_p, dt_step);
-    const Eigen::VectorXd corr_o = pid_ori_.compute(e_o, dt_step);
-
     // Wrench filtering + soft norm deadband with hysteresis + clamp
     const double dt_for_filter = std::clamp(dt_step, std::max(1e-6, dt_min), (dt_max > 0.0 ? dt_max : dt_step));
     const double alpha_wrench = computeFilterAlpha(dt_for_filter, wrench_filter_alpha_, wrench_filter_cutoff_hz_);
@@ -486,29 +565,98 @@ private:
     Eigen::Vector3d v_ff_lin(ff_twist_base.twist.linear.x, ff_twist_base.twist.linear.y, ff_twist_base.twist.linear.z);
     Eigen::Vector3d v_ff_ang(ff_twist_base.twist.angular.x, ff_twist_base.twist.angular.y, ff_twist_base.twist.angular.z);
 
-    const double alpha = computeAlpha(wrench_filt_.f, v_ff_lin);
+    Eigen::Vector3d v_cmd_lin = Eigen::Vector3d::Zero();
+    Eigen::Vector3d v_cmd_ang = Eigen::Vector3d::Zero();
 
-    Eigen::Vector3d v_cmd_lin = alpha * k_ff_ * v_ff_lin + corr_p;
-    Eigen::Vector3d v_cmd_ang = alpha * k_ff_ * v_ff_ang + corr_o;
-
-    // Compliance term (velocity from force)
-    Eigen::Vector3d v_comp_lin = -k_adm_linear_ * wrench_filt_.f;
-    v_comp_lin = teleoperation::clampNorm3(v_comp_lin, max_compliance_linear_speed_);
-    v_cmd_lin += v_comp_lin;
-
-    if (use_torques_)
+    if (use_spring_control_)
     {
-      Eigen::Vector3d v_comp_ang = -k_adm_angular_ * wrench_filt_.tau;
-      v_comp_ang = teleoperation::clampNorm3(v_comp_ang, max_compliance_angular_speed_);
-      v_cmd_ang += v_comp_ang;
+      // ---- Spring control mode ----
+      // v = k_ff * v_master + K_s * e_p + Ki * integral(e_p) - k_adm * F_s
+
+      // Spring proportional
+      Eigen::Vector3d v_spring_lin = spring_k_lin_ * e_p;
+      Eigen::Vector3d v_spring_ang = spring_k_ang_ * e_o;
+
+      // Integral with force-aware freeze + clamp.
+      // The integral accumulates only when external force is below the freeze threshold,
+      // preventing windup during contact.
+      if (f_norm < integral_force_freeze_)
+      {
+        pos_integral_ += e_p * dt_step;
+        pos_integral_ = teleoperation::clampNorm3(pos_integral_, integral_max_lin_);
+
+        if (use_torques_)
+        {
+          ori_integral_ += e_o * dt_step;
+          ori_integral_ = teleoperation::clampNorm3(ori_integral_, integral_max_ang_);
+        }
+      }
+      // else: integral frozen — retains last value, no accumulation
+
+      v_spring_lin += spring_ki_lin_ * pos_integral_;
+      if (use_torques_)
+      {
+        v_spring_ang += spring_ki_ang_ * ori_integral_;
+      }
+
+      // Clamp spring output
+      v_spring_lin = teleoperation::clampNorm3(v_spring_lin, max_spring_lin_speed_);
+      v_spring_ang = teleoperation::clampNorm3(v_spring_ang, max_spring_ang_speed_);
+
+      // Feedforward + spring (no alpha scaling — contact handled naturally)
+      v_cmd_lin = k_ff_ * v_ff_lin + v_spring_lin;
+      v_cmd_ang = k_ff_ * v_ff_ang + v_spring_ang;
+
+      // Compliance
+      Eigen::Vector3d v_comp_lin = -k_adm_linear_ * wrench_filt_.f;
+      v_comp_lin = teleoperation::clampNorm3(v_comp_lin, max_compliance_linear_speed_);
+      v_cmd_lin += v_comp_lin;
+
+      if (use_torques_)
+      {
+        Eigen::Vector3d v_comp_ang = -k_adm_angular_ * wrench_filt_.tau;
+        v_comp_ang = teleoperation::clampNorm3(v_comp_ang, max_compliance_angular_speed_);
+        v_cmd_ang += v_comp_ang;
+      }
+    }
+    else
+    {
+      // ---- Legacy PID mode ----
+      const Eigen::VectorXd corr_p = pid_pos_.compute(e_p, dt_step);
+      const Eigen::VectorXd corr_o = pid_ori_.compute(e_o, dt_step);
+
+      const double alpha = computeAlpha(wrench_filt_.f, v_ff_lin);
+
+      v_cmd_lin = alpha * k_ff_ * v_ff_lin + corr_p;
+      v_cmd_ang = alpha * k_ff_ * v_ff_ang + corr_o;
+
+      // Compliance
+      Eigen::Vector3d v_comp_lin = -k_adm_linear_ * wrench_filt_.f;
+      v_comp_lin = teleoperation::clampNorm3(v_comp_lin, max_compliance_linear_speed_);
+      v_cmd_lin += v_comp_lin;
+
+      if (use_torques_)
+      {
+        Eigen::Vector3d v_comp_ang = -k_adm_angular_ * wrench_filt_.tau;
+        v_comp_ang = teleoperation::clampNorm3(v_comp_ang, max_compliance_angular_speed_);
+        v_cmd_ang += v_comp_ang;
+      }
     }
 
     // Hard guard override (stop or retreat)
     if (guard_active)
     {
-      // Reset PID integrators to avoid accumulation during guard
-      pid_pos_.reset();
-      pid_ori_.reset();
+      // Reset controller state
+      if (use_spring_control_)
+      {
+        pos_integral_.setZero();
+        ori_integral_.setZero();
+      }
+      else
+      {
+        pid_pos_.reset();
+        pid_ori_.reset();
+      }
 
       if (hard_guard_action_ == "stop")
       {
@@ -517,7 +665,6 @@ private:
       }
       else if (hard_guard_action_ == "retreat")
       {
-        // Retreat opposite to ff direction if available, else opposite to force direction.
         Eigen::Vector3d dir = Eigen::Vector3d::Zero();
         if (v_ff_lin.norm() > 1e-6)
         {
@@ -532,7 +679,6 @@ private:
       }
       else
       {
-        // Unknown action: default to stop.
         v_cmd_lin.setZero();
         v_cmd_ang.setZero();
       }
@@ -568,6 +714,10 @@ private:
   teleoperation::WrenchDebugPublisher debug_wrench_filt_pub_;
   ros::Timer timer_;
 
+  // Master feedback publishing
+  ros::Publisher pub_master_fb_pose_;
+  ros::Timer master_fb_timer_;
+
   // Params
   std::string base_frame_;
   std::string tcp_frame_;
@@ -587,7 +737,20 @@ private:
   double k_adm_angular_{0.0};
   bool use_torques_{false};
 
-  std::string alpha_mode_{"parallel"};  // "parallel" or "norm"
+  // Spring control (alternative to PID)
+  bool use_spring_control_{false};
+  double spring_k_lin_{2.0};
+  double spring_k_ang_{1.5};
+  double spring_ki_lin_{0.3};
+  double spring_ki_ang_{0.2};
+  double integral_max_lin_{0.05};
+  double integral_max_ang_{0.1};
+  double integral_force_freeze_{2.0};
+  double max_spring_lin_speed_{0.15};
+  double max_spring_ang_speed_{0.3};
+
+  // Force-aware scaling (legacy PID mode only)
+  std::string alpha_mode_{"parallel"};
   double force_start_{8.0};
   double force_stop_{30.0};
 
@@ -607,7 +770,7 @@ private:
 
   double hard_force_threshold_{60.0};
   double hard_force_duration_{0.03};
-  std::string hard_guard_action_{"stop"};  // "stop" or "retreat"
+  std::string hard_guard_action_{"stop"};
   double retreat_speed_{0.03};
 
   // dt sanitization
@@ -619,6 +782,12 @@ private:
   // Wrench TF options
   std::string wrench_source_frame_override_;
   bool use_latest_tf_for_wrench_{false};
+
+  // Master feedback publishing params
+  bool publish_master_feedback_{false};
+  std::string master_fb_pose_topic_{"master_feedback_pose"};
+  std::string master_fb_frame_override_;
+  double master_fb_rate_{250.0};
 
   // State
   mutable std::mutex mutex_;
@@ -635,6 +804,10 @@ private:
   bool has_wrench_filt_{false};
   Wrench3 wrench_filt_;
   teleoperation::WrenchDeadbandState wrench_db_state_;
+
+  // Spring control integral state
+  Eigen::Vector3d pos_integral_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d ori_integral_{Eigen::Vector3d::Zero()};
 
   ros::Time last_time_{0};
   ros::Time hard_guard_active_since_{0};

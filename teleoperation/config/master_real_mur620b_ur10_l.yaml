@@ -67,8 +67,10 @@ damping_angular: 0.8
 #
 # **force_reflection_scale / torque_reflection_scale**:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
-force_reflection_scale: 0.3
-torque_reflection_scale: 0.3
+# NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
+# The spring provides the primary position-based feedback; FT adds subtle contact texture.
+force_reflection_scale: 0.03
+torque_reflection_scale: 0.03
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
@@ -175,4 +177,20 @@ slave_tcp_frame: mur620b/UR10_r/tool0
 #
 # Publishing rate for the slave targets (Hz).
 slave_publish_rate: 250.0
+
+## ----------------------------
+## Virtual spring coupling (position-based feedback from slave)
+## ----------------------------
+# Subscribes to the slave's actual TCP pose and computes:
+#   F_spring = K_s * (p_master - p_slave) + B_s * (v_master - v_slave)
+# This provides stable, delay-insensitive force feedback to the operator.
+# Requires the slave to publish its actual pose (publish_master_feedback: true on slave).
+spring_stiffness_linear: 100.0    # N/m
+spring_damping_linear: 2.0       # N·s/m
+spring_stiffness_angular: 1.0    # N·m/rad (disabled: set >0 to enable)
+spring_damping_angular: 0.5
+max_spring_force: 15.0           # N (safety saturation on spring force norm)
+max_spring_torque: 5.0           # N·m
+# Topic on which the slave publishes its actual TCP pose (set in launch).
+slave_actual_pose_topic: ""
 

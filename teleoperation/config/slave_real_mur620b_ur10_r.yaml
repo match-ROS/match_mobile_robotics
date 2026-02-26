@@ -140,9 +140,36 @@ dt_use_substepping: true
 dt_max_substeps: 10
 
 ## ----------------------------
-## Small correction PID (stabilizes pose error)
+## Spring control (replaces PID for bilateral teleoperation)
 ## ----------------------------
-# output_limit clamps the norm of the PID output (safety + smoothness).
+# When use_spring_control: true, the slave uses:
+#   v = k_ff * v_master + K_s * e_p + Ki * integral(e_p) - k_adm * F_s
+# The integral freezes when external force exceeds integral_force_freeze,
+# preventing windup during contact.
+use_spring_control: true
+spring_stiffness_linear: 2.0       # 1/s (velocity = K_s * position_error)
+spring_stiffness_angular: 1.5      # 1/s
+spring_ki_linear: 0.3              # 1/s² (integral gain)
+spring_ki_angular: 0.2
+integral_max_linear: 0.05          # m·s (clamp on integral norm)
+integral_max_angular: 0.1          # rad·s
+integral_force_freeze: 2.0         # N — freeze integral when |F| > threshold
+max_spring_linear_speed: 0.15      # m/s (spring output clamp)
+max_spring_angular_speed: 0.3      # rad/s
+
+## ----------------------------
+## Master feedback publishing (reverse of master→slave)
+## ----------------------------
+# The slave publishes its actual TCP pose so the master can compute
+# the virtual spring coupling force.
+publish_master_feedback: true
+master_feedback_pose_topic: /teleop/mur620b/slave_actual_pose
+master_feedback_frame_override: mur620b/UR10_l/base_link_inertia
+master_feedback_publish_rate: 250.0
+
+## ----------------------------
+## Legacy PID (used when use_spring_control: false)
+## ----------------------------
 pid:
   position:
     kp: 0.5

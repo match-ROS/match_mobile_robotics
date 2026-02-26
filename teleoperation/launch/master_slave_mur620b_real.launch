@@ -30,6 +30,8 @@
   <!-- Teleop topics (master publishes, slave consumes) -->
   <arg name="target_pose_topic" default="/teleop/$(arg robot_ns)/target_pose" />
   <arg name="feedforward_twist_topic" default="/teleop/$(arg robot_ns)/feedforward_twist" />
+  <!-- Slave publishes its actual TCP pose for master virtual spring coupling -->
+  <arg name="slave_actual_pose_topic" default="/teleop/$(arg robot_ns)/slave_actual_pose" />
 
   <!-- NOTE: cannot include ur10e_zero_loadcell.launch twice because it contains a node with a fixed name.
        So we run the python helper directly with two distinct node names. -->
@@ -84,6 +86,9 @@
     <param name="slave_base_frame" value="$(arg master_base_inertia_frame)" />
     <param name="slave_tcp_frame" value="$(arg master_tool_frame)" />
     <param name="slave_frame_id_override" value="$(arg slave_base_inertia_frame)" />
+
+    <!-- Virtual spring: subscribe to slave's actual TCP pose -->
+    <param name="slave_actual_pose_topic" value="$(arg slave_actual_pose_topic)" />
   </node>
 
   <!-- SLAVE: right arm outer-loop -->
@@ -103,6 +108,11 @@
     <param name="feedforward_twist_topic" value="$(arg feedforward_twist_topic)" />
     <param name="wrench_source_frame_override" value="$(arg slave_tool_frame)" />
     <param name="use_latest_tf_for_wrench" value="true" />
+
+    <!-- Master feedback: slave publishes its actual pose for spring coupling -->
+    <param name="publish_master_feedback" value="true" />
+    <param name="master_feedback_pose_topic" value="$(arg slave_actual_pose_topic)" />
+    <param name="master_feedback_frame_override" value="$(arg master_base_inertia_frame)" />
   </node>
 </launch>
 

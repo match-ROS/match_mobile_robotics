@@ -57,6 +57,15 @@ public:
     pnh_.param<double>("force_reflection_scale", kf_force_, kf_force_);
     pnh_.param<double>("torque_reflection_scale", kf_torque_, kf_torque_);
 
+    // Virtual spring coupling (position-based feedback from slave actual TCP)
+    pnh_.param<double>("spring_stiffness_linear", spring_k_lin_, spring_k_lin_);
+    pnh_.param<double>("spring_damping_linear", spring_b_lin_, spring_b_lin_);
+    pnh_.param<double>("spring_stiffness_angular", spring_k_ang_, spring_k_ang_);
+    pnh_.param<double>("spring_damping_angular", spring_b_ang_, spring_b_ang_);
+    pnh_.param<double>("max_spring_force", max_spring_force_, max_spring_force_);
+    pnh_.param<double>("max_spring_torque", max_spring_torque_, max_spring_torque_);
+    pnh_.param<std::string>("slave_actual_pose_topic", slave_actual_pose_topic_, slave_actual_pose_topic_);
+
     pnh_.param<bool>("use_forces", use_forces_, use_forces_);
     pnh_.param<bool>("use_torques", use_torques_, use_torques_);
 
@@ -144,6 +153,22 @@ public:
     {
       sub_coupling_wrench_ = nh_.subscribe(coupling_wrench_topic_, 1, &TeleopMasterHapticController::couplingWrenchCb, this,
                                            ros::TransportHints().tcpNoDelay());
+    }
+
+    if (!slave_actual_pose_topic_.empty())
+    {
+      sub_slave_actual_pose_ = nh_.subscribe(slave_actual_pose_topic_, 1,
+                                              &TeleopMasterHapticController::slaveActualPoseCb, this,
+                                              ros::TransportHints().tcpNoDelay());
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Virtual spring enabled: K_lin=%.2f B_lin=%.2f max=%.1f N, subscribing to '%s'",
+                     spring_k_lin_, spring_b_lin_, max_spring_force_,
+                     slave_actual_pose_topic_.c_str());
+    }
+    else if (spring_k_lin_ > 0.0 || spring_k_ang_ > 0.0)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "Spring stiffness set but slave_actual_pose_topic is empty: spring disabled.");
     }
 
     pub_cmd_ = nh_.advertise<geometry_msgs::Twist>(command_topic_, 1);
@@ -282,6 +307,8 @@ private:
     master_db_state_ = teleoperation::WrenchDeadbandState{};
     slave_db_state_ = teleoperation::WrenchDeadbandState{};
     coupling_db_state_ = teleoperation::WrenchDeadbandState{};
+
+    has_p_slave_prev_ = false;
   }
 
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
@@ -347,6 +374,20 @@ private:
     coupling_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
     coupling_wrench_raw_ = w;
     has_coupling_ = true;
+  }
+
+  void slaveActualPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    slave_actual_pos_ = Eigen::Vector3d(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
+    Eigen::Quaterniond q(msg->pose.orientation.w, msg->pose.orientation.x,
+                         msg->pose.orientation.y, msg->pose.orientation.z);
+    if (q.norm() > teleoperation::kMathEps)
+    {
+      slave_actual_ori_ = q.normalized();
+    }
+    slave_actual_pose_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
+    has_slave_actual_pose_ = true;
   }
 
   void publishZero()
@@ -634,10 +675,90 @@ private:
     const Eigen::Vector3d F_hand = master_filt_.f;
     const Eigen::Vector3d Tau_hand = master_filt_.tau;
 
+    // Virtual spring coupling: F_spring = K_s * (p_m - p_s) + B_s * (v_m - v_s)
+    Eigen::Vector3d F_spring_lin = Eigen::Vector3d::Zero();
+    Eigen::Vector3d Tau_spring = Eigen::Vector3d::Zero();
+
+    const bool spring_enabled = has_slave_actual_pose_ &&
+                                 (spring_k_lin_ > 0.0 || spring_k_ang_ > 0.0) &&
+                                 publish_slave_targets_;
+    if (spring_enabled)
+    {
+      // Master TCP position: lookupTransform using slave_base_frame_/slave_tcp_frame_
+      // (which are the master's own frames, as set up in the launch file).
+      geometry_msgs::TransformStamped T_master;
+      bool has_master_tcp = false;
+      try
+      {
+        T_master = tf_buffer_.lookupTransform(slave_base_frame_, slave_tcp_frame_,
+                                               ros::Time(0), ros::Duration(tf_timeout_s_));
+        has_master_tcp = true;
+      }
+      catch (const tf2::TransformException& ex)
+      {
+        ROS_WARN_THROTTLE_NAMED(2.0, "teleop_master_haptic_controller",
+                                "Spring TF lookup failed (%s -> %s): %s",
+                                slave_base_frame_.c_str(), slave_tcp_frame_.c_str(), ex.what());
+      }
+
+      if (has_master_tcp)
+      {
+        const Eigen::Vector3d p_master(T_master.transform.translation.x,
+                                        T_master.transform.translation.y,
+                                        T_master.transform.translation.z);
+
+        Eigen::Vector3d p_slave;
+        Eigen::Quaterniond q_slave;
+        {
+          std::lock_guard<std::mutex> lock(mutex_);
+          p_slave = slave_actual_pos_;
+          q_slave = slave_actual_ori_;
+        }
+
+        // Linear spring
+        if (spring_k_lin_ > 0.0)
+        {
+          const Eigen::Vector3d delta_p = p_master - p_slave;
+          F_spring_lin = spring_k_lin_ * delta_p;
+
+          // Optional velocity damping via numerical differentiation of slave position
+          if (spring_b_lin_ > 0.0 && has_p_slave_prev_)
+          {
+            const Eigen::Vector3d v_slave_est = (p_slave - p_slave_prev_) / dt_for_filter;
+            const Eigen::Vector3d delta_v = v_lin_cmd_ - v_slave_est;
+            F_spring_lin += spring_b_lin_ * delta_v;
+          }
+
+          F_spring_lin = teleoperation::clampNorm3(F_spring_lin, max_spring_force_);
+        }
+
+        // Angular spring
+        if (spring_k_ang_ > 0.0 && use_torques_)
+        {
+          Eigen::Quaterniond q_master(T_master.transform.rotation.w,
+                                       T_master.transform.rotation.x,
+                                       T_master.transform.rotation.y,
+                                       T_master.transform.rotation.z);
+          if (q_master.norm() > teleoperation::kMathEps)
+          {
+            q_master.normalize();
+            const Eigen::Vector3d delta_o = teleoperation::orientationErrorAxisAngle(q_slave, q_master);
+            Tau_spring = spring_k_ang_ * delta_o;
+            Tau_spring = teleoperation::clampNorm3(Tau_spring, max_spring_torque_);
+          }
+        }
+
+        p_slave_prev_ = p_slave;
+        has_p_slave_prev_ = true;
+      }
+    }
+
     // Force reflection: slave FT typically measures the wrench applied *on the slave tool* by the environment.
     // To obtain an opposing reflected contribution at the master, we invert the slave wrench sign here.
-    const Eigen::Vector3d F_feedback = (-kf_force_ * slave_filt_.f) + coupling_filt_.f;
-    const Eigen::Vector3d Tau_feedback = (-kf_torque_ * slave_filt_.tau) + coupling_filt_.tau;
+    // The spring force K_s*(p_m - p_s) already points in the direction master→slave, so adding it
+    // to F_feedback correctly opposes the master's motion when it is ahead.
+    const Eigen::Vector3d F_feedback = F_spring_lin + (-kf_force_ * slave_filt_.f) + coupling_filt_.f;
+    const Eigen::Vector3d Tau_feedback = Tau_spring + (-kf_torque_ * slave_filt_.tau) + coupling_filt_.tau;
 
     // Per-axis admittance: M dv + D v = (F_hand - F_feedback)
     const Eigen::Vector3d M_lin = sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);
@@ -813,6 +934,7 @@ private:
   ros::Subscriber sub_master_wrench_;
   ros::Subscriber sub_slave_wrench_;
   ros::Subscriber sub_coupling_wrench_;
+  ros::Subscriber sub_slave_actual_pose_;
   ros::Publisher pub_cmd_;
   ros::Publisher pub_cmd_stamped_;
   teleoperation::WrenchDebugPublisher debug_master_filt_pub_;
@@ -854,6 +976,15 @@ private:
   double kf_torque_{0.0};
   bool use_forces_{true};
   bool use_torques_{false};
+
+  // Virtual spring coupling
+  double spring_k_lin_{0.0};
+  double spring_b_lin_{0.0};
+  double spring_k_ang_{0.0};
+  double spring_b_ang_{0.0};
+  double max_spring_force_{20.0};
+  double max_spring_torque_{5.0};
+  std::string slave_actual_pose_topic_;
 
   double wrench_filter_alpha_{0.07};
   double wrench_filter_cutoff_hz_{0.0};
@@ -944,6 +1075,14 @@ private:
   teleoperation::WrenchDeadbandState master_db_state_;
   teleoperation::WrenchDeadbandState slave_db_state_;
   teleoperation::WrenchDeadbandState coupling_db_state_;
+
+  // Virtual spring state
+  bool has_slave_actual_pose_{false};
+  Eigen::Vector3d slave_actual_pos_{Eigen::Vector3d::Zero()};
+  Eigen::Quaterniond slave_actual_ori_{Eigen::Quaterniond::Identity()};
+  ros::Time slave_actual_pose_stamp_{0};
+  Eigen::Vector3d p_slave_prev_{Eigen::Vector3d::Zero()};
+  bool has_p_slave_prev_{false};
 };
 
 int main(int argc, char** argv)

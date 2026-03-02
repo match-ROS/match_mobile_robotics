@@ -103,7 +103,7 @@ torque_deadband_enter: 0.2
 torque_deadband_exit: 0.14
 
 # Saturation of wrench norms (safety).
-max_force: 80.0
+max_force: 60.0
 max_torque: 10.0
 
 # Optional debug topic of filtered wrench.
@@ -114,11 +114,11 @@ filtered_wrench_topic: /teleop_debug/mur620b_UR10_r/slave_wrench_filtered
 ## Velocity limits (safety)
 ## ----------------------------
 # Keep conservative for first tests.
-max_linear_speed: 0.2
+max_linear_speed: 0.4
 max_angular_speed: 0.4
 
 # Separate caps for the compliance term only (prevents the admittance from “running away”).
-max_compliance_linear_speed: 0.1
+max_compliance_linear_speed: 0.2
 max_compliance_angular_speed: 0.2
 
 ## ----------------------------

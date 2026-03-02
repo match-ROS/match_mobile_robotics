@@ -608,13 +608,13 @@ private:
       v_cmd_ang = k_ff_ * v_ff_ang + v_spring_ang;
 
       // Compliance
-      Eigen::Vector3d v_comp_lin = -k_adm_linear_ * wrench_filt_.f;
+      Eigen::Vector3d v_comp_lin = k_adm_linear_ * wrench_filt_.f;
       v_comp_lin = teleoperation::clampNorm3(v_comp_lin, max_compliance_linear_speed_);
       v_cmd_lin += v_comp_lin;
 
       if (use_torques_)
       {
-        Eigen::Vector3d v_comp_ang = -k_adm_angular_ * wrench_filt_.tau;
+        Eigen::Vector3d v_comp_ang = k_adm_angular_ * wrench_filt_.tau;
         v_comp_ang = teleoperation::clampNorm3(v_comp_ang, max_compliance_angular_speed_);
         v_cmd_ang += v_comp_ang;
       }
@@ -631,13 +631,13 @@ private:
       v_cmd_ang = alpha * k_ff_ * v_ff_ang + corr_o;
 
       // Compliance
-      Eigen::Vector3d v_comp_lin = -k_adm_linear_ * wrench_filt_.f;
+      Eigen::Vector3d v_comp_lin = k_adm_linear_ * wrench_filt_.f;
       v_comp_lin = teleoperation::clampNorm3(v_comp_lin, max_compliance_linear_speed_);
       v_cmd_lin += v_comp_lin;
 
       if (use_torques_)
       {
-        Eigen::Vector3d v_comp_ang = -k_adm_angular_ * wrench_filt_.tau;
+        Eigen::Vector3d v_comp_ang = k_adm_angular_ * wrench_filt_.tau;
         v_comp_ang = teleoperation::clampNorm3(v_comp_ang, max_compliance_angular_speed_);
         v_cmd_ang += v_comp_ang;
       }
@@ -672,7 +672,7 @@ private:
         }
         else if (wrench_filt_.f.norm() > 1e-6)
         {
-          dir = -wrench_filt_.f.normalized();
+          dir = wrench_filt_.f.normalized();
         }
         v_cmd_lin = retreat_speed_ * dir;
         v_cmd_ang.setZero();

@@ -74,7 +74,7 @@ torque_reflection_scale: 0.03
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
-use_torques: true
+use_torques: false
 
 ## ----------------------------
 ## Wrench filtering
@@ -97,7 +97,7 @@ torque_deadband_enter: 0.2    # Nm
 torque_deadband_exit: 0.12    # Nm
 #
 # Saturation limits applied to the wrench norm (safety + robustness).
-max_force: 80.0               # N
+max_force: 60.0               # N
 max_torque: 10.0              # Nm
 #
 # If true, publish filtered wrench topics for inspection.
@@ -110,7 +110,7 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## Command saturation (safety)
 ## ----------------------------
 # Saturate commanded twist norm.
-max_linear_speed: 0.2     # m/s
+max_linear_speed: 0.4     # m/s
 max_angular_speed: 0.4    # rad/s
 
 ## ----------------------------

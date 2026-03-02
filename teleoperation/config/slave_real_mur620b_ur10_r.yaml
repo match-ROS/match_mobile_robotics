@@ -54,7 +54,7 @@ k_ff: 1.0
 ##   v_comp = -k_adm * F
 ## where F is the measured force (and optionally torque if enabled).
 ## Start conservative for real hardware.
-k_adm_linear: 0.005
+k_adm_linear: 0.002
 k_adm_angular: 0.0
 
 # **use_torques**: if true, use torque component for angular compliance (requires sensible k_adm_angular).
@@ -89,7 +89,7 @@ use_latest_tf_for_wrench: true
 ## ----------------------------
 # **wrench_filter_cutoff_hz** (preferred): low-pass cutoff (Hz). If > 0 it overrides `wrench_filter_alpha`.
 # Match this with the master side if you want consistent “feel” in filtering.
-wrench_filter_cutoff_hz: 30.0
+wrench_filter_cutoff_hz: 20.0
 #
 # **wrench_filter_alpha**: 1st-order IIR smoothing on wrench (0..1). Used when cutoff_hz <= 0.
 wrench_filter_alpha: 0.07
@@ -148,9 +148,9 @@ dt_max_substeps: 10
 # The integral freezes when external force exceeds integral_force_freeze,
 # preventing windup during contact.
 use_spring_control: true
-spring_stiffness_linear: 200.0       # 1/s (velocity = K_s * position_error)
+spring_stiffness_linear: 1.0       # 1/s (velocity = K_s * position_error)
 spring_stiffness_angular: 1.5      # 1/s
-spring_ki_linear: 0.3              # 1/s² (integral gain)
+spring_ki_linear: 0.0              # 1/s² (integral gain)
 spring_ki_angular: 0.2
 integral_max_linear: 0.08          # m·s (clamp on integral norm)
 integral_max_angular: 0.1          # rad·s

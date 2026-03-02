@@ -69,7 +69,7 @@ damping_angular: 0.8
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
-force_reflection_scale: 0.1
+force_reflection_scale: 0.8
 torque_reflection_scale: 0.03
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
@@ -90,7 +90,7 @@ wrench_filter_alpha: 0.5
 # - `*_wrench_filter_cutoff_hz` <= 0.0  -> fallback to `wrench_filter_cutoff_hz`
 # - `*_wrench_filter_alpha`     <  0.0  -> fallback to `wrench_filter_alpha`
 master_wrench_filter_cutoff_hz: 30.0
-feedback_wrench_filter_cutoff_hz: 30.0
+feedback_wrench_filter_cutoff_hz: 40.0
 
 ## ----------------------------
 ## Deadbands, clamps, and debug of filtered wrench

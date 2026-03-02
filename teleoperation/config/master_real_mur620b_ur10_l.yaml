@@ -64,12 +64,27 @@ damping_linear: 10.0
 # **mass_angular / damping_angular**: rotational virtual dynamics.
 mass_angular: 0.10
 damping_angular: 0.8
+
+## ----------------------------
+## Dynamic damping (scheduled by slave force)
+## ----------------------------
+# Increase the master damping smoothly as the SLAVE measured force grows.
+# Implementation lives inside `teleop_master_haptic_controller` and uses the already-subscribed slave wrench.
+dynamic_damping:
+  enabled: true 
+  use_slave_wrench: true
+  force_metric: "norm"         # currently supported: "norm"
+  force_start: 8.0             # N (start adding damping)
+  force_stop: 35.0             # N (reach max extra damping)
+  extra_damping_linear: 200.0   # N*s/m (max extra added to base damping_linear)
+  extra_damping_angular: 0.0   # N*m*s/rad (optional)
+  d_extra_lowpass_cutoff_hz: 15.0  # low-pass on D_extra (<=0 disables)
 #
 # **force_reflection_scale / torque_reflection_scale**:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
-force_reflection_scale: 0.05
+force_reflection_scale: 0.07
 torque_reflection_scale: 0.03
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
@@ -136,8 +151,8 @@ dt_max_substeps: 10
 ## Smoothness limits (optional jerk-limited shaping)
 ## ----------------------------
 # If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
-max_linear_accel: 0.9      # m/s^2
-max_linear_jerk: 10.0       # m/s^3
+max_linear_accel: 1.8      # m/s^2
+max_linear_jerk: 40.0       # m/s^3
 max_angular_accel: 1.5     # rad/s^2
 max_angular_jerk: 15.0     # rad/s^3
 

@@ -54,6 +54,19 @@ public:
     pnh_.param<double>("mass_angular", mass_angular_, mass_angular_);
     pnh_.param<double>("damping_angular", damping_angular_, damping_angular_);
 
+    // Dynamic master damping scheduled by slave force (Option A).
+    // Params live under the node private namespace, e.g. "~dynamic_damping/enabled".
+    pnh_.param<bool>("dynamic_damping/enabled", dyn_damping_enabled_, dyn_damping_enabled_);
+    pnh_.param<bool>("dynamic_damping/use_slave_wrench", dyn_damping_use_slave_wrench_, dyn_damping_use_slave_wrench_);
+    pnh_.param<std::string>("dynamic_damping/force_metric", dyn_damping_force_metric_, dyn_damping_force_metric_);
+    pnh_.param<double>("dynamic_damping/force_start", dyn_damping_force_start_, dyn_damping_force_start_);
+    pnh_.param<double>("dynamic_damping/force_stop", dyn_damping_force_stop_, dyn_damping_force_stop_);
+    pnh_.param<double>("dynamic_damping/extra_damping_linear", dyn_extra_damping_linear_, dyn_extra_damping_linear_);
+    pnh_.param<double>("dynamic_damping/extra_damping_angular", dyn_extra_damping_angular_, dyn_extra_damping_angular_);
+    pnh_.param<double>("dynamic_damping/d_extra_lowpass_cutoff_hz", dyn_d_extra_lowpass_cutoff_hz_, dyn_d_extra_lowpass_cutoff_hz_);
+    (void)tryGetVector3Param(pnh_, "dynamic_damping/extra_damping_linear_xyz", dyn_extra_damping_linear_xyz_);
+    (void)tryGetVector3Param(pnh_, "dynamic_damping/extra_damping_angular_xyz", dyn_extra_damping_angular_xyz_);
+
     pnh_.param<double>("force_reflection_scale", kf_force_, kf_force_);
     pnh_.param<double>("torque_reflection_scale", kf_torque_, kf_torque_);
 
@@ -293,6 +306,31 @@ private:
     return std::clamp(alpha_param, 0.0, 1.0);
   }
 
+  static double smoothstep01(double t)
+  {
+    const double x = std::clamp(t, 0.0, 1.0);
+    return x * x * (3.0 - 2.0 * x);
+  }
+
+  double computeDynamicDampingSchedule(double F_env) const
+  {
+    if (!std::isfinite(F_env))
+    {
+      return 0.0;
+    }
+    const double f0 = dyn_damping_force_start_;
+    const double f1 = dyn_damping_force_stop_;
+    if (!(f1 > f0))
+    {
+      // Degenerate config: behave like a step at f0.
+      return (F_env > f0) ? 1.0 : 0.0;
+    }
+    if (F_env <= f0) return 0.0;
+    if (F_env >= f1) return 1.0;
+    const double u = (F_env - f0) / (f1 - f0);
+    return smoothstep01(u);
+  }
+
   void resetControllerState()
   {
     v_lin_cmd_.setZero();
@@ -309,6 +347,10 @@ private:
     coupling_db_state_ = teleoperation::WrenchDeadbandState{};
 
     has_p_slave_prev_ = false;
+
+    has_dyn_d_extra_filt_ = false;
+    dyn_d_extra_lin_filt_.setZero();
+    dyn_d_extra_ang_filt_.setZero();
   }
 
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
@@ -671,6 +713,49 @@ private:
     debug_slave_filt_pub_.publish(slave_filt_, now, wrench_target_frame_);
     debug_coupling_filt_pub_.publish(coupling_filt_, now, wrench_target_frame_);
 
+    // Dynamic damping scheduling from slave force.
+    if (dyn_damping_enabled_)
+    {
+      // Force metric (currently only norm is supported).
+      double F_env = 0.0;
+      if (dyn_damping_use_slave_wrench_ && has_slave)
+      {
+        F_env = slave_filt_.f.norm();
+      }
+
+      if (dyn_damping_force_metric_ != "norm" && dyn_damping_force_metric_ != "Norm")
+      {
+        ROS_WARN_THROTTLE_NAMED(2.0, "teleop_master_haptic_controller",
+                                "dynamic_damping/force_metric='%s' not supported. Using 'norm'.",
+                                dyn_damping_force_metric_.c_str());
+      }
+
+      const double s = computeDynamicDampingSchedule(F_env);
+
+      const Eigen::Vector3d Dextra_lin_max =
+          sanitizeNonNegativeVec((dyn_extra_damping_linear_xyz_.allFinite() ? dyn_extra_damping_linear_xyz_ : expandScalarTo3(dyn_extra_damping_linear_)));
+      const Eigen::Vector3d Dextra_ang_max =
+          sanitizeNonNegativeVec((dyn_extra_damping_angular_xyz_.allFinite() ? dyn_extra_damping_angular_xyz_ : expandScalarTo3(dyn_extra_damping_angular_)));
+
+      const Eigen::Vector3d d_extra_lin_target = s * Dextra_lin_max;
+      const Eigen::Vector3d d_extra_ang_target = s * Dextra_ang_max;
+
+      const bool do_d_filter = (dyn_d_extra_lowpass_cutoff_hz_ > 0.0) && std::isfinite(dyn_d_extra_lowpass_cutoff_hz_);
+      const double alpha_d = do_d_filter ? teleoperation::lowpassAlphaFromCutoffHz(dt_for_filter, dyn_d_extra_lowpass_cutoff_hz_) : 1.0;
+
+      if (!has_dyn_d_extra_filt_ || !do_d_filter)
+      {
+        dyn_d_extra_lin_filt_ = d_extra_lin_target;
+        dyn_d_extra_ang_filt_ = d_extra_ang_target;
+        has_dyn_d_extra_filt_ = true;
+      }
+      else
+      {
+        dyn_d_extra_lin_filt_ = teleoperation::ema3(dyn_d_extra_lin_filt_, d_extra_lin_target, alpha_d);
+        dyn_d_extra_ang_filt_ = teleoperation::ema3(dyn_d_extra_ang_filt_, d_extra_ang_target, alpha_d);
+      }
+    }
+
     // Admittance dynamics (linear + optional angular).
     const Eigen::Vector3d F_hand = master_filt_.f;
     const Eigen::Vector3d Tau_hand = master_filt_.tau;
@@ -762,9 +847,15 @@ private:
 
     // Per-axis admittance: M dv + D v = (F_hand - F_feedback)
     const Eigen::Vector3d M_lin = sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);
-    const Eigen::Vector3d D_lin = sanitizeNonNegativeVec((damping_linear_xyz_.allFinite() ? damping_linear_xyz_ : expandScalarTo3(damping_linear_)));
+    Eigen::Vector3d D_lin = sanitizeNonNegativeVec((damping_linear_xyz_.allFinite() ? damping_linear_xyz_ : expandScalarTo3(damping_linear_)));
     const Eigen::Vector3d M_ang = sanitizePositiveVec((mass_angular_xyz_.allFinite() ? mass_angular_xyz_ : expandScalarTo3(mass_angular_)), 1e-6);
-    const Eigen::Vector3d D_ang = sanitizeNonNegativeVec((damping_angular_xyz_.allFinite() ? damping_angular_xyz_ : expandScalarTo3(damping_angular_)));
+    Eigen::Vector3d D_ang = sanitizeNonNegativeVec((damping_angular_xyz_.allFinite() ? damping_angular_xyz_ : expandScalarTo3(damping_angular_)));
+
+    if (dyn_damping_enabled_ && has_dyn_d_extra_filt_)
+    {
+      D_lin += dyn_d_extra_lin_filt_;
+      D_ang += dyn_d_extra_ang_filt_;
+    }
 
     // Limits (accel/jerk). Scalars are expanded unless *_xyz override exists.
     const Eigen::Vector3d max_a_lin = sanitizeNonNegativeVec((max_linear_accel_xyz_.allFinite() ? max_linear_accel_xyz_ : expandScalarTo3(max_linear_accel_)));
@@ -971,6 +1062,21 @@ private:
   Eigen::Vector3d damping_linear_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
   Eigen::Vector3d mass_angular_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
   Eigen::Vector3d damping_angular_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+
+  // Dynamic damping scheduled by slave force
+  bool dyn_damping_enabled_{false};
+  bool dyn_damping_use_slave_wrench_{true};
+  std::string dyn_damping_force_metric_{"norm"};  // currently only "norm"
+  double dyn_damping_force_start_{5.0};
+  double dyn_damping_force_stop_{25.0};
+  double dyn_extra_damping_linear_{0.0};
+  double dyn_extra_damping_angular_{0.0};
+  double dyn_d_extra_lowpass_cutoff_hz_{10.0};
+  Eigen::Vector3d dyn_extra_damping_linear_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  Eigen::Vector3d dyn_extra_damping_angular_xyz_{Eigen::Vector3d::Constant(std::numeric_limits<double>::quiet_NaN())};
+  bool has_dyn_d_extra_filt_{false};
+  Eigen::Vector3d dyn_d_extra_lin_filt_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d dyn_d_extra_ang_filt_{Eigen::Vector3d::Zero()};
 
   double kf_force_{0.3};
   double kf_torque_{0.0};

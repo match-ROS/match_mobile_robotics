@@ -54,7 +54,7 @@ k_ff: 1.0
 ##   v_comp = -k_adm * F
 ## where F is the measured force (and optionally torque if enabled).
 ## Start conservative for real hardware.
-k_adm_linear: 0.0012
+k_adm_linear: 0.005
 k_adm_angular: 0.0
 
 # **use_torques**: if true, use torque component for angular compliance (requires sensible k_adm_angular).
@@ -66,6 +66,7 @@ use_torques: false
 # This scales motion down when contact force grows.
 # - **alpha_mode=parallel**: scale only the component parallel to the measured force direction.
 # - **alpha_mode=norm**: scale the whole vector based on force norm.
+# Dovrebbe essere disabilitato quando è attiva la molla
 alpha_mode: parallel   # "parallel" or "norm"
 force_start: 8.0       # N
 force_stop: 30.0       # N
@@ -102,8 +103,8 @@ torque_deadband: 0.2           # legacy fallback
 torque_deadband_enter: 0.2
 torque_deadband_exit: 0.14
 
-# Saturation of wrench norms (safety).
-max_force: 60.0
+# Saturation of wrench norms (safety). (non è un limite fisico di contatto, solo clamp del sensore)
+max_force: 120.0
 max_torque: 10.0
 
 # Optional debug topic of filtered wrench.
@@ -125,10 +126,10 @@ max_compliance_angular_speed: 0.2
 ## Hard guard (extra safety)
 ## ----------------------------
 # If force exceeds threshold continuously for duration, trigger action.
-hard_force_threshold: 20.0   # N
-hard_force_duration: 0.03    # s
-hard_guard_action: stop      # "stop" or "retreat"
-retreat_speed: 0.03          # m/s (if retreat)
+hard_force_threshold: 70.0   # N
+hard_force_duration: 0.1    # s
+hard_guard_action: retreat      # "stop" or "retreat"
+retreat_speed: 0.2          # m/s (if retreat)
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)
@@ -147,11 +148,11 @@ dt_max_substeps: 10
 # The integral freezes when external force exceeds integral_force_freeze,
 # preventing windup during contact.
 use_spring_control: true
-spring_stiffness_linear: 2.0       # 1/s (velocity = K_s * position_error)
+spring_stiffness_linear: 200.0       # 1/s (velocity = K_s * position_error)
 spring_stiffness_angular: 1.5      # 1/s
 spring_ki_linear: 0.3              # 1/s² (integral gain)
 spring_ki_angular: 0.2
-integral_max_linear: 0.05          # m·s (clamp on integral norm)
+integral_max_linear: 0.08          # m·s (clamp on integral norm)
 integral_max_angular: 0.1          # rad·s
 integral_force_freeze: 2.0         # N — freeze integral when |F| > threshold
 max_spring_linear_speed: 0.15      # m/s (spring output clamp)

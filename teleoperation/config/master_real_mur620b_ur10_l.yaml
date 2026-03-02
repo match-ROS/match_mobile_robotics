@@ -69,7 +69,7 @@ damping_angular: 0.8
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
-force_reflection_scale: 0.03
+force_reflection_scale: 0.1
 torque_reflection_scale: 0.03
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
@@ -85,19 +85,26 @@ use_torques: false
 wrench_filter_cutoff_hz: 30.0
 wrench_filter_alpha: 0.5
 
+# Optional: per-signal overrides (MASTER local wrench vs SLAVE feedback wrench).
+# If left at the sentinel values below, the node falls back to `wrench_filter_*` above:
+# - `*_wrench_filter_cutoff_hz` <= 0.0  -> fallback to `wrench_filter_cutoff_hz`
+# - `*_wrench_filter_alpha`     <  0.0  -> fallback to `wrench_filter_alpha`
+master_wrench_filter_cutoff_hz: 30.0
+feedback_wrench_filter_cutoff_hz: 30.0
+
 ## ----------------------------
 ## Deadbands, clamps, and debug of filtered wrench
 ## ----------------------------
 # Deadband is applied on the wrench norm (soft), with optional hysteresis:
 # - enter: threshold to start "considering" force/torque
 # - exit: lower threshold to go back to zero (avoids chattering)
-force_deadband_enter: 2.0     # N
+force_deadband_enter: 1.5     # N
 force_deadband_exit: 1.0      # N
 torque_deadband_enter: 0.2    # Nm
 torque_deadband_exit: 0.12    # Nm
 #
 # Saturation limits applied to the wrench norm (safety + robustness).
-max_force: 60.0               # N
+max_force: 80.0               # N
 max_torque: 10.0              # Nm
 #
 # If true, publish filtered wrench topics for inspection.
@@ -110,7 +117,7 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## Command saturation (safety)
 ## ----------------------------
 # Saturate commanded twist norm.
-max_linear_speed: 0.4     # m/s
+max_linear_speed: 0.5     # m/s
 max_angular_speed: 0.4    # rad/s
 
 ## ----------------------------
@@ -129,8 +136,8 @@ dt_max_substeps: 10
 ## Smoothness limits (optional jerk-limited shaping)
 ## ----------------------------
 # If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
-max_linear_accel: 0.6      # m/s^2
-max_linear_jerk: 6.0       # m/s^3
+max_linear_accel: 0.9      # m/s^2
+max_linear_jerk: 10.0       # m/s^3
 max_angular_accel: 1.5     # rad/s^2
 max_angular_jerk: 15.0     # rad/s^3
 
@@ -185,11 +192,11 @@ slave_publish_rate: 250.0
 #   F_spring = K_s * (p_master - p_slave) + B_s * (v_master - v_slave)
 # This provides stable, delay-insensitive force feedback to the operator.
 # Requires the slave to publish its actual pose (publish_master_feedback: true on slave).
-spring_stiffness_linear: 100.0    # N/m
-spring_damping_linear: 2.0       # N·s/m
+spring_stiffness_linear: 200.0    # N/m
+spring_damping_linear: 20.0       # N·s/m
 spring_stiffness_angular: 1.0    # N·m/rad (disabled: set >0 to enable)
 spring_damping_angular: 0.5
-max_spring_force: 15.0           # N (safety saturation on spring force norm)
+max_spring_force: 80.0           # N (safety saturation on spring force norm)
 max_spring_torque: 5.0           # N·m
 # Topic on which the slave publishes its actual TCP pose (set in launch).
 slave_actual_pose_topic: ""

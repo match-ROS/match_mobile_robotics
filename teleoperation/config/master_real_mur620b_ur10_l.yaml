@@ -79,6 +79,20 @@ dynamic_damping:
   extra_damping_linear: 200.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_angular: 0.0   # N*m*s/rad (optional)
   d_extra_lowpass_cutoff_hz: 15.0  # low-pass on D_extra (<=0 disables)
+
+## ----------------------------
+## Dynamic mass (scheduled by slave force)
+## ----------------------------
+# Increase the master virtual inertia smoothly as the SLAVE measured force grows.
+dynamic_mass:
+  enabled: true
+  use_slave_wrench: true
+  force_metric: "norm"           # currently supported: "norm"
+  force_start: 8.0               # N
+  force_stop: 35.0               # N
+  extra_mass_linear: 5.0         # kg (max extra added to base mass_linear)
+  extra_mass_angular: 0.0        # kg*m^2 (optional)
+  m_extra_lowpass_cutoff_hz: 15.0  # low-pass on M_extra (<=0 disables)
 #
 # **force_reflection_scale / torque_reflection_scale**:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).

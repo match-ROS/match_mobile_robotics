@@ -148,7 +148,7 @@ force_limiter:
   limit_enter: 70.0             # N  (soglia ingresso LIMITING)
   limit_exit: 60.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
   smooth_width: 0.0            # N  (se >0, la rampa avviene negli ultimi smooth_width N prima di limit_enter)
-  retreat_speed_max: 0.05       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
+  retreat_speed_max: 0.04       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
 
 torque_limiter:
   enabled: true

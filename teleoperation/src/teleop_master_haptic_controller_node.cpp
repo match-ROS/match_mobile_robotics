@@ -61,6 +61,17 @@ public:
     pnh_.param<std::string>("dynamic_damping/force_metric", dyn_damping_force_metric_, dyn_damping_force_metric_);
     pnh_.param<double>("dynamic_damping/force_start", dyn_damping_force_start_, dyn_damping_force_start_);
     pnh_.param<double>("dynamic_damping/force_stop", dyn_damping_force_stop_, dyn_damping_force_stop_);
+    // Optional: schedule ANGULAR extras by slave torque (if torque_* is provided).
+    // Backward-compatible: if torque_* is absent, angular extras follow the same schedule as linear (force-based).
+    const bool has_dyn_damping_torque_start = pnh_.getParam("dynamic_damping/torque_start", dyn_damping_torque_start_);
+    const bool has_dyn_damping_torque_stop = pnh_.getParam("dynamic_damping/torque_stop", dyn_damping_torque_stop_);
+    (void)pnh_.getParam("dynamic_damping/torque_metric", dyn_damping_torque_metric_);
+    dyn_damping_use_torque_schedule_ = has_dyn_damping_torque_start || has_dyn_damping_torque_stop;
+    if (dyn_damping_use_torque_schedule_)
+    {
+      if (!has_dyn_damping_torque_start) dyn_damping_torque_start_ = dyn_damping_force_start_;
+      if (!has_dyn_damping_torque_stop) dyn_damping_torque_stop_ = dyn_damping_force_stop_;
+    }
     pnh_.param<double>("dynamic_damping/extra_damping_linear", dyn_extra_damping_linear_, dyn_extra_damping_linear_);
     pnh_.param<double>("dynamic_damping/extra_damping_angular", dyn_extra_damping_angular_, dyn_extra_damping_angular_);
     pnh_.param<double>("dynamic_damping/d_extra_lowpass_cutoff_hz", dyn_d_extra_lowpass_cutoff_hz_, dyn_d_extra_lowpass_cutoff_hz_);
@@ -73,6 +84,17 @@ public:
     pnh_.param<std::string>("dynamic_mass/force_metric", dyn_mass_force_metric_, dyn_mass_force_metric_);
     pnh_.param<double>("dynamic_mass/force_start", dyn_mass_force_start_, dyn_mass_force_start_);
     pnh_.param<double>("dynamic_mass/force_stop", dyn_mass_force_stop_, dyn_mass_force_stop_);
+    // Optional: schedule ANGULAR extras by slave torque (if torque_* is provided).
+    // Backward-compatible: if torque_* is absent, angular extras follow the same schedule as linear (force-based).
+    const bool has_dyn_mass_torque_start = pnh_.getParam("dynamic_mass/torque_start", dyn_mass_torque_start_);
+    const bool has_dyn_mass_torque_stop = pnh_.getParam("dynamic_mass/torque_stop", dyn_mass_torque_stop_);
+    (void)pnh_.getParam("dynamic_mass/torque_metric", dyn_mass_torque_metric_);
+    dyn_mass_use_torque_schedule_ = has_dyn_mass_torque_start || has_dyn_mass_torque_stop;
+    if (dyn_mass_use_torque_schedule_)
+    {
+      if (!has_dyn_mass_torque_start) dyn_mass_torque_start_ = dyn_mass_force_start_;
+      if (!has_dyn_mass_torque_stop) dyn_mass_torque_stop_ = dyn_mass_force_stop_;
+    }
     pnh_.param<double>("dynamic_mass/extra_mass_linear", dyn_extra_mass_linear_, dyn_extra_mass_linear_);
     pnh_.param<double>("dynamic_mass/extra_mass_angular", dyn_extra_mass_angular_, dyn_extra_mass_angular_);
     pnh_.param<double>("dynamic_mass/m_extra_lowpass_cutoff_hz", dyn_m_extra_lowpass_cutoff_hz_, dyn_m_extra_lowpass_cutoff_hz_);
@@ -734,11 +756,13 @@ private:
     {
       // Force metric (currently only norm is supported).
       double F_env = 0.0;
+      double Tau_env = 0.0;
       const bool use_slave_for_damping = dyn_damping_enabled_ && dyn_damping_use_slave_wrench_;
       const bool use_slave_for_mass = dyn_mass_enabled_ && dyn_mass_use_slave_wrench_;
       if ((use_slave_for_damping || use_slave_for_mass) && has_slave)
       {
         F_env = slave_filt_.f.norm();
+        Tau_env = slave_filt_.tau.norm();
       }
 
       // ---- Dynamic damping ----
@@ -751,15 +775,26 @@ private:
                                   dyn_damping_force_metric_.c_str());
         }
 
-        const double s_d = computeScheduleSmoothstep(F_env, dyn_damping_force_start_, dyn_damping_force_stop_);
+        if (dyn_damping_use_torque_schedule_ &&
+            (dyn_damping_torque_metric_ != "norm" && dyn_damping_torque_metric_ != "Norm"))
+        {
+          ROS_WARN_THROTTLE_NAMED(2.0, "teleop_master_haptic_controller",
+                                  "dynamic_damping/torque_metric='%s' not supported. Using 'norm'.",
+                                  dyn_damping_torque_metric_.c_str());
+        }
+
+        const double s_d_lin = computeScheduleSmoothstep(F_env, dyn_damping_force_start_, dyn_damping_force_stop_);
+        const double s_d_ang = dyn_damping_use_torque_schedule_
+                                   ? computeScheduleSmoothstep(Tau_env, dyn_damping_torque_start_, dyn_damping_torque_stop_)
+                                   : s_d_lin;
 
         const Eigen::Vector3d Dextra_lin_max =
             sanitizeNonNegativeVec((dyn_extra_damping_linear_xyz_.allFinite() ? dyn_extra_damping_linear_xyz_ : expandScalarTo3(dyn_extra_damping_linear_)));
         const Eigen::Vector3d Dextra_ang_max =
             sanitizeNonNegativeVec((dyn_extra_damping_angular_xyz_.allFinite() ? dyn_extra_damping_angular_xyz_ : expandScalarTo3(dyn_extra_damping_angular_)));
 
-        const Eigen::Vector3d d_extra_lin_target = s_d * Dextra_lin_max;
-        const Eigen::Vector3d d_extra_ang_target = s_d * Dextra_ang_max;
+        const Eigen::Vector3d d_extra_lin_target = s_d_lin * Dextra_lin_max;
+        const Eigen::Vector3d d_extra_ang_target = s_d_ang * Dextra_ang_max;
 
         const bool do_d_filter = (dyn_d_extra_lowpass_cutoff_hz_ > 0.0) && std::isfinite(dyn_d_extra_lowpass_cutoff_hz_);
         const double alpha_d = do_d_filter ? teleoperation::lowpassAlphaFromCutoffHz(dt_for_filter, dyn_d_extra_lowpass_cutoff_hz_) : 1.0;
@@ -787,15 +822,26 @@ private:
                                   dyn_mass_force_metric_.c_str());
         }
 
-        const double s_m = computeScheduleSmoothstep(F_env, dyn_mass_force_start_, dyn_mass_force_stop_);
+        if (dyn_mass_use_torque_schedule_ &&
+            (dyn_mass_torque_metric_ != "norm" && dyn_mass_torque_metric_ != "Norm"))
+        {
+          ROS_WARN_THROTTLE_NAMED(2.0, "teleop_master_haptic_controller",
+                                  "dynamic_mass/torque_metric='%s' not supported. Using 'norm'.",
+                                  dyn_mass_torque_metric_.c_str());
+        }
+
+        const double s_m_lin = computeScheduleSmoothstep(F_env, dyn_mass_force_start_, dyn_mass_force_stop_);
+        const double s_m_ang = dyn_mass_use_torque_schedule_
+                                   ? computeScheduleSmoothstep(Tau_env, dyn_mass_torque_start_, dyn_mass_torque_stop_)
+                                   : s_m_lin;
 
         const Eigen::Vector3d Mextra_lin_max =
             sanitizeNonNegativeVec((dyn_extra_mass_linear_xyz_.allFinite() ? dyn_extra_mass_linear_xyz_ : expandScalarTo3(dyn_extra_mass_linear_)));
         const Eigen::Vector3d Mextra_ang_max =
             sanitizeNonNegativeVec((dyn_extra_mass_angular_xyz_.allFinite() ? dyn_extra_mass_angular_xyz_ : expandScalarTo3(dyn_extra_mass_angular_)));
 
-        const Eigen::Vector3d m_extra_lin_target = s_m * Mextra_lin_max;
-        const Eigen::Vector3d m_extra_ang_target = s_m * Mextra_ang_max;
+        const Eigen::Vector3d m_extra_lin_target = s_m_lin * Mextra_lin_max;
+        const Eigen::Vector3d m_extra_ang_target = s_m_ang * Mextra_ang_max;
 
         const bool do_m_filter = (dyn_m_extra_lowpass_cutoff_hz_ > 0.0) && std::isfinite(dyn_m_extra_lowpass_cutoff_hz_);
         const double alpha_m = do_m_filter ? teleoperation::lowpassAlphaFromCutoffHz(dt_for_filter, dyn_m_extra_lowpass_cutoff_hz_) : 1.0;
@@ -1133,6 +1179,10 @@ private:
   std::string dyn_damping_force_metric_{"norm"};  // currently only "norm"
   double dyn_damping_force_start_{5.0};
   double dyn_damping_force_stop_{25.0};
+  bool dyn_damping_use_torque_schedule_{false};
+  std::string dyn_damping_torque_metric_{"norm"};  // currently only "norm"
+  double dyn_damping_torque_start_{5.0};
+  double dyn_damping_torque_stop_{25.0};
   double dyn_extra_damping_linear_{0.0};
   double dyn_extra_damping_angular_{0.0};
   double dyn_d_extra_lowpass_cutoff_hz_{10.0};
@@ -1148,6 +1198,10 @@ private:
   std::string dyn_mass_force_metric_{"norm"};  // currently only "norm"
   double dyn_mass_force_start_{5.0};
   double dyn_mass_force_stop_{25.0};
+  bool dyn_mass_use_torque_schedule_{false};
+  std::string dyn_mass_torque_metric_{"norm"};  // currently only "norm"
+  double dyn_mass_torque_start_{5.0};
+  double dyn_mass_torque_stop_{25.0};
   double dyn_extra_mass_linear_{0.0};
   double dyn_extra_mass_angular_{0.0};
   double dyn_m_extra_lowpass_cutoff_hz_{10.0};

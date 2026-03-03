@@ -89,7 +89,7 @@ use_latest_tf_for_wrench: true
 ## ----------------------------
 # **wrench_filter_cutoff_hz** (preferred): low-pass cutoff (Hz). If > 0 it overrides `wrench_filter_alpha`.
 # Match this with the master side if you want consistent “feel” in filtering.
-wrench_filter_cutoff_hz: 25.0
+wrench_filter_cutoff_hz: 40.0
 #
 # **wrench_filter_alpha**: 1st-order IIR smoothing on wrench (0..1). Used when cutoff_hz <= 0.
 wrench_filter_alpha: 0.07
@@ -104,7 +104,7 @@ torque_deadband_enter: 0.2
 torque_deadband_exit: 0.14
 
 # Saturation of wrench norms (safety). (non è un limite fisico di contatto, solo clamp del sensore)
-max_force: 150.0
+max_force: 200.0
 max_torque: 10.0
 
 # Optional debug topic of filtered wrench.
@@ -126,10 +126,29 @@ max_compliance_angular_speed: 0.2
 ## Hard guard (extra safety)
 ## ----------------------------
 # If force exceeds threshold continuously for duration, trigger action.
-hard_force_threshold: 200.0   # N
-hard_force_duration: 0.1    # s
+hard_force_threshold: 150.0   # N
+hard_force_duration: 0.05    # s
 hard_guard_action: retreat      # "stop" or "retreat"
 retreat_speed: 0.2          # m/s (if retreat)
+
+## ----------------------------
+## Force limiter (soglia + isteresi, contact-aware)
+## ----------------------------
+# Limita solo la componente di velocità che "spinge" nella direzione della forza misurata (normale di contatto),
+# lasciando più libera la componente tangenziale (scorrimento). Utile per evitare che la forza superi un livello
+# desiderato con isteresi, senza cambiare spring/PID.
+#
+# NOTA: di default è disabilitato; abilitalo e inserisci valori coerenti con il tuo setup.
+force_limiter:
+  enabled: true
+  metric: parallel_resistive                 # "norm" | "parallel_resistive"
+  mode: retreat         # "scale_parallel" | "retreat"
+  enable_enter: 40.0            # N  (soglia ingresso COMPLIANT)
+  enable_exit: 30.0             # N  (soglia uscita COMPLIANT -> NORMAL, < enable_enter)
+  limit_enter: 70.0             # N  (soglia ingresso LIMITING)
+  limit_exit: 60.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
+  smooth_width: 0.0            # N  (se >0, la rampa avviene negli ultimi smooth_width N prima di limit_enter)
+  retreat_speed_max: 0.15       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)
@@ -154,7 +173,7 @@ spring_ki_linear: 0.0              # 1/s² (integral gain)
 spring_ki_angular: 0.2
 integral_max_linear: 0.08          # m·s (clamp on integral norm)
 integral_max_angular: 0.1          # rad·s
-integral_force_freeze: 3.0         # N — freeze integral when |F| > threshold
+integral_force_freeze: 8.0         # N — freeze integral when |F| > threshold
 max_spring_linear_speed: 0.3      # m/s (spring output clamp)
 max_spring_angular_speed: 0.3      # rad/s
 

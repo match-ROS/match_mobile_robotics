@@ -75,8 +75,8 @@ dynamic_damping:
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 8.0             # N (start adding damping)
-  force_stop: 35.0             # N (reach max extra damping)
-  extra_damping_linear: 200.0   # N*s/m (max extra added to base damping_linear)
+  force_stop: 80.0             # N (reach max extra damping)
+  extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_angular: 0.0   # N*m*s/rad (optional)
   d_extra_lowpass_cutoff_hz: 15.0  # low-pass on D_extra (<=0 disables)
 
@@ -89,8 +89,8 @@ dynamic_mass:
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 8.0               # N
-  force_stop: 35.0               # N
-  extra_mass_linear: 5.0         # kg (max extra added to base mass_linear)
+  force_stop: 80.0               # N
+  extra_mass_linear: 10.0         # kg (max extra added to base mass_linear)
   extra_mass_angular: 0.0        # kg*m^2 (optional)
   m_extra_lowpass_cutoff_hz: 15.0  # low-pass on M_extra (<=0 disables)
 #
@@ -98,7 +98,7 @@ dynamic_mass:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
-force_reflection_scale: 0.07
+force_reflection_scale: 0.25
 torque_reflection_scale: 0.03
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
@@ -119,7 +119,7 @@ wrench_filter_alpha: 0.5
 # - `*_wrench_filter_cutoff_hz` <= 0.0  -> fallback to `wrench_filter_cutoff_hz`
 # - `*_wrench_filter_alpha`     <  0.0  -> fallback to `wrench_filter_alpha`
 master_wrench_filter_cutoff_hz: 30.0
-feedback_wrench_filter_cutoff_hz: 15.0
+feedback_wrench_filter_cutoff_hz: 25.0
 
 ## ----------------------------
 ## Deadbands, clamps, and debug of filtered wrench

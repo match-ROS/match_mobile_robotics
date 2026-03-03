@@ -86,6 +86,17 @@ public:
     pnh_.param("force_start", force_start_, force_start_);
     pnh_.param("force_stop", force_stop_, force_stop_);
 
+    // Force limiter (contact-aware, hysteretic)
+    pnh_.param("force_limiter/enabled", force_limiter_enabled_, force_limiter_enabled_);
+    pnh_.param<std::string>("force_limiter/metric", force_limiter_metric_, force_limiter_metric_);
+    pnh_.param<std::string>("force_limiter/mode", force_limiter_mode_, force_limiter_mode_);
+    pnh_.param("force_limiter/enable_enter", fl_enable_enter_, fl_enable_enter_);
+    pnh_.param("force_limiter/enable_exit", fl_enable_exit_, fl_enable_exit_);
+    pnh_.param("force_limiter/limit_enter", fl_limit_enter_, fl_limit_enter_);
+    pnh_.param("force_limiter/limit_exit", fl_limit_exit_, fl_limit_exit_);
+    pnh_.param("force_limiter/smooth_width", fl_smooth_width_, fl_smooth_width_);
+    pnh_.param("force_limiter/retreat_speed_max", fl_retreat_speed_max_, fl_retreat_speed_max_);
+
     // Wrench filtering & clamps
     pnh_.param("wrench_filter_alpha", wrench_filter_alpha_, wrench_filter_alpha_);
     pnh_.param("wrench_filter_cutoff_hz", wrench_filter_cutoff_hz_, wrench_filter_cutoff_hz_);
@@ -183,6 +194,15 @@ public:
       ROS_INFO_NAMED("teleop_slave_twist_outer_loop",
                      "Spring control active: K_lin=%.2f K_ang=%.2f Ki_lin=%.3f Ki_ang=%.3f freeze=%.1f N",
                      spring_k_lin_, spring_k_ang_, spring_ki_lin_, spring_ki_ang_, integral_force_freeze_);
+    }
+
+    if (force_limiter_enabled_)
+    {
+      ROS_INFO_NAMED("teleop_slave_twist_outer_loop",
+                     "Force limiter enabled: metric='%s' mode='%s' enable=[%.2f, %.2f] limit=[%.2f, %.2f] smooth=%.2f retreat=%.3f",
+                     force_limiter_metric_.c_str(), force_limiter_mode_.c_str(),
+                     fl_enable_enter_, fl_enable_exit_, fl_limit_enter_, fl_limit_exit_,
+                     fl_smooth_width_, fl_retreat_speed_max_);
     }
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
@@ -342,6 +362,116 @@ private:
     return std::clamp(alpha_param, 0.0, 1.0);
   }
 
+  double computeForceLimiterMetric(const Eigen::Vector3d& F_ext_lin, const Eigen::Vector3d& v_cmd_lin) const
+  {
+    if (force_limiter_metric_ == "parallel_resistive")
+    {
+      const double vnorm = v_cmd_lin.norm();
+      if (vnorm > 1e-6)
+      {
+        const Eigen::Vector3d d = v_cmd_lin / vnorm;
+        // Resistive component: positive when external force opposes motion.
+        return std::max(0.0, -(d.dot(F_ext_lin)));
+      }
+      // If no motion direction, fall back to norm (robust).
+    }
+    return F_ext_lin.norm();
+  }
+
+  void updateForceLimiterState(double metric)
+  {
+    if (!force_limiter_enabled_)
+    {
+      force_limiter_state_ = ForceLimiterState::Normal;
+      return;
+    }
+
+    const double enable_enter = std::max(0.0, fl_enable_enter_);
+    const double enable_exit = std::max(0.0, std::min(fl_enable_exit_, enable_enter));
+    const double limit_enter = std::max(enable_enter, fl_limit_enter_);
+    const double limit_exit = std::max(enable_exit, std::min(fl_limit_exit_, limit_enter));
+
+    switch (force_limiter_state_)
+    {
+      case ForceLimiterState::Normal:
+        if (metric >= enable_enter) force_limiter_state_ = ForceLimiterState::Compliant;
+        break;
+      case ForceLimiterState::Compliant:
+        if (metric >= limit_enter) force_limiter_state_ = ForceLimiterState::Limiting;
+        else if (metric <= enable_exit) force_limiter_state_ = ForceLimiterState::Normal;
+        break;
+      case ForceLimiterState::Limiting:
+        if (metric <= limit_exit) force_limiter_state_ = ForceLimiterState::Compliant;
+        break;
+      default:
+        force_limiter_state_ = ForceLimiterState::Normal;
+        break;
+    }
+  }
+
+  Eigen::Vector3d applyForceLimiter(const Eigen::Vector3d& v_in, const Eigen::Vector3d& F_ext_lin, double metric) const
+  {
+    if (!force_limiter_enabled_) return v_in;
+    if (force_limiter_state_ == ForceLimiterState::Normal) return v_in;
+
+    const double f_norm = F_ext_lin.norm();
+    if (!(f_norm > 1e-6) || !F_ext_lin.allFinite()) return v_in;
+
+    const Eigen::Vector3d n = F_ext_lin / f_norm;
+    const double vn = n.dot(v_in);
+    if (!(vn > 0.0) || !std::isfinite(vn)) return v_in;  // only limit "pushing into contact"
+
+    const Eigen::Vector3d v_push = n * vn;  // component along contact normal that increases contact
+
+    const double enable_enter = std::max(0.0, fl_enable_enter_);
+    const double limit_enter = std::max(enable_enter, fl_limit_enter_);
+    const double smooth_width = std::max(0.0, fl_smooth_width_);
+
+    Eigen::Vector3d v = v_in;
+
+    const bool do_retreat = (force_limiter_mode_ == "retreat");
+
+    if (force_limiter_state_ == ForceLimiterState::Compliant)
+    {
+      // Scale only as we approach the limit (or across [enable_enter, limit_enter] if smooth_width<=0).
+      double ramp_start = enable_enter;
+      double ramp_stop = limit_enter;
+      if (smooth_width > 1e-9)
+      {
+        ramp_start = std::max(enable_enter, limit_enter - smooth_width);
+        ramp_stop = limit_enter;
+      }
+
+      double s = 0.0;
+      if (metric <= ramp_start) s = 0.0;
+      else if (metric >= ramp_stop) s = 1.0;
+      else
+      {
+        const double denom = std::max(1e-9, (ramp_stop - ramp_start));
+        s = smoothstep01((metric - ramp_start) / denom);
+      }
+
+      // remove s * v_push
+      v -= s * v_push;
+    }
+    else if (force_limiter_state_ == ForceLimiterState::Limiting)
+    {
+      // Never command further push into contact.
+      v -= v_push;
+
+      if (do_retreat)
+      {
+        const double vret = std::max(0.0, fl_retreat_speed_max_);
+        if (vret > 0.0)
+        {
+          v += (-vret) * n;
+        }
+      }
+    }
+
+    return v;
+  }
+
   double computeAlpha(const Eigen::Vector3d& F_ext_lin, const Eigen::Vector3d& v_ff_lin) const
   {
     double metric = F_ext_lin.norm();
@@ -443,6 +573,7 @@ private:
       hard_guard_active_since_ = ros::Time(0);
       wrench_db_state_ = teleoperation::WrenchDeadbandState{};
       has_wrench_filt_ = false;
+      force_limiter_state_ = ForceLimiterState::Normal;
       return;
     }
 
@@ -643,6 +774,11 @@ private:
       }
     }
 
+    // Force/contact limiter (hysteretic). Acts only on the "pushing" component along measured force direction.
+    const double fl_metric = computeForceLimiterMetric(wrench_filt_.f, v_cmd_lin);
+    updateForceLimiterState(fl_metric);
+    v_cmd_lin = applyForceLimiter(v_cmd_lin, wrench_filt_.f, fl_metric);
+
     // Hard guard override (stop or retreat)
     if (guard_active)
     {
@@ -754,6 +890,24 @@ private:
   double force_start_{8.0};
   double force_stop_{30.0};
 
+  enum class ForceLimiterState
+  {
+    Normal = 0,
+    Compliant = 1,
+    Limiting = 2
+  };
+
+  // Force limiter params (disabled by default)
+  bool force_limiter_enabled_{false};
+  std::string force_limiter_metric_{"norm"};
+  std::string force_limiter_mode_{"scale_parallel"};
+  double fl_enable_enter_{0.0};
+  double fl_enable_exit_{0.0};
+  double fl_limit_enter_{0.0};
+  double fl_limit_exit_{0.0};
+  double fl_smooth_width_{0.0};        // N; if <=0, ramp across [enable_enter, limit_enter]
+  double fl_retreat_speed_max_{0.0};   // m/s; used only in mode 'retreat'
+
   double wrench_filter_alpha_{0.07};
   double wrench_filter_cutoff_hz_{0.0};
   double force_deadband_enter_{1.0};
@@ -804,6 +958,8 @@ private:
   bool has_wrench_filt_{false};
   Wrench3 wrench_filt_;
   teleoperation::WrenchDeadbandState wrench_db_state_;
+
+  ForceLimiterState force_limiter_state_{ForceLimiterState::Normal};
 
   // Spring control integral state
   Eigen::Vector3d pos_integral_{Eigen::Vector3d::Zero()};

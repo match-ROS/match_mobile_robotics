@@ -418,10 +418,11 @@ private:
     if (!(f_norm > 1e-6) || !F_ext_lin.allFinite()) return v_in;
 
     const Eigen::Vector3d n = F_ext_lin / f_norm;
-    const double vn = n.dot(v_in);
-    if (!(vn > 0.0) || !std::isfinite(vn)) return v_in;  // only limit "pushing into contact"
-
-    const Eigen::Vector3d v_push = n * vn;  // component along contact normal that increases contact
+    const double vn_raw = n.dot(v_in);
+    if (!std::isfinite(vn_raw)) return v_in;
+    // With the convention F_ext = environment -> robot, motion "into contact" is opposite to force direction.
+    const double vn_push = std::min(0.0, vn_raw);        // <= 0 when pushing into contact
+    const Eigen::Vector3d v_push = n * vn_push;          // "push" component (points into contact when non-zero)
 
     const double enable_enter = std::max(0.0, fl_enable_enter_);
     const double limit_enter = std::max(enable_enter, fl_limit_enter_);
@@ -464,7 +465,8 @@ private:
         const double vret = std::max(0.0, fl_retreat_speed_max_);
         if (vret > 0.0)
         {
-          v += (-vret) * n;
+          // Retreat along +F (away from contact) under env->robot force convention.
+          v += vret * n;
         }
       }
     }

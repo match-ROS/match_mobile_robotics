@@ -89,7 +89,7 @@ use_latest_tf_for_wrench: true
 ## ----------------------------
 # **wrench_filter_cutoff_hz** (preferred): low-pass cutoff (Hz). If > 0 it overrides `wrench_filter_alpha`.
 # Match this with the master side if you want consistent “feel” in filtering.
-wrench_filter_cutoff_hz: 40.0
+wrench_filter_cutoff_hz: 30.0
 #
 # **wrench_filter_alpha**: 1st-order IIR smoothing on wrench (0..1). Used when cutoff_hz <= 0.
 wrench_filter_alpha: 0.07
@@ -148,7 +148,7 @@ force_limiter:
   limit_enter: 70.0             # N  (soglia ingresso LIMITING)
   limit_exit: 60.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
   smooth_width: 0.0            # N  (se >0, la rampa avviene negli ultimi smooth_width N prima di limit_enter)
-  retreat_speed_max: 0.15       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
+  retreat_speed_max: 0.05       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)
@@ -167,11 +167,11 @@ dt_max_substeps: 10
 # The integral freezes when external force exceeds integral_force_freeze,
 # preventing windup during contact.
 use_spring_control: true
-spring_stiffness_linear: 0.2       # 1/s (velocity = K_s * position_error)
+spring_stiffness_linear: 0.7       # 1/s (velocity = K_s * position_error) 0.2
 spring_stiffness_angular: 1.5      # 1/s
-spring_ki_linear: 0.0              # 1/s² (integral gain)
+spring_ki_linear: 0.2              # 1/s² (integral gain)
 spring_ki_angular: 0.2
-integral_max_linear: 0.08          # m·s (clamp on integral norm)
+integral_max_linear: 0.1          # m·s (clamp on integral norm)
 integral_max_angular: 0.1          # rad·s
 integral_force_freeze: 8.0         # N — freeze integral when |F| > threshold
 max_spring_linear_speed: 0.3      # m/s (spring output clamp)

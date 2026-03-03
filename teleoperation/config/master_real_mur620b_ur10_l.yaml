@@ -98,6 +98,7 @@ dynamic_mass:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
+#force_reflection_scale: 0.25
 force_reflection_scale: 0.25
 torque_reflection_scale: 0.03
 #

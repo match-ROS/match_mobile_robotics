@@ -62,8 +62,33 @@ mass_linear: 2.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
-mass_angular: 0.10
-damping_angular: 0.8
+mass_angular: 0.08
+damping_angular: 0.4
+#
+# -----------------------------
+# Feeling rotazionale "coerente" con la traslazione (formule guida)
+# -----------------------------
+# Per confrontare/accordare grandezze lineari (m, N) e angolari (rad, N·m) usa un
+# "braccio equivalente" L [m] (ordine tipico 0.10–0.30 m, tipo raggio/lever arm percepito al TCP):
+#
+# - Spostamento equivalente:     x_eq = L * theta            [m]     (theta in rad)
+# - Forza equivalente:           F_eq = tau / L              [N]     (tau in N·m)
+#
+# Da cui discendono regole pratiche per parametri "che sembrino uguali" all'operatore:
+#
+# - Limiti velocità:             omega_max ≈ v_max / L       [rad/s]
+# - Deadband:                    tau_db    ≈ F_db * L        [N·m]
+# - Clamp:                       tau_max   ≈ F_max * L       [N·m]
+#
+# E se vuoi una dinamica di ammettenza percepita simile (stessa "inerzia"):
+#
+# - Inerzia angolare:            J ≈ m * L^2                 [kg·m^2]
+#   quindi:                      mass_angular   ≈ mass_linear   * L^2
+# - Smorzamento angolare:        D_w ≈ D_v * L^2              [N·m·s/rad]
+#   quindi:                      damping_angular ≈ damping_linear * L^2
+#
+# Nota: queste sono equivalenze di scala/feeling (non una garanzia di stabilità); vanno
+# poi verificate con saturazioni, filtri e soglie di sicurezza.
 
 ## ----------------------------
 ## Dynamic damping (scheduled by slave force)
@@ -100,11 +125,11 @@ dynamic_mass:
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
 #force_reflection_scale: 0.25
 force_reflection_scale: 0.25
-torque_reflection_scale: 0.03
+torque_reflection_scale: 0.15
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
-use_torques: false
+use_torques: true
 
 ## ----------------------------
 ## Wrench filtering
@@ -135,7 +160,7 @@ torque_deadband_exit: 0.12    # Nm
 #
 # Saturation limits applied to the wrench norm (safety + robustness).
 max_force: 150.0               # N
-max_torque: 10.0              # Nm
+max_torque: 30.0              # Nm
 #
 # If true, publish filtered wrench topics for inspection.
 publish_filtered_wrench_debug: true
@@ -148,7 +173,7 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## ----------------------------
 # Saturate commanded twist norm.
 max_linear_speed: 0.5     # m/s
-max_angular_speed: 0.4    # rad/s
+max_angular_speed: 1.2    # rad/s
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)
@@ -168,8 +193,8 @@ dt_max_substeps: 10
 # If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
 max_linear_accel: 1.8      # m/s^2
 max_linear_jerk: 40.0       # m/s^3
-max_angular_accel: 1.5     # rad/s^2
-max_angular_jerk: 15.0     # rad/s^3
+max_angular_accel: 2.0     # rad/s^2
+max_angular_jerk: 20.0     # rad/s^3
 
 # Optional per-axis admittance (uncomment to use)
 #mass_linear_xyz: [4.0, 4.0, 6.0]
@@ -222,12 +247,12 @@ slave_publish_rate: 250.0
 #   F_spring = K_s * (p_master - p_slave) + B_s * (v_master - v_slave)
 # This provides stable, delay-insensitive force feedback to the operator.
 # Requires the slave to publish its actual pose (publish_master_feedback: true on slave).
-spring_stiffness_linear: 1.0    # N/m
+spring_stiffness_linear: 10.0    # N/m
 spring_damping_linear: 0.0       # N·s/m
-spring_stiffness_angular: 1.0    # N·m/rad (disabled: set >0 to enable)
-spring_damping_angular: 0.5
+spring_stiffness_angular: 0.4    # N·m/rad (disabled: set >0 to enable)
+spring_damping_angular: 0.0
 max_spring_force: 150.0           # N (safety saturation on spring force norm)
-max_spring_torque: 5.0           # N·m
+max_spring_torque: 30.0           # N·m
 # Topic on which the slave publishes its actual TCP pose (set in launch).
 slave_actual_pose_topic: ""
 

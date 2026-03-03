@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <mutex>
 #include <string>
 
@@ -74,6 +75,7 @@ public:
     pnh_.param("integral_max_linear", integral_max_lin_, integral_max_lin_);
     pnh_.param("integral_max_angular", integral_max_ang_, integral_max_ang_);
     pnh_.param("integral_force_freeze", integral_force_freeze_, integral_force_freeze_);
+    pnh_.param("integral_torque_freeze", integral_torque_freeze_, integral_torque_freeze_);
     pnh_.param("max_spring_linear_speed", max_spring_lin_speed_, max_spring_lin_speed_);
     pnh_.param("max_spring_angular_speed", max_spring_ang_speed_, max_spring_ang_speed_);
 
@@ -96,6 +98,17 @@ public:
     pnh_.param("force_limiter/limit_exit", fl_limit_exit_, fl_limit_exit_);
     pnh_.param("force_limiter/smooth_width", fl_smooth_width_, fl_smooth_width_);
     pnh_.param("force_limiter/retreat_speed_max", fl_retreat_speed_max_, fl_retreat_speed_max_);
+
+    // Torque limiter (contact-aware, hysteretic)
+    pnh_.param("torque_limiter/enabled", torque_limiter_enabled_, torque_limiter_enabled_);
+    pnh_.param<std::string>("torque_limiter/metric", torque_limiter_metric_, torque_limiter_metric_);
+    pnh_.param<std::string>("torque_limiter/mode", torque_limiter_mode_, torque_limiter_mode_);
+    pnh_.param("torque_limiter/enable_enter", tl_enable_enter_, tl_enable_enter_);
+    pnh_.param("torque_limiter/enable_exit", tl_enable_exit_, tl_enable_exit_);
+    pnh_.param("torque_limiter/limit_enter", tl_limit_enter_, tl_limit_enter_);
+    pnh_.param("torque_limiter/limit_exit", tl_limit_exit_, tl_limit_exit_);
+    pnh_.param("torque_limiter/smooth_width", tl_smooth_width_, tl_smooth_width_);
+    pnh_.param("torque_limiter/retreat_speed_max", tl_retreat_speed_max_, tl_retreat_speed_max_);
 
     // Wrench filtering & clamps
     pnh_.param("wrench_filter_alpha", wrench_filter_alpha_, wrench_filter_alpha_);
@@ -203,6 +216,15 @@ public:
                      force_limiter_metric_.c_str(), force_limiter_mode_.c_str(),
                      fl_enable_enter_, fl_enable_exit_, fl_limit_enter_, fl_limit_exit_,
                      fl_smooth_width_, fl_retreat_speed_max_);
+    }
+
+    if (torque_limiter_enabled_)
+    {
+      ROS_INFO_NAMED("teleop_slave_twist_outer_loop",
+                     "Torque limiter enabled: metric='%s' mode='%s' enable=[%.2f, %.2f] limit=[%.2f, %.2f] smooth=%.2f retreat=%.3f",
+                     torque_limiter_metric_.c_str(), torque_limiter_mode_.c_str(),
+                     tl_enable_enter_, tl_enable_exit_, tl_limit_enter_, tl_limit_exit_,
+                     tl_smooth_width_, tl_retreat_speed_max_);
     }
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
@@ -378,6 +400,22 @@ private:
     return F_ext_lin.norm();
   }
 
+  double computeTorqueLimiterMetric(const Eigen::Vector3d& tau_ext, const Eigen::Vector3d& v_cmd_ang) const
+  {
+    if (torque_limiter_metric_ == "parallel_resistive")
+    {
+      const double vnorm = v_cmd_ang.norm();
+      if (vnorm > 1e-6)
+      {
+        const Eigen::Vector3d d = v_cmd_ang / vnorm;
+        // Resistive component: positive when external torque opposes commanded angular motion.
+        return std::max(0.0, -(d.dot(tau_ext)));
+      }
+      // If no motion direction, fall back to norm (robust).
+    }
+    return tau_ext.norm();
+  }
+
   void updateForceLimiterState(double metric)
   {
     if (!force_limiter_enabled_)
@@ -405,6 +443,37 @@ private:
         break;
       default:
         force_limiter_state_ = ForceLimiterState::Normal;
+        break;
+    }
+  }
+
+  void updateTorqueLimiterState(double metric)
+  {
+    if (!torque_limiter_enabled_)
+    {
+      torque_limiter_state_ = ForceLimiterState::Normal;
+      return;
+    }
+
+    const double enable_enter = std::max(0.0, tl_enable_enter_);
+    const double enable_exit = std::max(0.0, std::min(tl_enable_exit_, enable_enter));
+    const double limit_enter = std::max(enable_enter, tl_limit_enter_);
+    const double limit_exit = std::max(enable_exit, std::min(tl_limit_exit_, limit_enter));
+
+    switch (torque_limiter_state_)
+    {
+      case ForceLimiterState::Normal:
+        if (metric >= enable_enter) torque_limiter_state_ = ForceLimiterState::Compliant;
+        break;
+      case ForceLimiterState::Compliant:
+        if (metric >= limit_enter) torque_limiter_state_ = ForceLimiterState::Limiting;
+        else if (metric <= enable_exit) torque_limiter_state_ = ForceLimiterState::Normal;
+        break;
+      case ForceLimiterState::Limiting:
+        if (metric <= limit_exit) torque_limiter_state_ = ForceLimiterState::Compliant;
+        break;
+      default:
+        torque_limiter_state_ = ForceLimiterState::Normal;
         break;
     }
   }
@@ -472,6 +541,70 @@ private:
     }
 
     return v;
+  }
+
+  Eigen::Vector3d applyTorqueLimiter(const Eigen::Vector3d& w_in, const Eigen::Vector3d& tau_ext, double metric) const
+  {
+    if (!torque_limiter_enabled_) return w_in;
+    if (torque_limiter_state_ == ForceLimiterState::Normal) return w_in;
+
+    const double tau_norm = tau_ext.norm();
+    if (!(tau_norm > 1e-6) || !tau_ext.allFinite()) return w_in;
+
+    const Eigen::Vector3d n = tau_ext / tau_norm;
+    const double wn_raw = n.dot(w_in);
+    if (!std::isfinite(wn_raw)) return w_in;
+    // Same convention as force limiter: tau_ext is environment -> robot, so "into contact" is opposite to torque direction.
+    const double wn_push = std::min(0.0, wn_raw);         // <= 0 when pushing into contact
+    const Eigen::Vector3d w_push = n * wn_push;           // "push" angular component
+
+    const double enable_enter = std::max(0.0, tl_enable_enter_);
+    const double limit_enter = std::max(enable_enter, tl_limit_enter_);
+    const double smooth_width = std::max(0.0, tl_smooth_width_);
+
+    Eigen::Vector3d w = w_in;
+
+    const bool do_retreat = (torque_limiter_mode_ == "retreat");
+
+    if (torque_limiter_state_ == ForceLimiterState::Compliant)
+    {
+      double ramp_start = enable_enter;
+      double ramp_stop = limit_enter;
+      if (smooth_width > 1e-9)
+      {
+        ramp_start = std::max(enable_enter, limit_enter - smooth_width);
+        ramp_stop = limit_enter;
+      }
+
+      double s = 0.0;
+      if (metric <= ramp_start) s = 0.0;
+      else if (metric >= ramp_stop) s = 1.0;
+      else
+      {
+        const double denom = std::max(1e-9, (ramp_stop - ramp_start));
+        s = smoothstep01((metric - ramp_start) / denom);
+      }
+
+      // remove s * w_push
+      w -= s * w_push;
+    }
+    else if (torque_limiter_state_ == ForceLimiterState::Limiting)
+    {
+      // Never command further push into torque contact.
+      w -= w_push;
+
+      if (do_retreat)
+      {
+        const double wret = std::max(0.0, tl_retreat_speed_max_);
+        if (wret > 0.0)
+        {
+          // Retreat along +tau (away from contact) under env->robot torque convention.
+          w += wret * n;
+        }
+      }
+    }
+
+    return w;
   }
 
   double computeAlpha(const Eigen::Vector3d& F_ext_lin, const Eigen::Vector3d& v_ff_lin) const
@@ -576,6 +709,7 @@ private:
       wrench_db_state_ = teleoperation::WrenchDeadbandState{};
       has_wrench_filt_ = false;
       force_limiter_state_ = ForceLimiterState::Normal;
+      torque_limiter_state_ = ForceLimiterState::Normal;
       return;
     }
 
@@ -680,6 +814,7 @@ private:
 
     // Hard guard logic (force)
     const double f_norm = wrench_filt_.f.norm();
+    const double tau_norm = wrench_filt_.tau.norm();
     if (f_norm >= hard_force_threshold_)
     {
       if (hard_guard_active_since_.isZero())
@@ -718,7 +853,7 @@ private:
         pos_integral_ += e_p * dt_step;
         pos_integral_ = teleoperation::clampNorm3(pos_integral_, integral_max_lin_);
 
-        if (use_torques_)
+        if (use_torques_ && (tau_norm < integral_torque_freeze_))
         {
           ori_integral_ += e_o * dt_step;
           ori_integral_ = teleoperation::clampNorm3(ori_integral_, integral_max_ang_);
@@ -780,6 +915,18 @@ private:
     const double fl_metric = computeForceLimiterMetric(wrench_filt_.f, v_cmd_lin);
     updateForceLimiterState(fl_metric);
     v_cmd_lin = applyForceLimiter(v_cmd_lin, wrench_filt_.f, fl_metric);
+
+    // Torque/contact limiter (hysteretic). Acts only on the "pushing" component along measured torque direction.
+    if (use_torques_)
+    {
+      const double tl_metric = computeTorqueLimiterMetric(wrench_filt_.tau, v_cmd_ang);
+      updateTorqueLimiterState(tl_metric);
+      v_cmd_ang = applyTorqueLimiter(v_cmd_ang, wrench_filt_.tau, tl_metric);
+    }
+    else
+    {
+      torque_limiter_state_ = ForceLimiterState::Normal;
+    }
 
     // Hard guard override (stop or retreat)
     if (guard_active)
@@ -884,6 +1031,7 @@ private:
   double integral_max_lin_{0.05};
   double integral_max_ang_{0.1};
   double integral_force_freeze_{2.0};
+  double integral_torque_freeze_{std::numeric_limits<double>::infinity()};
   double max_spring_lin_speed_{0.15};
   double max_spring_ang_speed_{0.3};
 
@@ -909,6 +1057,17 @@ private:
   double fl_limit_exit_{0.0};
   double fl_smooth_width_{0.0};        // N; if <=0, ramp across [enable_enter, limit_enter]
   double fl_retreat_speed_max_{0.0};   // m/s; used only in mode 'retreat'
+
+  // Torque limiter params (disabled by default)
+  bool torque_limiter_enabled_{false};
+  std::string torque_limiter_metric_{"norm"};
+  std::string torque_limiter_mode_{"scale_parallel"};
+  double tl_enable_enter_{0.0};
+  double tl_enable_exit_{0.0};
+  double tl_limit_enter_{0.0};
+  double tl_limit_exit_{0.0};
+  double tl_smooth_width_{0.0};        // Nm; if <=0, ramp across [enable_enter, limit_enter]
+  double tl_retreat_speed_max_{0.0};   // rad/s; used only in mode 'retreat'
 
   double wrench_filter_alpha_{0.07};
   double wrench_filter_cutoff_hz_{0.0};
@@ -962,6 +1121,7 @@ private:
   teleoperation::WrenchDeadbandState wrench_db_state_;
 
   ForceLimiterState force_limiter_state_{ForceLimiterState::Normal};
+  ForceLimiterState torque_limiter_state_{ForceLimiterState::Normal};
 
   // Spring control integral state
   Eigen::Vector3d pos_integral_{Eigen::Vector3d::Zero()};

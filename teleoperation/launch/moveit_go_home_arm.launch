@@ -1,0 +1,66 @@
+<launch>
+  <!-- Generic: switch controllers -> MoveIt named pose -> restore controllers -->
+
+  <!-- Robot naming -->
+  <arg name="robot_ns" default="mur620b" />
+  <arg name="arm_ns" default="UR10_l" />
+
+  <!-- Controller manager (default: per-arm controller_manager in this workspace) -->
+  <arg name="controller_manager_ns" default="/$(arg robot_ns)/$(arg arm_ns)/controller_manager" />
+  <arg name="twist_controller" default="twist_controller" />
+  <arg name="arm_controller" default="arm_controller" />
+
+  <!-- MoveIt -->
+  <arg name="moveit_ns" default="/$(arg robot_ns)" />
+  <arg name="robot_description_param" default="/$(arg robot_ns)/robot_description" />
+  <arg name="move_group_name" default="UR_arm_l" />
+  <arg name="home_pose_name" default="Home_custom" />
+
+  <!-- Planning/execution tuning -->
+  <arg name="planning_time" default="5.0" />
+  <arg name="num_planning_attempts" default="5" />
+  <arg name="max_velocity_scaling_factor" default="0.1" />
+  <arg name="max_acceleration_scaling_factor" default="0.1" />
+  <arg name="goal_joint_tolerance" default="0.001" />
+  <arg name="execute" default="true" />
+
+  <!-- Controller switching tuning -->
+  <arg name="auto_load_controllers" default="true" />
+  <arg name="strictness" default="2" />
+  <arg name="start_asap" default="false" />
+  <arg name="switch_timeout_s" default="0.0" />
+  <arg name="wait_services_timeout_s" default="15.0" />
+
+  <!-- Node (unique name per arm so you can include twice) -->
+  <node pkg="teleoperation"
+        type="moveit_go_home_and_switch.py"
+        name="moveit_go_home_$(arg robot_ns)_$(arg arm_ns)"
+        output="screen"
+        required="false">
+    <param name="robot_ns" value="$(arg robot_ns)" />
+    <param name="arm_ns" value="$(arg arm_ns)" />
+
+    <param name="controller_manager_ns" value="$(arg controller_manager_ns)" />
+    <param name="twist_controller" value="$(arg twist_controller)" />
+    <param name="arm_controller" value="$(arg arm_controller)" />
+
+    <param name="moveit_ns" value="$(arg moveit_ns)" />
+    <param name="robot_description_param" value="$(arg robot_description_param)" />
+    <param name="move_group_name" value="$(arg move_group_name)" />
+    <param name="home_pose_name" value="$(arg home_pose_name)" />
+
+    <param name="planning_time" value="$(arg planning_time)" />
+    <param name="num_planning_attempts" value="$(arg num_planning_attempts)" />
+    <param name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+    <param name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    <param name="goal_joint_tolerance" value="$(arg goal_joint_tolerance)" />
+    <param name="execute" value="$(arg execute)" />
+
+    <param name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <param name="strictness" value="$(arg strictness)" />
+    <param name="start_asap" value="$(arg start_asap)" />
+    <param name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <param name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+  </node>
+</launch>
+

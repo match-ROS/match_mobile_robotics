@@ -108,6 +108,7 @@ catkin_install_python(PROGRAMS
   scripts/fake_wrench_hold_publisher.py
   scripts/keyboard_wrench_setpoint.py
   scripts/ur_zero_ftsensor.py
+  scripts/moveit_go_home_and_switch.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

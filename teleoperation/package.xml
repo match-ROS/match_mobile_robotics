@@ -45,6 +45,8 @@
   <exec_depend>moveit_ros_planning</exec_depend>
   <exec_depend>Eigen3</exec_depend>
   <exec_depend>cartesian_velocity_controller</exec_depend>
+  <exec_depend>moveit_commander</exec_depend>
+  <exec_depend>controller_manager_msgs</exec_depend>
 
   <export/>
 </package>

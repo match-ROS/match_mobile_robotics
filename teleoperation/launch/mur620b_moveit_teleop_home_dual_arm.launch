@@ -1,0 +1,32 @@
+<launch>
+  <!-- Wrapper: run go-home sequence for both arms by including moveit_go_home_arm.launch twice. -->
+
+  <!-- Common -->
+  <arg name="robot_ns" default="mur620b" />
+
+  <!-- LEFT arm -->
+  <arg name="arm_ns_l" default="UR10_l" />
+  <arg name="move_group_name_l" default="UR_arm_l" />
+  <arg name="home_pose_name_l" default="Home_custom" />
+
+  <!-- RIGHT arm -->
+  <arg name="arm_ns_r" default="UR10_r" />
+  <arg name="move_group_name_r" default="UR_arm_r" />
+  <arg name="home_pose_name_r" default="Home_custom_teleop" />
+
+  <!-- Include per-arm launch twice -->
+  <include file="$(find teleoperation)/launch/moveit_go_home_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_ns)" />
+    <arg name="arm_ns" value="$(arg arm_ns_l)" />
+    <arg name="move_group_name" value="$(arg move_group_name_l)" />
+    <arg name="home_pose_name" value="$(arg home_pose_name_l)" />
+  </include>
+
+  <include file="$(find teleoperation)/launch/moveit_go_home_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_ns)" />
+    <arg name="arm_ns" value="$(arg arm_ns_r)" />
+    <arg name="move_group_name" value="$(arg move_group_name_r)" />
+    <arg name="home_pose_name" value="$(arg home_pose_name_r)" />
+  </include>
+</launch>
+

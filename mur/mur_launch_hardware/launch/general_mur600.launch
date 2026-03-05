@@ -108,7 +108,7 @@
                 <remap from="ewellix_tlt_node_l/joint_states" to="/$(arg tf_prefix)/joint_states"/>
                 <remap from="/joy" to="/joy_ewellix_l"/>
                 <node name="ewellix_tlt_node_l" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                    <param name="ewellix/port" value="/dev/ttyUSB1" />
+                    <param name="ewellix/port" value="/dev/ttyUSB0" />
                     <param name="ewellix/joint_name" value="left_lift_joint" />
                 </node>
 
@@ -206,7 +206,7 @@
                 <remap from="ewellix_tlt_node_r/joint_states" to="/$(arg tf_prefix)/joint_states"/>
                 <remap from="/joy" to="/joy_ewellix_r"/>
                 <node name="ewellix_tlt_node_r" pkg="ewellix_tlt" type="ewellix_tlt_node" output="screen" respawn="true" >
-                    <param name="ewellix/port" value="/dev/ttyUSB0" />
+                    <param name="ewellix/port" value="/dev/ttyUSB1" />
                     <param name="ewellix/joint_name" value="right_lift_joint" />
                 </node>
 

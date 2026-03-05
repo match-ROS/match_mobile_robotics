@@ -2,6 +2,7 @@
 import sys
 import rospy
 
+import rosservice
 from std_srvs.srv import Trigger
 from ur_dashboard_msgs.srv import GetLoadedProgram
 
@@ -18,6 +19,42 @@ def _get_int_param(name: str, default: int) -> int:
         return int(rospy.get_param(name, default))
     except Exception:
         return int(default)
+
+
+def _call_quit(service_name: str, resolved_name: str) -> None:
+    srv_type = rosservice.get_service_type(service_name) or ""
+
+    if srv_type == "std_srvs/Trigger":
+        proxy = rospy.ServiceProxy(service_name, Trigger)
+        resp = proxy()
+        if resp.success:
+            rospy.loginfo("Quit OK: %s", resp.message)
+        else:
+            rospy.logwarn("Quit returned success=false: %s", resp.message)
+        return
+
+    if srv_type == "ur_dashboard_msgs/GetLoadedProgram" or srv_type.endswith("/GetLoadedProgram"):
+        proxy = rospy.ServiceProxy(service_name, GetLoadedProgram)
+        resp = proxy()
+        if resp.success:
+            rospy.loginfo("Quit OK (answer='%s', program_name='%s')", resp.answer, resp.program_name)
+        else:
+            rospy.logwarn(
+                "Quit returned success=false (answer='%s', program_name='%s')",
+                resp.answer,
+                resp.program_name,
+            )
+        return
+
+    raise rospy.ServiceException(f"Unsupported quit service type '{srv_type}' for {resolved_name}")
+
+
+def _call_connect(service_name: str, resolved_name: str) -> Trigger:
+    srv_type = rosservice.get_service_type(service_name) or ""
+    if srv_type != "" and srv_type != "std_srvs/Trigger":
+        raise rospy.ServiceException(f"Unsupported connect service type '{srv_type}' for {resolved_name}")
+    proxy = rospy.ServiceProxy(service_name, Trigger)
+    return proxy()
 
 
 def main() -> None:
@@ -58,33 +95,17 @@ def main() -> None:
         rospy.sleep(delay_before_quit_s)
 
     try:
-        quit_proxy = rospy.ServiceProxy(quit_service, GetLoadedProgram)
-        quit_resp = quit_proxy()
+        _call_quit(quit_service, quit_service_resolved)
     except rospy.ServiceException as e:
-        rospy.logerr("Service call to quit '%s' failed: %s", quit_service_resolved, str(e))
-        sys.exit(3)
-
-    if not quit_resp.success:
-        rospy.logwarn(
-            "Quit returned success=false (answer='%s', program_name='%s')",
-            quit_resp.answer,
-            quit_resp.program_name,
-        )
-    else:
-        rospy.loginfo(
-            "Quit OK (answer='%s', program_name='%s')",
-            quit_resp.answer,
-            quit_resp.program_name,
-        )
+        rospy.logwarn("Quit call to '%s' failed (will still try connect): %s", quit_service_resolved, str(e))
 
     if delay_between_quit_connect_s > 0.0:
         rospy.sleep(delay_between_quit_connect_s)
 
-    connect_proxy = rospy.ServiceProxy(connect_service, Trigger)
     last_message = ""
     for attempt in range(connect_retries + 1):
         try:
-            connect_resp = connect_proxy()
+            connect_resp = _call_connect(connect_service, connect_service_resolved)
         except rospy.ServiceException as e:
             last_message = str(e)
             rospy.logwarn(

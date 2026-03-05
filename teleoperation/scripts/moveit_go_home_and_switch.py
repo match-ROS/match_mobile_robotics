@@ -122,6 +122,105 @@ def _list(proxy: rospy.ServiceProxy) -> Optional[List[Tuple[str, str]]]:
         return None
 
 
+def _states_map(controllers: List[Tuple[str, str]]) -> dict:
+    return {name: state for (name, state) in controllers}
+
+
+def _ensure_controller_states(
+    list_proxy: rospy.ServiceProxy,
+    switch_proxy: rospy.ServiceProxy,
+    *,
+    must_run: List[str],
+    must_stop: List[str],
+    strictness: int,
+    start_asap: bool,
+    switch_timeout_s: float,
+    verify_timeout_s: float,
+    verify_period_s: float,
+) -> bool:
+    """
+    Ensure required controller states, without failing on no-op requests.
+
+    - Controllers in must_run are expected to be in state 'running'
+    - Controllers in must_stop are expected to be NOT 'running' (missing is treated as not running)
+    """
+    controllers = _list(list_proxy)
+    if controllers is None:
+        # Fallback: we cannot compute a no-op-safe request nor verify. Try one switch request.
+        rospy.logwarn("Cannot list controllers; attempting a direct switch request (no state verification).")
+        return _switch(
+            switch_proxy,
+            start=list(must_run),
+            stop=list(must_stop),
+            strictness=strictness,
+            start_asap=start_asap,
+            timeout_s=switch_timeout_s,
+        )
+
+    states = _states_map(controllers)
+    start = [c for c in must_run if states.get(c) != "running"]
+    stop = [c for c in must_stop if states.get(c) == "running"]
+
+    if not start and not stop:
+        return True
+
+    ok = _switch(
+        switch_proxy,
+        start=start,
+        stop=stop,
+        strictness=strictness,
+        start_asap=start_asap,
+        timeout_s=switch_timeout_s,
+    )
+
+    # If STRICT fails, retry BEST_EFFORT. This matches the intent "make sure states are correct"
+    # more than "atomic switch must succeed".
+    if not ok and int(strictness) == 2:
+        rospy.logwarn("Strict controller switch failed; retrying with BEST_EFFORT.")
+        ok = _switch(
+            switch_proxy,
+            start=start,
+            stop=stop,
+            strictness=1,
+            start_asap=start_asap,
+            timeout_s=switch_timeout_s,
+        )
+
+    # Verify resulting states (even if ok==False; the switch might have partially succeeded).
+    if verify_timeout_s <= 0.0:
+        return ok
+
+    start_t = rospy.Time.now()
+    last_states: Optional[dict] = None
+    while not rospy.is_shutdown():
+        elapsed = (rospy.Time.now() - start_t).to_sec()
+        if elapsed >= float(verify_timeout_s):
+            break
+        controllers = _list(list_proxy)
+        if controllers is None:
+            rospy.sleep(float(verify_period_s))
+            continue
+        last_states = _states_map(controllers)
+
+        run_ok = all(last_states.get(c) == "running" for c in must_run)
+        stop_ok = all(last_states.get(c) != "running" for c in must_stop)
+        if run_ok and stop_ok:
+            return True
+        rospy.sleep(float(verify_period_s))
+
+    if last_states is None:
+        rospy.logwarn("Cannot verify controller states after switch; proceeding with switch result ok=%s.", ok)
+        return ok
+
+    rospy.logerr(
+        "Controller state enforcement failed. must_run=%s must_stop=%s last_states=%s",
+        must_run,
+        must_stop,
+        last_states,
+    )
+    return False
+
+
 def _ensure_controller_loaded(
     list_proxy: rospy.ServiceProxy,
     load_proxy: rospy.ServiceProxy,
@@ -311,6 +410,8 @@ def main() -> None:
     switch_timeout_s = _get_float("~switch_timeout_s", 0.0)
     wait_services_timeout_s = _get_float("~wait_services_timeout_s", 15.0)
     auto_load = _get_bool("~auto_load_controllers", True)
+    controller_state_verify_timeout_s = _get_float("~controller_state_verify_timeout_s", 5.0)
+    controller_state_verify_period_s = _get_float("~controller_state_verify_period_s", 0.1)
 
     # MoveIt config
     moveit_ns_default = f"/{robot_ns}" if robot_ns else ""
@@ -359,22 +460,25 @@ def main() -> None:
                 rospy.logerr("Cannot continue without execution lock (use_execution_lock:=true).")
                 sys.exit(7)
 
-        # 1) Stop twist, start arm controller
+        # 1) Ensure twist stopped, arm controller running
         rospy.loginfo(
-            "Switching controllers: stop=['%s'] start=['%s'] (cm=%s)",
-            twist_controller,
+            "Ensuring controllers for go-home: arm='%s' running, twist='%s' stopped (cm=%s)",
             arm_controller,
+            twist_controller,
             _resolve_ns_prefix(controller_manager_ns),
         )
-        if not _switch(
+        if not _ensure_controller_states(
+            list_proxy,
             switch_proxy,
-            start=[arm_controller],
-            stop=[twist_controller],
+            must_run=[arm_controller],
+            must_stop=[twist_controller],
             strictness=strictness,
             start_asap=start_asap,
-            timeout_s=switch_timeout_s,
+            switch_timeout_s=switch_timeout_s,
+            verify_timeout_s=controller_state_verify_timeout_s,
+            verify_period_s=controller_state_verify_period_s,
         ):
-            rospy.logerr("Controller switch to arm_controller failed.")
+            rospy.logerr("Cannot enforce required controller states for go-home.")
             exit_code = 4
             return
 
@@ -400,32 +504,38 @@ def main() -> None:
         )
         if not ok_home:
             rospy.logerr("Go-home failed. Attempting to restore twist controller anyway.")
-            _switch(
+            _ensure_controller_states(
+                list_proxy,
                 switch_proxy,
-                start=[twist_controller],
-                stop=[arm_controller],
+                must_run=[twist_controller],
+                must_stop=[arm_controller],
                 strictness=strictness,
                 start_asap=start_asap,
-                timeout_s=switch_timeout_s,
+                switch_timeout_s=switch_timeout_s,
+                verify_timeout_s=controller_state_verify_timeout_s,
+                verify_period_s=controller_state_verify_period_s,
             )
             exit_code = 5
             return
 
-        # 3) Stop arm, start twist controller
+        # 3) Ensure arm stopped, twist controller running
         rospy.loginfo(
-            "Restoring controllers: stop=['%s'] start=['%s']",
-            arm_controller,
+            "Ensuring controllers after go-home: twist='%s' running, arm='%s' stopped",
             twist_controller,
+            arm_controller,
         )
-        if not _switch(
+        if not _ensure_controller_states(
+            list_proxy,
             switch_proxy,
-            start=[twist_controller],
-            stop=[arm_controller],
+            must_run=[twist_controller],
+            must_stop=[arm_controller],
             strictness=strictness,
             start_asap=start_asap,
-            timeout_s=switch_timeout_s,
+            switch_timeout_s=switch_timeout_s,
+            verify_timeout_s=controller_state_verify_timeout_s,
+            verify_period_s=controller_state_verify_period_s,
         ):
-            rospy.logerr("Controller switch back to twist_controller failed.")
+            rospy.logerr("Cannot enforce required controller states after go-home.")
             exit_code = 6
             return
 

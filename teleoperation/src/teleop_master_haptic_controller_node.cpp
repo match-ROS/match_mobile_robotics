@@ -568,19 +568,40 @@ private:
     const bool slave_stale = has_slave && ((now - slave_stamp).toSec() > wrench_timeout_s_);
     const bool coupling_stale = has_coupling && ((now - coupling_stamp).toSec() > wrench_timeout_s_);
 
-    if (master_stale || (has_slave && slave_stale) || (has_coupling && coupling_stale))
+    const bool any_stale = (master_stale || (has_slave && slave_stale) || (has_coupling && coupling_stale));
+
+    if (any_stale)
     {
-      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
-                              "Stale wrench (master=%d slave=%d coupling=%d). Publishing zero.",
-                              master_stale, slave_stale, coupling_stale);
+      if (!stale_active_)
+      {
+        ROS_WARN_NAMED("teleop_master_haptic_controller",
+                       "Wrench became stale (master=%d slave=%d coupling=%d, timeout=%.3fs). Publishing zero%s.",
+                       master_stale,
+                       slave_stale,
+                       coupling_stale,
+                       wrench_timeout_s_,
+                       (reset_on_stale_ ? " + resetting internal state (reset_on_stale=true)" : ""));
+      }
+      else
+      {
+        ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
+                                "Stale wrench (master=%d slave=%d coupling=%d). Publishing zero.",
+                                master_stale, slave_stale, coupling_stale);
+      }
       publishZero();
       if (reset_on_stale_)
       {
         resetControllerState();
       }
+      stale_active_ = true;
       last_time_ = now;
       return;
     }
+    if (stale_active_)
+    {
+      ROS_INFO_NAMED("teleop_master_haptic_controller", "Wrench recovered (no longer stale).");
+    }
+    stale_active_ = false;
 
     const double dt_nominal = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
     const double dt_min = std::max(0.0, dt_min_factor_) * dt_nominal;
@@ -1264,6 +1285,7 @@ private:
 
   double wrench_timeout_s_{0.2};
   bool reset_on_stale_{true};
+  bool stale_active_{false};
 
   // Slave target publishing
   bool publish_slave_targets_{false};

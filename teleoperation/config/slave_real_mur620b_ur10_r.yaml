@@ -58,7 +58,7 @@ k_adm_linear: 0.00
 k_adm_angular: 0.0
 
 # **use_torques**: if true, use torque component for angular compliance (requires sensible k_adm_angular).
-use_torques: true
+use_torques: false
 
 ## ----------------------------
 ## Force-aware scaling alpha(F)
@@ -89,7 +89,7 @@ use_latest_tf_for_wrench: true
 ## ----------------------------
 # **wrench_filter_cutoff_hz** (preferred): low-pass cutoff (Hz). If > 0 it overrides `wrench_filter_alpha`.
 # Match this with the master side if you want consistent “feel” in filtering.
-wrench_filter_cutoff_hz: 30.0
+wrench_filter_cutoff_hz: 12.0
 #
 # **wrench_filter_alpha**: 1st-order IIR smoothing on wrench (0..1). Used when cutoff_hz <= 0.
 wrench_filter_alpha: 0.07
@@ -115,7 +115,7 @@ filtered_wrench_topic: /teleop_debug/mur620b_UR10_r/slave_wrench_filtered
 ## Velocity limits (safety)
 ## ----------------------------
 # Keep conservative for first tests.
-max_linear_speed: 0.5
+max_linear_speed: 0.7
 max_angular_speed: 1.2
 
 # Separate caps for the compliance term only (prevents the admittance from “running away”).
@@ -140,18 +140,18 @@ retreat_speed: 0.2          # m/s (if retreat)
 #
 # NOTA: di default è disabilitato; abilitalo e inserisci valori coerenti con il tuo setup.
 force_limiter:
-  enabled: true
+  enabled: false 
   metric: parallel_resistive                 # "norm" | "parallel_resistive"
   mode: retreat         # "scale_parallel" | "retreat"
-  enable_enter: 40.0            # N  (soglia ingresso COMPLIANT)
-  enable_exit: 30.0             # N  (soglia uscita COMPLIANT -> NORMAL, < enable_enter)
-  limit_enter: 70.0             # N  (soglia ingresso LIMITING)
-  limit_exit: 60.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
+  enable_enter: 60.0            # N  (soglia ingresso COMPLIANT)
+  enable_exit: 50.0             # N  (soglia uscita COMPLIANT -> NORMAL, < enable_enter)
+  limit_enter: 90.0             # N  (soglia ingresso LIMITING)
+  limit_exit: 80.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
   smooth_width: 0.0            # N  (se >0, la rampa avviene negli ultimi smooth_width N prima di limit_enter)
   retreat_speed_max: 0.04       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
 
 torque_limiter:
-  enabled: true
+  enabled: false
   metric: parallel_resistive                 # "norm" | "parallel_resistive"
   mode: retreat         # "scale_parallel" | "retreat"
   enable_enter: 4.0             # Nm (soglia ingresso COMPLIANT)
@@ -184,7 +184,7 @@ spring_ki_linear: 0.2              # 1/s² (integral gain)
 spring_ki_angular: 0.2
 integral_max_linear: 0.1          # m·s (clamp on integral norm)
 integral_max_angular: 0.1          # rad·s
-integral_force_freeze: 8.0         # N — freeze integral when |F| > threshold
+integral_force_freeze: 15.0         # N — freeze integral when |F| > threshold
 integral_torque_freeze: 1.6        # Nm — freeze angular integral when |tau| > threshold (in addition to force)
 max_spring_linear_speed: 0.3      # m/s (spring output clamp)
 max_spring_angular_speed: 0.3      # rad/s

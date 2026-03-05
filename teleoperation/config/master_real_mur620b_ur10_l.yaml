@@ -58,7 +58,7 @@ control_rate: 250.0
 # Start conservative on real hardware.
 #
 # **mass_linear / damping_linear**: translational virtual dynamics.
-mass_linear: 2.0
+mass_linear: 4.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
@@ -107,7 +107,7 @@ dynamic_damping:
   torque_start: 0.4            # Nm (start adding angular damping)
   torque_stop: 3.0            # Nm (reach max extra angular damping)
   #extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
-  extra_damping_linear: 10.0   # N*s/m (max extra added to base damping_linear)
+  extra_damping_linear: 30.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_angular: 8.0   # N*m*s/rad (optional)
   d_extra_lowpass_cutoff_hz: 20.0  # low-pass on D_extra (<=0 disables)
 
@@ -120,29 +120,29 @@ dynamic_mass:
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 5.0               # N
-  force_stop: 60.0               # N
+  force_stop: 80.0               # N
   # Optional: if provided, ANGULAR extra mass is scheduled by slave torque norm (Nm).
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"          # currently supported: "norm"
   torque_start: 0.4              # Nm (start adding angular inertia)
   torque_stop: 3.0              # Nm (reach max extra angular inertia)
   #extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
-  extra_mass_linear: 1.0         # kg (max extra added to base mass_linear)
+  extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
   extra_mass_angular: 0.3        # kg*m^2 (optional)
-  m_extra_lowpass_cutoff_hz: 20.0  # low-pass on M_extra (<=0 disables)
+  m_extra_lowpass_cutoff_hz: 0.0  # low-pass on M_extra (<=0 disables)
 #
 # **force_reflection_scale / torque_reflection_scale**:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
 #force_reflection_scale: 0.25
-force_reflection_scale: 0.25
+force_reflection_scale: 0.50
 #torque_reflection_scale: 0.10
 torque_reflection_scale: 0.15
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
-use_torques: true
+use_torques: false
 
 ## ----------------------------
 ## Wrench filtering
@@ -157,8 +157,8 @@ wrench_filter_alpha: 0.5
 # If left at the sentinel values below, the node falls back to `wrench_filter_*` above:
 # - `*_wrench_filter_cutoff_hz` <= 0.0  -> fallback to `wrench_filter_cutoff_hz`
 # - `*_wrench_filter_alpha`     <  0.0  -> fallback to `wrench_filter_alpha`
-master_wrench_filter_cutoff_hz: 30.0
-feedback_wrench_filter_cutoff_hz: 25.0
+master_wrench_filter_cutoff_hz: 12.0
+feedback_wrench_filter_cutoff_hz: 12.0
 
 ## ----------------------------
 ## Deadbands, clamps, and debug of filtered wrench
@@ -185,7 +185,7 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## Command saturation (safety)
 ## ----------------------------
 # Saturate commanded twist norm.
-max_linear_speed: 0.5     # m/s
+max_linear_speed: 0.7     # m/s
 max_angular_speed: 1.2    # rad/s
 
 ## ----------------------------

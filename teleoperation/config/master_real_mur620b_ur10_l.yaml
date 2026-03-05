@@ -62,8 +62,8 @@ mass_linear: 5.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
-mass_angular: 0.01
-damping_angular: 0.05
+mass_angular: 0.005
+damping_angular: 0.0005
 #
 # -----------------------------
 # Feeling rotazionale "coerente" con la traslazione (formule guida)
@@ -96,7 +96,7 @@ damping_angular: 0.05
 # Increase the master damping smoothly as the SLAVE measured force grows.
 # Implementation lives inside `teleop_master_haptic_controller` and uses the already-subscribed slave wrench.
 dynamic_damping:
-  enabled: true 
+  enabled: false  
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 5.0             # N (start adding damping)
@@ -116,7 +116,7 @@ dynamic_damping:
 ## ----------------------------
 # Increase the master virtual inertia smoothly as the SLAVE measured force grows.
 dynamic_mass:
-  enabled: true
+  enabled: false
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 5.0               # N
@@ -141,8 +141,8 @@ force_reflection_scale: 0.50
 torque_reflection_scale: 0.15
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
-use_forces: true
-use_torques: false
+use_forces: false
+use_torques: true
 
 ## ----------------------------
 ## Wrench filtering
@@ -168,8 +168,8 @@ feedback_wrench_filter_cutoff_hz: 12.0
 # - exit: lower threshold to go back to zero (avoids chattering)
 force_deadband_enter: 1.5     # N
 force_deadband_exit: 1.0      # N
-torque_deadband_enter: 0.07    # Nm
-torque_deadband_exit: 0.05    # Nm
+torque_deadband_enter: 0.18    # Nm
+torque_deadband_exit: 0.14    # Nm
 #
 # Saturation limits applied to the wrench norm (safety + robustness).
 max_force: 150.0               # N
@@ -186,7 +186,7 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## ----------------------------
 # Saturate commanded twist norm.
 max_linear_speed: 0.7     # m/s
-max_angular_speed: 1.2    # rad/s
+max_angular_speed: 1.8    # rad/s
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)
@@ -206,8 +206,8 @@ dt_max_substeps: 10
 # If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
 max_linear_accel: 1.8      # m/s^2
 max_linear_jerk: 40.0       # m/s^3
-max_angular_accel: 2.0     # rad/s^2
-max_angular_jerk: 20.0     # rad/s^3
+max_angular_accel: 3.0     # rad/s^2
+max_angular_jerk: 30.0     # rad/s^3
 
 # Optional per-axis admittance (uncomment to use)
 #mass_linear_xyz: [4.0, 4.0, 6.0]

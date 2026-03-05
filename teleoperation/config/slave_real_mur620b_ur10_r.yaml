@@ -116,7 +116,7 @@ filtered_wrench_topic: /teleop_debug/mur620b_UR10_r/slave_wrench_filtered
 ## ----------------------------
 # Keep conservative for first tests.
 max_linear_speed: 0.7
-max_angular_speed: 1.2
+max_angular_speed: 1.8
 
 # Separate caps for the compliance term only (prevents the admittance from “running away”).
 max_compliance_linear_speed: 0.3

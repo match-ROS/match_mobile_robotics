@@ -58,7 +58,7 @@ control_rate: 250.0
 # Start conservative on real hardware.
 #
 # **mass_linear / damping_linear**: translational virtual dynamics.
-mass_linear: 4.0
+mass_linear: 5.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
@@ -107,7 +107,7 @@ dynamic_damping:
   torque_start: 0.4            # Nm (start adding angular damping)
   torque_stop: 3.0            # Nm (reach max extra angular damping)
   #extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
-  extra_damping_linear: 30.0   # N*s/m (max extra added to base damping_linear)
+  extra_damping_linear: 50.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_angular: 8.0   # N*m*s/rad (optional)
   d_extra_lowpass_cutoff_hz: 20.0  # low-pass on D_extra (<=0 disables)
 
@@ -127,7 +127,7 @@ dynamic_mass:
   torque_start: 0.4              # Nm (start adding angular inertia)
   torque_stop: 3.0              # Nm (reach max extra angular inertia)
   #extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
-  extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
+  extra_mass_linear: 18.0         # kg (max extra added to base mass_linear)
   extra_mass_angular: 0.3        # kg*m^2 (optional)
   m_extra_lowpass_cutoff_hz: 0.0  # low-pass on M_extra (<=0 disables)
 #

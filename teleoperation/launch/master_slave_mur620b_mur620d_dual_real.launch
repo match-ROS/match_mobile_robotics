@@ -1,0 +1,206 @@
+<launch>
+  <arg name="master_robot_ns" default="mur620b" />
+  <arg name="slave_robot_ns" default="mur620d" />
+  <arg name="left_arm_ns" default="UR10_l" />
+  <arg name="right_arm_ns" default="UR10_r" />
+
+  <!-- Optional: zero/tare all UR10e FT sensors at startup -->
+  <arg name="do_ur10e_zero_loadcell_master_left" default="true" />
+  <arg name="do_ur10e_zero_loadcell_master_right" default="true" />
+  <arg name="do_ur10e_zero_loadcell_slave_left" default="true" />
+  <arg name="do_ur10e_zero_loadcell_slave_right" default="true" />
+  <arg name="ur10e_zero_loadcell_delay_s" default="0.5" />
+  <arg name="ur10e_zero_loadcell_wait_timeout_s" default="10.0" />
+
+  <!-- LEFT pair: mur620b/UR10_l master -> mur620d/UR10_l slave -->
+  <arg name="left_master_wrench_topic" default="/$(arg master_robot_ns)/$(arg left_arm_ns)/wrench" />
+  <arg name="left_slave_wrench_topic" default="/$(arg slave_robot_ns)/$(arg left_arm_ns)/wrench" />
+  <arg name="left_slave_wrench_topic_for_master" default="$(arg left_slave_wrench_topic)" />
+  <arg name="left_master_command_topic" default="/$(arg master_robot_ns)/$(arg left_arm_ns)/twist_controller/command_collision_free" />
+  <arg name="left_slave_command_topic" default="/$(arg slave_robot_ns)/$(arg left_arm_ns)/twist_controller/command_collision_free" />
+  <arg name="left_master_tool_frame" default="$(eval arg('master_robot_ns') + '/' + arg('left_arm_ns') + '/tool0')" />
+  <arg name="left_master_base_inertia_frame" default="$(eval arg('master_robot_ns') + '/' + arg('left_arm_ns') + '/base_link_inertia')" />
+  <arg name="left_slave_tool_frame" default="$(eval arg('slave_robot_ns') + '/' + arg('left_arm_ns') + '/tool0')" />
+  <arg name="left_slave_base_inertia_frame" default="$(eval arg('slave_robot_ns') + '/' + arg('left_arm_ns') + '/base_link_inertia')" />
+  <arg name="left_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/target_pose')" />
+  <arg name="left_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/feedforward_twist')" />
+  <arg name="left_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/slave_actual_pose')" />
+  <arg name="left_master_filtered_master_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/master_wrench_filtered')" />
+  <arg name="left_master_filtered_slave_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/slave_wrench_filtered')" />
+  <arg name="left_master_filtered_coupling_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/coupling_wrench_filtered')" />
+  <arg name="left_slave_filtered_wrench_topic" default="$(eval '/teleop_debug/' + arg('slave_robot_ns') + '_' + arg('left_arm_ns') + '/slave_wrench_filtered')" />
+
+  <!-- RIGHT pair: mur620b/UR10_r master -> mur620d/UR10_r slave -->
+  <arg name="right_master_wrench_topic" default="/$(arg master_robot_ns)/$(arg right_arm_ns)/wrench" />
+  <arg name="right_slave_wrench_topic" default="/$(arg slave_robot_ns)/$(arg right_arm_ns)/wrench" />
+  <arg name="right_slave_wrench_topic_for_master" default="$(arg right_slave_wrench_topic)" />
+  <arg name="right_master_command_topic" default="/$(arg master_robot_ns)/$(arg right_arm_ns)/twist_controller/command_collision_free" />
+  <arg name="right_slave_command_topic" default="/$(arg slave_robot_ns)/$(arg right_arm_ns)/twist_controller/command_collision_free" />
+  <arg name="right_master_tool_frame" default="$(eval arg('master_robot_ns') + '/' + arg('right_arm_ns') + '/tool0')" />
+  <arg name="right_master_base_inertia_frame" default="$(eval arg('master_robot_ns') + '/' + arg('right_arm_ns') + '/base_link_inertia')" />
+  <arg name="right_slave_tool_frame" default="$(eval arg('slave_robot_ns') + '/' + arg('right_arm_ns') + '/tool0')" />
+  <arg name="right_slave_base_inertia_frame" default="$(eval arg('slave_robot_ns') + '/' + arg('right_arm_ns') + '/base_link_inertia')" />
+  <arg name="right_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/target_pose')" />
+  <arg name="right_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/feedforward_twist')" />
+  <arg name="right_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/slave_actual_pose')" />
+  <arg name="right_master_filtered_master_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/master_wrench_filtered')" />
+  <arg name="right_master_filtered_slave_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/slave_wrench_filtered')" />
+  <arg name="right_master_filtered_coupling_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/coupling_wrench_filtered')" />
+  <arg name="right_slave_filtered_wrench_topic" default="$(eval '/teleop_debug/' + arg('slave_robot_ns') + '_' + arg('right_arm_ns') + '/slave_wrench_filtered')" />
+
+  <!-- Zero/tare FT sensors -->
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell_master_left"
+        output="screen"
+        required="false"
+        if="$(arg do_ur10e_zero_loadcell_master_left)">
+    <param name="service" value="/$(arg master_robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/zero_ftsensor" />
+    <param name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+    <param name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+  </node>
+
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell_master_right"
+        output="screen"
+        required="false"
+        if="$(arg do_ur10e_zero_loadcell_master_right)">
+    <param name="service" value="/$(arg master_robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/zero_ftsensor" />
+    <param name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+    <param name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+  </node>
+
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell_slave_left"
+        output="screen"
+        required="false"
+        if="$(arg do_ur10e_zero_loadcell_slave_left)">
+    <param name="service" value="/$(arg slave_robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/zero_ftsensor" />
+    <param name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+    <param name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+  </node>
+
+  <node pkg="teleoperation"
+        type="ur_zero_ftsensor.py"
+        name="ur10e_zero_loadcell_slave_right"
+        output="screen"
+        required="false"
+        if="$(arg do_ur10e_zero_loadcell_slave_right)">
+    <param name="service" value="/$(arg slave_robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/zero_ftsensor" />
+    <param name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+    <param name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+  </node>
+
+  <!-- MASTER LEFT: publish targets for slave left -->
+  <node pkg="teleoperation"
+        type="teleop_master_haptic_controller"
+        name="teleop_master_haptic_controller_left"
+        output="screen">
+    <rosparam command="load"
+              file="$(find teleoperation)/config/master_real_mur620b_ur10_l.yaml" />
+
+    <param name="master_wrench_topic" value="$(arg left_master_wrench_topic)" />
+    <param name="slave_wrench_topic" value="$(arg left_slave_wrench_topic_for_master)" />
+    <param name="coupling_wrench_topic" value="" />
+    <param name="command_topic" value="$(arg left_master_command_topic)" />
+
+    <param name="wrench_source_frame_override" value="$(arg left_master_tool_frame)" />
+    <param name="wrench_target_frame" value="$(arg left_master_base_inertia_frame)" />
+    <param name="use_latest_tf_for_wrench" value="true" />
+
+    <param name="publish_slave_targets" value="true" />
+    <param name="slave_target_pose_topic" value="$(arg left_target_pose_topic)" />
+    <param name="slave_feedforward_twist_topic" value="$(arg left_feedforward_twist_topic)" />
+
+    <!-- Keep the tested frame-override logic: publish master-left pose in master-left base,
+         but label the message as slave-left base so the numerically identical arm can consume it directly. -->
+    <param name="slave_base_frame" value="$(arg left_master_base_inertia_frame)" />
+    <param name="slave_tcp_frame" value="$(arg left_master_tool_frame)" />
+    <param name="slave_frame_id_override" value="$(arg left_slave_base_inertia_frame)" />
+
+    <param name="slave_actual_pose_topic" value="$(arg left_slave_actual_pose_topic)" />
+    <param name="filtered_master_wrench_topic" value="$(arg left_master_filtered_master_wrench_topic)" />
+    <param name="filtered_slave_wrench_topic" value="$(arg left_master_filtered_slave_wrench_topic)" />
+    <param name="filtered_coupling_wrench_topic" value="$(arg left_master_filtered_coupling_wrench_topic)" />
+  </node>
+
+  <!-- SLAVE LEFT: consume targets from master left -->
+  <node pkg="teleoperation"
+        type="teleop_slave_twist_outer_loop"
+        name="teleop_slave_twist_outer_loop_left"
+        output="screen">
+    <rosparam command="load"
+              file="$(find teleoperation)/config/slave_real_mur620b_ur10_r.yaml" />
+
+    <param name="base_frame" value="$(arg left_slave_base_inertia_frame)" />
+    <param name="tcp_frame" value="$(arg left_slave_tool_frame)" />
+    <param name="wrench_topic" value="$(arg left_slave_wrench_topic)" />
+    <param name="command_topic" value="$(arg left_slave_command_topic)" />
+    <param name="target_pose_topic" value="$(arg left_target_pose_topic)" />
+    <param name="feedforward_twist_topic" value="$(arg left_feedforward_twist_topic)" />
+    <param name="wrench_source_frame_override" value="$(arg left_slave_tool_frame)" />
+    <param name="use_latest_tf_for_wrench" value="true" />
+
+    <param name="publish_master_feedback" value="true" />
+    <param name="master_feedback_pose_topic" value="$(arg left_slave_actual_pose_topic)" />
+    <param name="master_feedback_frame_override" value="$(arg left_master_base_inertia_frame)" />
+    <param name="filtered_wrench_topic" value="$(arg left_slave_filtered_wrench_topic)" />
+  </node>
+
+  <!-- MASTER RIGHT: publish targets for slave right -->
+  <node pkg="teleoperation"
+        type="teleop_master_haptic_controller"
+        name="teleop_master_haptic_controller_right"
+        output="screen">
+    <rosparam command="load"
+              file="$(find teleoperation)/config/master_real_mur620b_ur10_l.yaml" />
+
+    <param name="master_wrench_topic" value="$(arg right_master_wrench_topic)" />
+    <param name="slave_wrench_topic" value="$(arg right_slave_wrench_topic_for_master)" />
+    <param name="coupling_wrench_topic" value="" />
+    <param name="command_topic" value="$(arg right_master_command_topic)" />
+
+    <param name="wrench_source_frame_override" value="$(arg right_master_tool_frame)" />
+    <param name="wrench_target_frame" value="$(arg right_master_base_inertia_frame)" />
+    <param name="use_latest_tf_for_wrench" value="true" />
+
+    <param name="publish_slave_targets" value="true" />
+    <param name="slave_target_pose_topic" value="$(arg right_target_pose_topic)" />
+    <param name="slave_feedforward_twist_topic" value="$(arg right_feedforward_twist_topic)" />
+
+    <!-- Same tested frame-override logic for the right arm pair. -->
+    <param name="slave_base_frame" value="$(arg right_master_base_inertia_frame)" />
+    <param name="slave_tcp_frame" value="$(arg right_master_tool_frame)" />
+    <param name="slave_frame_id_override" value="$(arg right_slave_base_inertia_frame)" />
+
+    <param name="slave_actual_pose_topic" value="$(arg right_slave_actual_pose_topic)" />
+    <param name="filtered_master_wrench_topic" value="$(arg right_master_filtered_master_wrench_topic)" />
+    <param name="filtered_slave_wrench_topic" value="$(arg right_master_filtered_slave_wrench_topic)" />
+    <param name="filtered_coupling_wrench_topic" value="$(arg right_master_filtered_coupling_wrench_topic)" />
+  </node>
+
+  <!-- SLAVE RIGHT: consume targets from master right -->
+  <node pkg="teleoperation"
+        type="teleop_slave_twist_outer_loop"
+        name="teleop_slave_twist_outer_loop_right"
+        output="screen">
+    <rosparam command="load"
+              file="$(find teleoperation)/config/slave_real_mur620b_ur10_r.yaml" />
+
+    <param name="base_frame" value="$(arg right_slave_base_inertia_frame)" />
+    <param name="tcp_frame" value="$(arg right_slave_tool_frame)" />
+    <param name="wrench_topic" value="$(arg right_slave_wrench_topic)" />
+    <param name="command_topic" value="$(arg right_slave_command_topic)" />
+    <param name="target_pose_topic" value="$(arg right_target_pose_topic)" />
+    <param name="feedforward_twist_topic" value="$(arg right_feedforward_twist_topic)" />
+    <param name="wrench_source_frame_override" value="$(arg right_slave_tool_frame)" />
+    <param name="use_latest_tf_for_wrench" value="true" />
+
+    <param name="publish_master_feedback" value="true" />
+    <param name="master_feedback_pose_topic" value="$(arg right_slave_actual_pose_topic)" />
+    <param name="master_feedback_frame_override" value="$(arg right_master_base_inertia_frame)" />
+    <param name="filtered_wrench_topic" value="$(arg right_slave_filtered_wrench_topic)" />
+  </node>
+</launch>

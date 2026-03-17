@@ -61,6 +61,7 @@ public:
     pnh_.param<std::string>("dynamic_damping/force_metric", dyn_damping_force_metric_, dyn_damping_force_metric_);
     pnh_.param<double>("dynamic_damping/force_start", dyn_damping_force_start_, dyn_damping_force_start_);
     pnh_.param<double>("dynamic_damping/force_stop", dyn_damping_force_stop_, dyn_damping_force_stop_);
+    pnh_.param<double>("dynamic_damping/shape_exp", dyn_damping_shape_exp_, dyn_damping_shape_exp_);
     // Optional: schedule ANGULAR extras by slave torque (if torque_* is provided).
     // Backward-compatible: if torque_* is absent, angular extras follow the same schedule as linear (force-based).
     const bool has_dyn_damping_torque_start = pnh_.getParam("dynamic_damping/torque_start", dyn_damping_torque_start_);
@@ -84,6 +85,7 @@ public:
     pnh_.param<std::string>("dynamic_mass/force_metric", dyn_mass_force_metric_, dyn_mass_force_metric_);
     pnh_.param<double>("dynamic_mass/force_start", dyn_mass_force_start_, dyn_mass_force_start_);
     pnh_.param<double>("dynamic_mass/force_stop", dyn_mass_force_stop_, dyn_mass_force_stop_);
+    pnh_.param<double>("dynamic_mass/shape_exp", dyn_mass_shape_exp_, dyn_mass_shape_exp_);
     // Optional: schedule ANGULAR extras by slave torque (if torque_* is provided).
     // Backward-compatible: if torque_* is absent, angular extras follow the same schedule as linear (force-based).
     const bool has_dyn_mass_torque_start = pnh_.getParam("dynamic_mass/torque_start", dyn_mass_torque_start_);
@@ -347,7 +349,21 @@ private:
     return x * x * (3.0 - 2.0 * x);
   }
 
-  static double computeScheduleSmoothstep(double F_env, double force_start, double force_stop)
+  static double applyScheduleShape(double schedule_value, double shape_exp)
+  {
+    const double x = std::clamp(schedule_value, 0.0, 1.0);
+    if (!std::isfinite(shape_exp) || shape_exp <= 0.0)
+    {
+      return x;
+    }
+    if (std::abs(shape_exp - 1.0) < 1e-9)
+    {
+      return x;
+    }
+    return std::clamp(1.0 - std::pow(1.0 - x, shape_exp), 0.0, 1.0);
+  }
+
+  static double computeScheduleSmoothstep(double F_env, double force_start, double force_stop, double shape_exp = 1.0)
   {
     if (!std::isfinite(F_env))
     {
@@ -363,7 +379,7 @@ private:
     if (F_env <= f0) return 0.0;
     if (F_env >= f1) return 1.0;
     const double u = (F_env - f0) / (f1 - f0);
-    return smoothstep01(u);
+    return applyScheduleShape(smoothstep01(u), shape_exp);
   }
 
   void resetControllerState()
@@ -805,9 +821,9 @@ private:
                                   dyn_damping_torque_metric_.c_str());
         }
 
-        const double s_d_lin = computeScheduleSmoothstep(F_env, dyn_damping_force_start_, dyn_damping_force_stop_);
+        const double s_d_lin = computeScheduleSmoothstep(F_env, dyn_damping_force_start_, dyn_damping_force_stop_, dyn_damping_shape_exp_);
         const double s_d_ang = dyn_damping_use_torque_schedule_
-                                   ? computeScheduleSmoothstep(Tau_env, dyn_damping_torque_start_, dyn_damping_torque_stop_)
+                                   ? computeScheduleSmoothstep(Tau_env, dyn_damping_torque_start_, dyn_damping_torque_stop_, dyn_damping_shape_exp_)
                                    : s_d_lin;
 
         const Eigen::Vector3d Dextra_lin_max =
@@ -852,9 +868,9 @@ private:
                                   dyn_mass_torque_metric_.c_str());
         }
 
-        const double s_m_lin = computeScheduleSmoothstep(F_env, dyn_mass_force_start_, dyn_mass_force_stop_);
+        const double s_m_lin = computeScheduleSmoothstep(F_env, dyn_mass_force_start_, dyn_mass_force_stop_, dyn_mass_shape_exp_);
         const double s_m_ang = dyn_mass_use_torque_schedule_
-                                   ? computeScheduleSmoothstep(Tau_env, dyn_mass_torque_start_, dyn_mass_torque_stop_)
+                                   ? computeScheduleSmoothstep(Tau_env, dyn_mass_torque_start_, dyn_mass_torque_stop_, dyn_mass_shape_exp_)
                                    : s_m_lin;
 
         const Eigen::Vector3d Mextra_lin_max =
@@ -1201,6 +1217,7 @@ private:
   std::string dyn_damping_force_metric_{"norm"};  // currently only "norm"
   double dyn_damping_force_start_{5.0};
   double dyn_damping_force_stop_{25.0};
+  double dyn_damping_shape_exp_{1.0};
   bool dyn_damping_use_torque_schedule_{false};
   std::string dyn_damping_torque_metric_{"norm"};  // currently only "norm"
   double dyn_damping_torque_start_{5.0};
@@ -1220,6 +1237,7 @@ private:
   std::string dyn_mass_force_metric_{"norm"};  // currently only "norm"
   double dyn_mass_force_start_{5.0};
   double dyn_mass_force_stop_{25.0};
+  double dyn_mass_shape_exp_{1.0};
   bool dyn_mass_use_torque_schedule_{false};
   std::string dyn_mass_torque_metric_{"norm"};  // currently only "norm"
   double dyn_mass_torque_start_{5.0};

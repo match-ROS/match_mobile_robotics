@@ -62,8 +62,8 @@ mass_linear: 5.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
-mass_angular: 0.02
-damping_angular: 0.10
+mass_angular: 0.03
+damping_angular: 0.12
 #
 # -----------------------------
 # Feeling rotazionale "coerente" con la traslazione (formule guida)
@@ -96,39 +96,41 @@ damping_angular: 0.10
 # Increase the master damping smoothly as the SLAVE measured force grows.
 # Implementation lives inside `teleop_master_haptic_controller` and uses the already-subscribed slave wrench.
 dynamic_damping:
-  enabled: false  
+  enabled: true  
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 5.0             # N (start adding damping)
   force_stop: 60.0             # N (reach max extra damping)
+  shape_exp: 2.0               # >1.0 = rise faster at low force, then flatten
   # Optional: if provided, ANGULAR extra damping is scheduled by slave torque norm (Nm).
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"        # currently supported: "norm"
-  torque_start: 0.4            # Nm (start adding angular damping)
-  torque_stop: 3.0            # Nm (reach max extra angular damping)
+  torque_start: 0.6            # Nm (start adding angular damping)
+  torque_stop: 4.0            # Nm (reach max extra angular damping)
   #extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_linear: 50.0   # N*s/m (max extra added to base damping_linear)
-  extra_damping_angular: 8.0   # N*m*s/rad (optional)
-  d_extra_lowpass_cutoff_hz: 20.0  # low-pass on D_extra (<=0 disables)
+  extra_damping_angular: 1.8   # N*m*s/rad (optional)
+  d_extra_lowpass_cutoff_hz: 0.0  # low-pass on D_extra (<=0 disables)
 
 ## ----------------------------
 ## Dynamic mass (scheduled by slave force)
 ## ----------------------------
 # Increase the master virtual inertia smoothly as the SLAVE measured force grows.
 dynamic_mass:
-  enabled: false
+  enabled: true
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 5.0               # N
   force_stop: 80.0               # N
+  shape_exp: 1.8                 # >1.0 = rise faster at low force, then flatten
   # Optional: if provided, ANGULAR extra mass is scheduled by slave torque norm (Nm).
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"          # currently supported: "norm"
-  torque_start: 0.4              # Nm (start adding angular inertia)
-  torque_stop: 3.0              # Nm (reach max extra angular inertia)
+  torque_start: 0.6              # Nm (start adding angular inertia)
+  torque_stop: 4.0              # Nm (reach max extra angular inertia)
   #extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
   extra_mass_linear: 18.0         # kg (max extra added to base mass_linear)
-  extra_mass_angular: 0.3        # kg*m^2 (optional)
+  extra_mass_angular: 0.5        # kg*m^2 (optional)
   m_extra_lowpass_cutoff_hz: 0.0  # low-pass on M_extra (<=0 disables)
 #
 # **force_reflection_scale / torque_reflection_scale**:
@@ -138,7 +140,7 @@ dynamic_mass:
 #force_reflection_scale: 0.25
 force_reflection_scale: 0.50
 #torque_reflection_scale: 0.10
-torque_reflection_scale: 0.0
+torque_reflection_scale: 0.20
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
@@ -168,8 +170,8 @@ feedback_wrench_filter_cutoff_hz: 12.0
 # - exit: lower threshold to go back to zero (avoids chattering)
 force_deadband_enter: 1.5     # N
 force_deadband_exit: 1.0      # N
-torque_deadband_enter: 0.14    # Nm
-torque_deadband_exit: 0.11    # Nm
+torque_deadband_enter: 0.11    # Nm
+torque_deadband_exit: 0.08    # Nm
 # Cross-channel deadband relief:
 # - when force is active, torque deadband is multiplied by this factor
 # - when torque is active, force deadband is multiplied by this factor

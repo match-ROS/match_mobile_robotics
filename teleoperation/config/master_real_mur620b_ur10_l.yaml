@@ -62,8 +62,8 @@ mass_linear: 5.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
-mass_angular: 0.005
-damping_angular: 0.0005
+mass_angular: 0.02
+damping_angular: 0.10
 #
 # -----------------------------
 # Feeling rotazionale "coerente" con la traslazione (formule guida)
@@ -138,10 +138,10 @@ dynamic_mass:
 #force_reflection_scale: 0.25
 force_reflection_scale: 0.50
 #torque_reflection_scale: 0.10
-torque_reflection_scale: 0.15
+torque_reflection_scale: 0.0
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
-use_forces: false
+use_forces: true
 use_torques: true
 
 ## ----------------------------
@@ -168,8 +168,14 @@ feedback_wrench_filter_cutoff_hz: 12.0
 # - exit: lower threshold to go back to zero (avoids chattering)
 force_deadband_enter: 1.5     # N
 force_deadband_exit: 1.0      # N
-torque_deadband_enter: 0.18    # Nm
-torque_deadband_exit: 0.14    # Nm
+torque_deadband_enter: 0.14    # Nm
+torque_deadband_exit: 0.11    # Nm
+# Cross-channel deadband relief:
+# - when force is active, torque deadband is multiplied by this factor
+# - when torque is active, force deadband is multiplied by this factor
+# - 1.0 = old independent behavior
+# - 0.0 = full bypass of the other deadband
+cross_deadband_scale: 0.35
 #
 # Saturation limits applied to the wrench norm (safety + robustness).
 max_force: 150.0               # N
@@ -186,7 +192,7 @@ filtered_slave_wrench_topic: /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
 ## ----------------------------
 # Saturate commanded twist norm.
 max_linear_speed: 0.7     # m/s
-max_angular_speed: 1.8    # rad/s
+max_angular_speed: 3.0    # rad/s
 
 ## ----------------------------
 ## dt sanitization (real-time robustness)
@@ -206,8 +212,8 @@ dt_max_substeps: 10
 # If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
 max_linear_accel: 1.8      # m/s^2
 max_linear_jerk: 40.0       # m/s^3
-max_angular_accel: 3.0     # rad/s^2
-max_angular_jerk: 30.0     # rad/s^3
+max_angular_accel: 5.0     # rad/s^2
+max_angular_jerk: 50.0     # rad/s^3
 
 # Optional per-axis admittance (uncomment to use)
 #mass_linear_xyz: [4.0, 4.0, 6.0]
@@ -262,7 +268,7 @@ slave_publish_rate: 250.0
 # Requires the slave to publish its actual pose (publish_master_feedback: true on slave).
 spring_stiffness_linear: 10.0    # N/m
 spring_damping_linear: 0.0       # N·s/m
-spring_stiffness_angular: 0.4    # N·m/rad (disabled: set >0 to enable)
+spring_stiffness_angular: 0.001    # N·m/rad (disabled: set >0 to enable)
 spring_damping_angular: 0.0
 max_spring_force: 150.0           # N (safety saturation on spring force norm)
 max_spring_torque: 30.0           # N·m

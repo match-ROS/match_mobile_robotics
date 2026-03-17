@@ -102,6 +102,12 @@ force_deadband_exit: 0.7
 torque_deadband: 0.2           # legacy fallback
 torque_deadband_enter: 0.2
 torque_deadband_exit: 0.14
+# Cross-channel deadband relief:
+# - when force is active, torque deadband is multiplied by this factor
+# - when torque is active, force deadband is multiplied by this factor
+# - 1.0 = old independent behavior
+# - 0.0 = full bypass of the other deadband
+cross_deadband_scale: 1.0
 
 # Saturation of wrench norms (safety). (non è un limite fisico di contatto, solo clamp del sensore)
 max_force: 200.0

@@ -123,6 +123,7 @@ public:
     pnh_.param("force_deadband_exit", force_deadband_exit_, force_deadband_enter_ * 0.7);
     pnh_.param("torque_deadband_enter", torque_deadband_enter_, torque_db_legacy);
     pnh_.param("torque_deadband_exit", torque_deadband_exit_, torque_deadband_enter_ * 0.7);
+    pnh_.param("cross_deadband_scale", cross_deadband_scale_, cross_deadband_scale_);
 
     pnh_.param("max_force", max_force_, max_force_);
     pnh_.param("max_torque", max_torque_, max_torque_);
@@ -799,7 +800,7 @@ private:
           wrench_raw, wrench_raw, false, alpha_wrench,
           force_deadband_enter_, force_deadband_exit_,
           torque_deadband_enter_, torque_deadband_exit_,
-          max_force_, max_torque_, use_torques_, wrench_db_state_);
+          max_force_, max_torque_, use_torques_, cross_deadband_scale_, wrench_db_state_);
       has_wrench_filt_ = true;
     }
     else
@@ -808,7 +809,7 @@ private:
           wrench_filt_, wrench_raw, do_filter, alpha_wrench,
           force_deadband_enter_, force_deadband_exit_,
           torque_deadband_enter_, torque_deadband_exit_,
-          max_force_, max_torque_, use_torques_, wrench_db_state_);
+          max_force_, max_torque_, use_torques_, cross_deadband_scale_, wrench_db_state_);
     }
     debug_wrench_filt_pub_.publish(wrench_filt_, now, base_frame_);
 
@@ -1075,6 +1076,7 @@ private:
   double force_deadband_exit_{0.7};
   double torque_deadband_enter_{0.2};
   double torque_deadband_exit_{0.14};
+  double cross_deadband_scale_{1.0};
   double max_force_{150.0};
   double max_torque_{20.0};
 

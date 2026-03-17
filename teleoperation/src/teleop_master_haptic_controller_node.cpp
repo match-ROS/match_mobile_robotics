@@ -133,6 +133,7 @@ public:
     (void)pnh_.getParam("torque_deadband_exit", torque_deadband_exit_);
     if (!(force_deadband_exit_ >= 0.0)) force_deadband_exit_ = force_deadband_enter_;
     if (!(torque_deadband_exit_ >= 0.0)) torque_deadband_exit_ = torque_deadband_enter_;
+    pnh_.param<double>("cross_deadband_scale", cross_deadband_scale_, cross_deadband_scale_);
 
     pnh_.param<double>("max_force", max_force_, max_force_);
     pnh_.param<double>("max_torque", max_torque_, max_torque_);
@@ -675,7 +676,7 @@ private:
           torque_deadband_enter_, torque_deadband_exit_,
           (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_),
           (max_torque_hand_ > 0.0 ? max_torque_hand_ : max_torque_),
-          use_torques_, master_db_state_);
+          use_torques_, cross_deadband_scale_, master_db_state_);
       has_filtered_master_ = true;
     }
     else
@@ -686,7 +687,7 @@ private:
           torque_deadband_enter_, torque_deadband_exit_,
           (max_force_hand_ > 0.0 ? max_force_hand_ : max_force_),
           (max_torque_hand_ > 0.0 ? max_torque_hand_ : max_torque_),
-          use_torques_, master_db_state_);
+          use_torques_, cross_deadband_scale_, master_db_state_);
     }
     if (!use_forces_)
     {
@@ -705,7 +706,7 @@ private:
             torque_deadband_enter_, torque_deadband_exit_,
             (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
             (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
-            use_torques_, slave_db_state_);
+            use_torques_, cross_deadband_scale_, slave_db_state_);
         has_filtered_slave_ = true;
       }
       else
@@ -716,7 +717,7 @@ private:
             torque_deadband_enter_, torque_deadband_exit_,
             (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
             (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
-            use_torques_, slave_db_state_);
+            use_torques_, cross_deadband_scale_, slave_db_state_);
       }
       if (!use_forces_)
       {
@@ -742,7 +743,7 @@ private:
             torque_deadband_enter_, torque_deadband_exit_,
             (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
             (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
-            use_torques_, coupling_db_state_);
+            use_torques_, cross_deadband_scale_, coupling_db_state_);
         has_filtered_coupling_ = true;
       }
       else
@@ -753,7 +754,7 @@ private:
             torque_deadband_enter_, torque_deadband_exit_,
             (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
             (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
-            use_torques_, coupling_db_state_);
+            use_torques_, cross_deadband_scale_, coupling_db_state_);
       }
       if (!use_forces_)
       {
@@ -1257,6 +1258,7 @@ private:
   double force_deadband_exit_{std::numeric_limits<double>::quiet_NaN()};
   double torque_deadband_enter_{0.2};
   double torque_deadband_exit_{std::numeric_limits<double>::quiet_NaN()};
+  double cross_deadband_scale_{1.0};
 
   double max_force_{150.0};
   double max_torque_{20.0};

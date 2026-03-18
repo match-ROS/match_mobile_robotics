@@ -40,6 +40,10 @@ public:
     pnh_.param<std::string>("master_wrench_topic", master_wrench_topic_, "wrench");
     pnh_.param<std::string>("slave_wrench_topic", slave_wrench_topic_, "");
     pnh_.param<std::string>("coupling_wrench_topic", coupling_wrench_topic_, "");
+    node_name_ = ros::this_node::getName();
+    resolved_master_wrench_topic_ = nh_.resolveName(master_wrench_topic_);
+    resolved_slave_wrench_topic_ = slave_wrench_topic_.empty() ? std::string() : nh_.resolveName(slave_wrench_topic_);
+    resolved_coupling_wrench_topic_ = coupling_wrench_topic_.empty() ? std::string() : nh_.resolveName(coupling_wrench_topic_);
     pnh_.param<std::string>("wrench_source_frame_override", wrench_source_frame_override_, "");
     pnh_.param<bool>("use_latest_tf_for_wrench", use_latest_tf_for_wrench_, use_latest_tf_for_wrench_);
 
@@ -589,10 +593,13 @@ private:
 
     if (any_stale)
     {
+      const std::string stale_sources = describeStaleSources(master_stale, slave_stale, coupling_stale);
       if (!stale_active_)
       {
         ROS_WARN_NAMED("teleop_master_haptic_controller",
-                       "Wrench became stale (master=%d slave=%d coupling=%d, timeout=%.3fs). Publishing zero%s.",
+                       "[%s] Wrench became stale on %s (master=%d slave=%d coupling=%d, timeout=%.3fs). Publishing zero%s.",
+                       node_name_.c_str(),
+                       stale_sources.c_str(),
                        master_stale,
                        slave_stale,
                        coupling_stale,
@@ -602,7 +609,9 @@ private:
       else
       {
         ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
-                                "Stale wrench (master=%d slave=%d coupling=%d). Publishing zero.",
+                                "[%s] Stale wrench on %s (master=%d slave=%d coupling=%d). Publishing zero.",
+                                node_name_.c_str(),
+                                stale_sources.c_str(),
                                 master_stale, slave_stale, coupling_stale);
       }
       publishZero();
@@ -616,7 +625,9 @@ private:
     }
     if (stale_active_)
     {
-      ROS_INFO_NAMED("teleop_master_haptic_controller", "Wrench recovered (no longer stale).");
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "[%s] Wrench recovered (no longer stale).",
+                     node_name_.c_str());
     }
     stale_active_ = false;
 
@@ -1164,6 +1175,37 @@ private:
   }
 
 private:
+  std::string describeStaleSources(bool master_stale, bool slave_stale, bool coupling_stale) const
+  {
+    std::string sources;
+    auto appendSource = [&sources](const std::string& label, const std::string& topic)
+    {
+      if (!sources.empty())
+      {
+        sources += ", ";
+      }
+      sources += label + "=" + (topic.empty() ? std::string("<disabled>") : topic);
+    };
+
+    if (master_stale)
+    {
+      appendSource("master", resolved_master_wrench_topic_);
+    }
+    if (slave_stale)
+    {
+      appendSource("slave", resolved_slave_wrench_topic_);
+    }
+    if (coupling_stale)
+    {
+      appendSource("coupling", resolved_coupling_wrench_topic_);
+    }
+    if (sources.empty())
+    {
+      sources = "unknown source";
+    }
+    return sources;
+  }
+
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
 
@@ -1191,9 +1233,13 @@ private:
   ros::Timer slave_timer_;
 
   // Params
+  std::string node_name_;
   std::string master_wrench_topic_;
   std::string slave_wrench_topic_;
   std::string coupling_wrench_topic_;
+  std::string resolved_master_wrench_topic_;
+  std::string resolved_slave_wrench_topic_;
+  std::string resolved_coupling_wrench_topic_;
   std::string wrench_source_frame_override_;
   bool use_latest_tf_for_wrench_{false};
   std::string wrench_target_frame_;

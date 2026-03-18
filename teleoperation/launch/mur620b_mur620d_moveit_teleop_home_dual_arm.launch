@@ -1,0 +1,112 @@
+<launch>
+  <!-- Wrapper: run go-home sequence for both arms of mur620b and mur620d. -->
+
+  <!-- Robot namespaces -->
+  <arg name="robot_ns_1" default="mur620b" />
+  <arg name="robot_ns_2" default="mur620d" />
+
+  <!-- Arm namespaces -->
+  <arg name="arm_ns_l" default="UR10_l" />
+  <arg name="move_group_name_l" default="UR_arm_l" />
+  <arg name="arm_ns_r" default="UR10_r" />
+  <arg name="move_group_name_r" default="UR_arm_r" />
+
+  <!-- Home poses for mur620b -->
+  <arg name="home_pose_name_1_l" default="Home_custom_teleop" />
+  <arg name="home_pose_name_1_r" default="Home_custom_teleop" />
+
+  <!-- Home poses for mur620d -->
+  <arg name="home_pose_name_2_l" default="Home_custom_teleop" />
+  <arg name="home_pose_name_2_r" default="Home_custom_teleop" />
+
+  <!-- Common planning/execution tuning -->
+  <arg name="planning_time" default="5.0" />
+  <arg name="num_planning_attempts" default="5" />
+  <arg name="max_velocity_scaling_factor" default="0.1" />
+  <arg name="max_acceleration_scaling_factor" default="0.1" />
+  <arg name="goal_joint_tolerance" default="0.001" />
+  <arg name="execute" default="true" />
+
+  <!-- Common controller switching tuning -->
+  <arg name="auto_load_controllers" default="true" />
+  <arg name="strictness" default="2" />
+  <arg name="start_asap" default="false" />
+  <arg name="switch_timeout_s" default="0.0" />
+  <arg name="wait_services_timeout_s" default="15.0" />
+
+  <!-- mur620b LEFT -->
+  <include file="$(find teleoperation)/launch/moveit_go_home_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_1)" />
+    <arg name="arm_ns" value="$(arg arm_ns_l)" />
+    <arg name="move_group_name" value="$(arg move_group_name_l)" />
+    <arg name="home_pose_name" value="$(arg home_pose_name_1_l)" />
+    <arg name="planning_time" value="$(arg planning_time)" />
+    <arg name="num_planning_attempts" value="$(arg num_planning_attempts)" />
+    <arg name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+    <arg name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    <arg name="goal_joint_tolerance" value="$(arg goal_joint_tolerance)" />
+    <arg name="execute" value="$(arg execute)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+  </include>
+
+  <!-- mur620b RIGHT -->
+  <include file="$(find teleoperation)/launch/moveit_go_home_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_1)" />
+    <arg name="arm_ns" value="$(arg arm_ns_r)" />
+    <arg name="move_group_name" value="$(arg move_group_name_r)" />
+    <arg name="home_pose_name" value="$(arg home_pose_name_1_r)" />
+    <arg name="planning_time" value="$(arg planning_time)" />
+    <arg name="num_planning_attempts" value="$(arg num_planning_attempts)" />
+    <arg name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+    <arg name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    <arg name="goal_joint_tolerance" value="$(arg goal_joint_tolerance)" />
+    <arg name="execute" value="$(arg execute)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+  </include>
+
+  <!-- mur620d LEFT -->
+  <include file="$(find teleoperation)/launch/moveit_go_home_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_2)" />
+    <arg name="arm_ns" value="$(arg arm_ns_l)" />
+    <arg name="move_group_name" value="$(arg move_group_name_l)" />
+    <arg name="home_pose_name" value="$(arg home_pose_name_2_l)" />
+    <arg name="planning_time" value="$(arg planning_time)" />
+    <arg name="num_planning_attempts" value="$(arg num_planning_attempts)" />
+    <arg name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+    <arg name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    <arg name="goal_joint_tolerance" value="$(arg goal_joint_tolerance)" />
+    <arg name="execute" value="$(arg execute)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+  </include>
+
+  <!-- mur620d RIGHT -->
+  <include file="$(find teleoperation)/launch/moveit_go_home_arm.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_2)" />
+    <arg name="arm_ns" value="$(arg arm_ns_r)" />
+    <arg name="move_group_name" value="$(arg move_group_name_r)" />
+    <arg name="home_pose_name" value="$(arg home_pose_name_2_r)" />
+    <arg name="planning_time" value="$(arg planning_time)" />
+    <arg name="num_planning_attempts" value="$(arg num_planning_attempts)" />
+    <arg name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+    <arg name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    <arg name="goal_joint_tolerance" value="$(arg goal_joint_tolerance)" />
+    <arg name="execute" value="$(arg execute)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+  </include>
+</launch>

@@ -146,13 +146,13 @@ retreat_speed: 0.2          # m/s (if retreat)
 #
 # NOTA: di default è disabilitato; abilitalo e inserisci valori coerenti con il tuo setup.
 force_limiter:
-  enabled: false 
+  enabled: true 
   metric: parallel_resistive                 # "norm" | "parallel_resistive"
   mode: retreat         # "scale_parallel" | "retreat"
-  enable_enter: 60.0            # N  (soglia ingresso COMPLIANT)
-  enable_exit: 50.0             # N  (soglia uscita COMPLIANT -> NORMAL, < enable_enter)
-  limit_enter: 90.0             # N  (soglia ingresso LIMITING)
-  limit_exit: 80.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
+  enable_enter: 30.0            # N  (soglia ingresso COMPLIANT)
+  enable_exit: 20.0             # N  (soglia uscita COMPLIANT -> NORMAL, < enable_enter)
+  limit_enter: 70.0             # N  (soglia ingresso LIMITING)
+  limit_exit: 60.0              # N  (soglia uscita LIMITING -> COMPLIANT, < limit_enter)
   smooth_width: 0.0            # N  (se >0, la rampa avviene negli ultimi smooth_width N prima di limit_enter)
   retreat_speed_max: 0.04       # m/s (solo mode="retreat": aggiunge una piccola velocità lungo -F in LIMITING)
 

@@ -9,6 +9,7 @@
   <arg name="controller_manager_ns" default="/$(arg robot_ns)/$(arg arm_ns)/controller_manager" />
   <arg name="twist_controller" default="twist_controller" />
   <arg name="arm_controller" default="arm_controller" />
+  <arg name="force_torque_controller" default="force_torque_sensor_controller" />
 
   <!-- MoveIt -->
   <arg name="moveit_ns" default="/$(arg robot_ns)" />
@@ -43,6 +44,7 @@
     <param name="controller_manager_ns" value="$(arg controller_manager_ns)" />
     <param name="twist_controller" value="$(arg twist_controller)" />
     <param name="arm_controller" value="$(arg arm_controller)" />
+    <param name="force_torque_controller" value="$(arg force_torque_controller)" />
 
     <param name="moveit_ns" value="$(arg moveit_ns)" />
     <param name="robot_description_param" value="$(arg robot_description_param)" />

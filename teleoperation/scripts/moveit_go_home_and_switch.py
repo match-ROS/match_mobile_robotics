@@ -404,6 +404,9 @@ def main() -> None:
 
     twist_controller = _get_str("~twist_controller", "twist_controller")
     arm_controller = _get_str("~arm_controller", "arm_controller")
+    force_torque_controller = _get_str(
+        "~force_torque_controller", "force_torque_sensor_controller"
+    )
 
     strictness = _get_int("~strictness", 2)
     start_asap = _get_bool("~start_asap", False)
@@ -450,6 +453,9 @@ def main() -> None:
     if auto_load and load_proxy is not None:
         _ensure_controller_loaded(list_proxy, load_proxy, twist_controller, auto_load=True)
         _ensure_controller_loaded(list_proxy, load_proxy, arm_controller, auto_load=True)
+        _ensure_controller_loaded(
+            list_proxy, load_proxy, force_torque_controller, auto_load=True
+        )
 
     lock_handle: Optional[IO[str]] = None
     exit_code = 0
@@ -460,17 +466,18 @@ def main() -> None:
                 rospy.logerr("Cannot continue without execution lock (use_execution_lock:=true).")
                 sys.exit(7)
 
-        # 1) Ensure twist stopped, arm controller running
+        # 1) Ensure twist stopped, arm + force/torque controllers running
         rospy.loginfo(
-            "Ensuring controllers for go-home: arm='%s' running, twist='%s' stopped (cm=%s)",
+            "Ensuring controllers for go-home: arm='%s' and force_torque='%s' running, twist='%s' stopped (cm=%s)",
             arm_controller,
+            force_torque_controller,
             twist_controller,
             _resolve_ns_prefix(controller_manager_ns),
         )
         if not _ensure_controller_states(
             list_proxy,
             switch_proxy,
-            must_run=[arm_controller],
+            must_run=[arm_controller, force_torque_controller],
             must_stop=[twist_controller],
             strictness=strictness,
             start_asap=start_asap,
@@ -503,11 +510,13 @@ def main() -> None:
             execute=execute,
         )
         if not ok_home:
-            rospy.logerr("Go-home failed. Attempting to restore twist controller anyway.")
+            rospy.logerr(
+                "Go-home failed. Attempting to restore twist and force_torque controllers anyway."
+            )
             _ensure_controller_states(
                 list_proxy,
                 switch_proxy,
-                must_run=[twist_controller],
+                must_run=[twist_controller, force_torque_controller],
                 must_stop=[arm_controller],
                 strictness=strictness,
                 start_asap=start_asap,
@@ -518,16 +527,17 @@ def main() -> None:
             exit_code = 5
             return
 
-        # 3) Ensure arm stopped, twist controller running
+        # 3) Ensure arm stopped, twist + force/torque controllers running
         rospy.loginfo(
-            "Ensuring controllers after go-home: twist='%s' running, arm='%s' stopped",
+            "Ensuring controllers after go-home: twist='%s' and force_torque='%s' running, arm='%s' stopped",
             twist_controller,
+            force_torque_controller,
             arm_controller,
         )
         if not _ensure_controller_states(
             list_proxy,
             switch_proxy,
-            must_run=[twist_controller],
+            must_run=[twist_controller, force_torque_controller],
             must_stop=[arm_controller],
             strictness=strictness,
             start_asap=start_asap,

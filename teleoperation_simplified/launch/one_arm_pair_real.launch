@@ -1,0 +1,52 @@
+<launch>
+  <arg name="pair_name" default="pair" />
+
+  <arg name="master_wrench_topic" default="/master/wrench" />
+  <arg name="slave_wrench_topic" default="/slave/wrench" />
+  <arg name="master_command_topic" default="/master/twist_controller/command_collision_free" />
+  <arg name="slave_command_topic" default="/slave/twist_controller/command_collision_free" />
+
+  <arg name="master_base_frame" default="master/base_link_inertia" />
+  <arg name="master_tcp_frame" default="master/tool0" />
+  <arg name="slave_base_frame" default="slave/base_link_inertia" />
+  <arg name="slave_tcp_frame" default="slave/tool0" />
+
+  <arg name="target_pose_topic" default="$(eval '/teleop/' + arg('pair_name') + '/target_pose')" />
+  <arg name="slave_actual_pose_topic" default="$(eval '/teleop/' + arg('pair_name') + '/slave_actual_pose')" />
+  <arg name="master_filtered_wrench_topic" default="$(eval '/teleop_debug/' + arg('pair_name') + '/master_wrench_filtered')" />
+  <arg name="slave_filtered_wrench_topic" default="$(eval '/teleop_debug/' + arg('pair_name') + '/slave_wrench_filtered')" />
+
+  <node pkg="teleoperation_simplified"
+        type="teleop_master_admittance"
+        name="$(eval 'teleop_master_admittance_' + arg('pair_name').replace('/', '_'))"
+        output="screen">
+    <rosparam command="load" file="$(find teleoperation_simplified)/config/master.yaml" />
+
+    <param name="wrench_topic" value="$(arg master_wrench_topic)" />
+    <param name="command_topic" value="$(arg master_command_topic)" />
+    <param name="target_pose_topic" value="$(arg target_pose_topic)" />
+    <param name="slave_actual_pose_topic" value="$(arg slave_actual_pose_topic)" />
+    <param name="base_frame" value="$(arg master_base_frame)" />
+    <param name="tcp_frame" value="$(arg master_tcp_frame)" />
+    <param name="wrench_source_frame_override" value="$(arg master_tcp_frame)" />
+    <param name="target_frame_id_override" value="$(arg slave_base_frame)" />
+    <param name="filtered_wrench_topic" value="$(arg master_filtered_wrench_topic)" />
+  </node>
+
+  <node pkg="teleoperation_simplified"
+        type="teleop_slave_pose_admittance"
+        name="$(eval 'teleop_slave_pose_admittance_' + arg('pair_name').replace('/', '_'))"
+        output="screen">
+    <rosparam command="load" file="$(find teleoperation_simplified)/config/slave.yaml" />
+
+    <param name="target_pose_topic" value="$(arg target_pose_topic)" />
+    <param name="wrench_topic" value="$(arg slave_wrench_topic)" />
+    <param name="command_topic" value="$(arg slave_command_topic)" />
+    <param name="feedback_pose_topic" value="$(arg slave_actual_pose_topic)" />
+    <param name="base_frame" value="$(arg slave_base_frame)" />
+    <param name="tcp_frame" value="$(arg slave_tcp_frame)" />
+    <param name="wrench_source_frame_override" value="$(arg slave_tcp_frame)" />
+    <param name="feedback_frame_id_override" value="$(arg master_base_frame)" />
+    <param name="filtered_wrench_topic" value="$(arg slave_filtered_wrench_topic)" />
+  </node>
+</launch>

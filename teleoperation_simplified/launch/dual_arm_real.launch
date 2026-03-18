@@ -1,0 +1,30 @@
+<launch>
+  <arg name="master_robot_ns" default="mur620b" />
+  <arg name="slave_robot_ns" default="mur620d" />
+  <arg name="left_arm_ns" default="UR10_l" />
+  <arg name="right_arm_ns" default="UR10_r" />
+
+  <include file="$(find teleoperation_simplified)/launch/one_arm_pair_real.launch">
+    <arg name="pair_name" value="$(eval arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left')" />
+    <arg name="master_wrench_topic" value="/$(arg master_robot_ns)/$(arg left_arm_ns)/wrench" />
+    <arg name="slave_wrench_topic" value="/$(arg slave_robot_ns)/$(arg left_arm_ns)/wrench" />
+    <arg name="master_command_topic" value="/$(arg master_robot_ns)/$(arg left_arm_ns)/twist_controller/command_collision_free" />
+    <arg name="slave_command_topic" value="/$(arg slave_robot_ns)/$(arg left_arm_ns)/twist_controller/command_collision_free" />
+    <arg name="master_base_frame" value="$(eval arg('master_robot_ns') + '/' + arg('left_arm_ns') + '/base_link_inertia')" />
+    <arg name="master_tcp_frame" value="$(eval arg('master_robot_ns') + '/' + arg('left_arm_ns') + '/tool0')" />
+    <arg name="slave_base_frame" value="$(eval arg('slave_robot_ns') + '/' + arg('left_arm_ns') + '/base_link_inertia')" />
+    <arg name="slave_tcp_frame" value="$(eval arg('slave_robot_ns') + '/' + arg('left_arm_ns') + '/tool0')" />
+  </include>
+
+  <include file="$(find teleoperation_simplified)/launch/one_arm_pair_real.launch">
+    <arg name="pair_name" value="$(eval arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right')" />
+    <arg name="master_wrench_topic" value="/$(arg master_robot_ns)/$(arg right_arm_ns)/wrench" />
+    <arg name="slave_wrench_topic" value="/$(arg slave_robot_ns)/$(arg right_arm_ns)/wrench" />
+    <arg name="master_command_topic" value="/$(arg master_robot_ns)/$(arg right_arm_ns)/twist_controller/command_collision_free" />
+    <arg name="slave_command_topic" value="/$(arg slave_robot_ns)/$(arg right_arm_ns)/twist_controller/command_collision_free" />
+    <arg name="master_base_frame" value="$(eval arg('master_robot_ns') + '/' + arg('right_arm_ns') + '/base_link_inertia')" />
+    <arg name="master_tcp_frame" value="$(eval arg('master_robot_ns') + '/' + arg('right_arm_ns') + '/tool0')" />
+    <arg name="slave_base_frame" value="$(eval arg('slave_robot_ns') + '/' + arg('right_arm_ns') + '/base_link_inertia')" />
+    <arg name="slave_tcp_frame" value="$(eval arg('slave_robot_ns') + '/' + arg('right_arm_ns') + '/tool0')" />
+  </include>
+</launch>

@@ -1,0 +1,38 @@
+enable_translation: true
+enable_rotation: false
+
+control_rate: 250.0
+tf_timeout_s: 0.02
+wrench_timeout_s: 0.2
+
+mass_linear: 5.0
+damping_linear: 10.0
+mass_angular: 0.03
+damping_angular: 0.12
+
+spring_stiffness_linear: 10.0
+spring_stiffness_angular: 0.001
+
+wrench_filter_cutoff_hz: 12.0
+force_deadband_enter: 1.5
+force_deadband_exit: 1.0
+torque_deadband_enter: 0.11
+torque_deadband_exit: 0.08
+cross_deadband_scale: 0.35
+max_force: 150.0
+max_torque: 30.0
+
+max_linear_speed: 0.7
+max_angular_speed: 3.0
+max_linear_accel: 1.8
+max_angular_accel: 5.0
+max_linear_jerk: 40.0
+max_angular_jerk: 50.0
+
+dt_min_factor: 0.5
+dt_max_factor: 2.0
+dt_use_substepping: true
+dt_max_substeps: 10
+
+publish_filtered_wrench_debug: true
+filtered_wrench_topic: /teleop_debug/master/master_wrench_filtered

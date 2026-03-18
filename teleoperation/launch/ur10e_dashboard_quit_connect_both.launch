@@ -1,8 +1,11 @@
 <launch>
   <!-- Quit + connect UR dashboard client (left + right) -->
   <arg name="robot_ns" default="mur620b" />
+  <arg name="second_robot_ns" default="mur620d" />
   <arg name="left_arm_ns" default="UR10_l" />
   <arg name="right_arm_ns" default="UR10_r" />
+  <arg name="enable_robot_1" default="true" />
+  <arg name="enable_robot_2" default="true" />
 
   <arg name="do_left" default="true" />
   <arg name="do_right" default="true" />
@@ -15,34 +18,68 @@
   <arg name="connect_retries" default="1" />
   <arg name="retry_sleep_s" default="0.5" />
 
-  <node pkg="teleoperation"
-        type="ur_dashboard_quit_connect.py"
-        name="ur10e_dashboard_quit_connect_left"
-        output="screen"
-        required="false"
-        if="$(arg do_left)">
-    <param name="quit_service" value="/$(arg robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/dashboard/quit" />
-    <param name="connect_service" value="/$(arg robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/dashboard/connect" />
-    <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
-    <param name="delay_before_quit_s" value="$(arg delay_before_quit_s)" />
-    <param name="delay_between_quit_connect_s" value="$(arg delay_between_quit_connect_s)" />
-    <param name="connect_retries" value="$(arg connect_retries)" />
-    <param name="retry_sleep_s" value="$(arg retry_sleep_s)" />
-  </node>
+  <group if="$(arg enable_robot_1)">
+    <node pkg="teleoperation"
+          type="ur_dashboard_quit_connect.py"
+          name="ur10e_dashboard_quit_connect_left"
+          output="screen"
+          required="false"
+          if="$(arg do_left)">
+      <param name="quit_service" value="/$(arg robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/dashboard/quit" />
+      <param name="connect_service" value="/$(arg robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/dashboard/connect" />
+      <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+      <param name="delay_before_quit_s" value="$(arg delay_before_quit_s)" />
+      <param name="delay_between_quit_connect_s" value="$(arg delay_between_quit_connect_s)" />
+      <param name="connect_retries" value="$(arg connect_retries)" />
+      <param name="retry_sleep_s" value="$(arg retry_sleep_s)" />
+    </node>
 
-  <node pkg="teleoperation"
-        type="ur_dashboard_quit_connect.py"
-        name="ur10e_dashboard_quit_connect_right"
-        output="screen"
-        required="false"
-        if="$(arg do_right)">
-    <param name="quit_service" value="/$(arg robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/dashboard/quit" />
-    <param name="connect_service" value="/$(arg robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/dashboard/connect" />
-    <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
-    <param name="delay_before_quit_s" value="$(arg delay_before_quit_s)" />
-    <param name="delay_between_quit_connect_s" value="$(arg delay_between_quit_connect_s)" />
-    <param name="connect_retries" value="$(arg connect_retries)" />
-    <param name="retry_sleep_s" value="$(arg retry_sleep_s)" />
-  </node>
+    <node pkg="teleoperation"
+          type="ur_dashboard_quit_connect.py"
+          name="ur10e_dashboard_quit_connect_right"
+          output="screen"
+          required="false"
+          if="$(arg do_right)">
+      <param name="quit_service" value="/$(arg robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/dashboard/quit" />
+      <param name="connect_service" value="/$(arg robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/dashboard/connect" />
+      <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+      <param name="delay_before_quit_s" value="$(arg delay_before_quit_s)" />
+      <param name="delay_between_quit_connect_s" value="$(arg delay_between_quit_connect_s)" />
+      <param name="connect_retries" value="$(arg connect_retries)" />
+      <param name="retry_sleep_s" value="$(arg retry_sleep_s)" />
+    </node>
+  </group>
+
+  <group if="$(arg enable_robot_2)">
+    <node pkg="teleoperation"
+          type="ur_dashboard_quit_connect.py"
+          name="ur10e_dashboard_quit_connect_left_second"
+          output="screen"
+          required="false"
+          if="$(arg do_left)">
+      <param name="quit_service" value="/$(arg second_robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/dashboard/quit" />
+      <param name="connect_service" value="/$(arg second_robot_ns)/$(arg left_arm_ns)/ur_hardware_interface/dashboard/connect" />
+      <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+      <param name="delay_before_quit_s" value="$(arg delay_before_quit_s)" />
+      <param name="delay_between_quit_connect_s" value="$(arg delay_between_quit_connect_s)" />
+      <param name="connect_retries" value="$(arg connect_retries)" />
+      <param name="retry_sleep_s" value="$(arg retry_sleep_s)" />
+    </node>
+
+    <node pkg="teleoperation"
+          type="ur_dashboard_quit_connect.py"
+          name="ur10e_dashboard_quit_connect_right_second"
+          output="screen"
+          required="false"
+          if="$(arg do_right)">
+      <param name="quit_service" value="/$(arg second_robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/dashboard/quit" />
+      <param name="connect_service" value="/$(arg second_robot_ns)/$(arg right_arm_ns)/ur_hardware_interface/dashboard/connect" />
+      <param name="wait_timeout_s" value="$(arg wait_timeout_s)" />
+      <param name="delay_before_quit_s" value="$(arg delay_before_quit_s)" />
+      <param name="delay_between_quit_connect_s" value="$(arg delay_between_quit_connect_s)" />
+      <param name="connect_retries" value="$(arg connect_retries)" />
+      <param name="retry_sleep_s" value="$(arg retry_sleep_s)" />
+    </node>
+  </group>
 </launch>
 

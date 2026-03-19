@@ -44,6 +44,16 @@ target_link_libraries(teleop_pid_controller
   ${catkin_LIBRARIES}
 )
 
+add_library(teleop_passivity_layer
+  src/components/passivity_layer.cpp
+)
+add_dependencies(teleop_passivity_layer
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(teleop_passivity_layer
+  ${catkin_LIBRARIES}
+)
+
 # =============================================================================
 # Nodes
 # =============================================================================
@@ -65,6 +75,7 @@ add_dependencies(teleop_master_haptic_controller
   ${catkin_EXPORTED_TARGETS}
 )
 target_link_libraries(teleop_master_haptic_controller
+  teleop_passivity_layer
   ${catkin_LIBRARIES}
 )
 
@@ -95,6 +106,7 @@ target_link_libraries(teleop_bimanual_coupling
 
 install(TARGETS
   teleop_pid_controller
+  teleop_passivity_layer
   teleop_master_measured_state_publisher
   teleop_master_haptic_controller
   teleop_slave_twist_outer_loop

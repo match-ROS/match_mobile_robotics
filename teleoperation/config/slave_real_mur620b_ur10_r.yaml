@@ -48,7 +48,7 @@ wrench_timeout: 0.1
 ## Core control: feedforward + compliance
 ## ----------------------------
 # **k_ff**: feedforward dominance (1.0 = pure feedforward, 0 = ignore feedforward).
-k_ff: 1.0
+k_ff: 0.8
 
 ## Compliance term:
 ##   v_comp = -k_adm * F

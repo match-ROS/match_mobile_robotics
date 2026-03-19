@@ -26,6 +26,7 @@
 #include "teleoperation/core/tf_utils.hpp"
 #include "teleoperation/core/types.hpp"
 #include "teleoperation/core/wrench_utils.hpp"
+#include "teleoperation/components/passivity_layer.hpp"
 
 using Wrench3 = teleoperation::Wrench3;
 
@@ -109,6 +110,18 @@ public:
 
     pnh_.param<double>("force_reflection_scale", kf_force_, kf_force_);
     pnh_.param<double>("torque_reflection_scale", kf_torque_, kf_torque_);
+    pnh_.param<bool>("passivity/enabled", passivity_config_.enabled, passivity_config_.enabled);
+    pnh_.param<bool>("passivity/linear_only", passivity_config_.linear_only, passivity_config_.linear_only);
+    pnh_.param<double>("passivity/tank_energy_init", passivity_config_.tank_energy_init, passivity_config_.tank_energy_init);
+    pnh_.param<double>("passivity/tank_energy_min", passivity_config_.tank_energy_min, passivity_config_.tank_energy_min);
+    pnh_.param<double>("passivity/tank_energy_max", passivity_config_.tank_energy_max, passivity_config_.tank_energy_max);
+    pnh_.param<double>("passivity/recharge_gain", passivity_config_.recharge_gain, passivity_config_.recharge_gain);
+    pnh_.param<double>("passivity/discharge_gain", passivity_config_.discharge_gain, passivity_config_.discharge_gain);
+    pnh_.param<double>("passivity/power_deadband", passivity_config_.power_deadband, passivity_config_.power_deadband);
+    pnh_.param<double>("passivity/gamma_lowpass_alpha", passivity_config_.gamma_lowpass_alpha, passivity_config_.gamma_lowpass_alpha);
+    pnh_.param<double>("passivity/gamma_rate_limit", passivity_config_.gamma_rate_limit, passivity_config_.gamma_rate_limit);
+    pnh_.param<bool>("passivity/publish_debug", passivity_publish_debug_, passivity_publish_debug_);
+    passivity_layer_.setConfig(passivity_config_);
 
     // Virtual spring coupling (position-based feedback from slave actual TCP)
     pnh_.param<double>("spring_stiffness_linear", spring_k_lin_, spring_k_lin_);
@@ -233,6 +246,10 @@ public:
       pub_debug_dt_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/dt_stats", 1);
       pub_debug_v_pre_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_pre", 1);
       pub_debug_v_post_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_post", 1);
+      if (passivity_publish_debug_)
+      {
+        pub_debug_passivity_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/passivity_stats", 1);
+      }
     }
     debug_master_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
                                 "filtered_master_wrench_topic", "debug/master_wrench_filtered");
@@ -258,6 +275,17 @@ public:
 
     const double period = (control_rate_ > 0.0) ? (1.0 / control_rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopMasterHapticController::tick, this);
+
+    if (passivity_config_.enabled)
+    {
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Passivity layer enabled: linear_only=%d E_init=%.3f E_min=%.3f E_max=%.3f deadband=%.3f",
+                     passivity_config_.linear_only ? 1 : 0,
+                     passivity_config_.tank_energy_init,
+                     passivity_config_.tank_energy_min,
+                     passivity_config_.tank_energy_max,
+                     passivity_config_.power_deadband);
+    }
   }
 
 private:
@@ -410,6 +438,8 @@ private:
     has_dyn_m_extra_filt_ = false;
     dyn_m_extra_lin_filt_.setZero();
     dyn_m_extra_ang_filt_.setZero();
+
+    passivity_layer_.reset();
   }
 
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
@@ -991,13 +1021,6 @@ private:
       }
     }
 
-    // Force reflection: slave FT typically measures the wrench applied *on the slave tool* by the environment.
-    // To obtain an opposing reflected contribution at the master, we invert the slave wrench sign here.
-    // The spring force K_s*(p_m - p_s) already points in the direction master→slave, so adding it
-    // to F_feedback correctly opposes the master's motion when it is ahead.
-    const Eigen::Vector3d F_feedback = F_spring_lin + (-kf_force_ * slave_filt_.f) + coupling_filt_.f;
-    const Eigen::Vector3d Tau_feedback = Tau_spring + (-kf_torque_ * slave_filt_.tau) + coupling_filt_.tau;
-
     // Per-axis admittance: M dv + D v = (F_hand - F_feedback)
     Eigen::Vector3d M_lin = sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);
     Eigen::Vector3d D_lin = sanitizeNonNegativeVec((damping_linear_xyz_.allFinite() ? damping_linear_xyz_ : expandScalarTo3(damping_linear_)));
@@ -1015,6 +1038,25 @@ private:
       D_lin += dyn_d_extra_lin_filt_;
       D_ang += dyn_d_extra_ang_filt_;
     }
+
+    // Force reflection: slave FT typically measures the wrench applied *on the slave tool* by the environment.
+    // To obtain an opposing reflected contribution at the master, we invert the slave wrench sign here.
+    // The spring force K_s*(p_m - p_s) already points in the direction master→slave, so adding it
+    // to F_feedback correctly opposes the master's motion when it is ahead.
+    Eigen::Vector3d F_reflection = Eigen::Vector3d::Zero();
+    Eigen::Vector3d Tau_reflection = Eigen::Vector3d::Zero();
+    if (use_forces_)
+    {
+      F_reflection = (-kf_force_ * slave_filt_.f).eval();
+    }
+    if (use_torques_)
+    {
+      Tau_reflection = (-kf_torque_ * slave_filt_.tau).eval();
+    }
+    const teleoperation::PassivityLayerResult passivity_result =
+        passivity_layer_.step(F_reflection, Tau_reflection, v_lin_cmd_, v_ang_cmd_, D_lin, D_ang, dt_used);
+    const Eigen::Vector3d F_feedback = F_spring_lin + passivity_result.force_used + coupling_filt_.f;
+    const Eigen::Vector3d Tau_feedback = Tau_spring + passivity_result.torque_used + coupling_filt_.tau;
 
     // Limits (accel/jerk). Scalars are expanded unless *_xyz override exists.
     const Eigen::Vector3d max_a_lin = sanitizeNonNegativeVec((max_linear_accel_xyz_.allFinite() ? max_linear_accel_xyz_ : expandScalarTo3(max_linear_accel_)));
@@ -1156,6 +1198,24 @@ private:
             ang_saturated ? 1.0 : 0.0};
         pub_debug_stats_.publish(st_msg);
 
+        if (pub_debug_passivity_)
+        {
+          std_msgs::Float64MultiArray passivity_msg;
+          passivity_msg.data = {
+              passivity_result.energy_before,
+              passivity_result.energy_after,
+              passivity_result.gamma_raw,
+              passivity_result.gamma_applied,
+              passivity_result.power_out_requested,
+              passivity_result.power_out_applied,
+              passivity_result.power_diss,
+              F_reflection.norm(),
+              passivity_result.force_used.norm(),
+              Tau_reflection.norm(),
+              passivity_result.torque_used.norm()};
+          pub_debug_passivity_.publish(passivity_msg);
+        }
+
         geometry_msgs::TwistStamped vpre, vpost;
         vpre.header.stamp = now;
         vpre.header.frame_id = wrench_target_frame_;
@@ -1225,6 +1285,7 @@ private:
   ros::Publisher pub_debug_dt_;
   ros::Publisher pub_debug_v_pre_;
   ros::Publisher pub_debug_v_post_;
+  ros::Publisher pub_debug_passivity_;
   ros::Timer timer_;
 
   // Slave target publishers
@@ -1299,6 +1360,8 @@ private:
 
   double kf_force_{0.3};
   double kf_torque_{0.0};
+  teleoperation::PassivityLayerConfig passivity_config_;
+  bool passivity_publish_debug_{true};
   bool use_forces_{true};
   bool use_torques_{false};
 
@@ -1395,6 +1458,7 @@ private:
 
   Eigen::Vector3d v_lin_cmd_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d v_ang_cmd_{Eigen::Vector3d::Zero()};
+  teleoperation::PassivityLayer passivity_layer_;
 
   teleoperation::JerkLimiter3 a_lin_limiter_;
   teleoperation::JerkLimiter3 a_ang_limiter_;

@@ -141,6 +141,25 @@ dynamic_mass:
 force_reflection_scale: 0.65
 #torque_reflection_scale: 0.10
 torque_reflection_scale: 0.20
+
+## ----------------------------
+## Passivity layer on direct force reflection
+## ----------------------------
+# Energy tank applied only to the direct slave wrench reflection.
+# The virtual spring and any optional coupling wrench stay outside this layer.
+passivity:
+  enabled: true
+  linear_only: false
+  tank_energy_init: 1.5
+  tank_energy_min: 0.2
+  tank_energy_max: 8.0
+  recharge_gain: 1.0
+  discharge_gain: 1.0
+  power_deadband: 0.2
+  gamma_lowpass_alpha: 0.2
+  gamma_rate_limit: 20.0
+  publish_debug: true
+
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
@@ -269,7 +288,7 @@ slave_publish_rate: 500.0
 # This provides stable, delay-insensitive force feedback to the operator.
 # Requires the slave to publish its actual pose (publish_master_feedback: true on slave).
 spring_stiffness_linear: 10.0    # N/m
-spring_damping_linear: 0.0       # N·s/m
+spring_damping_linear: 10.0       # N·s/m
 spring_stiffness_angular: 0.001    # N·m/rad (disabled: set >0 to enable)
 spring_damping_angular: 0.0
 max_spring_force: 150.0           # N (safety saturation on spring force norm)

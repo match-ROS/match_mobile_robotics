@@ -67,12 +67,17 @@ public:
     pnh_.param<double>("dynamic_damping/force_start", dyn_damping_force_start_, dyn_damping_force_start_);
     pnh_.param<double>("dynamic_damping/force_stop", dyn_damping_force_stop_, dyn_damping_force_stop_);
     pnh_.param<double>("dynamic_damping/shape_exp", dyn_damping_shape_exp_, dyn_damping_shape_exp_);
-    // Optional: schedule ANGULAR extras by slave torque (if torque_* is provided).
-    // Backward-compatible: if torque_* is absent, angular extras follow the same schedule as linear (force-based).
+    // Optional override: if enabled, angular extras always follow the force schedule.
+    // Otherwise, angular extras are scheduled by slave torque when torque_* is provided.
+    pnh_.param<bool>("dynamic_damping/angular_schedule_from_force",
+                     dyn_damping_angular_schedule_from_force_,
+                     dyn_damping_angular_schedule_from_force_);
     const bool has_dyn_damping_torque_start = pnh_.getParam("dynamic_damping/torque_start", dyn_damping_torque_start_);
     const bool has_dyn_damping_torque_stop = pnh_.getParam("dynamic_damping/torque_stop", dyn_damping_torque_stop_);
     (void)pnh_.getParam("dynamic_damping/torque_metric", dyn_damping_torque_metric_);
-    dyn_damping_use_torque_schedule_ = has_dyn_damping_torque_start || has_dyn_damping_torque_stop;
+    dyn_damping_use_torque_schedule_ =
+        !dyn_damping_angular_schedule_from_force_ &&
+        (has_dyn_damping_torque_start || has_dyn_damping_torque_stop);
     if (dyn_damping_use_torque_schedule_)
     {
       if (!has_dyn_damping_torque_start) dyn_damping_torque_start_ = dyn_damping_force_start_;
@@ -91,12 +96,17 @@ public:
     pnh_.param<double>("dynamic_mass/force_start", dyn_mass_force_start_, dyn_mass_force_start_);
     pnh_.param<double>("dynamic_mass/force_stop", dyn_mass_force_stop_, dyn_mass_force_stop_);
     pnh_.param<double>("dynamic_mass/shape_exp", dyn_mass_shape_exp_, dyn_mass_shape_exp_);
-    // Optional: schedule ANGULAR extras by slave torque (if torque_* is provided).
-    // Backward-compatible: if torque_* is absent, angular extras follow the same schedule as linear (force-based).
+    // Optional override: if enabled, angular extras always follow the force schedule.
+    // Otherwise, angular extras are scheduled by slave torque when torque_* is provided.
+    pnh_.param<bool>("dynamic_mass/angular_schedule_from_force",
+                     dyn_mass_angular_schedule_from_force_,
+                     dyn_mass_angular_schedule_from_force_);
     const bool has_dyn_mass_torque_start = pnh_.getParam("dynamic_mass/torque_start", dyn_mass_torque_start_);
     const bool has_dyn_mass_torque_stop = pnh_.getParam("dynamic_mass/torque_stop", dyn_mass_torque_stop_);
     (void)pnh_.getParam("dynamic_mass/torque_metric", dyn_mass_torque_metric_);
-    dyn_mass_use_torque_schedule_ = has_dyn_mass_torque_start || has_dyn_mass_torque_stop;
+    dyn_mass_use_torque_schedule_ =
+        !dyn_mass_angular_schedule_from_force_ &&
+        (has_dyn_mass_torque_start || has_dyn_mass_torque_stop);
     if (dyn_mass_use_torque_schedule_)
     {
       if (!has_dyn_mass_torque_start) dyn_mass_torque_start_ = dyn_mass_force_start_;
@@ -243,11 +253,12 @@ public:
     pub_cmd_stamped_ = nh_.advertise<geometry_msgs::TwistStamped>(command_topic_ + "_stamped", 1);
     if (publish_diagnostics_)
     {
-      pub_debug_stats_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/admittance_stats", 1);
+      // Keep all debug topics private so dual-arm runs do not merge left/right streams.
+      pub_debug_stats_ = pnh_.advertise<std_msgs::Float64MultiArray>("debug/admittance_stats", 1);
       pub_debug_admittance_dynamics_ = pnh_.advertise<std_msgs::Float64MultiArray>("debug/admittance_dynamics", 1);
-      pub_debug_dt_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/dt_stats", 1);
-      pub_debug_v_pre_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_pre", 1);
-      pub_debug_v_post_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_post", 1);
+      pub_debug_dt_ = pnh_.advertise<std_msgs::Float64MultiArray>("debug/dt_stats", 1);
+      pub_debug_v_pre_ = pnh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_pre", 1);
+      pub_debug_v_post_ = pnh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_post", 1);
       if (passivity_publish_debug_)
       {
         // Keep passivity debug scoped to the node instance so left/right controllers
@@ -1368,6 +1379,7 @@ private:
   double dyn_damping_force_start_{5.0};
   double dyn_damping_force_stop_{25.0};
   double dyn_damping_shape_exp_{1.0};
+  bool dyn_damping_angular_schedule_from_force_{false};
   bool dyn_damping_use_torque_schedule_{false};
   std::string dyn_damping_torque_metric_{"norm"};  // currently only "norm"
   double dyn_damping_torque_start_{5.0};
@@ -1388,6 +1400,7 @@ private:
   double dyn_mass_force_start_{5.0};
   double dyn_mass_force_stop_{25.0};
   double dyn_mass_shape_exp_{1.0};
+  bool dyn_mass_angular_schedule_from_force_{false};
   bool dyn_mass_use_torque_schedule_{false};
   std::string dyn_mass_torque_metric_{"norm"};  // currently only "norm"
   double dyn_mass_torque_start_{5.0};

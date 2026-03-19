@@ -142,6 +142,7 @@
     <param name="feedforward_twist_topic" value="$(arg left_feedforward_twist_topic)" />
     <param name="wrench_source_frame_override" value="$(arg left_slave_tool_frame)" />
     <param name="use_latest_tf_for_wrench" value="true" />
+    <param name="publish_filtered_wrench_debug" value="true" />
 
     <param name="publish_master_feedback" value="true" />
     <param name="master_feedback_pose_topic" value="$(arg left_slave_actual_pose_topic)" />
@@ -197,6 +198,7 @@
     <param name="feedforward_twist_topic" value="$(arg right_feedforward_twist_topic)" />
     <param name="wrench_source_frame_override" value="$(arg right_slave_tool_frame)" />
     <param name="use_latest_tf_for_wrench" value="true" />
+    <param name="publish_filtered_wrench_debug" value="true" />
 
     <param name="publish_master_feedback" value="true" />
     <param name="master_feedback_pose_topic" value="$(arg right_slave_actual_pose_topic)" />

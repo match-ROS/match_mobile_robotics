@@ -102,11 +102,11 @@ dynamic_damping:
   force_start: 5.0             # N (start adding damping)
   force_stop: 15.0             # N (reach max extra damping)
   shape_exp: 1.0               # >1.0 = rise faster at low force, then flatten
-  # Optional: if provided, ANGULAR extra damping is scheduled by slave torque norm (Nm).
-  # If omitted, angular follows the same schedule as linear (force-based).
+  angular_schedule_from_force: true  # also schedule angular damping from slave force
+  # Optional: when angular_schedule_from_force is false, ANGULAR extra damping is scheduled by slave torque norm (Nm).
   torque_metric: "norm"        # currently supported: "norm"
   torque_start: 0.6            # Nm (start adding angular damping)
-  torque_stop: 1.4            # Nm (reach max extra angular damping)
+  torque_stop: 1.4             # Nm (reach max extra angular damping)
   #extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_linear: 80.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_angular: 2.4   # N*m*s/rad (optional)
@@ -123,11 +123,11 @@ dynamic_mass:
   force_start: 5.0               # N
   force_stop: 15.0               # N
   shape_exp: 1.0                # >1.0 = rise faster at low force, then flatten
-  # Optional: if provided, ANGULAR extra mass is scheduled by slave torque norm (Nm).
-  # If omitted, angular follows the same schedule as linear (force-based).
+  angular_schedule_from_force: true  # also schedule angular inertia from slave force
+  # Optional: when angular_schedule_from_force is false, ANGULAR extra mass is scheduled by slave torque norm (Nm).
   torque_metric: "norm"          # currently supported: "norm"
   torque_start: 0.6              # Nm (start adding angular inertia)
-  torque_stop: 1.4              # Nm (reach max extra angular inertia)
+  torque_stop: 1.4               # Nm (reach max extra angular inertia)
   #extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
   extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
   extra_mass_angular: 0.01        # kg*m^2 (optional)

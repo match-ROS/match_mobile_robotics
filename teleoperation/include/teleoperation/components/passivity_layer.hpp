@@ -15,6 +15,7 @@ struct PassivityLayerConfig
   double recharge_gain{1.0};
   double discharge_gain{1.0};
   double power_deadband{0.0};
+  double gamma_min{0.0};  // Lower bound applied to gamma_applied; >0 weakens strict passivity.
   double gamma_lowpass_alpha{0.0};
   double gamma_rate_limit{0.0};  // 1/s, applied only while gamma recovers upward.
 };

@@ -127,7 +127,7 @@ PassivityLayerResult PassivityLayer::step(const Eigen::Vector3d& force_candidate
     }
   }
 
-  gamma_applied_ = clamp01(gamma_next);
+  gamma_applied_ = std::clamp(gamma_next, config_.gamma_min, 1.0);
   result.gamma_applied = gamma_applied_;
   result.force_used = gamma_applied_ * safe_force;
   result.torque_used = config_.linear_only ? safe_torque : (gamma_applied_ * safe_torque);
@@ -157,6 +157,7 @@ PassivityLayerConfig PassivityLayer::sanitizeConfig(PassivityLayerConfig config)
   config.recharge_gain = sanitizeFiniteNonNegative(config.recharge_gain, 1.0);
   config.discharge_gain = sanitizeFiniteNonNegative(config.discharge_gain, 1.0);
   config.power_deadband = sanitizeFiniteNonNegative(config.power_deadband, 0.0);
+  config.gamma_min = clamp01(config.gamma_min);
   config.gamma_lowpass_alpha = clamp01(config.gamma_lowpass_alpha);
   config.gamma_rate_limit = sanitizeFiniteNonNegative(config.gamma_rate_limit, 0.0);
   return config;

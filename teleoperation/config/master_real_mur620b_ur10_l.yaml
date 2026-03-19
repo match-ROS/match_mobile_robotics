@@ -96,49 +96,49 @@ damping_angular: 0.12
 # Increase the master damping smoothly as the SLAVE measured force grows.
 # Implementation lives inside `teleop_master_haptic_controller` and uses the already-subscribed slave wrench.
 dynamic_damping:
-  enabled: false  
+  enabled: true  
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 5.0             # N (start adding damping)
-  force_stop: 50.0             # N (reach max extra damping)
-  shape_exp: 2.0               # >1.0 = rise faster at low force, then flatten
+  force_stop: 15.0             # N (reach max extra damping)
+  shape_exp: 1.0               # >1.0 = rise faster at low force, then flatten
   # Optional: if provided, ANGULAR extra damping is scheduled by slave torque norm (Nm).
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"        # currently supported: "norm"
   torque_start: 0.6            # Nm (start adding angular damping)
   torque_stop: 4.0            # Nm (reach max extra angular damping)
   #extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
-  extra_damping_linear: 50.0   # N*s/m (max extra added to base damping_linear)
+  extra_damping_linear: 80.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_angular: 1.8   # N*m*s/rad (optional)
-  d_extra_lowpass_cutoff_hz: 10.0  # low-pass on D_extra (<=0 disables)
+  d_extra_lowpass_cutoff_hz: 30.0  # low-pass on D_extra (<=0 disables)
 
 ## ----------------------------
 ## Dynamic mass (scheduled by slave force)
 ## ----------------------------
 # Increase the master virtual inertia smoothly as the SLAVE measured force grows.
 dynamic_mass:
-  enabled: false
+  enabled: true
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 5.0               # N
-  force_stop: 50.0               # N
-  shape_exp: 2.0                # >1.0 = rise faster at low force, then flatten
+  force_stop: 15.0               # N
+  shape_exp: 1.0                # >1.0 = rise faster at low force, then flatten
   # Optional: if provided, ANGULAR extra mass is scheduled by slave torque norm (Nm).
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"          # currently supported: "norm"
   torque_start: 0.6              # Nm (start adding angular inertia)
   torque_stop: 4.0              # Nm (reach max extra angular inertia)
   #extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
-  extra_mass_linear: 18.0         # kg (max extra added to base mass_linear)
+  extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
   extra_mass_angular: 0.5        # kg*m^2 (optional)
-  m_extra_lowpass_cutoff_hz: 10.0  # low-pass on M_extra (<=0 disables)
+  m_extra_lowpass_cutoff_hz: 30.0  # low-pass on M_extra (<=0 disables)
 #
 # **force_reflection_scale / torque_reflection_scale**:
 # scales the fed-back wrench contribution (if slave_wrench_topic is enabled).
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
 #force_reflection_scale: 0.25
-force_reflection_scale: 0.65
+force_reflection_scale: 0.70
 #torque_reflection_scale: 0.10
 torque_reflection_scale: 0.20
 
@@ -148,15 +148,16 @@ torque_reflection_scale: 0.20
 # Energy tank applied only to the direct slave wrench reflection.
 # The virtual spring and any optional coupling wrench stay outside this layer.
 passivity:
-  enabled: true
-  linear_only: false
-  tank_energy_init: 1.5
-  tank_energy_min: 0.2
-  tank_energy_max: 8.0
-  recharge_gain: 1.0
-  discharge_gain: 1.0
-  power_deadband: 0.2
-  gamma_lowpass_alpha: 0.2
+  enabled: false
+  linear_only: true
+  tank_energy_init: 0.32
+  tank_energy_min: 0.3
+  tank_energy_max: 0.4
+  recharge_gain: 0.5
+  discharge_gain: 5.0
+  power_deadband: 0.02
+  gamma_min: 0.2          # Set > 0 only if you want to preserve a minimum reflected feedback.
+  gamma_lowpass_alpha: 0.4
   gamma_rate_limit: 20.0
   publish_debug: true
 

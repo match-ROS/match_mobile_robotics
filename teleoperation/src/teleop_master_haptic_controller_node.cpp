@@ -118,6 +118,7 @@ public:
     pnh_.param<double>("passivity/recharge_gain", passivity_config_.recharge_gain, passivity_config_.recharge_gain);
     pnh_.param<double>("passivity/discharge_gain", passivity_config_.discharge_gain, passivity_config_.discharge_gain);
     pnh_.param<double>("passivity/power_deadband", passivity_config_.power_deadband, passivity_config_.power_deadband);
+    pnh_.param<double>("passivity/gamma_min", passivity_config_.gamma_min, passivity_config_.gamma_min);
     pnh_.param<double>("passivity/gamma_lowpass_alpha", passivity_config_.gamma_lowpass_alpha, passivity_config_.gamma_lowpass_alpha);
     pnh_.param<double>("passivity/gamma_rate_limit", passivity_config_.gamma_rate_limit, passivity_config_.gamma_rate_limit);
     pnh_.param<bool>("passivity/publish_debug", passivity_publish_debug_, passivity_publish_debug_);
@@ -248,7 +249,9 @@ public:
       pub_debug_v_post_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_post", 1);
       if (passivity_publish_debug_)
       {
-        pub_debug_passivity_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/passivity_stats", 1);
+        // Keep passivity debug scoped to the node instance so left/right controllers
+        // publish on different topics in the dual-arm launch.
+        pub_debug_passivity_ = pnh_.advertise<std_msgs::Float64MultiArray>("debug/passivity_stats", 1);
       }
     }
     debug_master_filt_pub_.init(nh_, pnh_, "publish_filtered_wrench_debug",
@@ -279,12 +282,13 @@ public:
     if (passivity_config_.enabled)
     {
       ROS_INFO_NAMED("teleop_master_haptic_controller",
-                     "Passivity layer enabled: linear_only=%d E_init=%.3f E_min=%.3f E_max=%.3f deadband=%.3f",
+                     "Passivity layer enabled: linear_only=%d E_init=%.3f E_min=%.3f E_max=%.3f deadband=%.3f gamma_min=%.3f",
                      passivity_config_.linear_only ? 1 : 0,
                      passivity_config_.tank_energy_init,
                      passivity_config_.tank_energy_min,
                      passivity_config_.tank_energy_max,
-                     passivity_config_.power_deadband);
+                     passivity_config_.power_deadband,
+                     passivity_config_.gamma_min);
     }
   }
 

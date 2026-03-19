@@ -62,8 +62,8 @@ mass_linear: 5.0
 damping_linear: 10.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
-mass_angular: 0.03
-damping_angular: 0.12
+mass_angular: 0.04
+damping_angular: 0.3
 #
 # -----------------------------
 # Feeling rotazionale "coerente" con la traslazione (formule guida)
@@ -96,7 +96,7 @@ damping_angular: 0.12
 # Increase the master damping smoothly as the SLAVE measured force grows.
 # Implementation lives inside `teleop_master_haptic_controller` and uses the already-subscribed slave wrench.
 dynamic_damping:
-  enabled: true  
+  enabled: true   
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 5.0             # N (start adding damping)
@@ -106,10 +106,10 @@ dynamic_damping:
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"        # currently supported: "norm"
   torque_start: 0.6            # Nm (start adding angular damping)
-  torque_stop: 4.0            # Nm (reach max extra angular damping)
+  torque_stop: 1.4            # Nm (reach max extra angular damping)
   #extra_damping_linear: 500.0   # N*s/m (max extra added to base damping_linear)
   extra_damping_linear: 80.0   # N*s/m (max extra added to base damping_linear)
-  extra_damping_angular: 1.8   # N*m*s/rad (optional)
+  extra_damping_angular: 2.4   # N*m*s/rad (optional)
   d_extra_lowpass_cutoff_hz: 30.0  # low-pass on D_extra (<=0 disables)
 
 ## ----------------------------
@@ -127,10 +127,10 @@ dynamic_mass:
   # If omitted, angular follows the same schedule as linear (force-based).
   torque_metric: "norm"          # currently supported: "norm"
   torque_start: 0.6              # Nm (start adding angular inertia)
-  torque_stop: 4.0              # Nm (reach max extra angular inertia)
+  torque_stop: 1.4              # Nm (reach max extra angular inertia)
   #extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
   extra_mass_linear: 15.0         # kg (max extra added to base mass_linear)
-  extra_mass_angular: 0.5        # kg*m^2 (optional)
+  extra_mass_angular: 0.01        # kg*m^2 (optional)
   m_extra_lowpass_cutoff_hz: 30.0  # low-pass on M_extra (<=0 disables)
 #
 # **force_reflection_scale / torque_reflection_scale**:
@@ -140,7 +140,7 @@ dynamic_mass:
 #force_reflection_scale: 0.25
 force_reflection_scale: 0.70
 #torque_reflection_scale: 0.10
-torque_reflection_scale: 0.20
+torque_reflection_scale: 0.0
 
 ## ----------------------------
 ## Passivity layer on direct force reflection
@@ -164,7 +164,7 @@ passivity:
 #
 # **use_forces / use_torques**: enable linear / angular wrench components.
 use_forces: true
-use_torques: false
+use_torques: true
 
 ## ----------------------------
 ## Wrench filtering
@@ -190,14 +190,14 @@ feedback_wrench_filter_cutoff_hz: 25.0
 # - exit: lower threshold to go back to zero (avoids chattering)
 force_deadband_enter: 1.5     # N
 force_deadband_exit: 1.0      # N
-torque_deadband_enter: 0.11    # Nm
-torque_deadband_exit: 0.08    # Nm
+torque_deadband_enter: 0.2    # Nm
+torque_deadband_exit: 0.19    # Nm
 # Cross-channel deadband relief:
 # - when force is active, torque deadband is multiplied by this factor
 # - when torque is active, force deadband is multiplied by this factor
 # - 1.0 = old independent behavior
 # - 0.0 = full bypass of the other deadband
-cross_deadband_scale: 0.35
+cross_deadband_scale: 1.0
 #
 # Saturation limits applied to the wrench norm (safety + robustness).
 max_force: 150.0               # N
@@ -234,8 +234,8 @@ dt_max_substeps: 10
 # If >0, limit acceleration/jerk (helps avoid sharp user sensations and robot shocks).
 max_linear_accel: 1.8      # m/s^2
 max_linear_jerk: 40.0       # m/s^3
-max_angular_accel: 5.0     # rad/s^2
-max_angular_jerk: 50.0     # rad/s^3
+max_angular_accel: 10.0     # rad/s^2
+max_angular_jerk: 100.0     # rad/s^3
 
 # Optional per-axis admittance (uncomment to use)
 #mass_linear_xyz: [4.0, 4.0, 6.0]

@@ -244,6 +244,7 @@ public:
     if (publish_diagnostics_)
     {
       pub_debug_stats_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/admittance_stats", 1);
+      pub_debug_admittance_dynamics_ = pnh_.advertise<std_msgs::Float64MultiArray>("debug/admittance_dynamics", 1);
       pub_debug_dt_ = nh_.advertise<std_msgs::Float64MultiArray>("debug/dt_stats", 1);
       pub_debug_v_pre_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_pre", 1);
       pub_debug_v_post_ = nh_.advertise<geometry_msgs::TwistStamped>("debug/v_cmd_post", 1);
@@ -1026,21 +1027,39 @@ private:
     }
 
     // Per-axis admittance: M dv + D v = (F_hand - F_feedback)
-    Eigen::Vector3d M_lin = sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);
-    Eigen::Vector3d D_lin = sanitizeNonNegativeVec((damping_linear_xyz_.allFinite() ? damping_linear_xyz_ : expandScalarTo3(damping_linear_)));
-    Eigen::Vector3d M_ang = sanitizePositiveVec((mass_angular_xyz_.allFinite() ? mass_angular_xyz_ : expandScalarTo3(mass_angular_)), 1e-6);
-    Eigen::Vector3d D_ang = sanitizeNonNegativeVec((damping_angular_xyz_.allFinite() ? damping_angular_xyz_ : expandScalarTo3(damping_angular_)));
+    const Eigen::Vector3d M_lin_base =
+        sanitizePositiveVec((mass_linear_xyz_.allFinite() ? mass_linear_xyz_ : expandScalarTo3(mass_linear_)), 1e-6);
+    const Eigen::Vector3d D_lin_base =
+        sanitizeNonNegativeVec((damping_linear_xyz_.allFinite() ? damping_linear_xyz_ : expandScalarTo3(damping_linear_)));
+    const Eigen::Vector3d M_ang_base =
+        sanitizePositiveVec((mass_angular_xyz_.allFinite() ? mass_angular_xyz_ : expandScalarTo3(mass_angular_)), 1e-6);
+    const Eigen::Vector3d D_ang_base =
+        sanitizeNonNegativeVec((damping_angular_xyz_.allFinite() ? damping_angular_xyz_ : expandScalarTo3(damping_angular_)));
+
+    Eigen::Vector3d M_lin_extra = Eigen::Vector3d::Zero();
+    Eigen::Vector3d D_lin_extra = Eigen::Vector3d::Zero();
+    Eigen::Vector3d M_ang_extra = Eigen::Vector3d::Zero();
+    Eigen::Vector3d D_ang_extra = Eigen::Vector3d::Zero();
+
+    Eigen::Vector3d M_lin = M_lin_base;
+    Eigen::Vector3d D_lin = D_lin_base;
+    Eigen::Vector3d M_ang = M_ang_base;
+    Eigen::Vector3d D_ang = D_ang_base;
 
     if (dyn_mass_enabled_ && has_dyn_m_extra_filt_)
     {
-      M_lin = sanitizePositiveVec(M_lin + dyn_m_extra_lin_filt_, 1e-6);
-      M_ang = sanitizePositiveVec(M_ang + dyn_m_extra_ang_filt_, 1e-6);
+      M_lin_extra = dyn_m_extra_lin_filt_;
+      M_ang_extra = dyn_m_extra_ang_filt_;
+      M_lin = sanitizePositiveVec(M_lin_base + M_lin_extra, 1e-6);
+      M_ang = sanitizePositiveVec(M_ang_base + M_ang_extra, 1e-6);
     }
 
     if (dyn_damping_enabled_ && has_dyn_d_extra_filt_)
     {
-      D_lin += dyn_d_extra_lin_filt_;
-      D_ang += dyn_d_extra_ang_filt_;
+      D_lin_extra = dyn_d_extra_lin_filt_;
+      D_ang_extra = dyn_d_extra_ang_filt_;
+      D_lin += D_lin_extra;
+      D_ang += D_ang_extra;
     }
 
     // Force reflection: slave FT typically measures the wrench applied *on the slave tool* by the environment.
@@ -1202,6 +1221,25 @@ private:
             ang_saturated ? 1.0 : 0.0};
         pub_debug_stats_.publish(st_msg);
 
+        if (pub_debug_admittance_dynamics_)
+        {
+          std_msgs::Float64MultiArray admittance_dyn_msg;
+          admittance_dyn_msg.data = {
+              M_lin_base.x(), M_lin_base.y(), M_lin_base.z(),
+              M_lin_extra.x(), M_lin_extra.y(), M_lin_extra.z(),
+              M_lin.x(), M_lin.y(), M_lin.z(),
+              D_lin_base.x(), D_lin_base.y(), D_lin_base.z(),
+              D_lin_extra.x(), D_lin_extra.y(), D_lin_extra.z(),
+              D_lin.x(), D_lin.y(), D_lin.z(),
+              M_ang_base.x(), M_ang_base.y(), M_ang_base.z(),
+              M_ang_extra.x(), M_ang_extra.y(), M_ang_extra.z(),
+              M_ang.x(), M_ang.y(), M_ang.z(),
+              D_ang_base.x(), D_ang_base.y(), D_ang_base.z(),
+              D_ang_extra.x(), D_ang_extra.y(), D_ang_extra.z(),
+              D_ang.x(), D_ang.y(), D_ang.z()};
+          pub_debug_admittance_dynamics_.publish(admittance_dyn_msg);
+        }
+
         if (pub_debug_passivity_)
         {
           std_msgs::Float64MultiArray passivity_msg;
@@ -1286,6 +1324,7 @@ private:
   teleoperation::WrenchDebugPublisher debug_slave_filt_pub_;
   teleoperation::WrenchDebugPublisher debug_coupling_filt_pub_;
   ros::Publisher pub_debug_stats_;
+  ros::Publisher pub_debug_admittance_dynamics_;
   ros::Publisher pub_debug_dt_;
   ros::Publisher pub_debug_v_pre_;
   ros::Publisher pub_debug_v_post_;

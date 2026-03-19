@@ -89,7 +89,7 @@ use_latest_tf_for_wrench: true
 ## ----------------------------
 # **wrench_filter_cutoff_hz** (preferred): low-pass cutoff (Hz). If > 0 it overrides `wrench_filter_alpha`.
 # Match this with the master side if you want consistent “feel” in filtering.
-wrench_filter_cutoff_hz: 12.0
+wrench_filter_cutoff_hz: 25.0
 #
 # **wrench_filter_alpha**: 1st-order IIR smoothing on wrench (0..1). Used when cutoff_hz <= 0.
 wrench_filter_alpha: 0.07
@@ -146,7 +146,7 @@ retreat_speed: 0.2          # m/s (if retreat)
 #
 # NOTA: di default è disabilitato; abilitalo e inserisci valori coerenti con il tuo setup.
 force_limiter:
-  enabled: true 
+  enabled: false 
   metric: parallel_resistive                 # "norm" | "parallel_resistive"
   mode: retreat         # "scale_parallel" | "retreat"
   enable_enter: 30.0            # N  (soglia ingresso COMPLIANT)

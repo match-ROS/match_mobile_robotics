@@ -6,11 +6,12 @@ tf_timeout_s: 0.02
 wrench_timeout_s: 0.2
 
 mass_linear: 5.0
-damping_linear: 10.0
+#damping_linear: 10.0
+damping_linear: 65.0
 mass_angular: 0.03
 damping_angular: 0.12
 
-spring_stiffness_linear: 10.0
+spring_stiffness_linear: 200.0
 spring_stiffness_angular: 0.001
 
 wrench_filter_cutoff_hz: 12.0

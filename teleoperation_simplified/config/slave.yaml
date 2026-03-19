@@ -8,8 +8,8 @@ wrench_timeout: 0.1
 
 mass_linear: 5.0
 mass_angular: 0.03
-stiffness_linear: 70.0
-damping_linear: 100.0
+stiffness_linear: 200.0
+damping_linear: 65.0
 stiffness_angular: 3.0
 damping_angular: 5.0
 

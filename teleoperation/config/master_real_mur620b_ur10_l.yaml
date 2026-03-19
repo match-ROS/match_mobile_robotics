@@ -96,7 +96,7 @@ damping_angular: 0.12
 # Increase the master damping smoothly as the SLAVE measured force grows.
 # Implementation lives inside `teleop_master_haptic_controller` and uses the already-subscribed slave wrench.
 dynamic_damping:
-  enabled: true  
+  enabled: false  
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 5.0             # N (start adding damping)
@@ -117,7 +117,7 @@ dynamic_damping:
 ## ----------------------------
 # Increase the master virtual inertia smoothly as the SLAVE measured force grows.
 dynamic_mass:
-  enabled: true
+  enabled: false
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 5.0               # N
@@ -138,7 +138,7 @@ dynamic_mass:
 # NOTE: with virtual spring coupling active, keep this low (0.01–0.05).
 # The spring provides the primary position-based feedback; FT adds subtle contact texture.
 #force_reflection_scale: 0.25
-force_reflection_scale: 0.25
+force_reflection_scale: 0.65
 #torque_reflection_scale: 0.10
 torque_reflection_scale: 0.20
 #
@@ -159,8 +159,8 @@ wrench_filter_alpha: 0.5
 # If left at the sentinel values below, the node falls back to `wrench_filter_*` above:
 # - `*_wrench_filter_cutoff_hz` <= 0.0  -> fallback to `wrench_filter_cutoff_hz`
 # - `*_wrench_filter_alpha`     <  0.0  -> fallback to `wrench_filter_alpha`
-master_wrench_filter_cutoff_hz: 12.0
-feedback_wrench_filter_cutoff_hz: 10.0
+master_wrench_filter_cutoff_hz: 25.0
+feedback_wrench_filter_cutoff_hz: 25.0
 
 ## ----------------------------
 ## Deadbands, clamps, and debug of filtered wrench

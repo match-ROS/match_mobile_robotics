@@ -70,6 +70,8 @@ public:
 
     pnh_.param("enable_translation", enable_translation_, enable_translation_);
     pnh_.param("enable_rotation", enable_rotation_, enable_rotation_);
+    pnh_.param("mass_linear", mass_linear_, mass_linear_);
+    pnh_.param("mass_angular", mass_angular_, mass_angular_);
     pnh_.param("stiffness_linear", stiffness_linear_, stiffness_linear_);
     pnh_.param("damping_linear", damping_linear_, damping_linear_);
     pnh_.param("stiffness_angular", stiffness_angular_, stiffness_angular_);
@@ -404,8 +406,10 @@ private:
     const Eigen::Vector3d orientation_error =
         teleoperation_simplified::orientationErrorAxisAngle(current_ori, target_ori);
 
-    const double damping_linear = std::max(1e-6, damping_linear_);
-    const double damping_angular = std::max(1e-6, damping_angular_);
+    const double mass_linear = std::max(1e-6, mass_linear_);
+    const double damping_linear = std::max(0.0, damping_linear_);
+    const double mass_angular = std::max(1e-6, mass_angular_);
+    const double damping_angular = std::max(0.0, damping_angular_);
 
     const Eigen::Vector3d max_a_lin = accelLimitVector(max_linear_accel_);
     const Eigen::Vector3d max_j_lin = accelLimitVector(max_linear_jerk_);
@@ -417,9 +421,8 @@ private:
       if (enable_translation_)
       {
         const Eigen::Vector3d force_virtual = stiffness_linear_ * position_error;
-        const Eigen::Vector3d v_des = (force_virtual - wrench_filt_.f) / damping_linear;
-        const Eigen::Vector3d a_des = (v_des - v_lin_cmd_) / dt_step;
-        const Eigen::Vector3d a_cmd = a_lin_limiter_.step(a_des, dt_step, max_a_lin, max_j_lin);
+        const Eigen::Vector3d rhs = force_virtual + wrench_filt_.f - damping_linear * v_lin_cmd_;
+        const Eigen::Vector3d a_cmd = a_lin_limiter_.step(rhs / mass_linear, dt_step, max_a_lin, max_j_lin);
         v_lin_cmd_ = optionalClampNorm(v_lin_cmd_ + a_cmd * dt_step, max_linear_speed_);
       }
       else
@@ -431,9 +434,8 @@ private:
       if (enable_rotation_)
       {
         const Eigen::Vector3d torque_virtual = stiffness_angular_ * orientation_error;
-        const Eigen::Vector3d w_des = (torque_virtual - wrench_filt_.tau) / damping_angular;
-        const Eigen::Vector3d a_des = (w_des - v_ang_cmd_) / dt_step;
-        const Eigen::Vector3d a_cmd = a_ang_limiter_.step(a_des, dt_step, max_a_ang, max_j_ang);
+        const Eigen::Vector3d rhs = torque_virtual + wrench_filt_.tau - damping_angular * v_ang_cmd_;
+        const Eigen::Vector3d a_cmd = a_ang_limiter_.step(rhs / mass_angular, dt_step, max_a_ang, max_j_ang);
         v_ang_cmd_ = optionalClampNorm(v_ang_cmd_ + a_cmd * dt_step, max_angular_speed_);
       }
       else
@@ -485,6 +487,8 @@ private:
 
   bool enable_translation_{true};
   bool enable_rotation_{false};
+  double mass_linear_{5.0};
+  double mass_angular_{0.03};
   double stiffness_linear_{70.0};
   double damping_linear_{100.0};
   double stiffness_angular_{3.0};

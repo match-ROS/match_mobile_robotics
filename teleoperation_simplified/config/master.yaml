@@ -1,7 +1,7 @@
 enable_translation: true
 enable_rotation: false
 
-control_rate: 250.0
+control_rate: 500.0
 tf_timeout_s: 0.02
 wrench_timeout_s: 0.2
 

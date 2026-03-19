@@ -4,6 +4,39 @@
   <arg name="left_arm_ns" default="UR10_l" />
   <arg name="right_arm_ns" default="UR10_r" />
 
+  <!-- Optional: zero/tare all UR10e FT sensors at startup -->
+  <arg name="do_ur10e_zero_loadcell_master_left" default="true" />
+  <arg name="do_ur10e_zero_loadcell_master_right" default="true" />
+  <arg name="do_ur10e_zero_loadcell_slave_left" default="true" />
+  <arg name="do_ur10e_zero_loadcell_slave_right" default="true" />
+  <arg name="ur10e_zero_loadcell_delay_s" default="0.5" />
+  <arg name="ur10e_zero_loadcell_wait_timeout_s" default="10.0" />
+
+  <!-- Reuse the dedicated zeroing launch from teleoperation for both robots. -->
+  <group ns="ft_zero_master">
+    <include file="$(find teleoperation)/launch/ur10e_zero_loadcell_both.launch">
+      <arg name="robot_ns" value="$(arg master_robot_ns)" />
+      <arg name="left_arm_ns" value="$(arg left_arm_ns)" />
+      <arg name="right_arm_ns" value="$(arg right_arm_ns)" />
+      <arg name="do_left" value="$(arg do_ur10e_zero_loadcell_master_left)" />
+      <arg name="do_right" value="$(arg do_ur10e_zero_loadcell_master_right)" />
+      <arg name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+      <arg name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+    </include>
+  </group>
+
+  <group ns="ft_zero_slave">
+    <include file="$(find teleoperation)/launch/ur10e_zero_loadcell_both.launch">
+      <arg name="robot_ns" value="$(arg slave_robot_ns)" />
+      <arg name="left_arm_ns" value="$(arg left_arm_ns)" />
+      <arg name="right_arm_ns" value="$(arg right_arm_ns)" />
+      <arg name="do_left" value="$(arg do_ur10e_zero_loadcell_slave_left)" />
+      <arg name="do_right" value="$(arg do_ur10e_zero_loadcell_slave_right)" />
+      <arg name="delay_s" value="$(arg ur10e_zero_loadcell_delay_s)" />
+      <arg name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
+    </include>
+  </group>
+
   <include file="$(find teleoperation_simplified)/launch/one_arm_pair_real.launch">
     <arg name="pair_name" value="$(eval arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left')" />
     <arg name="master_wrench_topic" value="/$(arg master_robot_ns)/$(arg left_arm_ns)/wrench" />

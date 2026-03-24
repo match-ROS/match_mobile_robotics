@@ -222,6 +222,44 @@ public:
                      slave_pose_twist_rotation_rpy_.z());
     }
 
+    pnh_.param<bool>("home_return/enabled", home_return_enabled_, home_return_enabled_);
+    pnh_.param<double>("home_return/timeout_s", home_return_timeout_s_, home_return_timeout_s_);
+    pnh_.param<double>("home_return/force_activity_threshold",
+                       home_return_force_activity_threshold_,
+                       home_return_force_activity_threshold_);
+    pnh_.param<double>("home_return/torque_activity_threshold",
+                       home_return_torque_activity_threshold_,
+                       home_return_torque_activity_threshold_);
+    pnh_.param<double>("home_return/blend_in_time_s", home_return_blend_in_time_s_, home_return_blend_in_time_s_);
+    pnh_.param<double>("home_return/stiffness_linear", home_return_k_lin_, home_return_k_lin_);
+    pnh_.param<double>("home_return/damping_linear", home_return_d_lin_, home_return_d_lin_);
+    pnh_.param<double>("home_return/integral_linear", home_return_i_lin_, home_return_i_lin_);
+    pnh_.param<double>("home_return/integral_linear_clamp", home_return_i_lin_clamp_, home_return_i_lin_clamp_);
+    pnh_.param<double>("home_return/max_force", home_return_max_force_, home_return_max_force_);
+    pnh_.param<double>("home_return/stiffness_angular", home_return_k_ang_, home_return_k_ang_);
+    pnh_.param<double>("home_return/damping_angular", home_return_d_ang_, home_return_d_ang_);
+    pnh_.param<double>("home_return/integral_angular", home_return_i_ang_, home_return_i_ang_);
+    pnh_.param<double>("home_return/integral_angular_clamp", home_return_i_ang_clamp_, home_return_i_ang_clamp_);
+    pnh_.param<double>("home_return/max_torque", home_return_max_torque_, home_return_max_torque_);
+
+    Eigen::Vector3d home_target_position_out = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond home_target_orientation_out = Eigen::Quaterniond::Identity();
+    const bool has_home_target_position =
+        tryGetVector3Param(pnh_, "home_return/target_position", home_target_position_out);
+    const bool has_home_target_orientation =
+        tryGetQuaternionParam(pnh_, "home_return/target_orientation_xyzw", home_target_orientation_out);
+    if (has_home_target_position && has_home_target_orientation)
+    {
+      home_target_pos_ = slave_pose_twist_rotation_.transpose() * home_target_position_out;
+      home_target_ori_ = (slave_pose_twist_rotation_q_.conjugate() * home_target_orientation_out).normalized();
+      has_home_target_ = true;
+    }
+    else if (home_return_enabled_)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "home_return is enabled but target_position / target_orientation_xyzw are missing or invalid.");
+    }
+
     // Diagnostics
     pnh_.param<bool>("publish_diagnostics", publish_diagnostics_, publish_diagnostics_);
     pnh_.param<double>("diagnostics_rate", diagnostics_rate_, diagnostics_rate_);
@@ -314,6 +352,15 @@ public:
                      passivity_config_.power_deadband,
                      passivity_config_.gamma_min);
     }
+    if (home_return_enabled_ && has_home_target_)
+    {
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Home return enabled: timeout=%.2fs blend=%.2fs F_thr=%.2fN Tau_thr=%.2fNm",
+                     home_return_timeout_s_,
+                     home_return_blend_in_time_s_,
+                     home_return_force_activity_threshold_,
+                     home_return_torque_activity_threshold_);
+    }
   }
 
 private:
@@ -359,6 +406,45 @@ private:
     }
     out = Eigen::Vector3d(x, y, z);
     return out.allFinite();
+  }
+
+  static bool tryGetQuaternionParam(ros::NodeHandle& pnh, const std::string& name, Eigen::Quaterniond& out)
+  {
+    if (!pnh.hasParam(name))
+    {
+      return false;
+    }
+    XmlRpc::XmlRpcValue v;
+    if (!pnh.getParam(name, v))
+    {
+      return false;
+    }
+    if (v.getType() != XmlRpc::XmlRpcValue::TypeArray || v.size() != 4)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "Param '%s' exists but is not a 4-element array [x,y,z,w]. Ignoring.", name.c_str());
+      return false;
+    }
+
+    double x = 0.0, y = 0.0, z = 0.0, w = 1.0;
+    if (!xmlRpcToDouble(v[0], x) || !xmlRpcToDouble(v[1], y) ||
+        !xmlRpcToDouble(v[2], z) || !xmlRpcToDouble(v[3], w))
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "Param '%s' array must contain only int/double values. Ignoring.", name.c_str());
+      return false;
+    }
+
+    out = Eigen::Quaterniond(w, x, y, z);
+    const double q_norm = out.norm();
+    if (!(q_norm > teleoperation::kMathEps) || !std::isfinite(q_norm))
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "Param '%s' contains an invalid quaternion. Ignoring.", name.c_str());
+      return false;
+    }
+    out.normalize();
+    return true;
   }
 
   static Eigen::Vector3d expandScalarTo3(double x)
@@ -476,6 +562,46 @@ private:
     dyn_m_extra_ang_filt_.setZero();
 
     passivity_layer_.reset();
+    home_integral_lin_.setZero();
+    home_integral_ang_.setZero();
+    home_blend_start_time_ = ros::Time(0);
+  }
+
+  bool lookupMasterPose(Eigen::Vector3d& p_master,
+                        Eigen::Quaterniond& q_master,
+                        double warn_throttle_s,
+                        const std::string& context) const
+  {
+    geometry_msgs::TransformStamped T;
+    try
+    {
+      T = tf_buffer_.lookupTransform(slave_base_frame_, slave_tcp_frame_, ros::Time(0),
+                                     ros::Duration(tf_timeout_s_));
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE_NAMED(warn_throttle_s, "teleop_master_haptic_controller",
+                              "%s TF lookup failed (%s -> %s): %s",
+                              context.c_str(), slave_base_frame_.c_str(), slave_tcp_frame_.c_str(), ex.what());
+      return false;
+    }
+
+    p_master = Eigen::Vector3d(T.transform.translation.x,
+                               T.transform.translation.y,
+                               T.transform.translation.z);
+    q_master = Eigen::Quaterniond(T.transform.rotation.w,
+                                  T.transform.rotation.x,
+                                  T.transform.rotation.y,
+                                  T.transform.rotation.z);
+    if (q_master.norm() < teleoperation::kMathEps)
+    {
+      ROS_WARN_THROTTLE_NAMED(warn_throttle_s, "teleop_master_haptic_controller",
+                              "%s TF returned an invalid quaternion. Skipping sample.",
+                              context.c_str());
+      return false;
+    }
+    q_master.normalize();
+    return true;
   }
 
   bool wrenchMsgToWrench3(const geometry_msgs::WrenchStamped& msg, Wrench3& out) const
@@ -575,41 +701,17 @@ private:
   {
     const ros::Time now = ros::Time::now();
 
-    // Lookup master TCP pose in its own base frame
-    geometry_msgs::TransformStamped T;
-    try
-    {
-      T = tf_buffer_.lookupTransform(slave_base_frame_, slave_tcp_frame_, ros::Time(0),
-                                     ros::Duration(tf_timeout_s_));
-    }
-    catch (const tf2::TransformException& ex)
-    {
-      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
-                              "Slave target TF lookup failed (%s -> %s): %s",
-                              slave_base_frame_.c_str(), slave_tcp_frame_.c_str(), ex.what());
-      return;
-    }
-
     const std::string frame_out = slave_frame_id_override_.empty()
                                       ? slave_base_frame_
                                       : slave_frame_id_override_;
 
-    const Eigen::Vector3d p_master(T.transform.translation.x,
-                                   T.transform.translation.y,
-                                   T.transform.translation.z);
-    const Eigen::Vector3d p_out = slave_pose_twist_rotation_ * p_master;
-
-    Eigen::Quaterniond q_master(T.transform.rotation.w,
-                                T.transform.rotation.x,
-                                T.transform.rotation.y,
-                                T.transform.rotation.z);
-    if (q_master.norm() < teleoperation::kMathEps)
+    Eigen::Vector3d p_master = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond q_master = Eigen::Quaterniond::Identity();
+    if (!lookupMasterPose(p_master, q_master, 1.0, "Slave target"))
     {
-      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
-                              "Slave target TF returned an invalid quaternion. Skipping sample.");
       return;
     }
-    q_master.normalize();
+    const Eigen::Vector3d p_out = slave_pose_twist_rotation_ * p_master;
     Eigen::Quaterniond q_out = slave_pose_twist_rotation_q_ * q_master;
     q_out.normalize();
 
@@ -1006,78 +1108,123 @@ private:
     // Virtual spring coupling: F_spring = K_s * (p_m - p_s) + B_s * (v_m - v_s)
     Eigen::Vector3d F_spring_lin = Eigen::Vector3d::Zero();
     Eigen::Vector3d Tau_spring = Eigen::Vector3d::Zero();
+    Eigen::Vector3d F_home = Eigen::Vector3d::Zero();
+    Eigen::Vector3d Tau_home = Eigen::Vector3d::Zero();
 
     const bool spring_enabled = has_slave_actual_pose_ &&
                                  (spring_k_lin_ > 0.0 || spring_k_ang_ > 0.0) &&
                                  publish_slave_targets_;
-    if (spring_enabled)
+    const bool home_return_ready = home_return_enabled_ && has_home_target_;
+    const bool need_master_pose = spring_enabled || home_return_ready;
+    Eigen::Vector3d p_master = Eigen::Vector3d::Zero();
+    Eigen::Quaterniond q_master = Eigen::Quaterniond::Identity();
+    const bool has_master_tcp = need_master_pose
+                                    ? lookupMasterPose(p_master, q_master, 2.0, "Controller")
+                                    : false;
+
+    if (spring_enabled && has_master_tcp)
     {
-      // Master TCP position: lookupTransform using slave_base_frame_/slave_tcp_frame_
-      // (which are the master's own frames, as set up in the launch file).
-      geometry_msgs::TransformStamped T_master;
-      bool has_master_tcp = false;
-      try
+      Eigen::Vector3d p_slave;
+      Eigen::Quaterniond q_slave;
       {
-        T_master = tf_buffer_.lookupTransform(slave_base_frame_, slave_tcp_frame_,
-                                               ros::Time(0), ros::Duration(tf_timeout_s_));
-        has_master_tcp = true;
-      }
-      catch (const tf2::TransformException& ex)
-      {
-        ROS_WARN_THROTTLE_NAMED(2.0, "teleop_master_haptic_controller",
-                                "Spring TF lookup failed (%s -> %s): %s",
-                                slave_base_frame_.c_str(), slave_tcp_frame_.c_str(), ex.what());
+        std::lock_guard<std::mutex> lock(mutex_);
+        p_slave = slave_actual_pos_;
+        q_slave = slave_actual_ori_;
       }
 
-      if (has_master_tcp)
+      // Linear spring
+      if (spring_k_lin_ > 0.0)
       {
-        const Eigen::Vector3d p_master(T_master.transform.translation.x,
-                                        T_master.transform.translation.y,
-                                        T_master.transform.translation.z);
+        const Eigen::Vector3d delta_p = p_master - p_slave;
+        F_spring_lin = spring_k_lin_ * delta_p;
 
-        Eigen::Vector3d p_slave;
-        Eigen::Quaterniond q_slave;
+        // Optional velocity damping via numerical differentiation of slave position
+        if (spring_b_lin_ > 0.0 && has_p_slave_prev_)
         {
-          std::lock_guard<std::mutex> lock(mutex_);
-          p_slave = slave_actual_pos_;
-          q_slave = slave_actual_ori_;
+          const Eigen::Vector3d v_slave_est = (p_slave - p_slave_prev_) / dt_for_filter;
+          const Eigen::Vector3d delta_v = v_lin_cmd_ - v_slave_est;
+          F_spring_lin += spring_b_lin_ * delta_v;
         }
 
-        // Linear spring
-        if (spring_k_lin_ > 0.0)
-        {
-          const Eigen::Vector3d delta_p = p_master - p_slave;
-          F_spring_lin = spring_k_lin_ * delta_p;
+        F_spring_lin = teleoperation::clampNorm3(F_spring_lin, max_spring_force_);
+      }
 
-          // Optional velocity damping via numerical differentiation of slave position
-          if (spring_b_lin_ > 0.0 && has_p_slave_prev_)
-          {
-            const Eigen::Vector3d v_slave_est = (p_slave - p_slave_prev_) / dt_for_filter;
-            const Eigen::Vector3d delta_v = v_lin_cmd_ - v_slave_est;
-            F_spring_lin += spring_b_lin_ * delta_v;
-          }
+      // Angular spring
+      if (spring_k_ang_ > 0.0 && use_torques_)
+      {
+        const Eigen::Vector3d delta_o = teleoperation::orientationErrorAxisAngle(q_slave, q_master);
+        Tau_spring = spring_k_ang_ * delta_o;
+        Tau_spring = teleoperation::clampNorm3(Tau_spring, max_spring_torque_);
+      }
 
-          F_spring_lin = teleoperation::clampNorm3(F_spring_lin, max_spring_force_);
-        }
+      p_slave_prev_ = p_slave;
+      has_p_slave_prev_ = true;
+    }
 
-        // Angular spring
-        if (spring_k_ang_ > 0.0 && use_torques_)
-        {
-          Eigen::Quaterniond q_master(T_master.transform.rotation.w,
-                                       T_master.transform.rotation.x,
-                                       T_master.transform.rotation.y,
-                                       T_master.transform.rotation.z);
-          if (q_master.norm() > teleoperation::kMathEps)
-          {
-            q_master.normalize();
-            const Eigen::Vector3d delta_o = teleoperation::orientationErrorAxisAngle(q_slave, q_master);
-            Tau_spring = spring_k_ang_ * delta_o;
-            Tau_spring = teleoperation::clampNorm3(Tau_spring, max_spring_torque_);
-          }
-        }
+    if (last_operator_activity_time_.isZero())
+    {
+      last_operator_activity_time_ = now;
+    }
+    const bool operator_active =
+        (F_hand.norm() > std::max(0.0, home_return_force_activity_threshold_)) ||
+        (use_torques_ && (Tau_hand.norm() > std::max(0.0, home_return_torque_activity_threshold_)));
+    if (operator_active)
+    {
+      last_operator_activity_time_ = now;
+    }
 
-        p_slave_prev_ = p_slave;
-        has_p_slave_prev_ = true;
+    const bool home_should_be_active =
+        home_return_ready &&
+        ((now - last_operator_activity_time_).toSec() >= std::max(0.0, home_return_timeout_s_));
+    if (!home_should_be_active)
+    {
+      home_integral_lin_.setZero();
+      home_integral_ang_.setZero();
+      home_blend_start_time_ = ros::Time(0);
+    }
+    else if (home_blend_start_time_.isZero())
+    {
+      home_blend_start_time_ = now;
+    }
+
+    double home_alpha = 0.0;
+    if (home_should_be_active && has_master_tcp)
+    {
+      if (home_return_blend_in_time_s_ <= 0.0)
+      {
+        home_alpha = 1.0;
+      }
+      else
+      {
+        home_alpha = std::clamp((now - home_blend_start_time_).toSec() / home_return_blend_in_time_s_, 0.0, 1.0);
+      }
+    }
+
+    if (home_alpha > 0.0 && has_master_tcp)
+    {
+      const Eigen::Vector3d home_pos_error = p_master - home_target_pos_;
+      home_integral_lin_ += home_pos_error * dt_used;
+      home_integral_lin_ = teleoperation::clampNorm3(home_integral_lin_, std::max(0.0, home_return_i_lin_clamp_));
+
+      F_home = home_return_k_lin_ * home_pos_error +
+               home_return_i_lin_ * home_integral_lin_ +
+               home_return_d_lin_ * v_lin_cmd_;
+      F_home = home_alpha * teleoperation::clampNorm3(F_home, std::max(0.0, home_return_max_force_));
+
+      if (use_torques_)
+      {
+        const Eigen::Vector3d home_ori_error = teleoperation::orientationErrorAxisAngle(home_target_ori_, q_master);
+        home_integral_ang_ += home_ori_error * dt_used;
+        home_integral_ang_ = teleoperation::clampNorm3(home_integral_ang_, std::max(0.0, home_return_i_ang_clamp_));
+
+        Tau_home = home_return_k_ang_ * home_ori_error +
+                   home_return_i_ang_ * home_integral_ang_ +
+                   home_return_d_ang_ * v_ang_cmd_;
+        Tau_home = home_alpha * teleoperation::clampNorm3(Tau_home, std::max(0.0, home_return_max_torque_));
+      }
+      else
+      {
+        home_integral_ang_.setZero();
       }
     }
 
@@ -1133,8 +1280,8 @@ private:
     }
     const teleoperation::PassivityLayerResult passivity_result =
         passivity_layer_.step(F_reflection, Tau_reflection, v_lin_cmd_, v_ang_cmd_, D_lin, D_ang, dt_used);
-    const Eigen::Vector3d F_feedback = F_spring_lin + passivity_result.force_used + coupling_filt_.f;
-    const Eigen::Vector3d Tau_feedback = Tau_spring + passivity_result.torque_used + coupling_filt_.tau;
+    const Eigen::Vector3d F_feedback = F_spring_lin + F_home + passivity_result.force_used + coupling_filt_.f;
+    const Eigen::Vector3d Tau_feedback = Tau_spring + Tau_home + passivity_result.torque_used + coupling_filt_.tau;
 
     // Limits (accel/jerk). Scalars are expanded unless *_xyz override exists.
     const Eigen::Vector3d max_a_lin = sanitizeNonNegativeVec((max_linear_accel_xyz_.allFinite() ? max_linear_accel_xyz_ : expandScalarTo3(max_linear_accel_)));
@@ -1528,6 +1675,25 @@ private:
   Eigen::Matrix3d slave_pose_twist_rotation_{Eigen::Matrix3d::Identity()};
   Eigen::Quaterniond slave_pose_twist_rotation_q_{Eigen::Quaterniond::Identity()};
 
+  bool home_return_enabled_{false};
+  bool has_home_target_{false};
+  double home_return_timeout_s_{2.0};
+  double home_return_force_activity_threshold_{2.0};
+  double home_return_torque_activity_threshold_{0.25};
+  double home_return_blend_in_time_s_{1.0};
+  double home_return_k_lin_{15.0};
+  double home_return_d_lin_{18.0};
+  double home_return_i_lin_{1.5};
+  double home_return_i_lin_clamp_{0.10};
+  double home_return_max_force_{25.0};
+  double home_return_k_ang_{0.8};
+  double home_return_d_ang_{0.25};
+  double home_return_i_ang_{0.08};
+  double home_return_i_ang_clamp_{0.30};
+  double home_return_max_torque_{3.0};
+  Eigen::Vector3d home_target_pos_{Eigen::Vector3d::Zero()};
+  Eigen::Quaterniond home_target_ori_{Eigen::Quaterniond::Identity()};
+
   bool publish_diagnostics_{true};
   double diagnostics_rate_{50.0};
 
@@ -1562,6 +1728,10 @@ private:
   Eigen::Vector3d v_lin_cmd_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d v_ang_cmd_{Eigen::Vector3d::Zero()};
   teleoperation::PassivityLayer passivity_layer_;
+  ros::Time last_operator_activity_time_{0};
+  ros::Time home_blend_start_time_{0};
+  Eigen::Vector3d home_integral_lin_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d home_integral_ang_{Eigen::Vector3d::Zero()};
 
   teleoperation::JerkLimiter3 a_lin_limiter_;
   teleoperation::JerkLimiter3 a_ang_limiter_;

@@ -58,8 +58,8 @@ control_rate: 500.0
 # Start conservative on real hardware.
 #
 # **mass_linear / damping_linear**: translational virtual dynamics.
-mass_linear: 5.0
-damping_linear: 10.0
+mass_linear: 9.0
+damping_linear: 25.0
 #
 # **mass_angular / damping_angular**: rotational virtual dynamics.
 mass_angular: 0.04
@@ -100,7 +100,7 @@ dynamic_damping:
   use_slave_wrench: true
   force_metric: "norm"         # currently supported: "norm"
   force_start: 5.0             # N (start adding damping)
-  force_stop: 15.0             # N (reach max extra damping)
+  force_stop: 25.0             # N (reach max extra damping)
   shape_exp: 1.0               # >1.0 = rise faster at low force, then flatten
   angular_schedule_from_force: true  # also schedule angular damping from slave force
   # Optional: when angular_schedule_from_force is false, ANGULAR extra damping is scheduled by slave torque norm (Nm).
@@ -121,7 +121,7 @@ dynamic_mass:
   use_slave_wrench: true
   force_metric: "norm"           # currently supported: "norm"
   force_start: 5.0               # N
-  force_stop: 15.0               # N
+  force_stop: 25.0               # N
   shape_exp: 1.0                # >1.0 = rise faster at low force, then flatten
   angular_schedule_from_force: true  # also schedule angular inertia from slave force
   # Optional: when angular_schedule_from_force is false, ANGULAR extra mass is scheduled by slave torque norm (Nm).
@@ -296,4 +296,27 @@ max_spring_force: 150.0           # N (safety saturation on spring force norm)
 max_spring_torque: 30.0           # N·m
 # Topic on which the slave publishes its actual TCP pose (set in launch).
 slave_actual_pose_topic: ""
+
+## ----------------------------
+## Automatic home return on operator inactivity
+## ----------------------------
+# Adds an extra virtual spring + damping + integral term on the MASTER side.
+# It activates only after the operator has stopped applying noticeable wrench
+# for `timeout_s`, and deactivates immediately on new operator interaction.
+home_return:
+  enabled: true
+  timeout_s: 8.0
+  force_activity_threshold: 2.0    # N
+  torque_activity_threshold: 0.25  # N·m
+  blend_in_time_s: 1.0
+  stiffness_linear: 15.0           # N/m
+  damping_linear: 18.0             # N·s/m
+  integral_linear: 1.5             # N/(m·s)
+  integral_linear_clamp: 0.10      # clamp on integrated position error norm
+  max_force: 15.0                  # N
+  stiffness_angular: 0.8           # N·m/rad
+  damping_angular: 0.25            # N·m·s/rad
+  integral_angular: 0.08           # N·m/(rad·s)
+  integral_angular_clamp: 0.30     # clamp on integrated orientation error norm
+  max_torque: 0.5                  # N·m
 

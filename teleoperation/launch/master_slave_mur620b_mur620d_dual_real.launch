@@ -24,6 +24,8 @@
   <arg name="left_slave_base_inertia_frame" default="$(eval arg('slave_robot_ns') + '/' + arg('left_arm_ns') + '/base_link_inertia')" />
   <arg name="left_master_to_slave_rotation_rpy" default="0.0, 0.0, 0.2305469980736988" />
   <arg name="left_slave_to_master_rotation_rpy" default="0.0, 0.0, -0.2305469980736988" />
+  <arg name="left_home_position" default="-0.806894581060263, -0.2898162547907234, -0.050432885739712885" />
+  <arg name="left_home_orientation_xyzw" default="0.6289655351530469, 0.777346636545271, -0.011530064095607334, 0.00127273852268894" />
   <arg name="left_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/target_pose')" />
   <arg name="left_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/feedforward_twist')" />
   <arg name="left_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/slave_actual_pose')" />
@@ -44,6 +46,8 @@
   <arg name="right_slave_base_inertia_frame" default="$(eval arg('slave_robot_ns') + '/' + arg('right_arm_ns') + '/base_link_inertia')" />
   <arg name="right_master_to_slave_rotation_rpy" default="0.0, 0.0, 0.22812032433233884" />
   <arg name="right_slave_to_master_rotation_rpy" default="0.0, 0.0, -0.22812032433233884" />
+  <arg name="right_home_position" default="0.8605060709826873, 0.1163925862675045, -0.021583319483116287" />
+  <arg name="right_home_orientation_xyzw" default="-0.7766724367866567, 0.629871644406543, 0.005840862903921362, -0.0027425953058616568" />
   <arg name="right_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/target_pose')" />
   <arg name="right_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/feedforward_twist')" />
   <arg name="right_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/slave_actual_pose')" />
@@ -124,6 +128,8 @@
     <param name="slave_tcp_frame" value="$(arg left_master_tool_frame)" />
     <param name="slave_frame_id_override" value="$(arg left_slave_base_inertia_frame)" />
     <rosparam subst_value="true" param="slave_pose_twist_rotation_rpy">[$(arg left_master_to_slave_rotation_rpy)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_position">[$(arg left_home_position)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg left_home_orientation_xyzw)]</rosparam>
 
     <param name="slave_actual_pose_topic" value="$(arg left_slave_actual_pose_topic)" />
     <param name="filtered_master_wrench_topic" value="$(arg left_master_filtered_master_wrench_topic)" />
@@ -182,6 +188,8 @@
     <param name="slave_tcp_frame" value="$(arg right_master_tool_frame)" />
     <param name="slave_frame_id_override" value="$(arg right_slave_base_inertia_frame)" />
     <rosparam subst_value="true" param="slave_pose_twist_rotation_rpy">[$(arg right_master_to_slave_rotation_rpy)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_position">[$(arg right_home_position)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg right_home_orientation_xyzw)]</rosparam>
 
     <param name="slave_actual_pose_topic" value="$(arg right_slave_actual_pose_topic)" />
     <param name="filtered_master_wrench_topic" value="$(arg right_master_filtered_master_wrench_topic)" />

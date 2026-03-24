@@ -9,6 +9,7 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 
 #include <algorithm>
 #include <cmath>
@@ -209,6 +210,17 @@ public:
     pnh_.param<std::string>("slave_tcp_frame", slave_tcp_frame_, slave_tcp_frame_);
     pnh_.param<std::string>("slave_frame_id_override", slave_frame_id_override_, slave_frame_id_override_);
     pnh_.param<double>("slave_publish_rate", slave_publish_rate_, slave_publish_rate_);
+    if (tryGetVector3Param(pnh_, "slave_pose_twist_rotation_rpy", slave_pose_twist_rotation_rpy_))
+    {
+      slave_pose_twist_rotation_ = rpyToRotation(slave_pose_twist_rotation_rpy_);
+      slave_pose_twist_rotation_q_ = Eigen::Quaterniond(slave_pose_twist_rotation_);
+      slave_pose_twist_rotation_q_.normalize();
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Applying static master->slave numeric rotation rpy=[%.6f %.6f %.6f]",
+                     slave_pose_twist_rotation_rpy_.x(),
+                     slave_pose_twist_rotation_rpy_.y(),
+                     slave_pose_twist_rotation_rpy_.z());
+    }
 
     // Diagnostics
     pnh_.param<bool>("publish_diagnostics", publish_diagnostics_, publish_diagnostics_);
@@ -378,6 +390,14 @@ private:
       }
     }
     return out;
+  }
+
+  static Eigen::Matrix3d rpyToRotation(const Eigen::Vector3d& rpy)
+  {
+    return (Eigen::AngleAxisd(rpy.z(), Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(rpy.y(), Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(rpy.x(), Eigen::Vector3d::UnitX()))
+        .toRotationMatrix();
   }
 
   // softDeadzoneNormWithHysteresis is now in teleoperation::math_utils.hpp
@@ -574,14 +594,36 @@ private:
                                       ? slave_base_frame_
                                       : slave_frame_id_override_;
 
+    const Eigen::Vector3d p_master(T.transform.translation.x,
+                                   T.transform.translation.y,
+                                   T.transform.translation.z);
+    const Eigen::Vector3d p_out = slave_pose_twist_rotation_ * p_master;
+
+    Eigen::Quaterniond q_master(T.transform.rotation.w,
+                                T.transform.rotation.x,
+                                T.transform.rotation.y,
+                                T.transform.rotation.z);
+    if (q_master.norm() < teleoperation::kMathEps)
+    {
+      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
+                              "Slave target TF returned an invalid quaternion. Skipping sample.");
+      return;
+    }
+    q_master.normalize();
+    Eigen::Quaterniond q_out = slave_pose_twist_rotation_q_ * q_master;
+    q_out.normalize();
+
     // Publish PoseStamped
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp = now;
     pose_msg.header.frame_id = frame_out;
-    pose_msg.pose.position.x = T.transform.translation.x;
-    pose_msg.pose.position.y = T.transform.translation.y;
-    pose_msg.pose.position.z = T.transform.translation.z;
-    pose_msg.pose.orientation = T.transform.rotation;
+    pose_msg.pose.position.x = p_out.x();
+    pose_msg.pose.position.y = p_out.y();
+    pose_msg.pose.position.z = p_out.z();
+    pose_msg.pose.orientation.w = q_out.w();
+    pose_msg.pose.orientation.x = q_out.x();
+    pose_msg.pose.orientation.y = q_out.y();
+    pose_msg.pose.orientation.z = q_out.z();
     pub_slave_pose_.publish(pose_msg);
 
     // Publish commanded twist (already computed by admittance loop)
@@ -591,16 +633,18 @@ private:
       v_lin = v_lin_cmd_;
       v_ang = v_ang_cmd_;
     }
+    const Eigen::Vector3d v_lin_out = slave_pose_twist_rotation_ * v_lin;
+    const Eigen::Vector3d v_ang_out = slave_pose_twist_rotation_ * v_ang;
 
     geometry_msgs::TwistStamped twist_msg;
     twist_msg.header.stamp = now;
     twist_msg.header.frame_id = frame_out;
-    twist_msg.twist.linear.x = v_lin.x();
-    twist_msg.twist.linear.y = v_lin.y();
-    twist_msg.twist.linear.z = v_lin.z();
-    twist_msg.twist.angular.x = v_ang.x();
-    twist_msg.twist.angular.y = v_ang.y();
-    twist_msg.twist.angular.z = v_ang.z();
+    twist_msg.twist.linear.x = v_lin_out.x();
+    twist_msg.twist.linear.y = v_lin_out.y();
+    twist_msg.twist.linear.z = v_lin_out.z();
+    twist_msg.twist.angular.x = v_ang_out.x();
+    twist_msg.twist.angular.y = v_ang_out.y();
+    twist_msg.twist.angular.z = v_ang_out.z();
     pub_slave_twist_.publish(twist_msg);
   }
 
@@ -1480,6 +1524,9 @@ private:
   std::string slave_tcp_frame_{"tool0"};
   std::string slave_frame_id_override_;
   double slave_publish_rate_{250.0};
+  Eigen::Vector3d slave_pose_twist_rotation_rpy_{Eigen::Vector3d::Zero()};
+  Eigen::Matrix3d slave_pose_twist_rotation_{Eigen::Matrix3d::Identity()};
+  Eigen::Quaterniond slave_pose_twist_rotation_q_{Eigen::Quaterniond::Identity()};
 
   bool publish_diagnostics_{true};
   double diagnostics_rate_{50.0};

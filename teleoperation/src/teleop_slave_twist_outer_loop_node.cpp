@@ -18,6 +18,7 @@
 #include <limits>
 #include <mutex>
 #include <string>
+#include <XmlRpcValue.h>
 
 #include "teleoperation/components/pid_controller.hpp"
 #include "teleoperation/core/math_utils.hpp"
@@ -177,6 +178,17 @@ public:
     pnh_.param<std::string>("master_feedback_pose_topic", master_fb_pose_topic_, master_fb_pose_topic_);
     pnh_.param<std::string>("master_feedback_frame_override", master_fb_frame_override_, master_fb_frame_override_);
     pnh_.param("master_feedback_publish_rate", master_fb_rate_, master_fb_rate_);
+    if (tryGetVector3Param(pnh_, "master_feedback_rotation_rpy", master_fb_rotation_rpy_))
+    {
+      master_fb_rotation_ = rpyToRotation(master_fb_rotation_rpy_);
+      master_fb_rotation_q_ = Eigen::Quaterniond(master_fb_rotation_);
+      master_fb_rotation_q_.normalize();
+      ROS_INFO_NAMED("teleop_slave_twist_outer_loop",
+                     "Applying static slave->master feedback rotation rpy=[%.6f %.6f %.6f]",
+                     master_fb_rotation_rpy_.x(),
+                     master_fb_rotation_rpy_.y(),
+                     master_fb_rotation_rpy_.z());
+    }
 
     sub_target_pose_ = nh_.subscribe(target_pose_topic_, 1, &TeleopSlaveTwistOuterLoop::targetPoseCb, this,
                                      ros::TransportHints().tcpNoDelay());
@@ -233,6 +245,61 @@ public:
   }
 
 private:
+  static bool xmlRpcToDouble(const XmlRpc::XmlRpcValue& v, double& out)
+  {
+    if (v.getType() == XmlRpc::XmlRpcValue::TypeInt)
+    {
+      out = static_cast<int>(v);
+      return std::isfinite(out);
+    }
+    if (v.getType() == XmlRpc::XmlRpcValue::TypeDouble)
+    {
+      out = static_cast<double>(v);
+      return std::isfinite(out);
+    }
+    return false;
+  }
+
+  static bool tryGetVector3Param(ros::NodeHandle& pnh, const std::string& name, Eigen::Vector3d& out)
+  {
+    if (!pnh.hasParam(name))
+    {
+      return false;
+    }
+
+    XmlRpc::XmlRpcValue v;
+    if (!pnh.getParam(name, v))
+    {
+      return false;
+    }
+
+    if (v.getType() != XmlRpc::XmlRpcValue::TypeArray || v.size() != 3)
+    {
+      ROS_WARN_NAMED("teleop_slave_twist_outer_loop",
+                     "Param '%s' exists but is not a 3-element array. Ignoring.", name.c_str());
+      return false;
+    }
+
+    double x = 0.0, y = 0.0, z = 0.0;
+    if (!xmlRpcToDouble(v[0], x) || !xmlRpcToDouble(v[1], y) || !xmlRpcToDouble(v[2], z))
+    {
+      ROS_WARN_NAMED("teleop_slave_twist_outer_loop",
+                     "Param '%s' array must contain only int/double values. Ignoring.", name.c_str());
+      return false;
+    }
+
+    out = Eigen::Vector3d(x, y, z);
+    return out.allFinite();
+  }
+
+  static Eigen::Matrix3d rpyToRotation(const Eigen::Vector3d& rpy)
+  {
+    return (Eigen::AngleAxisd(rpy.z(), Eigen::Vector3d::UnitZ()) *
+            Eigen::AngleAxisd(rpy.y(), Eigen::Vector3d::UnitY()) *
+            Eigen::AngleAxisd(rpy.x(), Eigen::Vector3d::UnitX()))
+        .toRotationMatrix();
+  }
+
   void targetPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
   {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -648,19 +715,22 @@ private:
                                       ? base_frame_
                                       : master_fb_frame_override_;
 
+    const Eigen::Vector3d p_out = master_fb_rotation_ * T_base_tcp.translation();
     Eigen::Quaterniond q(T_base_tcp.rotation());
     q.normalize();
+    Eigen::Quaterniond q_out = master_fb_rotation_q_ * q;
+    q_out.normalize();
 
     geometry_msgs::PoseStamped pose_msg;
     pose_msg.header.stamp = ros::Time::now();
     pose_msg.header.frame_id = frame_out;
-    pose_msg.pose.position.x = T_base_tcp.translation().x();
-    pose_msg.pose.position.y = T_base_tcp.translation().y();
-    pose_msg.pose.position.z = T_base_tcp.translation().z();
-    pose_msg.pose.orientation.w = q.w();
-    pose_msg.pose.orientation.x = q.x();
-    pose_msg.pose.orientation.y = q.y();
-    pose_msg.pose.orientation.z = q.z();
+    pose_msg.pose.position.x = p_out.x();
+    pose_msg.pose.position.y = p_out.y();
+    pose_msg.pose.position.z = p_out.z();
+    pose_msg.pose.orientation.w = q_out.w();
+    pose_msg.pose.orientation.x = q_out.x();
+    pose_msg.pose.orientation.y = q_out.y();
+    pose_msg.pose.orientation.z = q_out.z();
     pub_master_fb_pose_.publish(pose_msg);
   }
 
@@ -1105,6 +1175,9 @@ private:
   std::string master_fb_pose_topic_{"master_feedback_pose"};
   std::string master_fb_frame_override_;
   double master_fb_rate_{250.0};
+  Eigen::Vector3d master_fb_rotation_rpy_{Eigen::Vector3d::Zero()};
+  Eigen::Matrix3d master_fb_rotation_{Eigen::Matrix3d::Identity()};
+  Eigen::Quaterniond master_fb_rotation_q_{Eigen::Quaterniond::Identity()};
 
   // State
   mutable std::mutex mutex_;

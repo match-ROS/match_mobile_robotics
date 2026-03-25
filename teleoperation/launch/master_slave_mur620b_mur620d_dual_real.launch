@@ -29,6 +29,7 @@
   <arg name="left_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/target_pose')" />
   <arg name="left_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/feedforward_twist')" />
   <arg name="left_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/slave_actual_pose')" />
+  <arg name="left_home_return_status_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/home_return/status')" />
   <arg name="left_master_filtered_master_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/master_wrench_filtered')" />
   <arg name="left_master_filtered_slave_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/slave_wrench_filtered')" />
   <arg name="left_master_filtered_coupling_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/coupling_wrench_filtered')" />
@@ -51,6 +52,7 @@
   <arg name="right_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/target_pose')" />
   <arg name="right_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/feedforward_twist')" />
   <arg name="right_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/slave_actual_pose')" />
+  <arg name="right_home_return_status_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/home_return/status')" />
   <arg name="right_master_filtered_master_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/master_wrench_filtered')" />
   <arg name="right_master_filtered_slave_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/slave_wrench_filtered')" />
   <arg name="right_master_filtered_coupling_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/coupling_wrench_filtered')" />
@@ -130,6 +132,7 @@
     <rosparam subst_value="true" param="slave_pose_twist_rotation_rpy">[$(arg left_master_to_slave_rotation_rpy)]</rosparam>
     <rosparam subst_value="true" param="home_return/target_position">[$(arg left_home_position)]</rosparam>
     <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg left_home_orientation_xyzw)]</rosparam>
+    <param name="home_return/status_topic" value="$(arg left_home_return_status_topic)" />
 
     <param name="slave_actual_pose_topic" value="$(arg left_slave_actual_pose_topic)" />
     <param name="filtered_master_wrench_topic" value="$(arg left_master_filtered_master_wrench_topic)" />
@@ -190,6 +193,7 @@
     <rosparam subst_value="true" param="slave_pose_twist_rotation_rpy">[$(arg right_master_to_slave_rotation_rpy)]</rosparam>
     <rosparam subst_value="true" param="home_return/target_position">[$(arg right_home_position)]</rosparam>
     <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg right_home_orientation_xyzw)]</rosparam>
+    <param name="home_return/status_topic" value="$(arg right_home_return_status_topic)" />
 
     <param name="slave_actual_pose_topic" value="$(arg right_slave_actual_pose_topic)" />
     <param name="filtered_master_wrench_topic" value="$(arg right_master_filtered_master_wrench_topic)" />

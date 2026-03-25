@@ -25,6 +25,8 @@ TOPICS=(
   /teleop/mur620b_to_mur620d/right/feedforward_twist
   /teleop/mur620b_to_mur620d/left/slave_actual_pose
   /teleop/mur620b_to_mur620d/right/slave_actual_pose
+  /teleop/mur620b_to_mur620d/left/home_return/status
+  /teleop/mur620b_to_mur620d/right/home_return/status
   /mur620b/UR10_l/wrench
   /mur620b/UR10_r/wrench
   /mur620d/UR10_l/wrench

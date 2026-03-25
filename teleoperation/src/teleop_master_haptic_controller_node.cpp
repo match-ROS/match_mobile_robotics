@@ -5,6 +5,7 @@
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <std_msgs/Float64MultiArray.h>
+#include <std_msgs/String.h>
 
 #include <tf2_ros/transform_listener.h>
 
@@ -241,6 +242,15 @@ public:
     pnh_.param<double>("home_return/integral_angular", home_return_i_ang_, home_return_i_ang_);
     pnh_.param<double>("home_return/integral_angular_clamp", home_return_i_ang_clamp_, home_return_i_ang_clamp_);
     pnh_.param<double>("home_return/max_torque", home_return_max_torque_, home_return_max_torque_);
+    pnh_.param<std::string>("home_return/status_topic", home_return_status_topic_, std::string());
+    pnh_.param<double>("home_return/status_publish_rate", home_return_status_publish_rate_, home_return_status_publish_rate_);
+    pnh_.param<double>("home_return/feedback_timeout_s", home_return_feedback_timeout_s_, home_return_feedback_timeout_s_);
+    pnh_.param<double>("home_return/arrival_position_tolerance_m",
+                       home_return_arrival_position_tolerance_m_,
+                       home_return_arrival_position_tolerance_m_);
+    pnh_.param<double>("home_return/arrival_orientation_tolerance_rad",
+                       home_return_arrival_orientation_tolerance_rad_,
+                       home_return_arrival_orientation_tolerance_rad_);
 
     Eigen::Vector3d home_target_position_out = Eigen::Vector3d::Zero();
     Eigen::Quaterniond home_target_orientation_out = Eigen::Quaterniond::Identity();
@@ -301,6 +311,16 @@ public:
 
     pub_cmd_ = nh_.advertise<geometry_msgs::Twist>(command_topic_, 1);
     pub_cmd_stamped_ = nh_.advertise<geometry_msgs::TwistStamped>(command_topic_ + "_stamped", 1);
+    if (!home_return_status_topic_.empty())
+    {
+      pub_home_return_status_ = nh_.advertise<std_msgs::String>(home_return_status_topic_, 1, true);
+      if (home_return_status_publish_rate_ > 0.0)
+      {
+        home_return_status_timer_ = nh_.createTimer(ros::Duration(1.0 / home_return_status_publish_rate_),
+                                                    &TeleopMasterHapticController::homeReturnStatusTick, this);
+      }
+      publishHomeReturnStatusMessage(home_return_status_);
+    }
     if (publish_diagnostics_)
     {
       // Keep all debug topics private so dual-arm runs do not merge left/right streams.
@@ -360,6 +380,16 @@ public:
                      home_return_blend_in_time_s_,
                      home_return_force_activity_threshold_,
                      home_return_torque_activity_threshold_);
+    }
+    if (pub_home_return_status_)
+    {
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Home return status topic enabled: topic='%s' rate=%.2f Hz feedback_timeout=%.3fs pos_tol=%.3fm ori_tol=%.3frad",
+                     home_return_status_topic_.c_str(),
+                     home_return_status_publish_rate_,
+                     home_return_feedback_timeout_s_,
+                     home_return_arrival_position_tolerance_m_,
+                     home_return_arrival_orientation_tolerance_rad_);
     }
   }
 
@@ -697,6 +727,70 @@ private:
     }
   }
 
+  void publishHomeReturnStatusMessage(const std::string& status)
+  {
+    if (!pub_home_return_status_)
+    {
+      return;
+    }
+
+    std_msgs::String msg;
+    msg.data = status;
+    pub_home_return_status_.publish(msg);
+  }
+
+  void setHomeReturnStatus(const std::string& status)
+  {
+    const std::string next_status = status.empty() ? std::string("inactive") : status;
+    if (home_return_status_ == next_status)
+    {
+      return;
+    }
+
+    home_return_status_ = next_status;
+    ROS_INFO_NAMED("teleop_master_haptic_controller",
+                   "[%s] Home return status -> %s",
+                   node_name_.c_str(),
+                   home_return_status_.c_str());
+    publishHomeReturnStatusMessage(home_return_status_);
+  }
+
+  void homeReturnStatusTick(const ros::TimerEvent& /*ev*/)
+  {
+    publishHomeReturnStatusMessage(home_return_status_);
+  }
+
+  bool getFreshSlaveActualPoseForHome(const ros::Time& now,
+                                      Eigen::Vector3d& slave_pos,
+                                      Eigen::Quaterniond& slave_ori,
+                                      double& feedback_age_s) const
+  {
+    ros::Time pose_stamp;
+    bool has_pose = false;
+    {
+      std::lock_guard<std::mutex> lock(mutex_);
+      has_pose = has_slave_actual_pose_;
+      slave_pos = slave_actual_pos_;
+      slave_ori = slave_actual_ori_;
+      pose_stamp = slave_actual_pose_stamp_;
+    }
+
+    if (!has_pose)
+    {
+      feedback_age_s = std::numeric_limits<double>::infinity();
+      return false;
+    }
+
+    feedback_age_s = std::fabs((now - pose_stamp).toSec());
+    if (home_return_feedback_timeout_s_ > 0.0 &&
+        feedback_age_s > home_return_feedback_timeout_s_)
+    {
+      return false;
+    }
+
+    return true;
+  }
+
   void slaveTargetTick(const ros::TimerEvent& /*ev*/)
   {
     const ros::Time now = ros::Time::now();
@@ -762,6 +856,7 @@ private:
       std::lock_guard<std::mutex> lock(mutex_);
       if (!has_master_)
       {
+        setHomeReturnStatus("inactive");
         publishZero();
         return;
       }
@@ -806,6 +901,7 @@ private:
                                 stale_sources.c_str(),
                                 master_stale, slave_stale, coupling_stale);
       }
+      setHomeReturnStatus("inactive");
       publishZero();
       if (reset_on_stale_)
       {
@@ -840,6 +936,7 @@ private:
 
     if (!(dt_raw > 0.0) || !std::isfinite(dt_raw))
     {
+      setHomeReturnStatus("inactive");
       publishZero();
       return;
     }
@@ -867,6 +964,7 @@ private:
     const double dt_step = dt_used / static_cast<double>(n_substeps);
     if (!(dt_step > 0.0) || !std::isfinite(dt_step))
     {
+      setHomeReturnStatus("inactive");
       publishZero();
       return;
     }
@@ -1185,6 +1283,41 @@ private:
     else if (home_blend_start_time_.isZero())
     {
       home_blend_start_time_ = now;
+    }
+
+    if (!home_should_be_active)
+    {
+      setHomeReturnStatus("inactive");
+    }
+    else
+    {
+      Eigen::Vector3d slave_pos = Eigen::Vector3d::Zero();
+      Eigen::Quaterniond slave_ori = Eigen::Quaterniond::Identity();
+      double feedback_age_s = std::numeric_limits<double>::infinity();
+      if (getFreshSlaveActualPoseForHome(now, slave_pos, slave_ori, feedback_age_s))
+      {
+        const double pos_error_norm = (slave_pos - home_target_pos_).norm();
+        const double ori_error_norm =
+            teleoperation::orientationErrorAxisAngle(home_target_ori_, slave_ori).norm();
+        if (pos_error_norm <= std::max(0.0, home_return_arrival_position_tolerance_m_) &&
+            ori_error_norm <= std::max(0.0, home_return_arrival_orientation_tolerance_rad_))
+        {
+          setHomeReturnStatus("home_reached");
+        }
+        else
+        {
+          setHomeReturnStatus("active");
+        }
+      }
+      else
+      {
+        ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
+                                "[%s] Home return active but slave feedback is unavailable/stale (timeout=%.3fs age=%.3fs).",
+                                node_name_.c_str(),
+                                home_return_feedback_timeout_s_,
+                                feedback_age_s);
+        setHomeReturnStatus("active");
+      }
     }
 
     double home_alpha = 0.0;
@@ -1531,7 +1664,9 @@ private:
   ros::Publisher pub_debug_v_pre_;
   ros::Publisher pub_debug_v_post_;
   ros::Publisher pub_debug_passivity_;
+  ros::Publisher pub_home_return_status_;
   ros::Timer timer_;
+  ros::Timer home_return_status_timer_;
 
   // Slave target publishers
   ros::Publisher pub_slave_pose_;
@@ -1691,6 +1826,11 @@ private:
   double home_return_i_ang_{0.08};
   double home_return_i_ang_clamp_{0.30};
   double home_return_max_torque_{3.0};
+  std::string home_return_status_topic_;
+  double home_return_status_publish_rate_{2.0};
+  double home_return_feedback_timeout_s_{0.25};
+  double home_return_arrival_position_tolerance_m_{0.02};
+  double home_return_arrival_orientation_tolerance_rad_{0.10};
   Eigen::Vector3d home_target_pos_{Eigen::Vector3d::Zero()};
   Eigen::Quaterniond home_target_ori_{Eigen::Quaterniond::Identity()};
 
@@ -1732,6 +1872,7 @@ private:
   ros::Time home_blend_start_time_{0};
   Eigen::Vector3d home_integral_lin_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d home_integral_ang_{Eigen::Vector3d::Zero()};
+  std::string home_return_status_{"inactive"};
 
   teleoperation::JerkLimiter3 a_lin_limiter_;
   teleoperation::JerkLimiter3 a_ang_limiter_;

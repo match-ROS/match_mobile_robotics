@@ -303,6 +303,11 @@ slave_actual_pose_topic: ""
 # Adds an extra virtual spring + damping + integral term on the MASTER side.
 # It activates only after the operator has stopped applying noticeable wrench
 # for `timeout_s`, and deactivates immediately on new operator interaction.
+# `status_topic` is typically set from the launch file for each arm.
+# `status_publish_rate` controls the periodic publication of the status topic:
+#   0.0 = publish only on state changes, >0 = periodic republish at that rate.
+# `feedback_timeout_s` is the max accepted age of slave_actual_pose used to
+# confirm `home_reached`; stale feedback keeps the status at `active`.
 home_return:
   enabled: true
   timeout_s: 8.0
@@ -319,4 +324,9 @@ home_return:
   integral_angular: 0.2           # N·m/(rad·s)
   integral_angular_clamp: 0.30     # clamp on integrated orientation error norm
   max_torque: 0.5                  # N·m
+  status_topic: ""
+  status_publish_rate: 2.0
+  feedback_timeout_s: 0.25
+  arrival_position_tolerance_m: 0.02
+  arrival_orientation_tolerance_rad: 0.10
 

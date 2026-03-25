@@ -310,7 +310,7 @@ slave_actual_pose_topic: ""
 # confirm `home_reached`; stale feedback keeps the status at `active`.
 home_return:
   enabled: true
-  timeout_s: 8.0
+  timeout_s: 3.0
   force_activity_threshold: 2.0    # N
   torque_activity_threshold: 0.25  # N·m
   blend_in_time_s: 1.0
@@ -325,7 +325,7 @@ home_return:
   integral_angular_clamp: 0.30     # clamp on integrated orientation error norm
   max_torque: 0.5                  # N·m
   status_topic: ""
-  status_publish_rate: 2.0
+  status_publish_rate: 10.0
   feedback_timeout_s: 0.25
   arrival_position_tolerance_m: 0.02
   arrival_orientation_tolerance_rad: 0.10

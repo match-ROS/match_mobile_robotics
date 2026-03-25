@@ -184,8 +184,8 @@ dt_max_substeps: 10
 # The integral freezes when external force exceeds integral_force_freeze,
 # preventing windup during contact.
 use_spring_control: true
-spring_stiffness_linear: 0.7       # 1/s (velocity = K_s * position_error) 0.2
-spring_stiffness_angular: 0.4      # 1/s
+spring_stiffness_linear: 1.0       # 1/s (velocity = K_s * position_error) 0.2
+spring_stiffness_angular: 1.0      # 1/s
 spring_ki_linear: 0.2              # 1/s² (integral gain)
 spring_ki_angular: 0.2
 integral_max_linear: 0.1          # m·s (clamp on integral norm)

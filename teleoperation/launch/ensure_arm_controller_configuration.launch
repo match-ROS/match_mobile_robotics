@@ -1,0 +1,39 @@
+<launch>
+  <!-- Generic controller configuration for one arm/controller_manager -->
+
+  <arg name="robot_ns" default="mur620b" />
+  <arg name="arm_ns" default="UR10_l" />
+
+  <arg name="controller_manager_ns" default="/$(arg robot_ns)/$(arg arm_ns)/controller_manager" />
+  <arg name="running_controllers" default="twist_controller,force_torque_sensor_controller" />
+  <arg name="stopped_controllers" default="arm_controller" />
+  <arg name="controllers_to_load" default="$(arg running_controllers),$(arg stopped_controllers)" />
+
+  <arg name="auto_load_controllers" default="true" />
+  <arg name="strictness" default="2" />
+  <arg name="start_asap" default="false" />
+  <arg name="switch_timeout_s" default="0.0" />
+  <arg name="wait_services_timeout_s" default="15.0" />
+  <arg name="controller_state_verify_timeout_s" default="5.0" />
+  <arg name="controller_state_verify_period_s" default="0.1" />
+
+  <node pkg="teleoperation"
+        type="ensure_controller_configuration.py"
+        name="ensure_controller_configuration_$(arg robot_ns)_$(arg arm_ns)"
+        output="screen"
+        required="false">
+    <param name="robot_ns" value="$(arg robot_ns)" />
+    <param name="arm_ns" value="$(arg arm_ns)" />
+    <param name="controller_manager_ns" value="$(arg controller_manager_ns)" />
+    <param name="running_controllers" value="$(arg running_controllers)" />
+    <param name="stopped_controllers" value="$(arg stopped_controllers)" />
+    <param name="controllers_to_load" value="$(arg controllers_to_load)" />
+    <param name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <param name="strictness" value="$(arg strictness)" />
+    <param name="start_asap" value="$(arg start_asap)" />
+    <param name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <param name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+    <param name="controller_state_verify_timeout_s" value="$(arg controller_state_verify_timeout_s)" />
+    <param name="controller_state_verify_period_s" value="$(arg controller_state_verify_period_s)" />
+  </node>
+</launch>

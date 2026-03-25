@@ -122,6 +122,7 @@ catkin_install_python(PROGRAMS
   scripts/ur_zero_ftsensor.py
   scripts/ur_dashboard_quit_connect.py
   scripts/moveit_go_home_and_switch.py
+  scripts/ensure_controller_configuration.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

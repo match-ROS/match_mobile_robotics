@@ -1,0 +1,86 @@
+<launch>
+  <!-- Ensure the same final controller configuration produced by the MoveIt go-home teleop launch:
+       twist_controller + force_torque_sensor_controller running, arm_controller stopped. -->
+
+  <arg name="robot_ns_1" default="mur620b" />
+  <arg name="robot_ns_2" default="mur620d" />
+
+  <arg name="arm_ns_l" default="UR10_l" />
+  <arg name="arm_ns_r" default="UR10_r" />
+
+  <arg name="running_controllers" default="twist_controller,force_torque_sensor_controller" />
+  <arg name="stopped_controllers" default="arm_controller" />
+  <arg name="controllers_to_load" default="$(arg running_controllers),$(arg stopped_controllers)" />
+
+  <arg name="auto_load_controllers" default="true" />
+  <arg name="strictness" default="2" />
+  <arg name="start_asap" default="false" />
+  <arg name="switch_timeout_s" default="0.0" />
+  <arg name="wait_services_timeout_s" default="15.0" />
+  <arg name="controller_state_verify_timeout_s" default="5.0" />
+  <arg name="controller_state_verify_period_s" default="0.1" />
+
+  <!-- mur620b LEFT -->
+  <include file="$(find teleoperation)/launch/ensure_arm_controller_configuration.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_1)" />
+    <arg name="arm_ns" value="$(arg arm_ns_l)" />
+    <arg name="running_controllers" value="$(arg running_controllers)" />
+    <arg name="stopped_controllers" value="$(arg stopped_controllers)" />
+    <arg name="controllers_to_load" value="$(arg controllers_to_load)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+    <arg name="controller_state_verify_timeout_s" value="$(arg controller_state_verify_timeout_s)" />
+    <arg name="controller_state_verify_period_s" value="$(arg controller_state_verify_period_s)" />
+  </include>
+
+  <!-- mur620b RIGHT -->
+  <include file="$(find teleoperation)/launch/ensure_arm_controller_configuration.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_1)" />
+    <arg name="arm_ns" value="$(arg arm_ns_r)" />
+    <arg name="running_controllers" value="$(arg running_controllers)" />
+    <arg name="stopped_controllers" value="$(arg stopped_controllers)" />
+    <arg name="controllers_to_load" value="$(arg controllers_to_load)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+    <arg name="controller_state_verify_timeout_s" value="$(arg controller_state_verify_timeout_s)" />
+    <arg name="controller_state_verify_period_s" value="$(arg controller_state_verify_period_s)" />
+  </include>
+
+  <!-- mur620d LEFT -->
+  <include file="$(find teleoperation)/launch/ensure_arm_controller_configuration.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_2)" />
+    <arg name="arm_ns" value="$(arg arm_ns_l)" />
+    <arg name="running_controllers" value="$(arg running_controllers)" />
+    <arg name="stopped_controllers" value="$(arg stopped_controllers)" />
+    <arg name="controllers_to_load" value="$(arg controllers_to_load)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+    <arg name="controller_state_verify_timeout_s" value="$(arg controller_state_verify_timeout_s)" />
+    <arg name="controller_state_verify_period_s" value="$(arg controller_state_verify_period_s)" />
+  </include>
+
+  <!-- mur620d RIGHT -->
+  <include file="$(find teleoperation)/launch/ensure_arm_controller_configuration.launch">
+    <arg name="robot_ns" value="$(arg robot_ns_2)" />
+    <arg name="arm_ns" value="$(arg arm_ns_r)" />
+    <arg name="running_controllers" value="$(arg running_controllers)" />
+    <arg name="stopped_controllers" value="$(arg stopped_controllers)" />
+    <arg name="controllers_to_load" value="$(arg controllers_to_load)" />
+    <arg name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <arg name="strictness" value="$(arg strictness)" />
+    <arg name="start_asap" value="$(arg start_asap)" />
+    <arg name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <arg name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+    <arg name="controller_state_verify_timeout_s" value="$(arg controller_state_verify_timeout_s)" />
+    <arg name="controller_state_verify_period_s" value="$(arg controller_state_verify_period_s)" />
+  </include>
+</launch>

@@ -309,14 +309,14 @@ home_return:
   force_activity_threshold: 2.0    # N
   torque_activity_threshold: 0.25  # N·m
   blend_in_time_s: 1.0
-  stiffness_linear: 15.0           # N/m
+  stiffness_linear: 45.0           # N/m
   damping_linear: 18.0             # N·s/m
-  integral_linear: 1.5             # N/(m·s)
+  integral_linear: 10             # N/(m·s)
   integral_linear_clamp: 0.10      # clamp on integrated position error norm
   max_force: 15.0                  # N
-  stiffness_angular: 0.8           # N·m/rad
-  damping_angular: 0.25            # N·m·s/rad
-  integral_angular: 0.08           # N·m/(rad·s)
+  stiffness_angular: 1.5           # N·m/rad
+  damping_angular: 0.3            # N·m·s/rad
+  integral_angular: 0.2           # N·m/(rad·s)
   integral_angular_clamp: 0.30     # clamp on integrated orientation error norm
   max_torque: 0.5                  # N·m
 

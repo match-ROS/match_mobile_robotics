@@ -310,10 +310,10 @@ slave_actual_pose_topic: ""
 # confirm `home_reached`; stale feedback keeps the status at `active`.
 home_return:
   enabled: true
-  timeout_s: 3.0
+  timeout_s: 5.0
   force_activity_threshold: 2.0    # N
   torque_activity_threshold: 0.25  # N·m
-  blend_in_time_s: 1.0
+  blend_in_time_s: 3.0
   stiffness_linear: 45.0           # N/m
   damping_linear: 18.0             # N·s/m
   integral_linear: 10             # N/(m·s)

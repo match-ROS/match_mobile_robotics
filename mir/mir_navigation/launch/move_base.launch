@@ -13,7 +13,8 @@
        
         <!-- planner params -->
         <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/$(arg global_planner).yaml" command="load" />
-        <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" command="load" subst_value="true" />
+        <!-- <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" command="load" subst_value="true" /> -->
+        <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" command="load" />
         
         <!-- global costmap params -->
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />

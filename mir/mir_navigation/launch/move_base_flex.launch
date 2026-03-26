@@ -29,7 +29,8 @@
         <!-- <rosparam file="$(find mir_navigation)/config/Planner/GlobalPlanner/SBPLatticePlanner.yaml" command="load" /> -->
         <!-- <rosparam file="$(find mir_navigation)/config/Planner/LocalPlanner/$(arg local_planner).yaml" command="load" /> -->
         <!-- Load param file for the local path planner. User must define the path to the config file. -->
-        <rosparam file="$(arg local_planner_config)" command="load" subst_value="true"/>
+        <!-- <rosparam file="$(arg local_planner_config)" command="load" subst_value="true"/> -->
+        <rosparam file="$(arg local_planner_config)" command="load"/>
 
         <!-- global costmap params -->
         <rosparam file="$(find mir_navigation)/config/Costmap/costmap_common_params.yaml" command="load" ns="global_costmap" subst_value="true" />

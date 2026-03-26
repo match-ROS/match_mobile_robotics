@@ -7,8 +7,8 @@ controllers:
     type: 'dwa_local_planner/DWAPlannerROS'
   # - name: 'EBandPlannerROS'
   #   type: 'eband_local_planner/EBandPlannerROS'
-  # - name: 'PoseFollower'  # Commented out: no mbf adapter available
-  #   type: 'pose_follower/PoseFollower'
+  - name: 'PoseFollower'  # Commented out: no mbf adapter available
+    type: 'pose_follower/PoseFollower'
   - name: 'TebLocalPlannerROS'
     type: 'teb_local_planner/TebLocalPlannerROS'
   - name: 'TrajectoryPlannerROS'

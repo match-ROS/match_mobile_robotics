@@ -57,4 +57,5 @@ DWAPlannerROS:
   publish_cost_grid_pc: true
   # IMPORTANT: must match the local costmap global_frame (which is prefixed in multi-robot setups).
   # This file is loaded with `subst_value="true"` from the launch files.
-  global_frame_id: $(arg tf_prefix_slashed)odom  # or <robot namespace>/odom_comb
+  #global_frame_id: $(arg tf_prefix_slashed)odom  # or <robot namespace>/odom_comb
+  global_frame_id: /odom  # or <robot namespace>/odom_comb

@@ -187,8 +187,8 @@ class UR_twist_limiter():
         ddynrec = DDynamicReconfigure("example_dyn_rec")
 
         # Add variables (name, description, default value, min, max, edit_method)
-        ddynrec.add_variable("lin_vel_limit", "float/double variable", 0.2, 0, 0.4)
-        ddynrec.add_variable("angular_vel_limit", "float/double variable", 0.3, 0, 0.6)
+        ddynrec.add_variable("lin_vel_limit", "float/double variable", 0.6, 0, 0.7)
+        ddynrec.add_variable("angular_vel_limit", "float/double variable", 1.0, 0, 1.5)
         ddynrec.add_variable("lin_acc_limit", "float/double variable", 4.0, 0, 10.0)
         ddynrec.add_variable("angular_acc_limit", "float/double variable", 7.0, 0, 14.0)
         ddynrec.add_variable("lin_jerk_limit", "float/double variable", 0.8, 0, 2.0)

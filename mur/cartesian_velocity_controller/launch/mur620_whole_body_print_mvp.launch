@@ -1,0 +1,49 @@
+<launch>
+  <!-- Whole-body demo controller: path TCP + differential base + optional lifter supervisor. -->
+
+  <arg name="arm" default="left" />
+  <arg name="mur_ns" default="mur620d" />
+  <arg name="config_file" default="$(find cartesian_velocity_controller)/config/whole_body_print_demo.yaml" />
+  <arg name="path_frame" default="map" />
+  <arg name="base_enabled" default="true" />
+  <arg name="lifter_enabled" default="false" />
+  <arg name="lifter_command_topic" default="UR10_l/lift_position_command" />
+
+  <arg name="override_global_frame" default="true" />
+  <arg name="auto_load_unsafe_velocity_controllers" default="true" />
+  <arg name="auto_switch_to_velocity" default="true" />
+
+  <include file="$(find cartesian_velocity_controller)/launch/mur620_single_arm_cartesian_velocity_controller.launch">
+    <arg name="arm" value="$(arg arm)" />
+    <arg name="mur_ns" value="$(arg mur_ns)" />
+    <arg name="override_global_frame" value="$(arg override_global_frame)" />
+    <arg name="auto_load_unsafe_velocity_controllers" value="$(arg auto_load_unsafe_velocity_controllers)" />
+    <arg name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
+  </include>
+
+  <arg name="controller_suffix" value="l" if="$(eval arm == 'left')" />
+  <arg name="controller_suffix" value="r" if="$(eval arm == 'right')" />
+  <arg name="lifter_joint" value="left_lift_joint" if="$(eval arm == 'left')" />
+  <arg name="lifter_joint" value="right_lift_joint" if="$(eval arm == 'right')" />
+
+  <group ns="/$(arg mur_ns)">
+    <node pkg="cartesian_velocity_controller"
+          type="whole_body_print_controller_node"
+          name="whole_body_print_controller"
+          output="screen">
+      <rosparam file="$(arg config_file)" command="load" subst_value="true" />
+
+      <param name="path/frame_id" value="$(arg path_frame)" />
+      <param name="base/enabled" type="bool" value="$(arg base_enabled)" />
+      <param name="base/base_frame" value="$(arg mur_ns)/base_link" />
+      <param name="base/cmd_vel_topic" value="cmd_vel" />
+
+      <param name="lifter/enabled" type="bool" value="$(arg lifter_enabled)" />
+      <param name="lifter/joint_name" value="$(arg lifter_joint)" />
+      <param name="lifter/command_topic" value="$(arg lifter_command_topic)" />
+
+      <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+      <param name="ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
+    </node>
+  </group>
+</launch>

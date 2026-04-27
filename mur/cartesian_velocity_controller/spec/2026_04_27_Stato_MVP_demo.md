@@ -14,6 +14,72 @@ Data: 2026-04-27
 
 ## Cosa e' stato implementato
 
+### Whole-body print controller C++
+
+Nuovo nodo:
+
+```text
+src/whole_body_print_controller_node.cpp
+```
+
+Funzioni:
+
+- genera setpoint TCP lungo una polilinea a velocita' costante;
+- pubblica il target TCP verso il controller cartesiano arm-only esistente;
+- calcola un contributo base + lifter con least-squares pesato e regolarizzato;
+- non usa QP;
+- gestisce la base differenziale con soli due comandi: `linear.x` e `angular.z`;
+- non genera mai `linear.y` per la base;
+- usa il braccio come compensatore del residuo non eseguibile da base/lifter;
+- espone servizi `pause`, `resume`, `restart`, `stop`;
+- pubblica marker RViz del path e del setpoint corrente.
+
+Il solver usa una matrice cinematica demo:
+
+```text
+u = [v_base_x, omega_base_z, v_lifter_virtual]
+```
+
+con colonne:
+
+- `v_base_x`: asse x della base espresso nel frame path;
+- `omega_base_z`: contributo planare `z x (tcp - base)`;
+- `v_lifter_virtual`: asse z verticale.
+
+La parte null-space non e' gerarchica pura, ma e' approssimata con regolarizzazione verso obiettivi secondari:
+
+- tenere il TCP in una zona comoda davanti alla base;
+- ridurre errore laterale ruotando la base;
+- allineare lentamente la base alla direzione del path;
+- muovere il lifter lentamente e solo se abilitato.
+
+### Config whole-body
+
+Nuovo file:
+
+```text
+config/whole_body_print_demo.yaml
+```
+
+Contiene path, tracking, solver, parametri base e parametri lifter.
+
+### Launch whole-body
+
+Nuovo launch:
+
+```text
+launch/mur620_whole_body_print_mvp.launch
+```
+
+Avvia:
+
+- controller cartesiano single-arm esistente;
+- nuovo nodo C++ `whole_body_print_controller`;
+- default `arm:=left`;
+- default `mur_ns:=mur620d`;
+- default `base_enabled:=true`;
+- default `lifter_enabled:=false`.
+
 ### Trajectory manager TCP
 
 Nuovo nodo:
@@ -86,16 +152,28 @@ Braccio + base C-light:
 roslaunch cartesian_velocity_controller mur620_print_path_mvp.launch arm:=left mur_ns:=mur620d path_frame:=map base_control_enabled:=true
 ```
 
+Whole-body C++ braccio + base:
+
+```bash
+roslaunch cartesian_velocity_controller mur620_whole_body_print_mvp.launch arm:=left mur_ns:=mur620d path_frame:=map
+```
+
+Whole-body C++ con lifter abilitato:
+
+```bash
+roslaunch cartesian_velocity_controller mur620_whole_body_print_mvp.launch arm:=left mur_ns:=mur620d path_frame:=map lifter_enabled:=true lifter_command_topic:=<topic_reale_lifter>
+```
+
 Avvio traiettoria:
 
 ```bash
-rosservice call /mur620d/tcp_path_trajectory_manager/resume "{}"
+rosservice call /mur620d/whole_body_print_controller/resume "{}"
 ```
 
 Pausa:
 
 ```bash
-rosservice call /mur620d/tcp_path_trajectory_manager/pause "{}"
+rosservice call /mur620d/whole_body_print_controller/pause "{}"
 ```
 
 ## Limiti noti
@@ -105,4 +183,5 @@ rosservice call /mur620d/tcp_path_trajectory_manager/pause "{}"
 - Il TCP puo' avere errore di inseguimento se il braccio satura o la base si muove troppo lentamente.
 - Non c'e' ancora gestione lifter.
 - Non c'e' ancora obstacle avoidance laser integrata.
-- Non c'e' ancora solver whole-body cinematico completo.
+- Il lifter e' implementato come supervisor a posizione con topic `std_msgs/Float64`, ma il topic reale va verificato sul robot.
+- Il solver whole-body e' cinematico/demo: niente QP, niente vincoli duri, saturazioni applicate dopo il least-squares.

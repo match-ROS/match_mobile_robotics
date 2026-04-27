@@ -1,0 +1,49 @@
+start_paused: true
+rate: 20.0
+
+path:
+  frame_id: "map"
+  speed: 0.03
+  loop: false
+  orientation_rpy: [0.0, 0.0, 0.0]
+  points:
+    - [0.40, 0.00, 0.85]
+    - [0.60, 0.00, 0.85]
+    - [0.60, 0.20, 0.85]
+    - [0.40, 0.20, 0.85]
+    - [0.40, 0.00, 0.85]
+
+tracking:
+  kp_position: 0.8
+
+solver:
+  damping: 0.02
+  task_weight_z: 0.7
+
+base:
+  enabled: true
+  cmd_vel_topic: "cmd_vel"
+  base_frame: "mur620d/base_link"
+  preferred_tcp_x: 0.65
+  preferred_tcp_y: 0.0
+  max_linear_velocity: 0.08
+  max_angular_velocity: 0.25
+  weight_linear: 4.0
+  weight_angular: 2.0
+  k_preferred_x: 0.25
+  k_lateral: 0.6
+  k_heading: 0.25
+  allow_reverse: false
+  align_to_path: true
+  tf_timeout: 0.05
+
+lifter:
+  enabled: false
+  joint_name: "left_lift_joint"
+  joint_state_topic: "joint_states"
+  command_topic: "UR10_l/lift_position_command"
+  min_position: 0.0
+  max_position: 0.5
+  max_velocity: 0.015
+  weight: 8.0
+  k_position: 0.5

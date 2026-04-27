@@ -257,6 +257,19 @@ target_link_libraries(cartesian_velocity_node
   ${catkin_LIBRARIES}
 )
 
+add_executable(whole_body_print_controller_node
+  src/whole_body_print_controller_node.cpp
+)
+
+add_dependencies(whole_body_print_controller_node
+  ${catkin_EXPORTED_TARGETS}
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+)
+
+target_link_libraries(whole_body_print_controller_node
+  ${catkin_LIBRARIES}
+)
+
 # =============================================================================
 # Python Scripts Installation
 # =============================================================================

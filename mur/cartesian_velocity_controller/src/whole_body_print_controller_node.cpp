@@ -20,6 +20,7 @@
 #include <xmlrpcpp/XmlRpcValue.h>
 
 #include "cartesian_velocity_controller/EndEffectorState.h"
+#include "cartesian_velocity_controller/WholeBodyPrintDebug.h"
 
 namespace
 {
@@ -53,6 +54,24 @@ geometry_msgs::Quaternion toMsg(const Eigen::Quaterniond& q)
   msg.y = q.y();
   msg.z = q.z();
   msg.w = q.w();
+  return msg;
+}
+
+geometry_msgs::Point pointToMsg(const Eigen::Vector3d& p)
+{
+  geometry_msgs::Point msg;
+  msg.x = p.x();
+  msg.y = p.y();
+  msg.z = p.z();
+  return msg;
+}
+
+geometry_msgs::Vector3 vectorToMsg(const Eigen::Vector3d& v)
+{
+  geometry_msgs::Vector3 msg;
+  msg.x = v.x();
+  msg.y = v.y();
+  msg.z = v.z();
   return msg;
 }
 
@@ -220,6 +239,7 @@ public:
 
     target_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(target_pose_topic_, 1);
     base_pub_ = nh_.advertise<geometry_msgs::Twist>(base_cmd_vel_topic_, 1);
+    debug_pub_ = pnh_.advertise<cartesian_velocity_controller::WholeBodyPrintDebug>("debug", 10);
     if (lifter_enabled_)
     {
       lifter_pub_ = nh_.advertise<std_msgs::Float64>(lifter_command_topic_, 1);
@@ -268,6 +288,11 @@ private:
 
     pnh_.param("rate", rate_hz_, 20.0);
     pnh_.param("tracking/kp_position", kp_position_, 0.8);
+    pnh_.param("tracking/arm_full_x_error", arm_full_x_error_, 0.15);
+    pnh_.param("tracking/arm_full_y_error", arm_full_y_error_, 0.12);
+    pnh_.param("tracking/arm_start_x_error", arm_start_x_error_, 0.45);
+    pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
+    pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
     pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_l/target_pose");
     pnh_.param<std::string>("ee_state_topic", ee_state_topic_, "cartesian_velocity_controller_l/end_effector_state");
 
@@ -286,6 +311,7 @@ private:
     pnh_.param("base/allow_reverse", base_allow_reverse_, false);
     pnh_.param("base/align_to_path", base_align_to_path_, true);
     pnh_.param("base/tf_timeout", base_tf_timeout_, 0.05);
+    pnh_.param("base/target_filter_tau", base_target_filter_tau_, 1.0);
 
     pnh_.param("lifter/enabled", lifter_enabled_, false);
     pnh_.param<std::string>("lifter/joint_name", lifter_joint_name_, "left_lift_joint");
@@ -304,6 +330,7 @@ private:
   void eeStateCb(const cartesian_velocity_controller::EndEffectorState::ConstPtr& msg)
   {
     current_tcp_ = Eigen::Vector3d(msg->position.x, msg->position.y, msg->position.z);
+    current_tcp_frame_ = msg->header.frame_id;
     have_tcp_ = true;
   }
 
@@ -394,21 +421,34 @@ private:
     if (!has_started_ || stopped_)
     {
       publishZeroBase();
+      publishDebug(now,
+                   stateString(),
+                   path_.sample(s_),
+                   path_.sample(s_),
+                   currentTcpInPath(path_.sample(s_)),
+                   Eigen::Vector3d::Zero(),
+                   0.0);
       return;
     }
 
     const Eigen::Vector3d target = path_.sample(s_);
     const Eigen::Vector3d tangent = path_.tangent(s_);
-    publishTargetPose(target, now);
+    updateBaseTrackingTarget(target, dt);
+
+    const Eigen::Vector3d tcp = currentTcpInPath(target);
+    const Eigen::Vector3d target_in_base = targetInBase(target);
+    const double arm_scale = computeArmTrackingScale(target_in_base);
+    const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
+
+    publishTargetPose(arm_target, now);
     publishCurrentMarker(target, now);
 
     if (!paused_ && !done_)
     {
-      const Eigen::Vector3d tcp = have_tcp_ ? current_tcp_ : target;
-      Eigen::Vector3d desired_linear = speed_ * tangent + kp_position_ * (target - tcp);
+      Eigen::Vector3d desired_linear = speed_ * tangent + kp_position_ * (base_tracking_target_ - tcp);
       desired_linear.z() *= task_weight_z_;
 
-      Eigen::VectorXd u = solveBaseLifter(desired_linear, tcp, tangent, dt);
+      Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
       publishBaseCommand(u);
       publishLifterCommand(u, dt);
     }
@@ -416,10 +456,12 @@ private:
     {
       publishZeroBase();
     }
+
+    publishDebug(now, stateString(), target, arm_target, tcp, target_in_base, arm_scale);
   }
 
   Eigen::VectorXd solveBaseLifter(const Eigen::Vector3d& desired_linear,
-                                  const Eigen::Vector3d& tcp,
+                                  const Eigen::Vector3d& base_reference_point,
                                   const Eigen::Vector3d& tangent,
                                   double dt)
   {
@@ -460,12 +502,12 @@ private:
                                            tf_path_base.transform.rotation.y,
                                            tf_path_base.transform.rotation.z);
       const Eigen::Vector3d base_x = q_path_base.normalized() * Eigen::Vector3d::UnitX();
-      const Eigen::Vector3d r = tcp - base_pos;
+      const Eigen::Vector3d r = base_reference_point - base_pos;
       const Eigen::Vector3d yaw_col(-r.y(), r.x(), 0.0);
       J.col(c) = base_x;
       J.col(c + 1) = yaw_col;
 
-      Eigen::Vector3d tcp_in_base = transformPoint(tf_base_path, tcp);
+      Eigen::Vector3d tcp_in_base = transformPoint(tf_base_path, base_reference_point);
       const Eigen::Vector3d tangent_in_base = rotateVector(tf_base_path, tangent);
       const double x_error = tcp_in_base.x() - base_preferred_x_;
       const double y_error = tcp_in_base.y() - base_preferred_y_;
@@ -511,11 +553,13 @@ private:
     c = 0;
     if (base_enabled_)
     {
+      last_base_linear_saturated_ = std::abs(u(c)) > base_max_linear_;
       u(c) = clamp(u(c), -base_max_linear_, base_max_linear_);
       if (!base_allow_reverse_)
       {
         u(c) = std::max(0.0, u(c));
       }
+      last_base_angular_saturated_ = std::abs(u(c + 1)) > base_max_angular_;
       u(c + 1) = clamp(u(c + 1), -base_max_angular_, base_max_angular_);
       c += 2;
     }
@@ -527,8 +571,97 @@ private:
       {
         u(c) = 0.0;
       }
+      last_lifter_velocity_command_ = u(c);
     }
     return u;
+  }
+
+  Eigen::Vector3d currentTcpInPath(const Eigen::Vector3d& fallback)
+  {
+    if (!have_tcp_)
+    {
+      return fallback;
+    }
+    if (current_tcp_frame_.empty() || current_tcp_frame_ == path_frame_)
+    {
+      return current_tcp_;
+    }
+    try
+    {
+      const geometry_msgs::TransformStamped tf =
+          tf_buffer_.lookupTransform(path_frame_, current_tcp_frame_, ros::Time(0), ros::Duration(base_tf_timeout_));
+      return transformPoint(tf, current_tcp_);
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE(2.0, "TCP feedback TF failed (%s -> %s): %s",
+                        current_tcp_frame_.c_str(), path_frame_.c_str(), ex.what());
+      return fallback;
+    }
+  }
+
+  Eigen::Vector3d targetInBase(const Eigen::Vector3d& target)
+  {
+    if (!base_enabled_)
+    {
+      return Eigen::Vector3d::Zero();
+    }
+    try
+    {
+      const geometry_msgs::TransformStamped tf =
+          tf_buffer_.lookupTransform(base_frame_, path_frame_, ros::Time(0), ros::Duration(base_tf_timeout_));
+      last_target_in_base_ = transformPoint(tf, target);
+      return last_target_in_base_;
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE(2.0, "Target-in-base TF failed (%s -> %s): %s",
+                        path_frame_.c_str(), base_frame_.c_str(), ex.what());
+      return last_target_in_base_;
+    }
+  }
+
+  double computeArmTrackingScale(const Eigen::Vector3d& target_in_base)
+  {
+    if (!base_enabled_)
+    {
+      base_in_tracking_zone_ = true;
+      return 1.0;
+    }
+
+    const double dx = std::abs(target_in_base.x() - base_preferred_x_);
+    const double dy = std::abs(target_in_base.y() - base_preferred_y_);
+    const double full_x = std::max(1e-6, arm_full_x_error_);
+    const double full_y = std::max(1e-6, arm_full_y_error_);
+    const double start_x = std::max(full_x + 1e-6, arm_start_x_error_);
+    const double start_y = std::max(full_y + 1e-6, arm_start_y_error_);
+
+    base_in_tracking_zone_ = (dx <= full_x && dy <= full_y);
+    if (base_in_tracking_zone_)
+    {
+      return 1.0;
+    }
+    if (dx >= start_x || dy >= start_y)
+    {
+      return clamp(arm_far_scale_, 0.0, 1.0);
+    }
+
+    const double rx = std::max(0.0, (dx - full_x) / (start_x - full_x));
+    const double ry = std::max(0.0, (dy - full_y) / (start_y - full_y));
+    const double blend = clamp(std::max(rx, ry), 0.0, 1.0);
+    return clamp(1.0 - blend * (1.0 - arm_far_scale_), 0.0, 1.0);
+  }
+
+  void updateBaseTrackingTarget(const Eigen::Vector3d& target, double dt)
+  {
+    if (!base_tracking_target_initialized_ || base_target_filter_tau_ <= 1e-6 || dt <= 0.0)
+    {
+      base_tracking_target_ = target;
+      base_tracking_target_initialized_ = true;
+      return;
+    }
+    const double alpha = clamp(dt / (base_target_filter_tau_ + dt), 0.0, 1.0);
+    base_tracking_target_ += alpha * (target - base_tracking_target_);
   }
 
   Eigen::Vector3d rotateVector(const geometry_msgs::TransformStamped& tf, const Eigen::Vector3d& v) const
@@ -559,6 +692,7 @@ private:
     geometry_msgs::Twist cmd;
     cmd.linear.x = u.size() >= 1 ? u(0) : 0.0;
     cmd.angular.z = u.size() >= 2 ? u(1) : 0.0;
+    last_base_command_ = cmd;
     base_pub_.publish(cmd);
   }
 
@@ -583,7 +717,10 @@ private:
   {
     if (base_enabled_)
     {
-      base_pub_.publish(geometry_msgs::Twist());
+      last_base_command_ = geometry_msgs::Twist();
+      last_base_linear_saturated_ = false;
+      last_base_angular_saturated_ = false;
+      base_pub_.publish(last_base_command_);
     }
   }
 
@@ -648,6 +785,59 @@ private:
     current_marker_pub_.publish(marker);
   }
 
+  std::string stateString() const
+  {
+    if (stopped_) return "stopped";
+    if (!has_started_) return "idle";
+    if (paused_) return "paused";
+    if (done_) return "done";
+    return "running";
+  }
+
+  void publishDebug(const ros::Time& stamp,
+                    const std::string& state,
+                    const Eigen::Vector3d& target,
+                    const Eigen::Vector3d& arm_target,
+                    const Eigen::Vector3d& tcp,
+                    const Eigen::Vector3d& target_in_base,
+                    double arm_scale)
+  {
+    if (debug_pub_.getNumSubscribers() == 0)
+    {
+      return;
+    }
+
+    cartesian_velocity_controller::WholeBodyPrintDebug msg;
+    msg.header.stamp = stamp;
+    msg.header.frame_id = path_frame_;
+    msg.state = state;
+    msg.path_frame = path_frame_;
+    msg.base_frame = base_frame_;
+    msg.path_s = s_;
+    msg.path_length = path_.totalLength();
+    msg.path_progress = path_.totalLength() > 1e-9 ? clamp(s_ / path_.totalLength(), 0.0, 1.0) : 0.0;
+    msg.target_position = pointToMsg(target);
+    msg.arm_target_position = pointToMsg(arm_target);
+    msg.current_tcp_position = pointToMsg(tcp);
+    msg.target_in_base = pointToMsg(target_in_base);
+    msg.tcp_error = vectorToMsg(target - tcp);
+    msg.arm_tracking_scale = arm_scale;
+    msg.base_enabled = base_enabled_;
+    msg.base_tf_ok = base_tf_ok_;
+    msg.base_in_tracking_zone = base_in_tracking_zone_;
+    msg.base_linear_saturated = last_base_linear_saturated_;
+    msg.base_angular_saturated = last_base_angular_saturated_;
+    msg.base_command = last_base_command_;
+    msg.lifter_enabled = lifter_enabled_;
+    msg.lifter_have_state = have_lifter_;
+    msg.lifter_position = current_lifter_;
+    msg.lifter_target = lifter_target_;
+    msg.lifter_velocity_command = last_lifter_velocity_command_;
+    msg.preferred_tcp_x = base_preferred_x_;
+    msg.preferred_tcp_y = base_preferred_y_;
+    debug_pub_.publish(msg);
+  }
+
   ros::NodeHandle nh_;
   ros::NodeHandle pnh_;
   tf2_ros::Buffer tf_buffer_;
@@ -658,6 +848,7 @@ private:
   ros::Publisher lifter_pub_;
   ros::Publisher path_marker_pub_;
   ros::Publisher current_marker_pub_;
+  ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
   ros::ServiceServer pause_srv_;
@@ -682,7 +873,13 @@ private:
   std::string target_pose_topic_;
   std::string ee_state_topic_;
   double kp_position_{0.8};
+  double arm_full_x_error_{0.15};
+  double arm_full_y_error_{0.12};
+  double arm_start_x_error_{0.45};
+  double arm_start_y_error_{0.35};
+  double arm_far_scale_{0.0};
   Eigen::Vector3d current_tcp_{Eigen::Vector3d::Zero()};
+  std::string current_tcp_frame_;
   bool have_tcp_{false};
 
   bool base_enabled_{true};
@@ -698,9 +895,17 @@ private:
   double base_k_lateral_{0.6};
   double base_k_heading_{0.25};
   double base_tf_timeout_{0.05};
+  double base_target_filter_tau_{1.0};
   bool base_allow_reverse_{false};
   bool base_align_to_path_{true};
   bool base_tf_ok_{true};
+  bool base_in_tracking_zone_{false};
+  bool base_tracking_target_initialized_{false};
+  bool last_base_linear_saturated_{false};
+  bool last_base_angular_saturated_{false};
+  Eigen::Vector3d base_tracking_target_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d last_target_in_base_{Eigen::Vector3d::Zero()};
+  geometry_msgs::Twist last_base_command_;
 
   bool lifter_enabled_{false};
   std::string lifter_joint_name_;
@@ -713,6 +918,7 @@ private:
   double lifter_k_position_{0.5};
   double current_lifter_{0.0};
   double lifter_target_{0.0};
+  double last_lifter_velocity_command_{0.0};
   bool have_lifter_{false};
   bool lifter_target_initialized_{false};
 

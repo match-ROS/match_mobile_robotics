@@ -1,0 +1,32 @@
+std_msgs/Header header
+
+string state
+string path_frame
+string base_frame
+
+float64 path_s
+float64 path_length
+float64 path_progress
+
+geometry_msgs/Point target_position
+geometry_msgs/Point arm_target_position
+geometry_msgs/Point current_tcp_position
+geometry_msgs/Point target_in_base
+geometry_msgs/Vector3 tcp_error
+
+float64 arm_tracking_scale
+bool base_enabled
+bool base_tf_ok
+bool base_in_tracking_zone
+bool base_linear_saturated
+bool base_angular_saturated
+geometry_msgs/Twist base_command
+
+bool lifter_enabled
+bool lifter_have_state
+float64 lifter_position
+float64 lifter_target
+float64 lifter_velocity_command
+
+float64 preferred_tcp_x
+float64 preferred_tcp_y

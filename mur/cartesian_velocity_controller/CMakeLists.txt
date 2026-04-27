@@ -45,6 +45,7 @@ add_message_files(
   EndEffectorState.msg
   PipelineDebug.msg
   JointVelocityFeedback.msg
+  WholeBodyPrintDebug.msg
 )
 
 add_service_files(

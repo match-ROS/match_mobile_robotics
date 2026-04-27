@@ -15,6 +15,15 @@ path:
 
 tracking:
   kp_position: 0.8
+  # Zone allocation between base and arm.
+  # Errors are computed on target_position expressed in base/base_frame.
+  # Inside full_* the arm tracks the path target fully.
+  # Outside start_* the arm target is held/limited and the base does coarse positioning.
+  arm_full_x_error: 0.15
+  arm_full_y_error: 0.12
+  arm_start_x_error: 0.45
+  arm_start_y_error: 0.35
+  arm_far_scale: 0.0
 
 solver:
   damping: 0.02
@@ -24,6 +33,8 @@ base:
   enabled: true
   cmd_vel_topic: "cmd_vel"
   base_frame: "mur620d/base_link"
+  # Desired path target position expressed in base_frame.
+  # x is forward/backward, y is lateral left/right in the robot base frame.
   preferred_tcp_x: 0.65
   preferred_tcp_y: 0.0
   max_linear_velocity: 0.08
@@ -36,6 +47,7 @@ base:
   allow_reverse: false
   align_to_path: true
   tf_timeout: 0.05
+  target_filter_tau: 1.0
 
 lifter:
   enabled: false

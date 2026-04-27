@@ -30,9 +30,11 @@ Funzioni:
 - non usa QP;
 - gestisce la base differenziale con soli due comandi: `linear.x` e `angular.z`;
 - non genera mai `linear.y` per la base;
-- usa il braccio come compensatore del residuo non eseguibile da base/lifter;
+- usa una allocazione per zone tra base e braccio;
+- usa il braccio come compensatore fine quando il target e' nella zona utile;
 - espone servizi `pause`, `resume`, `restart`, `stop`;
-- pubblica marker RViz del path e del setpoint corrente.
+- pubblica marker RViz del path e del setpoint corrente;
+- pubblica debug strutturato su `~debug`.
 
 Il solver usa una matrice cinematica demo:
 
@@ -52,6 +54,30 @@ La parte null-space non e' gerarchica pura, ma e' approssimata con regolarizzazi
 - ridurre errore laterale ruotando la base;
 - allineare lentamente la base alla direzione del path;
 - muovere il lifter lentamente e solo se abilitato.
+
+Allocazione base/braccio:
+
+- la posizione desiderata del target rispetto alla base e' definita nel frame `base/base_frame`, solidale con il robot;
+- i parametri `base/preferred_tcp_x` e `base/preferred_tcp_y` sono quindi espressi in `mur620d/base_link` nel setup default;
+- `x` e' avanti/dietro rispetto alla base;
+- `y` e' laterale sinistra/destra rispetto alla base;
+- se il target e' lontano dalla zona preferita, la base fa il posizionamento grossolano e il target inviato al braccio viene limitato/tenuto vicino alla posa corrente;
+- quando il target entra nella zona utile, il braccio insegue il target completo;
+- se il target si muove, la base usa un target filtrato piu' lento mentre il braccio usa il target istantaneo quando e' in zona.
+
+Debug whole-body:
+
+```text
+/mur620d/whole_body_print_controller/debug
+```
+
+Messaggio:
+
+```text
+cartesian_velocity_controller/WholeBodyPrintDebug
+```
+
+Contiene stato, progress path, target TCP, target inviato al braccio, TCP corrente, target espresso nel frame base, scala tracking braccio, comando base, saturazioni e stato lifter.
 
 ### Config whole-body
 

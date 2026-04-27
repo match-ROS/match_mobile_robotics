@@ -265,6 +265,7 @@ catkin_install_python(PROGRAMS
   scripts/ensure_mur620_dual_arm_velocity_controllers.py
   scripts/ensure_mur620_single_arm_velocity_controller.py
   scripts/print_jacobian.py
+  scripts/tcp_path_trajectory_manager.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -278,4 +279,3 @@ install(DIRECTORY launch/
 install(DIRECTORY config/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/config
 )
-

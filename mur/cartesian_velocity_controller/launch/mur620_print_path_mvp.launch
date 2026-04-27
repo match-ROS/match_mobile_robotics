@@ -1,0 +1,50 @@
+<launch>
+  <!--
+    MVP "stampa 3D" path tracking:
+    - launches the existing single-arm Cartesian velocity controller
+    - publishes constant-speed TCP setpoints from a simple YAML/CSV path
+
+    Example:
+      roslaunch cartesian_velocity_controller mur620_print_path_mvp.launch arm:=left mur_ns:=mur620d path_frame:=map
+  -->
+
+  <arg name="arm" default="left" />
+  <arg name="mur_ns" default="mur620d" />
+  <arg name="path_file" default="$(find cartesian_velocity_controller)/config/print_path_demo.yaml" />
+  <arg name="path_frame" default="map" />
+  <arg name="speed" default="0.03" />
+  <arg name="rate" default="20.0" />
+  <arg name="loop" default="false" />
+  <arg name="start_paused" default="true" />
+
+  <!-- Controller frame override is useful on the full MUR robot. -->
+  <arg name="override_global_frame" default="true" />
+  <arg name="auto_load_unsafe_velocity_controllers" default="true" />
+  <arg name="auto_switch_to_velocity" default="true" />
+
+  <include file="$(find cartesian_velocity_controller)/launch/mur620_single_arm_cartesian_velocity_controller.launch">
+    <arg name="arm" value="$(arg arm)" />
+    <arg name="mur_ns" value="$(arg mur_ns)" />
+    <arg name="override_global_frame" value="$(arg override_global_frame)" />
+    <arg name="auto_load_unsafe_velocity_controllers" value="$(arg auto_load_unsafe_velocity_controllers)" />
+    <arg name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
+  </include>
+
+  <arg name="controller_suffix" value="l" if="$(eval arm == 'left')" />
+  <arg name="controller_suffix" value="r" if="$(eval arm == 'right')" />
+
+  <group ns="/$(arg mur_ns)">
+    <node pkg="cartesian_velocity_controller"
+          type="tcp_path_trajectory_manager.py"
+          name="tcp_path_trajectory_manager"
+          output="screen">
+      <param name="path_file" value="$(arg path_file)" />
+      <param name="frame_id" value="$(arg path_frame)" />
+      <param name="speed" type="double" value="$(arg speed)" />
+      <param name="rate" type="double" value="$(arg rate)" />
+      <param name="loop" type="bool" value="$(arg loop)" />
+      <param name="start_paused" type="bool" value="$(arg start_paused)" />
+      <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+    </node>
+  </group>
+</launch>

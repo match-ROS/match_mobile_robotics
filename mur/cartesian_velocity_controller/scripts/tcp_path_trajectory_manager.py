@@ -7,8 +7,9 @@ import os
 from typing import List, Optional, Sequence, Tuple
 
 import rospy
+import tf2_ros
 import yaml
-from geometry_msgs.msg import Point, PoseStamped, Quaternion
+from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist
 from std_msgs.msg import Float64
 from std_srvs.srv import Trigger, TriggerResponse
 from visualization_msgs.msg import Marker
@@ -96,6 +97,43 @@ def _distance(a: Point3, b: Point3) -> float:
     return math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 + (b[2] - a[2]) ** 2)
 
 
+def _clamp(value: float, lower: float, upper: float) -> float:
+    return min(max(value, lower), upper)
+
+
+def _normalize_angle(angle: float) -> float:
+    return math.atan2(math.sin(angle), math.cos(angle))
+
+
+def _rotate_vector(q: Quaternion, v: Point3) -> Point3:
+    # Quaternion-vector multiplication implemented explicitly to keep the node dependency-light.
+    x, y, z, w = q.x, q.y, q.z, q.w
+    n = math.sqrt(x * x + y * y + z * z + w * w)
+    if n <= 1e-12:
+        return v
+    x, y, z, w = x / n, y / n, z / n, w / n
+
+    tx = 2.0 * (y * v[2] - z * v[1])
+    ty = 2.0 * (z * v[0] - x * v[2])
+    tz = 2.0 * (x * v[1] - y * v[0])
+
+    return (
+        v[0] + w * tx + (y * tz - z * ty),
+        v[1] + w * ty + (z * tx - x * tz),
+        v[2] + w * tz + (x * ty - y * tx),
+    )
+
+
+def _transform_point(transform, point: Point3) -> Point3:
+    rotated = _rotate_vector(transform.transform.rotation, point)
+    translation = transform.transform.translation
+    return (
+        rotated[0] + translation.x,
+        rotated[1] + translation.y,
+        rotated[2] + translation.z,
+    )
+
+
 class PolylinePath:
     def __init__(self, points: Sequence[Point3]):
         if len(points) < 2:
@@ -131,6 +169,26 @@ class PolylinePath:
             remaining -= segment_length
 
         return self.points[-1]
+
+    def tangent(self, distance_along_path: float) -> Point3:
+        s = min(max(distance_along_path, 0.0), self.total_length)
+        remaining = s
+
+        for a, b, segment_length in self.segments:
+            if remaining <= segment_length:
+                return (
+                    (b[0] - a[0]) / segment_length,
+                    (b[1] - a[1]) / segment_length,
+                    (b[2] - a[2]) / segment_length,
+                )
+            remaining -= segment_length
+
+        a, b, segment_length = self.segments[-1]
+        return (
+            (b[0] - a[0]) / segment_length,
+            (b[1] - a[1]) / segment_length,
+            (b[2] - a[2]) / segment_length,
+        )
 
 
 def _load_csv(path_file: str) -> List[Point3]:
@@ -169,6 +227,22 @@ class TcpPathTrajectoryManager:
         self.hold_final_pose = _as_bool(rospy.get_param("~hold_final_pose", True), "hold_final_pose")
         self.start_paused = _as_bool(rospy.get_param("~start_paused", False), "start_paused")
         self.marker_scale = float(rospy.get_param("~marker_scale", 0.02))
+        self.base_control_enabled = _as_bool(rospy.get_param("~base_control/enabled", False), "base_control/enabled")
+        self.base_frame = str(rospy.get_param("~base_control/base_frame", "base_link"))
+        self.base_cmd_vel_topic = str(rospy.get_param("~base_control/cmd_vel_topic", "cmd_vel"))
+        self.base_preferred_x = float(rospy.get_param("~base_control/preferred_tcp_x", 0.65))
+        self.base_preferred_y = float(rospy.get_param("~base_control/preferred_tcp_y", 0.0))
+        self.base_kx = float(rospy.get_param("~base_control/kx", 0.35))
+        self.base_ky = float(rospy.get_param("~base_control/ky", 0.8))
+        self.base_k_heading = float(rospy.get_param("~base_control/k_heading", 0.4))
+        self.base_max_linear = abs(float(rospy.get_param("~base_control/max_linear_velocity", 0.08)))
+        self.base_max_angular = abs(float(rospy.get_param("~base_control/max_angular_velocity", 0.25)))
+        self.base_x_deadband = abs(float(rospy.get_param("~base_control/x_deadband", 0.05)))
+        self.base_y_deadband = abs(float(rospy.get_param("~base_control/y_deadband", 0.04)))
+        self.base_heading_deadband = abs(float(rospy.get_param("~base_control/heading_deadband", 0.10)))
+        self.base_allow_reverse = _as_bool(rospy.get_param("~base_control/allow_reverse", False), "base_control/allow_reverse")
+        self.base_align_to_path = _as_bool(rospy.get_param("~base_control/align_to_path", True), "base_control/align_to_path")
+        self.base_tf_timeout = float(rospy.get_param("~base_control/tf_timeout", 0.05))
 
         if self.speed <= 0.0:
             raise ValueError("speed must be > 0")
@@ -184,6 +258,13 @@ class TcpPathTrajectoryManager:
         self.progress_pub = rospy.Publisher("~progress", Float64, queue_size=1, latch=True)
         self.path_marker_pub = rospy.Publisher("~path_marker", Marker, queue_size=1, latch=True)
         self.current_marker_pub = rospy.Publisher("~current_marker", Marker, queue_size=1)
+        self.base_cmd_pub = None
+        self.tf_buffer = None
+        self.tf_listener = None
+        if self.base_control_enabled:
+            self.base_cmd_pub = rospy.Publisher(self.base_cmd_vel_topic, Twist, queue_size=1)
+            self.tf_buffer = tf2_ros.Buffer()
+            self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
         self.paused = self.start_paused
         self.stopped = False
@@ -204,6 +285,14 @@ class TcpPathTrajectoryManager:
             self.speed,
             self.frame_id,
         )
+        if self.base_control_enabled:
+            rospy.loginfo(
+                "Base C-light enabled: topic '%s', base_frame '%s', preferred TCP [%.2f, %.2f]",
+                self.base_cmd_vel_topic,
+                self.base_frame,
+                self.base_preferred_x,
+                self.base_preferred_y,
+            )
 
     def _load_path_data(self, path_file: str):
         if path_file.lower().endswith(".csv"):
@@ -227,6 +316,7 @@ class TcpPathTrajectoryManager:
 
     def _pause_cb(self, _req):
         self.paused = True
+        self._publish_zero_base()
         return TriggerResponse(success=True, message="paused")
 
     def _resume_cb(self, _req):
@@ -243,11 +333,13 @@ class TcpPathTrajectoryManager:
         self.paused = self.start_paused
         self.has_started = not self.start_paused
         self.last_time = rospy.Time.now()
+        self._publish_zero_base()
         return TriggerResponse(success=True, message="restarted")
 
     def _stop_cb(self, _req):
         self.stopped = True
         self.paused = True
+        self._publish_zero_base()
         return TriggerResponse(success=True, message="stopped")
 
     def run(self):
@@ -269,10 +361,19 @@ class TcpPathTrajectoryManager:
                         self.distance_offset = self.path.total_length
                         self.done = True
 
+            active_motion = self.has_started and not self.paused and not self.stopped and not self.done
+
             if self.has_started and not self.stopped and (self.hold_final_pose or not self.done):
                 point = self.path.sample(self.distance_offset)
                 self._publish_pose(point, now)
                 self._publish_current_marker(point, now)
+                if active_motion:
+                    tangent = self.path.tangent(self.distance_offset)
+                    self._publish_base_command(point, tangent)
+                else:
+                    self._publish_zero_base()
+            else:
+                self._publish_zero_base()
 
             progress = min(self.distance_offset / self.path.total_length, 1.0)
             self.progress_pub.publish(Float64(data=progress))
@@ -287,6 +388,57 @@ class TcpPathTrajectoryManager:
         msg.pose.position.z = point[2]
         msg.pose.orientation = self.orientation
         self.target_pub.publish(msg)
+
+    def _publish_base_command(self, point: Point3, tangent: Point3):
+        if not self.base_control_enabled or self.base_cmd_pub is None or self.tf_buffer is None:
+            return
+
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.base_frame,
+                self.frame_id,
+                rospy.Time(0),
+                rospy.Duration(self.base_tf_timeout),
+            )
+        except Exception as exc:
+            rospy.logwarn_throttle(
+                2.0,
+                "Base C-light TF failed (%s -> %s): %s",
+                self.frame_id,
+                self.base_frame,
+                exc,
+            )
+            self._publish_zero_base()
+            return
+
+        target_in_base = _transform_point(transform, point)
+        tangent_in_base = _rotate_vector(transform.transform.rotation, tangent)
+
+        x_error = target_in_base[0] - self.base_preferred_x
+        y_error = target_in_base[1] - self.base_preferred_y
+
+        linear = 0.0 if abs(x_error) < self.base_x_deadband else self.base_kx * x_error
+        if not self.base_allow_reverse:
+            linear = max(0.0, linear)
+        linear = _clamp(linear, -self.base_max_linear, self.base_max_linear)
+
+        lateral_term = 0.0 if abs(y_error) < self.base_y_deadband else self.base_ky * y_error
+        heading_term = 0.0
+        if self.base_align_to_path:
+            heading = _normalize_angle(math.atan2(tangent_in_base[1], tangent_in_base[0]))
+            if abs(heading) >= self.base_heading_deadband:
+                heading_term = self.base_k_heading * heading
+
+        angular = _clamp(lateral_term + heading_term, -self.base_max_angular, self.base_max_angular)
+
+        cmd = Twist()
+        cmd.linear.x = linear
+        cmd.angular.z = angular
+        self.base_cmd_pub.publish(cmd)
+
+    def _publish_zero_base(self):
+        if self.base_control_enabled and self.base_cmd_pub is not None:
+            self.base_cmd_pub.publish(Twist())
 
     def _publish_path_marker(self):
         marker = Marker()

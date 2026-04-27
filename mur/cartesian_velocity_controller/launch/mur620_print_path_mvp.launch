@@ -16,6 +16,13 @@
   <arg name="rate" default="20.0" />
   <arg name="loop" default="false" />
   <arg name="start_paused" default="true" />
+  <arg name="base_control_enabled" default="false" />
+  <arg name="base_cmd_vel_topic" default="cmd_vel" />
+  <arg name="base_frame" default="$(arg mur_ns)/base_link" />
+  <arg name="base_preferred_tcp_x" default="0.65" />
+  <arg name="base_preferred_tcp_y" default="0.0" />
+  <arg name="base_max_linear_velocity" default="0.08" />
+  <arg name="base_max_angular_velocity" default="0.25" />
 
   <!-- Controller frame override is useful on the full MUR robot. -->
   <arg name="override_global_frame" default="true" />
@@ -45,6 +52,13 @@
       <param name="loop" type="bool" value="$(arg loop)" />
       <param name="start_paused" type="bool" value="$(arg start_paused)" />
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+      <param name="base_control/enabled" type="bool" value="$(arg base_control_enabled)" />
+      <param name="base_control/cmd_vel_topic" value="$(arg base_cmd_vel_topic)" />
+      <param name="base_control/base_frame" value="$(arg base_frame)" />
+      <param name="base_control/preferred_tcp_x" type="double" value="$(arg base_preferred_tcp_x)" />
+      <param name="base_control/preferred_tcp_y" type="double" value="$(arg base_preferred_tcp_y)" />
+      <param name="base_control/max_linear_velocity" type="double" value="$(arg base_max_linear_velocity)" />
+      <param name="base_control/max_angular_velocity" type="double" value="$(arg base_max_angular_velocity)" />
     </node>
   </group>
 </launch>

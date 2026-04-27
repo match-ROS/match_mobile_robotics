@@ -257,13 +257,17 @@ public:
 
     last_time_ = ros::Time::now();
     publishPathMarker();
-    timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, rate_hz_)),
+    timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
                              &WholeBodyPrintController::timerCb, this);
 
-    ROS_INFO("Whole-body print demo ready: frame=%s length=%.3f m speed=%.3f m/s base=%s lifter=%s",
+    ROS_INFO("Whole-body print demo ready: frame=%s length=%.3f m speed=%.3f m/s rates[path=%.1f base=%.1f lifter=%.1f debug=%.1f] base=%s lifter=%s",
              path_frame_.c_str(),
              path_.totalLength(),
              speed_,
+             path_rate_hz_,
+             base_rate_hz_,
+             lifter_rate_hz_,
+             debug_rate_hz_,
              base_enabled_ ? "enabled" : "disabled",
              lifter_enabled_ ? "enabled" : "disabled");
   }
@@ -286,7 +290,11 @@ private:
     }
     target_orientation_ = rpyToQuat(rpy[0], rpy[1], rpy[2]);
 
-    pnh_.param("rate", rate_hz_, 20.0);
+    pnh_.param("rate", path_rate_hz_, 30.0);
+    pnh_.param("rates/path", path_rate_hz_, path_rate_hz_);
+    pnh_.param("rates/base", base_rate_hz_, 20.0);
+    pnh_.param("rates/lifter", lifter_rate_hz_, 10.0);
+    pnh_.param("rates/debug", debug_rate_hz_, 10.0);
     pnh_.param("tracking/kp_position", kp_position_, 0.8);
     pnh_.param("tracking/arm_full_x_error", arm_full_x_error_, 0.15);
     pnh_.param("tracking/arm_full_y_error", arm_full_y_error_, 0.12);
@@ -449,8 +457,8 @@ private:
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
-      publishBaseCommand(u);
-      publishLifterCommand(u, dt);
+      publishBaseCommand(u, now);
+      publishLifterCommand(u, dt, now);
     }
     else
     {
@@ -682,11 +690,28 @@ private:
     return out;
   }
 
-  void publishBaseCommand(const Eigen::VectorXd& u)
+  bool dueByRate(const ros::Time& now, const ros::Time& last, double rate_hz) const
+  {
+    if (rate_hz <= 0.0)
+    {
+      return false;
+    }
+    if (last.isZero())
+    {
+      return true;
+    }
+    return (now - last).toSec() >= (1.0 / rate_hz);
+  }
+
+  void publishBaseCommand(const Eigen::VectorXd& u, const ros::Time& now)
   {
     if (!base_enabled_ || !base_tf_ok_)
     {
       publishZeroBase();
+      return;
+    }
+    if (!dueByRate(now, last_base_pub_time_, base_rate_hz_))
+    {
       return;
     }
     geometry_msgs::Twist cmd;
@@ -694,11 +719,16 @@ private:
     cmd.angular.z = u.size() >= 2 ? u(1) : 0.0;
     last_base_command_ = cmd;
     base_pub_.publish(cmd);
+    last_base_pub_time_ = now;
   }
 
-  void publishLifterCommand(const Eigen::VectorXd& u, double dt)
+  void publishLifterCommand(const Eigen::VectorXd& u, double dt, const ros::Time& now)
   {
     if (!lifter_enabled_ || !have_lifter_ || !lifter_target_initialized_)
+    {
+      return;
+    }
+    if (!dueByRate(now, last_lifter_pub_time_, lifter_rate_hz_))
     {
       return;
     }
@@ -711,6 +741,7 @@ private:
     std_msgs::Float64 msg;
     msg.data = lifter_target_;
     lifter_pub_.publish(msg);
+    last_lifter_pub_time_ = now;
   }
 
   void publishZeroBase()
@@ -806,6 +837,10 @@ private:
     {
       return;
     }
+    if (!dueByRate(stamp, last_debug_pub_time_, debug_rate_hz_))
+    {
+      return;
+    }
 
     cartesian_velocity_controller::WholeBodyPrintDebug msg;
     msg.header.stamp = stamp;
@@ -836,6 +871,7 @@ private:
     msg.preferred_tcp_x = base_preferred_x_;
     msg.preferred_tcp_y = base_preferred_y_;
     debug_pub_.publish(msg);
+    last_debug_pub_time_ = stamp;
   }
 
   ros::NodeHandle nh_;
@@ -861,7 +897,10 @@ private:
   std::string path_frame_;
   Eigen::Quaterniond target_orientation_{Eigen::Quaterniond::Identity()};
   double speed_{0.03};
-  double rate_hz_{20.0};
+  double path_rate_hz_{30.0};
+  double base_rate_hz_{20.0};
+  double lifter_rate_hz_{10.0};
+  double debug_rate_hz_{10.0};
   double s_{0.0};
   bool loop_{false};
   bool paused_{true};
@@ -906,6 +945,9 @@ private:
   Eigen::Vector3d base_tracking_target_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d last_target_in_base_{Eigen::Vector3d::Zero()};
   geometry_msgs::Twist last_base_command_;
+  ros::Time last_base_pub_time_;
+  ros::Time last_lifter_pub_time_;
+  ros::Time last_debug_pub_time_;
 
   bool lifter_enabled_{false};
   std::string lifter_joint_name_;

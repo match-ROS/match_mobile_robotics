@@ -36,6 +36,20 @@ Funzioni:
 - pubblica marker RViz del path e del setpoint corrente;
 - pubblica debug strutturato su `~debug`.
 
+Frequenze:
+
+- il nodo whole-body aggiorna path e target TCP a `rates/path`;
+- la base viene comandata separatamente a `rates/base`, tipicamente 20-30 Hz;
+- il lifter viene comandato separatamente a `rates/lifter`, tipicamente piu' lento;
+- il debug viene pubblicato a `rates/debug`;
+- il controller cartesiano del braccio resta un nodo separato e puo' girare a frequenza piu' alta usando l'ultimo target TCP ricevuto.
+
+Principio di compensazione:
+
+- base e lifter sono sottosistemi lenti;
+- il braccio e' il sottosistema veloce che deve compensare il residuo e le dinamiche lente di base/lifter;
+- la base non deve essere comandata a 500 Hz, mentre il braccio puo' essere portato a frequenze piu' alte nel proprio controller.
+
 Il solver usa una matrice cinematica demo:
 
 ```text

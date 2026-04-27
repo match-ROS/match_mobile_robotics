@@ -1,5 +1,12 @@
 start_paused: true
-rate: 20.0
+
+rates:
+  # The arm controller runs independently at its own high control_rate.
+  # This node only updates the moving TCP reference and slow subsystems.
+  path: 30.0
+  base: 20.0
+  lifter: 10.0
+  debug: 10.0
 
 path:
   frame_id: "map"

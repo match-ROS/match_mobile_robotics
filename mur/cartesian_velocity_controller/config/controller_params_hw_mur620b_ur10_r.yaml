@@ -56,7 +56,7 @@ controller_manager_ns: "controller_manager"
 # =============================================================================
 # Control Loop Configuration
 # =============================================================================
-control_rate: 250.0
+control_rate: 500.0
 command_timeout: 0.5
 pose_filter_alpha: 0.8
 reset_filter_on_target_change: false
@@ -70,11 +70,11 @@ startup_behavior: "hold_current_pose"
 # Level C: Cartesian Velocity Filter dt policy (robust to loop jitter)
 # =============================================================================
 cartesian_velocity_filter:
-  dt_nominal: 0.01
+  dt_nominal: 0.002
   min_dt: 0.0005
-  max_dt: 0.05
+  max_dt: 0.02
   max_substeps: 10
-  reset_dt_threshold: 0.25
+  reset_dt_threshold: 0.05
   large_dt_policy: "hold_last"
   uniform_scaling_enabled: true
 
@@ -157,16 +157,16 @@ joint_safety_limiter:
 # =============================================================================
 joint_velocity_filter:
   enabled: true
-  tau: 0.10
+  tau: 0.05
   uniform_scaling_enabled: false
   max_joint_velocity:     [1.0, 1.0, 1.0, 2.0, 2.0, 2.0]
   max_joint_acceleration: [3.0, 3.0, 3.0, 6.0, 6.0, 6.0]
   max_joint_jerk:         [30.0, 30.0, 30.0, 60.0, 60.0, 60.0]
-  dt_nominal: 0.01
+  dt_nominal: 0.002
   min_dt: 0.0005
-  max_dt: 0.05
+  max_dt: 0.02
   max_substeps: 10
-  reset_dt_threshold: 0.25
+  reset_dt_threshold: 0.05
   large_dt_policy: "hold_last"
 
 # =============================================================================

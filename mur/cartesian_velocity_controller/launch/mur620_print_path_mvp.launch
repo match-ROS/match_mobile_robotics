@@ -12,7 +12,7 @@
   <arg name="mur_ns" default="mur620b" />
   <arg name="path_file" default="$(find cartesian_velocity_controller)/config/print_path_demo.yaml" />
   <arg name="path_frame" default="mur620b/base_link" />
-  <arg name="speed" default="0.01" />
+  <arg name="speed" default="0.10" />
   <arg name="rate" default="20.0" />
   <arg name="loop" default="false" />
   <arg name="start_paused" default="true" />
@@ -23,6 +23,10 @@
   <arg name="base_preferred_tcp_y" default="0.0" />
   <arg name="base_max_linear_velocity" default="0.08" />
   <arg name="base_max_angular_velocity" default="0.25" />
+  <arg name="preposition_enabled" default="true" />
+  <arg name="require_start_reached" default="true" />
+  <arg name="start_position_tolerance" default="0.01" />
+  <arg name="preposition_dwell_s" default="1.0" />
 
   <!-- Controller frame override is useful on the full MUR robot. -->
   <arg name="override_global_frame" default="true" />
@@ -52,6 +56,11 @@
       <param name="loop" type="bool" value="$(arg loop)" />
       <param name="start_paused" type="bool" value="$(arg start_paused)" />
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+      <param name="preposition/enabled" type="bool" value="$(arg preposition_enabled)" />
+      <param name="preposition/require_start_reached" type="bool" value="$(arg require_start_reached)" />
+      <param name="preposition/position_tolerance" type="double" value="$(arg start_position_tolerance)" />
+      <param name="preposition/dwell_s" type="double" value="$(arg preposition_dwell_s)" />
+      <param name="preposition/ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
       <param name="base_control/enabled" type="bool" value="$(arg base_control_enabled)" />
       <param name="base_control/cmd_vel_topic" value="$(arg base_cmd_vel_topic)" />
       <param name="base_control/base_frame" value="$(arg base_frame)" />

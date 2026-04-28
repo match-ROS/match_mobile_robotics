@@ -626,6 +626,18 @@ class TcpPathTrajectoryManager:
         self.start_position_tolerance = abs(float(rospy.get_param("~preposition/position_tolerance", 0.01)))
         self.preposition_dwell_s = max(0.0, float(rospy.get_param("~preposition/dwell_s", 1.0)))
         self.ee_state_topic = str(rospy.get_param("~preposition/ee_state_topic", "end_effector_state"))
+        self.tracking_guard_enabled = _as_bool(
+            rospy.get_param("~tracking_guard/enabled", True), "tracking_guard/enabled")
+        self.tracking_guard_slowdown_error = abs(float(rospy.get_param("~tracking_guard/slowdown_error", 0.03)))
+        self.tracking_guard_stop_error = abs(float(rospy.get_param("~tracking_guard/stop_error", 0.08)))
+        self.tracking_guard_resume_hysteresis = abs(float(
+            rospy.get_param("~tracking_guard/resume_hysteresis", 0.05)))
+        self.tracking_guard_stopped = False
+        self.tracking_guard_last_error: Optional[float] = None
+        self.speed_scale = 1.0
+
+        if self.tracking_guard_stop_error <= self.tracking_guard_slowdown_error:
+            raise ValueError("tracking_guard/stop_error must be greater than tracking_guard/slowdown_error")
 
         if self.speed <= 0.0:
             raise ValueError("speed must be > 0")
@@ -663,6 +675,7 @@ class TcpPathTrajectoryManager:
         self.target_pub = rospy.Publisher(target_topic, PoseStamped, queue_size=1)
         self.target_state_pub = rospy.Publisher(target_state_topic, CartesianTrajectorySetpoint, queue_size=1)
         self.progress_pub = rospy.Publisher("~progress", Float64, queue_size=1, latch=True)
+        self.speed_scale_pub = rospy.Publisher("~speed_scale", Float64, queue_size=1, latch=True)
         self.path_marker_pub = rospy.Publisher("~path_marker", Marker, queue_size=1, latch=True)
         self.current_marker_pub = rospy.Publisher("~current_marker", Marker, queue_size=1)
         self.base_cmd_pub = None
@@ -670,7 +683,7 @@ class TcpPathTrajectoryManager:
         self.tf_listener = None
         if self.base_control_enabled:
             self.base_cmd_pub = rospy.Publisher(self.base_cmd_vel_topic, Twist, queue_size=1)
-        if self.base_control_enabled or self.require_start_reached:
+        if self.base_control_enabled or self.require_start_reached or self.tracking_guard_enabled:
             self.tf_buffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
@@ -687,7 +700,7 @@ class TcpPathTrajectoryManager:
         self.dwell_start_time: Optional[rospy.Time] = None
         self.last_profile_state = (0.0, 0.0, 0.0)
 
-        if self.require_start_reached:
+        if self.require_start_reached or self.tracking_guard_enabled:
             self.ee_state_sub = rospy.Subscriber(self.ee_state_topic, EndEffectorState, self._ee_state_cb, queue_size=10)
 
         if self.validate_waypoints:
@@ -721,6 +734,13 @@ class TcpPathTrajectoryManager:
                 "Preposition enabled: start service moves to first point, waits %.2f s, start tolerance %.3f m",
                 self.preposition_dwell_s,
                 self.start_position_tolerance,
+            )
+        if self.tracking_guard_enabled:
+            rospy.loginfo(
+                "Tracking guard enabled: slowdown %.3f m, stop %.3f m, resume hysteresis %.3f m",
+                self.tracking_guard_slowdown_error,
+                self.tracking_guard_stop_error,
+                self.tracking_guard_resume_hysteresis,
             )
 
     def _load_path_data(self, path_file: str):
@@ -803,6 +823,9 @@ class TcpPathTrajectoryManager:
         self.distance_offset = 0.0
         self.motion_profile.reset()
         self.last_profile_state = (0.0, 0.0, 0.0)
+        self.speed_scale = 1.0
+        self.tracking_guard_stopped = False
+        self.tracking_guard_last_error = None
         self.done = False
         self.stopped = False
         self.paused = False
@@ -817,6 +840,7 @@ class TcpPathTrajectoryManager:
 
     def _pause_cb(self, _req):
         self.paused = True
+        self.speed_scale = 0.0
         self._publish_zero_base()
         return TriggerResponse(success=True, message="paused")
 
@@ -832,6 +856,9 @@ class TcpPathTrajectoryManager:
         self.distance_offset = 0.0
         self.motion_profile.reset()
         self.last_profile_state = (0.0, 0.0, 0.0)
+        self.speed_scale = 1.0
+        self.tracking_guard_stopped = False
+        self.tracking_guard_last_error = None
         self.done = False
         self.stopped = False
         self.paused = False
@@ -846,6 +873,7 @@ class TcpPathTrajectoryManager:
         self.stopped = True
         self.paused = True
         self.state = "stopped"
+        self.speed_scale = 0.0
         self._publish_zero_base()
         return TriggerResponse(success=True, message="stopped")
 
@@ -859,9 +887,12 @@ class TcpPathTrajectoryManager:
             dt = max(0.0, (now - self.last_time).to_sec()) if self.last_time else 0.0
             self.last_time = now
 
+            nominal_point = self.path.sample(self.distance_offset)
+            self.speed_scale = self._tracking_guard_speed_scale(nominal_point)
+
             if self.state == "tracking" and not self.paused and not self.stopped and not self.done:
                 remaining = max(0.0, self.path.total_length - self.distance_offset)
-                v, a, j = self.motion_profile.update(self.speed, remaining, dt, self.loop)
+                v, a, j = self.motion_profile.update(self.speed * self.speed_scale, remaining, dt, self.loop)
                 self.last_profile_state = (v, a, j)
                 self.distance_offset += v * dt
                 if self.distance_offset >= self.path.total_length:
@@ -876,6 +907,8 @@ class TcpPathTrajectoryManager:
             elif self.paused or self.stopped or self.done:
                 self.motion_profile.reset()
                 self.last_profile_state = (0.0, 0.0, 0.0)
+                if self.paused or self.stopped:
+                    self.speed_scale = 0.0
 
             active_motion = self.state == "tracking" and not self.paused and not self.stopped and not self.done
 
@@ -918,7 +951,48 @@ class TcpPathTrajectoryManager:
 
             progress = min(self.distance_offset / self.path.total_length, 1.0)
             self.progress_pub.publish(Float64(data=progress))
+            self.speed_scale_pub.publish(Float64(data=self.speed_scale))
             rate.sleep()
+
+    def _tracking_guard_speed_scale(self, target_point: Point3) -> float:
+        if not self.tracking_guard_enabled:
+            self.tracking_guard_last_error = None
+            self.tracking_guard_stopped = False
+            return 1.0
+        if self.state != "tracking" or self.paused or self.stopped or self.done:
+            return 0.0
+
+        tcp = self._current_tcp_in_path_frame()
+        if tcp is None:
+            self.tracking_guard_last_error = None
+            return 1.0
+
+        error = _distance(tcp, target_point)
+        self.tracking_guard_last_error = error
+        resume_error = max(self.tracking_guard_slowdown_error,
+                           self.tracking_guard_stop_error - self.tracking_guard_resume_hysteresis)
+
+        if self.tracking_guard_stopped:
+            if error <= resume_error:
+                self.tracking_guard_stopped = False
+            else:
+                return 0.0
+
+        if error >= self.tracking_guard_stop_error:
+            self.tracking_guard_stopped = True
+            rospy.logwarn_throttle(
+                1.0,
+                "Tracking guard stop: TCP error %.3f m >= %.3f m",
+                error,
+                self.tracking_guard_stop_error,
+            )
+            return 0.0
+
+        if error <= self.tracking_guard_slowdown_error:
+            return 1.0
+
+        span = self.tracking_guard_stop_error - self.tracking_guard_slowdown_error
+        return _clamp((self.tracking_guard_stop_error - error) / span, 0.0, 1.0)
 
     def _publish_pose(self, point: Point3, stamp: rospy.Time, active: bool = True):
         orientation = _quaternion_from_tuple(self.orientation_profile.sample(self.distance_offset))
@@ -987,7 +1061,7 @@ class TcpPathTrajectoryManager:
         except Exception as exc:
             rospy.logwarn_throttle(
                 2.0,
-                "Preposition TCP TF failed (%s -> %s): %s",
+                "TCP feedback TF failed (%s -> %s): %s",
                 self.current_tcp_frame,
                 self.frame_id,
                 exc,

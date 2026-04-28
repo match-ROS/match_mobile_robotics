@@ -19,7 +19,11 @@
   <arg name="validation_timeout" default="10.0" />
   <arg name="base_enabled" default="true" />
   <arg name="base_avoidance_enabled" default="false" />
-  <arg name="scan_topic" default="mir/scan" />
+  <arg name="scan_topic" default="mir/f_scan" />
+  <arg name="tracking_guard_enabled" default="true" />
+  <arg name="tracking_guard_slowdown_error" default="0.03" />
+  <arg name="tracking_guard_stop_error" default="0.08" />
+  <arg name="tracking_guard_resume_hysteresis" default="0.05" />
 
   <arg name="lifter_enabled" default="false" />
   <arg name="lifter_command_topic" default="" />
@@ -55,6 +59,7 @@
       <param name="base/cmd_vel_topic" value="cmd_vel" />
       <param name="base_avoidance/enabled" type="bool" value="$(arg base_avoidance_enabled)" />
       <param name="base_avoidance/scan_topic" value="$(arg scan_topic)" />
+      <rosparam param="base_avoidance/scan_topics" subst_value="true">["$(arg scan_topic)", "mir/scan"]</rosparam>
 
       <param name="lifter/enabled" type="bool" value="$(arg lifter_enabled)" />
       <param name="lifter/joint_name" value="$(arg lifter_joint)" />
@@ -63,7 +68,7 @@
 
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
       <param name="target_state_input/enabled" type="bool" value="true" />
-      <param name="target_state_input/topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_state" />
+      <param name="target_state_input/topic" value="whole_body_print_controller/input_target_state" />
       <param name="ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
     </node>
 
@@ -85,8 +90,13 @@
       <param name="validation_timeout" type="double" value="$(arg validation_timeout)" />
       <param name="publish_target_pose" type="bool" value="false" />
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
-      <param name="target_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_state" />
+      <param name="target_state_topic" value="whole_body_print_controller/input_target_state" />
+      <param name="validation_service" value="cartesian_velocity_controller_$(arg controller_suffix)/validate_poses" />
       <param name="preposition/ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
+      <param name="tracking_guard/enabled" type="bool" value="$(arg tracking_guard_enabled)" />
+      <param name="tracking_guard/slowdown_error" type="double" value="$(arg tracking_guard_slowdown_error)" />
+      <param name="tracking_guard/stop_error" type="double" value="$(arg tracking_guard_stop_error)" />
+      <param name="tracking_guard/resume_hysteresis" type="double" value="$(arg tracking_guard_resume_hysteresis)" />
     </node>
   </group>
 </launch>

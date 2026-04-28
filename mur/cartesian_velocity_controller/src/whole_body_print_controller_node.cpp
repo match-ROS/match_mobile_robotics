@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <map>
 #include <string>
 #include <vector>
 
@@ -31,6 +32,14 @@ namespace
 struct PathPoint
 {
   Eigen::Vector3d p{Eigen::Vector3d::Zero()};
+};
+
+struct ScanAvoidanceState
+{
+  bool active{false};
+  double min_distance{std::numeric_limits<double>::infinity()};
+  double raw_omega{0.0};
+  ros::Time stamp;
 };
 
 double clamp(double v, double lo, double hi)
@@ -256,7 +265,14 @@ public:
     }
     if (avoidance_enabled_)
     {
-      scan_sub_ = nh_.subscribe(avoidance_scan_topic_, 5, &WholeBodyPrintController::scanCb, this);
+      for (const auto& topic : avoidance_scan_topics_)
+      {
+        if (!topic.empty())
+        {
+          scan_subs_.push_back(nh_.subscribe<sensor_msgs::LaserScan>(
+              topic, 5, [this, topic](const sensor_msgs::LaserScan::ConstPtr& msg) { scanCb(msg, topic); }));
+        }
+      }
     }
 
     path_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("path_marker", 1, true);
@@ -341,6 +357,7 @@ private:
 
     pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
     pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "mir/scan");
+    loadScanTopics();
     pnh_.param("base_avoidance/influence_distance", avoidance_influence_distance_, 1.2);
     pnh_.param("base_avoidance/stop_distance", avoidance_stop_distance_, 0.35);
     pnh_.param("base_avoidance/slowdown_distance", avoidance_slowdown_distance_, 0.8);
@@ -363,6 +380,43 @@ private:
 
     pnh_.param("solver/damping", solver_damping_, 0.02);
     pnh_.param("solver/task_weight_z", task_weight_z_, 0.7);
+  }
+
+  void loadScanTopics()
+  {
+    avoidance_scan_topics_.clear();
+
+    XmlRpc::XmlRpcValue raw_topics;
+    if (pnh_.getParam("base_avoidance/scan_topics", raw_topics) &&
+        raw_topics.getType() == XmlRpc::XmlRpcValue::TypeArray)
+    {
+      for (int i = 0; i < raw_topics.size(); ++i)
+      {
+        if (raw_topics[i].getType() != XmlRpc::XmlRpcValue::TypeString)
+        {
+          ROS_WARN("Ignoring non-string base_avoidance/scan_topics[%d]", i);
+          continue;
+        }
+        const std::string topic = static_cast<std::string>(raw_topics[i]);
+        if (!topic.empty() &&
+            std::find(avoidance_scan_topics_.begin(), avoidance_scan_topics_.end(), topic) == avoidance_scan_topics_.end())
+        {
+          avoidance_scan_topics_.push_back(topic);
+        }
+      }
+    }
+
+    if (!avoidance_scan_topic_.empty() &&
+        std::find(avoidance_scan_topics_.begin(), avoidance_scan_topics_.end(), avoidance_scan_topic_) ==
+            avoidance_scan_topics_.end())
+    {
+      avoidance_scan_topics_.push_back(avoidance_scan_topic_);
+    }
+
+    if (avoidance_scan_topics_.empty())
+    {
+      avoidance_scan_topics_.push_back("mir/scan");
+    }
   }
 
   void eeStateCb(const cartesian_velocity_controller::EndEffectorState::ConstPtr& msg)
@@ -398,6 +452,14 @@ private:
     }
     external_target_ = Eigen::Vector3d(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
     external_velocity_ = Eigen::Vector3d(msg->velocity.linear.x, msg->velocity.linear.y, msg->velocity.linear.z);
+    Eigen::Quaterniond q(msg->pose.orientation.w,
+                         msg->pose.orientation.x,
+                         msg->pose.orientation.y,
+                         msg->pose.orientation.z);
+    if (q.norm() > 1e-9)
+    {
+      target_orientation_ = q.normalized();
+    }
     external_active_ = msg->active;
     external_path_s_ = msg->path_s;
     external_path_progress_ = msg->path_progress;
@@ -409,11 +471,12 @@ private:
     have_external_target_ = true;
   }
 
-  void scanCb(const sensor_msgs::LaserScan::ConstPtr& msg)
+  void scanCb(const sensor_msgs::LaserScan::ConstPtr& msg, const std::string& source_topic)
   {
     double omega_sum = 0.0;
     double weight_sum = 0.0;
     double min_dist = std::numeric_limits<double>::infinity();
+    const ros::Time stamp = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
 
     geometry_msgs::TransformStamped tf_base_scan;
     const bool need_tf = !msg->header.frame_id.empty() && msg->header.frame_id != base_frame_;
@@ -428,7 +491,7 @@ private:
       {
         ROS_WARN_THROTTLE(2.0, "Laser avoidance TF failed (%s -> %s): %s",
                           msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
-        avoidance_active_ = false;
+        scan_avoidance_states_[source_topic] = ScanAvoidanceState{false, std::numeric_limits<double>::infinity(), 0.0, stamp};
         return;
       }
     }
@@ -468,19 +531,55 @@ private:
       weight_sum += influence;
     }
 
-    avoidance_last_scan_time_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
+    ScanAvoidanceState state;
+    state.stamp = stamp;
     if (weight_sum > 1e-6)
     {
-      avoidance_active_ = true;
-      avoidance_min_distance_ = min_dist;
-      avoidance_raw_omega_ = clamp(avoidance_k_omega_ * omega_sum / weight_sum,
-                                   -avoidance_max_omega_, avoidance_max_omega_);
+      state.active = true;
+      state.min_distance = min_dist;
+      state.raw_omega = clamp(avoidance_k_omega_ * omega_sum / weight_sum,
+                              -avoidance_max_omega_, avoidance_max_omega_);
     }
     else
     {
-      avoidance_active_ = false;
-      avoidance_min_distance_ = std::numeric_limits<double>::infinity();
-      avoidance_raw_omega_ = 0.0;
+      state.active = false;
+      state.min_distance = std::numeric_limits<double>::infinity();
+      state.raw_omega = 0.0;
+    }
+    scan_avoidance_states_[source_topic] = state;
+    updateAggregatedAvoidance(stamp);
+  }
+
+  void updateAggregatedAvoidance(const ros::Time& now)
+  {
+    avoidance_active_ = false;
+    avoidance_min_distance_ = std::numeric_limits<double>::infinity();
+    avoidance_raw_omega_ = 0.0;
+    avoidance_last_scan_time_ = ros::Time();
+
+    double omega_sum = 0.0;
+    double weight_sum = 0.0;
+    for (const auto& kv : scan_avoidance_states_)
+    {
+      const ScanAvoidanceState& state = kv.second;
+      if (!state.stamp.isZero() && (avoidance_last_scan_time_.isZero() || state.stamp > avoidance_last_scan_time_))
+      {
+        avoidance_last_scan_time_ = state.stamp;
+      }
+      if (state.stamp.isZero() || (now - state.stamp).toSec() > avoidance_stale_timeout_ || !state.active)
+      {
+        continue;
+      }
+      const double distance_weight = 1.0 / std::max(0.05, state.min_distance);
+      omega_sum += state.raw_omega * distance_weight;
+      weight_sum += distance_weight;
+      avoidance_min_distance_ = std::min(avoidance_min_distance_, state.min_distance);
+      avoidance_active_ = true;
+    }
+
+    if (weight_sum > 1e-9)
+    {
+      avoidance_raw_omega_ = clamp(omega_sum / weight_sum, -avoidance_max_omega_, avoidance_max_omega_);
     }
   }
 
@@ -628,11 +727,13 @@ private:
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
     const double arm_scale = computeArmTrackingScale(target_in_base);
-    const Eigen::Vector3d arm_target = target;
+    const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
 
+    publishTargetPose(arm_target, now);
     publishCurrentMarker(target, now);
 
-    if (!paused_ && !stopped_ && external_active_)
+    const bool prepositioning = !external_active_ && external_path_s_ <= 1e-6 && external_path_progress_ <= 1e-6;
+    if (!paused_ && !stopped_ && (external_active_ || prepositioning))
     {
       Eigen::Vector3d desired_linear = external_velocity_ + kp_position_ * (base_tracking_target_ - tcp);
       desired_linear.z() *= task_weight_z_;
@@ -914,6 +1015,7 @@ private:
       return cmd;
     }
 
+    updateAggregatedAvoidance(now);
     const bool stale = avoidance_last_scan_time_.isZero() ||
                        (now - avoidance_last_scan_time_).toSec() > avoidance_stale_timeout_;
     const double dt = last_base_pub_time_.isZero() ? (1.0 / std::max(1.0, base_rate_hz_))
@@ -1125,7 +1227,7 @@ private:
   ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
-  ros::Subscriber scan_sub_;
+  std::vector<ros::Subscriber> scan_subs_;
   ros::Subscriber target_state_sub_;
   ros::ServiceServer pause_srv_;
   ros::ServiceServer resume_srv_;
@@ -1203,6 +1305,8 @@ private:
 
   bool avoidance_enabled_{false};
   std::string avoidance_scan_topic_;
+  std::vector<std::string> avoidance_scan_topics_;
+  std::map<std::string, ScanAvoidanceState> scan_avoidance_states_;
   double avoidance_influence_distance_{1.2};
   double avoidance_stop_distance_{0.35};
   double avoidance_slowdown_distance_{0.8};

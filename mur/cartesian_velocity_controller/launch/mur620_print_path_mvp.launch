@@ -12,7 +12,7 @@
   <arg name="mur_ns" default="mur620b" />
   <arg name="path_file" default="$(find cartesian_velocity_controller)/config/print_path_demo.yaml" />
   <arg name="path_frame" default="mur620b/base_link" />
-  <arg name="speed" default="0.01" />
+  <arg name="speed" default="0.15" />
   <arg name="rate" default="20.0" />
   <arg name="loop" default="false" />
   <arg name="start_paused" default="true" />

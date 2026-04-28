@@ -50,6 +50,20 @@ Principio di compensazione:
 - il braccio e' il sottosistema veloce che deve compensare il residuo e le dinamiche lente di base/lifter;
 - la base non deve essere comandata a 500 Hz, mentre il braccio puo' essere portato a frequenze piu' alte nel proprio controller.
 
+Avoidance laser base:
+
+- opzionale tramite `base_avoidance/enabled`;
+- ingresso `sensor_msgs/LaserScan`;
+- i punti laser vengono trasformati nel frame `base/base_frame`;
+- vengono considerati solo ostacoli davanti o davanti-laterali alla base;
+- il comando base nominale viene filtrato in uscita:
+  - ostacolo davanti-laterale destro -> incremento `angular.z` verso sinistra;
+  - ostacolo davanti-laterale sinistro -> incremento `angular.z` verso destra;
+  - ostacolo frontale vicino -> riduzione di `linear.x`;
+  - ostacolo sotto `stop_distance` -> base ferma in avanzamento;
+- il braccio continua a ricevere il target TCP e deve compensare la deviazione locale della base;
+- quando l'ostacolo sparisce, il contributo avoidance decade e la base rientra verso la zona preferita.
+
 Il solver usa una matrice cinematica demo:
 
 ```text

@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -10,6 +11,7 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
+#include <sensor_msgs/LaserScan.h>
 #include <std_msgs/Float64.h>
 #include <std_srvs/Trigger.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -246,6 +248,10 @@ public:
       joint_state_sub_ = nh_.subscribe(joint_state_topic_, 20, &WholeBodyPrintController::jointStateCb, this);
     }
     ee_sub_ = nh_.subscribe(ee_state_topic_, 20, &WholeBodyPrintController::eeStateCb, this);
+    if (avoidance_enabled_)
+    {
+      scan_sub_ = nh_.subscribe(avoidance_scan_topic_, 5, &WholeBodyPrintController::scanCb, this);
+    }
 
     path_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("path_marker", 1, true);
     current_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("current_marker", 1);
@@ -321,6 +327,18 @@ private:
     pnh_.param("base/tf_timeout", base_tf_timeout_, 0.05);
     pnh_.param("base/target_filter_tau", base_target_filter_tau_, 1.0);
 
+    pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
+    pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "mir/scan");
+    pnh_.param("base_avoidance/influence_distance", avoidance_influence_distance_, 1.2);
+    pnh_.param("base_avoidance/stop_distance", avoidance_stop_distance_, 0.35);
+    pnh_.param("base_avoidance/slowdown_distance", avoidance_slowdown_distance_, 0.8);
+    pnh_.param("base_avoidance/lateral_window", avoidance_lateral_window_, 0.9);
+    pnh_.param("base_avoidance/front_min_x", avoidance_front_min_x_, 0.05);
+    pnh_.param("base_avoidance/k_omega", avoidance_k_omega_, 0.8);
+    pnh_.param("base_avoidance/max_omega", avoidance_max_omega_, 0.35);
+    pnh_.param("base_avoidance/filter_tau", avoidance_filter_tau_, 0.4);
+    pnh_.param("base_avoidance/stale_timeout", avoidance_stale_timeout_, 0.5);
+
     pnh_.param("lifter/enabled", lifter_enabled_, false);
     pnh_.param<std::string>("lifter/joint_name", lifter_joint_name_, "left_lift_joint");
     pnh_.param<std::string>("lifter/joint_state_topic", joint_state_topic_, "joint_states");
@@ -357,6 +375,81 @@ private:
         }
         return;
       }
+    }
+  }
+
+  void scanCb(const sensor_msgs::LaserScan::ConstPtr& msg)
+  {
+    double omega_sum = 0.0;
+    double weight_sum = 0.0;
+    double min_dist = std::numeric_limits<double>::infinity();
+
+    geometry_msgs::TransformStamped tf_base_scan;
+    const bool need_tf = !msg->header.frame_id.empty() && msg->header.frame_id != base_frame_;
+    if (need_tf)
+    {
+      try
+      {
+        tf_base_scan = tf_buffer_.lookupTransform(base_frame_, msg->header.frame_id,
+                                                  ros::Time(0), ros::Duration(base_tf_timeout_));
+      }
+      catch (const tf2::TransformException& ex)
+      {
+        ROS_WARN_THROTTLE(2.0, "Laser avoidance TF failed (%s -> %s): %s",
+                          msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
+        avoidance_active_ = false;
+        return;
+      }
+    }
+
+    for (std::size_t i = 0; i < msg->ranges.size(); ++i)
+    {
+      const float r = msg->ranges[i];
+      if (!std::isfinite(r) || r < msg->range_min || r > msg->range_max)
+      {
+        continue;
+      }
+      const double angle = msg->angle_min + static_cast<double>(i) * msg->angle_increment;
+      Eigen::Vector3d p(r * std::cos(angle), r * std::sin(angle), 0.0);
+      if (need_tf)
+      {
+        p = transformPoint(tf_base_scan, p);
+      }
+
+      if (p.x() < avoidance_front_min_x_ || std::abs(p.y()) > avoidance_lateral_window_)
+      {
+        continue;
+      }
+
+      const double dist = std::hypot(p.x(), p.y());
+      if (dist > avoidance_influence_distance_)
+      {
+        continue;
+      }
+
+      min_dist = std::min(min_dist, dist);
+      const double influence = clamp((avoidance_influence_distance_ - dist) /
+                                     std::max(1e-6, avoidance_influence_distance_ - avoidance_stop_distance_),
+                                     0.0, 1.0);
+      const double side = (std::abs(p.y()) > 1e-4) ? (p.y() > 0.0 ? 1.0 : -1.0) : 1.0;
+      // y > 0 means obstacle left: rotate right. y < 0 means obstacle right: rotate left.
+      omega_sum += -side * influence * influence;
+      weight_sum += influence;
+    }
+
+    avoidance_last_scan_time_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
+    if (weight_sum > 1e-6)
+    {
+      avoidance_active_ = true;
+      avoidance_min_distance_ = min_dist;
+      avoidance_raw_omega_ = clamp(avoidance_k_omega_ * omega_sum / weight_sum,
+                                   -avoidance_max_omega_, avoidance_max_omega_);
+    }
+    else
+    {
+      avoidance_active_ = false;
+      avoidance_min_distance_ = std::numeric_limits<double>::infinity();
+      avoidance_raw_omega_ = 0.0;
     }
   }
 
@@ -717,9 +810,56 @@ private:
     geometry_msgs::Twist cmd;
     cmd.linear.x = u.size() >= 1 ? u(0) : 0.0;
     cmd.angular.z = u.size() >= 2 ? u(1) : 0.0;
-    last_base_command_ = cmd;
-    base_pub_.publish(cmd);
+    last_base_nominal_command_ = cmd;
+    last_base_command_ = applyLaserAvoidance(cmd, now);
+    base_pub_.publish(last_base_command_);
     last_base_pub_time_ = now;
+  }
+
+  geometry_msgs::Twist applyLaserAvoidance(const geometry_msgs::Twist& nominal, const ros::Time& now)
+  {
+    geometry_msgs::Twist cmd = nominal;
+    if (!avoidance_enabled_)
+    {
+      last_avoidance_omega_ = 0.0;
+      last_avoidance_speed_scale_ = 1.0;
+      return cmd;
+    }
+
+    const bool stale = avoidance_last_scan_time_.isZero() ||
+                       (now - avoidance_last_scan_time_).toSec() > avoidance_stale_timeout_;
+    const double dt = last_base_pub_time_.isZero() ? (1.0 / std::max(1.0, base_rate_hz_))
+                                                   : std::max(0.0, (now - last_base_pub_time_).toSec());
+    double target_omega = 0.0;
+    double speed_scale = 1.0;
+
+    if (!stale && avoidance_active_)
+    {
+      target_omega = avoidance_raw_omega_;
+      if (avoidance_min_distance_ <= avoidance_stop_distance_)
+      {
+        speed_scale = 0.0;
+      }
+      else if (avoidance_min_distance_ < avoidance_slowdown_distance_)
+      {
+        speed_scale = clamp((avoidance_min_distance_ - avoidance_stop_distance_) /
+                            std::max(1e-6, avoidance_slowdown_distance_ - avoidance_stop_distance_),
+                            0.0, 1.0);
+      }
+    }
+    else if (stale)
+    {
+      avoidance_active_ = false;
+      avoidance_min_distance_ = std::numeric_limits<double>::infinity();
+    }
+
+    const double alpha = avoidance_filter_tau_ <= 1e-6 ? 1.0 : clamp(dt / (avoidance_filter_tau_ + dt), 0.0, 1.0);
+    last_avoidance_omega_ += alpha * (target_omega - last_avoidance_omega_);
+    last_avoidance_speed_scale_ += alpha * (speed_scale - last_avoidance_speed_scale_);
+
+    cmd.linear.x *= last_avoidance_speed_scale_;
+    cmd.angular.z = clamp(cmd.angular.z + last_avoidance_omega_, -base_max_angular_, base_max_angular_);
+    return cmd;
   }
 
   void publishLifterCommand(const Eigen::VectorXd& u, double dt, const ros::Time& now)
@@ -749,6 +889,7 @@ private:
     if (base_enabled_)
     {
       last_base_command_ = geometry_msgs::Twist();
+      last_base_nominal_command_ = geometry_msgs::Twist();
       last_base_linear_saturated_ = false;
       last_base_angular_saturated_ = false;
       base_pub_.publish(last_base_command_);
@@ -863,6 +1004,7 @@ private:
     msg.base_linear_saturated = last_base_linear_saturated_;
     msg.base_angular_saturated = last_base_angular_saturated_;
     msg.base_command = last_base_command_;
+    msg.base_nominal_command = last_base_nominal_command_;
     msg.lifter_enabled = lifter_enabled_;
     msg.lifter_have_state = have_lifter_;
     msg.lifter_position = current_lifter_;
@@ -870,6 +1012,11 @@ private:
     msg.lifter_velocity_command = last_lifter_velocity_command_;
     msg.preferred_tcp_x = base_preferred_x_;
     msg.preferred_tcp_y = base_preferred_y_;
+    msg.avoidance_enabled = avoidance_enabled_;
+    msg.avoidance_active = avoidance_active_;
+    msg.avoidance_min_distance = std::isfinite(avoidance_min_distance_) ? avoidance_min_distance_ : -1.0;
+    msg.avoidance_omega = last_avoidance_omega_;
+    msg.avoidance_speed_scale = last_avoidance_speed_scale_;
     debug_pub_.publish(msg);
     last_debug_pub_time_ = stamp;
   }
@@ -887,6 +1034,7 @@ private:
   ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
+  ros::Subscriber scan_sub_;
   ros::ServiceServer pause_srv_;
   ros::ServiceServer resume_srv_;
   ros::ServiceServer restart_srv_;
@@ -945,9 +1093,28 @@ private:
   Eigen::Vector3d base_tracking_target_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d last_target_in_base_{Eigen::Vector3d::Zero()};
   geometry_msgs::Twist last_base_command_;
+  geometry_msgs::Twist last_base_nominal_command_;
   ros::Time last_base_pub_time_;
   ros::Time last_lifter_pub_time_;
   ros::Time last_debug_pub_time_;
+
+  bool avoidance_enabled_{false};
+  std::string avoidance_scan_topic_;
+  double avoidance_influence_distance_{1.2};
+  double avoidance_stop_distance_{0.35};
+  double avoidance_slowdown_distance_{0.8};
+  double avoidance_lateral_window_{0.9};
+  double avoidance_front_min_x_{0.05};
+  double avoidance_k_omega_{0.8};
+  double avoidance_max_omega_{0.35};
+  double avoidance_filter_tau_{0.4};
+  double avoidance_stale_timeout_{0.5};
+  bool avoidance_active_{false};
+  double avoidance_min_distance_{std::numeric_limits<double>::infinity()};
+  double avoidance_raw_omega_{0.0};
+  double last_avoidance_omega_{0.0};
+  double last_avoidance_speed_scale_{1.0};
+  ros::Time avoidance_last_scan_time_;
 
   bool lifter_enabled_{false};
   std::string lifter_joint_name_;

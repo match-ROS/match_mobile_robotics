@@ -6,6 +6,8 @@
   <arg name="config_file" default="$(find cartesian_velocity_controller)/config/whole_body_print_demo.yaml" />
   <arg name="path_frame" default="map" />
   <arg name="base_enabled" default="true" />
+  <arg name="base_avoidance_enabled" default="false" />
+  <arg name="scan_topic" default="mir/scan" />
   <arg name="lifter_enabled" default="false" />
   <arg name="lifter_command_topic" default="UR10_l/lift_position_command" />
 
@@ -37,6 +39,8 @@
       <param name="base/enabled" type="bool" value="$(arg base_enabled)" />
       <param name="base/base_frame" value="$(arg mur_ns)/base_link" />
       <param name="base/cmd_vel_topic" value="cmd_vel" />
+      <param name="base_avoidance/enabled" type="bool" value="$(arg base_avoidance_enabled)" />
+      <param name="base_avoidance/scan_topic" value="$(arg scan_topic)" />
 
       <param name="lifter/enabled" type="bool" value="$(arg lifter_enabled)" />
       <param name="lifter/joint_name" value="$(arg lifter_joint)" />

@@ -21,6 +21,7 @@ bool base_in_tracking_zone
 bool base_linear_saturated
 bool base_angular_saturated
 geometry_msgs/Twist base_command
+geometry_msgs/Twist base_nominal_command
 
 bool lifter_enabled
 bool lifter_have_state
@@ -30,3 +31,9 @@ float64 lifter_velocity_command
 
 float64 preferred_tcp_x
 float64 preferred_tcp_y
+
+bool avoidance_enabled
+bool avoidance_active
+float64 avoidance_min_distance
+float64 avoidance_omega
+float64 avoidance_speed_scale

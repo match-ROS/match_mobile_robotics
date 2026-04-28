@@ -56,6 +56,19 @@ base:
   tf_timeout: 0.05
   target_filter_tau: 1.0
 
+base_avoidance:
+  enabled: false
+  scan_topic: "mir/scan"
+  influence_distance: 1.2
+  stop_distance: 0.35
+  slowdown_distance: 0.8
+  lateral_window: 0.9
+  front_min_x: 0.05
+  k_omega: 0.8
+  max_omega: 0.35
+  filter_tau: 0.4
+  stale_timeout: 0.5
+
 lifter:
   enabled: false
   joint_name: "left_lift_joint"

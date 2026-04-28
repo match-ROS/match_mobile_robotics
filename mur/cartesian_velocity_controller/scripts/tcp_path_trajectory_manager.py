@@ -9,6 +9,7 @@ from typing import List, Optional, Sequence, Tuple
 import rospy
 import tf2_ros
 import yaml
+from cartesian_velocity_controller.msg import EndEffectorState
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist
 from std_msgs.msg import Float64
 from std_srvs.srv import Trigger, TriggerResponse
@@ -243,6 +244,15 @@ class TcpPathTrajectoryManager:
         self.base_allow_reverse = _as_bool(rospy.get_param("~base_control/allow_reverse", False), "base_control/allow_reverse")
         self.base_align_to_path = _as_bool(rospy.get_param("~base_control/align_to_path", True), "base_control/align_to_path")
         self.base_tf_timeout = float(rospy.get_param("~base_control/tf_timeout", 0.05))
+        self.preposition_enabled = _as_bool(rospy.get_param("~preposition/enabled", True), "preposition/enabled")
+        self.require_start_reached = _as_bool(
+            rospy.get_param("~preposition/require_start_reached",
+                            rospy.get_param("~preposition/require_start_reached_on_resume", True)),
+            "preposition/require_start_reached",
+        )
+        self.start_position_tolerance = abs(float(rospy.get_param("~preposition/position_tolerance", 0.01)))
+        self.preposition_dwell_s = max(0.0, float(rospy.get_param("~preposition/dwell_s", 1.0)))
+        self.ee_state_topic = str(rospy.get_param("~preposition/ee_state_topic", "end_effector_state"))
 
         if self.speed <= 0.0:
             raise ValueError("speed must be > 0")
@@ -263,16 +273,26 @@ class TcpPathTrajectoryManager:
         self.tf_listener = None
         if self.base_control_enabled:
             self.base_cmd_pub = rospy.Publisher(self.base_cmd_vel_topic, Twist, queue_size=1)
+        if self.base_control_enabled or self.require_start_reached:
             self.tf_buffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-        self.paused = self.start_paused
+        self.paused = False
         self.stopped = False
         self.done = False
         self.has_started = not self.start_paused
+        self.state = "tracking" if self.has_started else "idle"
         self.distance_offset = 0.0
         self.last_time: Optional[rospy.Time] = None
+        self.current_tcp: Optional[Point3] = None
+        self.current_tcp_frame = ""
+        self.last_start_error: Optional[float] = None
+        self.dwell_start_time: Optional[rospy.Time] = None
 
+        if self.require_start_reached:
+            self.ee_state_sub = rospy.Subscriber(self.ee_state_topic, EndEffectorState, self._ee_state_cb, queue_size=10)
+
+        rospy.Service("~start", Trigger, self._start_cb)
         rospy.Service("~pause", Trigger, self._pause_cb)
         rospy.Service("~resume", Trigger, self._resume_cb)
         rospy.Service("~restart", Trigger, self._restart_cb)
@@ -292,6 +312,12 @@ class TcpPathTrajectoryManager:
                 self.base_frame,
                 self.base_preferred_x,
                 self.base_preferred_y,
+            )
+        if self.preposition_enabled:
+            rospy.loginfo(
+                "Preposition enabled: start service moves to first point, waits %.2f s, start tolerance %.3f m",
+                self.preposition_dwell_s,
+                self.start_position_tolerance,
             )
 
     def _load_path_data(self, path_file: str):
@@ -314,15 +340,30 @@ class TcpPathTrajectoryManager:
             raise ValueError("orientation_rpy must be [roll, pitch, yaw]")
         return _quaternion_from_rpy(float(rpy[0]), float(rpy[1]), float(rpy[2]))
 
+    def _start_cb(self, _req):
+        self.distance_offset = 0.0
+        self.done = False
+        self.stopped = False
+        self.paused = False
+        self.has_started = False
+        self.dwell_start_time = None
+        self.last_time = rospy.Time.now()
+        self.state = "preposition" if self.preposition_enabled else "tracking"
+        if self.state == "tracking":
+            self.has_started = True
+        self._publish_zero_base()
+        return TriggerResponse(success=True, message=f"started {self.state}")
+
     def _pause_cb(self, _req):
         self.paused = True
         self._publish_zero_base()
         return TriggerResponse(success=True, message="paused")
 
     def _resume_cb(self, _req):
+        if self.state == "idle":
+            return self._start_cb(_req)
         self.paused = False
         self.stopped = False
-        self.has_started = True
         self.last_time = rospy.Time.now()
         return TriggerResponse(success=True, message="resumed")
 
@@ -330,15 +371,18 @@ class TcpPathTrajectoryManager:
         self.distance_offset = 0.0
         self.done = False
         self.stopped = False
-        self.paused = self.start_paused
-        self.has_started = not self.start_paused
+        self.paused = False
+        self.has_started = False
+        self.state = "idle"
+        self.dwell_start_time = None
         self.last_time = rospy.Time.now()
         self._publish_zero_base()
-        return TriggerResponse(success=True, message="restarted")
+        return TriggerResponse(success=True, message="reset to idle")
 
     def _stop_cb(self, _req):
         self.stopped = True
         self.paused = True
+        self.state = "stopped"
         self._publish_zero_base()
         return TriggerResponse(success=True, message="stopped")
 
@@ -352,7 +396,7 @@ class TcpPathTrajectoryManager:
             dt = max(0.0, (now - self.last_time).to_sec()) if self.last_time else 0.0
             self.last_time = now
 
-            if self.has_started and not self.paused and not self.stopped and not self.done:
+            if self.state == "tracking" and not self.paused and not self.stopped and not self.done:
                 self.distance_offset += self.speed * dt
                 if self.distance_offset >= self.path.total_length:
                     if self.loop:
@@ -360,10 +404,36 @@ class TcpPathTrajectoryManager:
                     else:
                         self.distance_offset = self.path.total_length
                         self.done = True
+                        self.state = "done"
 
-            active_motion = self.has_started and not self.paused and not self.stopped and not self.done
+            active_motion = self.state == "tracking" and not self.paused and not self.stopped and not self.done
 
-            if self.has_started and not self.stopped and (self.hold_final_pose or not self.done):
+            if self.state == "idle":
+                point = self.path.sample(0.0)
+                self._publish_current_marker(point, now)
+                self._publish_zero_base()
+            elif self.state == "preposition" and not self.paused and not self.stopped:
+                point = self.path.sample(0.0)
+                self._publish_pose(point, now)
+                self._publish_current_marker(point, now)
+                self._publish_zero_base()
+                if self._start_reached():
+                    self.state = "dwell"
+                    self.dwell_start_time = now
+                    rospy.loginfo("Start point reached; waiting %.2f s before path following", self.preposition_dwell_s)
+            elif self.state == "dwell" and not self.paused and not self.stopped:
+                point = self.path.sample(0.0)
+                self._publish_pose(point, now)
+                self._publish_current_marker(point, now)
+                self._publish_zero_base()
+                if self.dwell_start_time is None:
+                    self.dwell_start_time = now
+                if (now - self.dwell_start_time).to_sec() >= self.preposition_dwell_s:
+                    self.state = "tracking"
+                    self.has_started = True
+                    self.last_time = now
+                    rospy.loginfo("Starting path following")
+            elif self.state in ("tracking", "done") and not self.stopped and (self.hold_final_pose or not self.done):
                 point = self.path.sample(self.distance_offset)
                 self._publish_pose(point, now)
                 self._publish_current_marker(point, now)
@@ -388,6 +458,46 @@ class TcpPathTrajectoryManager:
         msg.pose.position.z = point[2]
         msg.pose.orientation = self.orientation
         self.target_pub.publish(msg)
+
+    def _ee_state_cb(self, msg: EndEffectorState):
+        self.current_tcp = (msg.position.x, msg.position.y, msg.position.z)
+        self.current_tcp_frame = msg.header.frame_id
+
+    def _current_tcp_in_path_frame(self) -> Optional[Point3]:
+        if self.current_tcp is None:
+            return None
+        if not self.current_tcp_frame or self.current_tcp_frame == self.frame_id:
+            return self.current_tcp
+        if self.tf_buffer is None:
+            return None
+
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.frame_id,
+                self.current_tcp_frame,
+                rospy.Time(0),
+                rospy.Duration(self.base_tf_timeout),
+            )
+        except Exception as exc:
+            rospy.logwarn_throttle(
+                2.0,
+                "Preposition TCP TF failed (%s -> %s): %s",
+                self.current_tcp_frame,
+                self.frame_id,
+                exc,
+            )
+            return None
+        return _transform_point(transform, self.current_tcp)
+
+    def _start_reached(self) -> bool:
+        if not self.require_start_reached:
+            return True
+        tcp = self._current_tcp_in_path_frame()
+        if tcp is None:
+            self.last_start_error = None
+            return False
+        self.last_start_error = _distance(tcp, self.path.sample(0.0))
+        return self.last_start_error <= self.start_position_tolerance
 
     def _publish_base_command(self, point: Point3, tangent: Point3):
         if not self.base_control_enabled or self.base_cmd_pub is None or self.tf_buffer is None:

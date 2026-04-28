@@ -11,8 +11,9 @@
 #include <geometry_msgs/Twist.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
+
 #include <sensor_msgs/LaserScan.h>
-#include <std_msgs/Float64.h>
+#include <std_msgs/Float32.h>
 #include <std_srvs/Trigger.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -244,7 +245,7 @@ public:
     debug_pub_ = pnh_.advertise<cartesian_velocity_controller::WholeBodyPrintDebug>("debug", 10);
     if (lifter_enabled_)
     {
-      lifter_pub_ = nh_.advertise<std_msgs::Float64>(lifter_command_topic_, 1);
+      lifter_pub_ = nh_.advertise<std_msgs::Float32>(lifter_command_topic_, 1);
       joint_state_sub_ = nh_.subscribe(joint_state_topic_, 20, &WholeBodyPrintController::jointStateCb, this);
     }
     ee_sub_ = nh_.subscribe(ee_state_topic_, 20, &WholeBodyPrintController::eeStateCb, this);
@@ -307,8 +308,8 @@ private:
     pnh_.param("tracking/arm_start_x_error", arm_start_x_error_, 0.45);
     pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
     pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
-    pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_l/target_pose");
-    pnh_.param<std::string>("ee_state_topic", ee_state_topic_, "cartesian_velocity_controller_l/end_effector_state");
+    pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_r/target_pose");
+    pnh_.param<std::string>("ee_state_topic", ee_state_topic_, "cartesian_velocity_controller_r/end_effector_state");
 
     pnh_.param("base/enabled", base_enabled_, true);
     pnh_.param<std::string>("base/cmd_vel_topic", base_cmd_vel_topic_, "cmd_vel");
@@ -340,9 +341,9 @@ private:
     pnh_.param("base_avoidance/stale_timeout", avoidance_stale_timeout_, 0.5);
 
     pnh_.param("lifter/enabled", lifter_enabled_, false);
-    pnh_.param<std::string>("lifter/joint_name", lifter_joint_name_, "left_lift_joint");
+    pnh_.param<std::string>("lifter/joint_name", lifter_joint_name_, "right_lift_joint");
     pnh_.param<std::string>("lifter/joint_state_topic", joint_state_topic_, "joint_states");
-    pnh_.param<std::string>("lifter/command_topic", lifter_command_topic_, "UR10_l/lift_position_command");
+    pnh_.param<std::string>("lifter/command_topic", lifter_command_topic_, "UR10_r/ewellix_tlt_node_r/command");
     pnh_.param("lifter/min_position", lifter_min_, 0.0);
     pnh_.param("lifter/max_position", lifter_max_, 0.5);
     pnh_.param("lifter/max_velocity", lifter_max_velocity_, 0.015);
@@ -878,7 +879,7 @@ private:
       return;
     }
     lifter_target_ = clamp(lifter_target_ + u(idx) * dt, lifter_min_, lifter_max_);
-    std_msgs::Float64 msg;
+    std_msgs::Float32 msg;
     msg.data = lifter_target_;
     lifter_pub_.publish(msg);
     last_lifter_pub_time_ = now;

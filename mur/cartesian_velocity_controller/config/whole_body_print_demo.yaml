@@ -9,16 +9,14 @@ rates:
   debug: 10.0
 
 path:
-  frame_id: "map"
-  speed: 0.03
+  frame_id: "mur620b/base_link"
+  speed: 0.01
   loop: false
-  orientation_rpy: [0.0, 0.0, 0.0]
+  # TCP local Z points downward relative to base_link Z-up.
+  orientation_rpy: [3.141592653589793, 0.0, 0.0]
   points:
-    - [0.40, 0.00, 0.85]
-    - [0.60, 0.00, 0.85]
-    - [0.60, 0.20, 0.85]
-    - [0.40, 0.20, 0.85]
-    - [0.40, 0.00, 0.85]
+    - [0.45, -0.30, 0.85]
+    - [0.50, -0.30, 0.85]
 
 tracking:
   kp_position: 0.8
@@ -71,9 +69,9 @@ base_avoidance:
 
 lifter:
   enabled: false
-  joint_name: "left_lift_joint"
+  joint_name: "right_lift_joint"
   joint_state_topic: "joint_states"
-  command_topic: "UR10_l/lift_position_command"
+  command_topic: "UR10_r/ewellix_tlt_node_r/command"
   min_position: 0.0
   max_position: 0.5
   max_velocity: 0.015

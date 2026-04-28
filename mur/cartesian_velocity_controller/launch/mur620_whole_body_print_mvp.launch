@@ -4,8 +4,19 @@
   <arg name="arm" default="right" />
   <arg name="mur_ns" default="mur620b" />
   <arg name="config_file" default="$(find cartesian_velocity_controller)/config/whole_body_print_demo.yaml" />
+  <arg name="path_file" default="$(find cartesian_velocity_controller)/config/print_path_demo.yaml" />
 
   <arg name="path_frame" default="map" />
+  <arg name="speed" default="0.05" />
+  <arg name="rate" default="30.0" />
+  <arg name="loop" default="false" />
+  <arg name="start_paused" default="true" />
+  <arg name="blend_tolerance" default="0.04" />
+  <arg name="max_linear_velocity" default="$(arg speed)" />
+  <arg name="max_linear_acceleration" default="0.20" />
+  <arg name="max_linear_jerk" default="1.5" />
+  <arg name="validate_waypoints" default="true" />
+  <arg name="validation_timeout" default="10.0" />
   <arg name="base_enabled" default="true" />
   <arg name="base_avoidance_enabled" default="false" />
   <arg name="scan_topic" default="mir/scan" />
@@ -38,6 +49,7 @@
       <rosparam file="$(arg config_file)" command="load" subst_value="true" />
 
       <param name="path/frame_id" value="$(arg path_frame)" />
+      <param name="start_paused" type="bool" value="false" />
       <param name="base/enabled" type="bool" value="$(arg base_enabled)" />
       <param name="base/base_frame" value="$(arg mur_ns)/base_link" />
       <param name="base/cmd_vel_topic" value="cmd_vel" />
@@ -50,7 +62,31 @@
              value="$(eval lifter_command_topic if lifter_command_topic else ('UR10_r/ewellix_tlt_node_r/command' if arm == 'right' else 'UR10_l/ewellix_tlt_node_l/command'))" />
 
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+      <param name="target_state_input/enabled" type="bool" value="true" />
+      <param name="target_state_input/topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_state" />
       <param name="ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
+    </node>
+
+    <node pkg="cartesian_velocity_controller"
+          type="tcp_path_trajectory_manager.py"
+          name="tcp_path_trajectory_manager"
+          output="screen">
+      <param name="path_file" value="$(arg path_file)" />
+      <param name="frame_id" value="$(arg path_frame)" />
+      <param name="speed" type="double" value="$(arg speed)" />
+      <param name="rate" type="double" value="$(arg rate)" />
+      <param name="loop" type="bool" value="$(arg loop)" />
+      <param name="start_paused" type="bool" value="$(arg start_paused)" />
+      <param name="blend_tolerance" type="double" value="$(arg blend_tolerance)" />
+      <param name="max_linear_velocity" type="double" value="$(arg max_linear_velocity)" />
+      <param name="max_linear_acceleration" type="double" value="$(arg max_linear_acceleration)" />
+      <param name="max_linear_jerk" type="double" value="$(arg max_linear_jerk)" />
+      <param name="validate_waypoints" type="bool" value="$(arg validate_waypoints)" />
+      <param name="validation_timeout" type="double" value="$(arg validation_timeout)" />
+      <param name="publish_target_pose" type="bool" value="false" />
+      <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+      <param name="target_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_state" />
+      <param name="preposition/ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
     </node>
   </group>
 </launch>

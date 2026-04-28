@@ -10,8 +10,9 @@ import rospy
 import tf2_ros
 import yaml
 from cartesian_velocity_controller.msg import CartesianTrajectorySetpoint, EndEffectorState
+from cartesian_velocity_controller.srv import ValidatePoses
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist, Vector3
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, Header
 from std_srvs.srv import Trigger, TriggerResponse
 from visualization_msgs.msg import Marker
 
@@ -632,6 +633,8 @@ class TcpPathTrajectoryManager:
             raise ValueError("rate must be > 0")
 
         points, orientations = self._load_waypoints(path_data)
+        self.waypoint_points = points
+        self.waypoint_orientations = orientations
         self.blend_tolerance = abs(float(rospy.get_param("~blend_tolerance", path_data.get("blend_tolerance", 0.0))))
         self.path = SmoothedPath(points, self.blend_tolerance)
         self.orientation_profile = OrientationProfile(self.path.waypoint_s, orientations)
@@ -653,6 +656,10 @@ class TcpPathTrajectoryManager:
         target_topic = rospy.get_param("~target_pose_topic", "target_pose")
         target_state_topic = rospy.get_param("~target_state_topic", "target_state")
         self.publish_target_pose = _as_bool(rospy.get_param("~publish_target_pose", True), "publish_target_pose")
+        self.validate_waypoints = _as_bool(rospy.get_param("~validate_waypoints", True), "validate_waypoints")
+        self.validation_timeout = max(0.0, float(rospy.get_param("~validation_timeout", 2.0)))
+        self.validation_service = str(rospy.get_param(
+            "~validation_service", self._infer_controller_service(target_state_topic, "validate_poses")))
         self.target_pub = rospy.Publisher(target_topic, PoseStamped, queue_size=1)
         self.target_state_pub = rospy.Publisher(target_state_topic, CartesianTrajectorySetpoint, queue_size=1)
         self.progress_pub = rospy.Publisher("~progress", Float64, queue_size=1, latch=True)
@@ -682,6 +689,9 @@ class TcpPathTrajectoryManager:
 
         if self.require_start_reached:
             self.ee_state_sub = rospy.Subscriber(self.ee_state_topic, EndEffectorState, self._ee_state_cb, queue_size=10)
+
+        if self.validate_waypoints:
+            self._validate_waypoints_or_raise()
 
         rospy.Service("~start", Trigger, self._start_cb)
         rospy.Service("~pause", Trigger, self._pause_cb)
@@ -724,6 +734,14 @@ class TcpPathTrajectoryManager:
             return data
         raise ValueError("path file must contain a 'points' or 'waypoints' list")
 
+    @staticmethod
+    def _infer_controller_service(target_state_topic: str, service_name: str) -> str:
+        topic = target_state_topic.rstrip("/")
+        suffix = "/target_state"
+        if topic.endswith(suffix):
+            return topic[: -len(suffix)] + "/" + service_name
+        return service_name
+
     def _load_waypoints(self, path_data) -> Tuple[List[Point3], List[QuaternionTuple]]:
         default_orientation = _quaternion_tuple(self._load_orientation(path_data))
         points: List[Point3] = []
@@ -743,6 +761,34 @@ class TcpPathTrajectoryManager:
         if len(points) != len(orientations):
             raise ValueError("internal waypoint/orientation mismatch")
         return points, orientations
+
+    def _validate_waypoints_or_raise(self):
+        if not self.validation_service:
+            rospy.logwarn("Waypoint validation requested but validation_service is empty; skipping")
+            return
+
+        try:
+            rospy.wait_for_service(self.validation_service, timeout=self.validation_timeout)
+        except rospy.ROSException as exc:
+            raise RuntimeError(f"Waypoint validation service '{self.validation_service}' not available: {exc}")
+
+        poses = []
+        for point, quat in zip(self.waypoint_points, self.waypoint_orientations):
+            pose = PoseStamped().pose
+            pose.position.x = point[0]
+            pose.position.y = point[1]
+            pose.position.z = point[2]
+            pose.orientation = _quaternion_from_tuple(quat)
+            poses.append(pose)
+
+        proxy = rospy.ServiceProxy(self.validation_service, ValidatePoses)
+        header = Header(stamp=rospy.Time(0), frame_id=self.frame_id)
+        resp = proxy(header, poses)
+        if not resp.success:
+            invalid = [str(i) for i, ok in enumerate(resp.valid) if not ok]
+            raise RuntimeError(
+                f"Waypoint validation failed via '{self.validation_service}': {resp.message}; invalid indexes: {', '.join(invalid)}")
+        rospy.loginfo("Waypoint validation OK: %d waypoint(s) reachable", len(poses))
 
     def _load_orientation(self, path_data) -> Quaternion:
         if "orientation" in path_data:

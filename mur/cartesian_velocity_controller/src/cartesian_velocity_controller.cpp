@@ -1048,6 +1048,8 @@ void CartesianVelocityController::setupRosInterfaces()
   // Debug/utility service: retrieve the current Jacobian (per-node namespace via private NH)
   get_jacobian_server_ = pnh_.advertiseService("get_jacobian",
                                                &CartesianVelocityController::getJacobianCallback, this);
+  validate_poses_server_ = pnh_.advertiseService("validate_poses",
+                                                 &CartesianVelocityController::validatePosesCallback, this);
 
   const std::string cm_ns = controller_manager_ns_.empty() ? "controller_manager" : controller_manager_ns_;
   const std::string switch_srv = ros::names::append(cm_ns, "switch_controller");
@@ -3591,6 +3593,82 @@ bool CartesianVelocityController::getJacobianCallback(GetJacobian::Request& /*re
 
   res.success = true;
   res.message = "OK";
+  return true;
+}
+
+// ============================================================================
+// Utility Service: Validate Poses
+// ============================================================================
+
+bool CartesianVelocityController::validatePosesCallback(ValidatePoses::Request& req,
+                                                        ValidatePoses::Response& res)
+{
+  res.success = false;
+  res.valid.clear();
+
+  if (!robot_state_ || !robot_state_->isReady())
+  {
+    res.message = "Robot state not ready (no JointState received yet).";
+    return true;
+  }
+
+  Eigen::Isometry3d tcp_offset;
+  {
+    std::lock_guard<std::mutex> lock(tcp_mutex_);
+    tcp_offset = tcp_offset_;
+  }
+
+  const ControllerJointLimitsConfig* limits_ptr =
+      (controller_joint_limits_.enabled && controller_joint_limits_.hasAnyEnabledLimit()) ? &controller_joint_limits_ : nullptr;
+
+  res.valid.resize(req.poses.size(), false);
+  std::size_t invalid_count = 0;
+  for (std::size_t i = 0; i < req.poses.size(); ++i)
+  {
+    geometry_msgs::PoseStamped pose_in;
+    pose_in.header = req.header;
+    pose_in.pose = req.poses[i];
+
+    Eigen::Isometry3d pose;
+    if (pose_in.header.frame_id.empty() || pose_in.header.frame_id == global_frame_)
+    {
+      if (pose_in.header.frame_id.empty() && !accept_empty_frame_as_global_)
+      {
+        invalid_count++;
+        continue;
+      }
+      pose = poseToIsometry(pose_in.pose);
+    }
+    else
+    {
+      try
+      {
+        const geometry_msgs::TransformStamped T =
+            tf_buffer_.lookupTransform(global_frame_, pose_in.header.frame_id, ros::Time(0), ros::Duration(tf_timeout_));
+        geometry_msgs::PoseStamped transformed;
+        tf2::doTransform(pose_in, transformed, T);
+        pose = poseToIsometry(transformed.pose);
+      }
+      catch (const tf2::TransformException& ex)
+      {
+        ROS_WARN_THROTTLE(2.0, "ValidatePoses TF failed (%s -> %s): %s",
+                          pose_in.header.frame_id.c_str(), global_frame_.c_str(), ex.what());
+        invalid_count++;
+        continue;
+      }
+    }
+
+    Eigen::VectorXd joint_solution;
+    const bool ok = robot_state_->checkPoseReachability(pose, tcp_offset, joint_solution, limits_ptr);
+    res.valid[i] = ok;
+    if (!ok)
+    {
+      invalid_count++;
+    }
+  }
+
+  res.success = (invalid_count == 0);
+  res.message = res.success ? "OK" : (std::to_string(invalid_count) + " pose(s) are not reachable");
   return true;
 }
 

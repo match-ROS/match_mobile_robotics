@@ -22,6 +22,7 @@
 #include <visualization_msgs/Marker.h>
 #include <xmlrpcpp/XmlRpcValue.h>
 
+#include "cartesian_velocity_controller/CartesianTrajectorySetpoint.h"
 #include "cartesian_velocity_controller/EndEffectorState.h"
 #include "cartesian_velocity_controller/WholeBodyPrintDebug.h"
 
@@ -234,7 +235,7 @@ public:
     , tf_listener_(tf_buffer_)
   {
     loadParams();
-    if (!path_.load(pnh_))
+    if (!external_target_enabled_ && !path_.load(pnh_))
     {
       ros::shutdown();
       return;
@@ -249,6 +250,10 @@ public:
       joint_state_sub_ = nh_.subscribe(joint_state_topic_, 20, &WholeBodyPrintController::jointStateCb, this);
     }
     ee_sub_ = nh_.subscribe(ee_state_topic_, 20, &WholeBodyPrintController::eeStateCb, this);
+    if (external_target_enabled_)
+    {
+      target_state_sub_ = nh_.subscribe(target_state_topic_, 20, &WholeBodyPrintController::targetStateCb, this);
+    }
     if (avoidance_enabled_)
     {
       scan_sub_ = nh_.subscribe(avoidance_scan_topic_, 5, &WholeBodyPrintController::scanCb, this);
@@ -263,13 +268,16 @@ public:
     stop_srv_ = pnh_.advertiseService("stop", &WholeBodyPrintController::stopCb, this);
 
     last_time_ = ros::Time::now();
-    publishPathMarker();
+    if (!external_target_enabled_)
+    {
+      publishPathMarker();
+    }
     timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
                              &WholeBodyPrintController::timerCb, this);
 
     ROS_INFO("Whole-body print demo ready: frame=%s length=%.3f m speed=%.3f m/s rates[path=%.1f base=%.1f lifter=%.1f debug=%.1f] base=%s lifter=%s",
              path_frame_.c_str(),
-             path_.totalLength(),
+             external_target_enabled_ ? 0.0 : path_.totalLength(),
              speed_,
              path_rate_hz_,
              base_rate_hz_,
@@ -309,6 +317,9 @@ private:
     pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
     pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
     pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_r/target_pose");
+    pnh_.param("target_state_input/enabled", external_target_enabled_, false);
+    pnh_.param<std::string>("target_state_input/topic", target_state_topic_, "cartesian_velocity_controller_r/target_state");
+    pnh_.param("target_state_input/timeout", target_state_timeout_, 0.5);
     pnh_.param<std::string>("ee_state_topic", ee_state_topic_, "cartesian_velocity_controller_r/end_effector_state");
 
     pnh_.param("base/enabled", base_enabled_, true);
@@ -377,6 +388,25 @@ private:
         return;
       }
     }
+  }
+
+  void targetStateCb(const cartesian_velocity_controller::CartesianTrajectorySetpoint::ConstPtr& msg)
+  {
+    if (!msg->header.frame_id.empty())
+    {
+      path_frame_ = msg->header.frame_id;
+    }
+    external_target_ = Eigen::Vector3d(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
+    external_velocity_ = Eigen::Vector3d(msg->velocity.linear.x, msg->velocity.linear.y, msg->velocity.linear.z);
+    external_active_ = msg->active;
+    external_path_s_ = msg->path_s;
+    external_path_progress_ = msg->path_progress;
+    if (external_path_progress_ > 1e-6)
+    {
+      external_path_length_ = std::max(external_path_length_, external_path_s_ / external_path_progress_);
+    }
+    external_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
+    have_external_target_ = true;
   }
 
   void scanCb(const sensor_msgs::LaserScan::ConstPtr& msg)
@@ -503,6 +533,12 @@ private:
     const double dt = std::max(0.0, (now - last_time_).toSec());
     last_time_ = now;
 
+    if (external_target_enabled_)
+    {
+      timerCbExternal(now, dt);
+      return;
+    }
+
     if (has_started_ && !paused_ && !stopped_ && !done_)
     {
       s_ += speed_ * dt;
@@ -548,6 +584,57 @@ private:
     if (!paused_ && !done_)
     {
       Eigen::Vector3d desired_linear = speed_ * tangent + kp_position_ * (base_tracking_target_ - tcp);
+      desired_linear.z() *= task_weight_z_;
+
+      Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
+      publishBaseCommand(u, now);
+      publishLifterCommand(u, dt, now);
+    }
+    else
+    {
+      publishZeroBase();
+    }
+
+    publishDebug(now, stateString(), target, arm_target, tcp, target_in_base, arm_scale);
+  }
+
+  void timerCbExternal(const ros::Time& now, double dt)
+  {
+    if (!have_external_target_ ||
+        (target_state_timeout_ > 0.0 && !external_stamp_.isZero() &&
+         (now - external_stamp_).toSec() > target_state_timeout_))
+    {
+      publishZeroBase();
+      publishDebug(now,
+                   have_external_target_ ? "target_timeout" : "waiting_target",
+                   external_target_,
+                   external_target_,
+                   currentTcpInPath(external_target_),
+                   Eigen::Vector3d::Zero(),
+                   0.0);
+      return;
+    }
+
+    s_ = external_path_s_;
+    const Eigen::Vector3d target = external_target_;
+    const double speed = external_velocity_.norm();
+    Eigen::Vector3d tangent = Eigen::Vector3d::UnitX();
+    if (speed > 1e-9)
+    {
+      tangent = external_velocity_ / speed;
+    }
+    updateBaseTrackingTarget(target, dt);
+
+    const Eigen::Vector3d tcp = currentTcpInPath(target);
+    const Eigen::Vector3d target_in_base = targetInBase(target);
+    const double arm_scale = computeArmTrackingScale(target_in_base);
+    const Eigen::Vector3d arm_target = target;
+
+    publishCurrentMarker(target, now);
+
+    if (!paused_ && !stopped_ && external_active_)
+    {
+      Eigen::Vector3d desired_linear = external_velocity_ + kp_position_ * (base_tracking_target_ - tcp);
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
@@ -991,8 +1078,11 @@ private:
     msg.path_frame = path_frame_;
     msg.base_frame = base_frame_;
     msg.path_s = s_;
-    msg.path_length = path_.totalLength();
-    msg.path_progress = path_.totalLength() > 1e-9 ? clamp(s_ / path_.totalLength(), 0.0, 1.0) : 0.0;
+    const double path_length = external_target_enabled_ ? external_path_length_ : path_.totalLength();
+    msg.path_length = path_length;
+    msg.path_progress = external_target_enabled_
+                            ? clamp(external_path_progress_, 0.0, 1.0)
+                            : (path_length > 1e-9 ? clamp(s_ / path_length, 0.0, 1.0) : 0.0);
     msg.target_position = pointToMsg(target);
     msg.arm_target_position = pointToMsg(arm_target);
     msg.current_tcp_position = pointToMsg(tcp);
@@ -1036,6 +1126,7 @@ private:
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
   ros::Subscriber scan_sub_;
+  ros::Subscriber target_state_sub_;
   ros::ServiceServer pause_srv_;
   ros::ServiceServer resume_srv_;
   ros::ServiceServer restart_srv_;
@@ -1059,6 +1150,17 @@ private:
   ros::Time last_time_;
 
   std::string target_pose_topic_;
+  bool external_target_enabled_{false};
+  std::string target_state_topic_;
+  double target_state_timeout_{0.5};
+  bool have_external_target_{false};
+  bool external_active_{false};
+  ros::Time external_stamp_;
+  Eigen::Vector3d external_target_{Eigen::Vector3d::Zero()};
+  Eigen::Vector3d external_velocity_{Eigen::Vector3d::Zero()};
+  double external_path_s_{0.0};
+  double external_path_progress_{0.0};
+  double external_path_length_{0.0};
   std::string ee_state_topic_;
   double kp_position_{0.8};
   double arm_full_x_error_{0.15};

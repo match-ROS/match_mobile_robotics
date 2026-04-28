@@ -54,6 +54,7 @@ add_service_files(
   QueryMap3D.srv
   GetFrameInfo.srv
   GetJacobian.srv
+  ValidatePoses.srv
 )
 
 generate_messages(

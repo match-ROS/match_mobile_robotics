@@ -1,24 +1,18 @@
 # =============================================================================
-# Cartesian Velocity Controller - MUR620 Dual-Arm (LEFT) - MVP configuration
+# Cartesian Velocity Controller - MUR620 Dual-Arm (RIGHT) - MVP configuration
 # =============================================================================
-#
-# Notes:
-# - Designed to be launched under the robot namespace (default: /mur620)
-# - Intended for two independent controller instances (L/R)
-# - For MVP: Map3D is disabled (map3d/enabled: false) and repulsion is disabled
-# - Verify frame/link names (tcp_link, repulsion links) against the real URDF/SRDF
-#
+# See also: controller_params_mur620_ur10_l.yaml
 # =============================================================================
 
 # =============================================================================
 # Robot Configuration
 # =============================================================================
-group_name: "UR_arm_l"
+group_name: "UR_arm_r"
 
 # IMPORTANT: verify this on the real model (may be prefixed)
 # NOTE: this must match the URDF link name (MoveIt RobotModel), not the TF-prefixed frame.
-# In mur_620.gazebo.xacro the left arm links are prefixed with "UR10_l/".
-tcp_link: "UR10_l/tool0"
+# In mur_620.gazebo.xacro the right arm links are prefixed with "UR10_r/".
+tcp_link: "UR10_r/tool0"
 
 global_frame: "$(arg robot_ns)/base_link"
 
@@ -31,47 +25,41 @@ global_frame: "$(arg robot_ns)/base_link"
 #
 # TIP: set jacobian_source_frame to the frame/link that MoveIt uses as reference
 # when computing the Jacobian for this group (often the chain root / group base).
-jacobian_source_frame: "$(arg robot_ns)/UR10_l/base_link"
+jacobian_source_frame: "$(arg robot_ns)/UR10_r/base_link"
 # Target frame for the Jacobian (defaults to global_frame if omitted)
 jacobian_target_frame: "$(arg robot_ns)/base_link"
+robot_description_param: "robot_description"
 
 # =============================================================================
 # RViz Marker Visualization
 # =============================================================================
 # Prefix added to visualization_msgs/Marker.ns so RViz can group markers per-arm.
 marker_publisher:
-  ns_prefix: "UR10_l"
+  ns_prefix: "UR10_r"
 
-# Parameter used by MoveIt RobotModelLoader
-# (usually overridden in the launch to point to /mur620/robot_description)
-robot_description_param: "robot_description"
-
-# TCP offset from link (position [x, y, z] in meters)
 tcp_offset_position: [0.0, 0.0, 0.0]
-# TCP offset orientation (roll, pitch, yaw in radians)
 tcp_offset_orientation_rpy: [0.0, 0.0, 0.0]
 
 # =============================================================================
 # ROS Topics and Controller Names
 # =============================================================================
 joint_state_topic: "joint_states"
-velocity_command_topic: "UR10_l/joint_group_vel_controller/command"
+velocity_command_topic: "UR10_r/joint_group_vel_controller/command"
 distance_topic: "distance_info"
 
 # Controller switching (MVP: disabled, do it manually)
 start_controller: ""
 stop_controller: ""
 
-# controller_manager namespace (relative to the node namespace)
 controller_manager_ns: "controller_manager"
 
 # =============================================================================
 # Control Loop Configuration
 # =============================================================================
-control_rate: 250.0           # Hz - main control loop frequency
-command_timeout: 0.5         # seconds - timeout for velocity commands
-pose_filter_alpha: 0.8       # EMA blending for TCP pose filtering (0=no filter, 1=raw)
-reset_filter_on_target_change: false  # keep filter state when target changes (continuity)
+control_rate: 250.0
+command_timeout: 0.5
+pose_filter_alpha: 0.8
+reset_filter_on_target_change: false
 
 # Startup behavior:
 # - "hold_current_pose" (default): capture current TCP pose and hold it as initial target
@@ -221,16 +209,16 @@ repulsion:
 
   robot_points_of_interest:
     tcp:
-      link: "UR10_l/tool0"
+      link: "UR10_r/tool0"
       offset: [0.0, 0.0, 0.0]
     elbow:
-      link: "UR10_l/forearm_link"
+      link: "UR10_r/forearm_link"
       offset: [0.0, 0.0, 0.12]
     wrist:
-      link: "UR10_l/wrist_1_link"
+      link: "UR10_r/wrist_1_link"
       offset: [0.0, 0.0, -0.05]
     forearm_mid:
-      link: "UR10_l/forearm_link"
+      link: "UR10_r/forearm_link"
       offset: [-0.30, 0.0, 0.035]
 
   points:

@@ -2,18 +2,18 @@
   <!-- Whole-body demo controller: path TCP + differential base + optional lifter supervisor. -->
 
   <arg name="arm" default="right" />
-  <arg name="mur_ns" default="mur620d" />
+  <arg name="mur_ns" default="mur620b" />
   <arg name="config_file" default="$(find cartesian_velocity_controller)/config/whole_body_print_demo.yaml" />
-  <arg name="path_frame" default="map" />
-  <arg name="base_enabled" default="true" />
+  <arg name="path_frame" default="mur620b/base_link" />
+  <arg name="base_enabled" default="false" />
   <arg name="lifter_enabled" default="false" />
   <arg name="lifter_command_topic" default="" />
 
   <arg name="override_global_frame" default="true" />
-  <arg name="auto_load_unsafe_velocity_controllers" default="true" />
-  <arg name="auto_switch_to_velocity" default="true" />
+  <arg name="auto_load_unsafe_velocity_controllers" default="false" />
+  <arg name="auto_switch_to_velocity" default="false" />
 
-  <include file="$(find cartesian_velocity_controller)/launch/mur620_single_arm_cartesian_velocity_controller.launch">
+  <include file="$(find cartesian_velocity_controller)/launch/mur620b_hw_single_arm_cartesian_velocity_controller.launch">
     <arg name="arm" value="$(arg arm)" />
     <arg name="mur_ns" value="$(arg mur_ns)" />
     <arg name="override_global_frame" value="$(arg override_global_frame)" />

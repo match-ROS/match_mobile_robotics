@@ -12,7 +12,7 @@ import yaml
 from cartesian_velocity_controller.msg import CartesianTrajectorySetpoint, EndEffectorState
 from cartesian_velocity_controller.srv import ValidatePoses
 from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist, Vector3
-from std_msgs.msg import Float64, Header
+from std_msgs.msg import Bool, Float64, Header, String
 from std_srvs.srv import Trigger, TriggerResponse
 from visualization_msgs.msg import Marker
 
@@ -676,6 +676,9 @@ class TcpPathTrajectoryManager:
         self.target_state_pub = rospy.Publisher(target_state_topic, CartesianTrajectorySetpoint, queue_size=1)
         self.progress_pub = rospy.Publisher("~progress", Float64, queue_size=1, latch=True)
         self.speed_scale_pub = rospy.Publisher("~speed_scale", Float64, queue_size=1, latch=True)
+        self.tracking_error_pub = rospy.Publisher("~tracking_error", Float64, queue_size=1, latch=True)
+        self.tracking_guard_active_pub = rospy.Publisher("~tracking_guard_active", Bool, queue_size=1, latch=True)
+        self.tracking_guard_state_pub = rospy.Publisher("~tracking_guard_state", String, queue_size=1, latch=True)
         self.path_marker_pub = rospy.Publisher("~path_marker", Marker, queue_size=1, latch=True)
         self.current_marker_pub = rospy.Publisher("~current_marker", Marker, queue_size=1)
         self.base_cmd_pub = None
@@ -952,7 +955,22 @@ class TcpPathTrajectoryManager:
             progress = min(self.distance_offset / self.path.total_length, 1.0)
             self.progress_pub.publish(Float64(data=progress))
             self.speed_scale_pub.publish(Float64(data=self.speed_scale))
+            self.tracking_error_pub.publish(Float64(
+                data=-1.0 if self.tracking_guard_last_error is None else self.tracking_guard_last_error))
+            self.tracking_guard_active_pub.publish(Bool(data=self.tracking_guard_enabled and self.speed_scale < 0.999))
+            self.tracking_guard_state_pub.publish(String(data=self._tracking_guard_state()))
             rate.sleep()
+
+    def _tracking_guard_state(self) -> str:
+        if not self.tracking_guard_enabled:
+            return "disabled"
+        if self.tracking_guard_last_error is None:
+            return "waiting_feedback" if self.state == "tracking" else self.state
+        if self.tracking_guard_stopped or self.speed_scale <= 1e-6:
+            return "stopped"
+        if self.speed_scale < 0.999:
+            return "slowdown"
+        return "nominal"
 
     def _tracking_guard_speed_scale(self, target_point: Point3) -> float:
         if not self.tracking_guard_enabled:

@@ -1,16 +1,21 @@
-# Simple polyline path for the TCP trajectory manager.
+# Smoothed waypoint path for the TCP trajectory manager.
 #
-# Coordinates are expressed in frame_id.
+# Coordinates are expressed in frame_id. Intermediate waypoints are guide points:
+# the generated path is blended near corners according to blend_tolerance.
 # For the first mur620b hardware test, keep the path fixed in the robot base frame.
 frame_id: "mur620b/base_link"
 speed: 0.05
+max_linear_velocity: 0.05
+max_linear_acceleration: 0.20
+max_linear_jerk: 1.5
+blend_tolerance: 0.04
 
 # TCP local Z points downward relative to base_link Z-up.
 orientation_rpy: [3.141592653589793, 0.0, 0.0]
 
-points:
-  - [0.0, -1.0, 1.3]
-  - [0.90, -1.0, 1.3]
-  - [0.90, -1.3, 1.3]
-  - [0.0, -1.3, 1.3]
-  - [0.0, -1.0, 1.3]
+waypoints:
+  - position: [0.0, -1.0, 1.3]
+  - position: [0.90, -1.0, 1.3]
+  - position: [0.90, -1.3, 1.3]
+  - position: [0.0, -1.3, 1.3]
+  - position: [0.0, -1.0, 1.3]

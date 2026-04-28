@@ -70,6 +70,8 @@ controller_manager_ns: "controller_manager"
 # =============================================================================
 control_rate: 250.0           # Hz - main control loop frequency
 command_timeout: 0.5         # seconds - timeout for velocity commands
+target_state_timeout: 0.25   # seconds - stale trajectory setpoint threshold
+target_state_zero_velocity_on_timeout: false
 pose_filter_alpha: 0.8       # EMA blending for TCP pose filtering (0=no filter, 1=raw)
 reset_filter_on_target_change: false  # keep filter state when target changes (continuity)
 

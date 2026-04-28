@@ -14,6 +14,11 @@
   <arg name="path_frame" default="mur620b/base_link" />
   <arg name="speed" default="0.10" />
   <arg name="rate" default="20.0" />
+  <arg name="blend_tolerance" default="0.04" />
+  <arg name="max_linear_velocity" default="$(arg speed)" />
+  <arg name="max_linear_acceleration" default="0.25" />
+  <arg name="max_linear_jerk" default="2.0" />
+  <arg name="publish_target_pose" default="false" />
   <arg name="loop" default="false" />
   <arg name="start_paused" default="true" />
   <arg name="base_control_enabled" default="false" />
@@ -53,9 +58,15 @@
       <param name="frame_id" value="$(arg path_frame)" />
       <param name="speed" type="double" value="$(arg speed)" />
       <param name="rate" type="double" value="$(arg rate)" />
+      <param name="blend_tolerance" type="double" value="$(arg blend_tolerance)" />
+      <param name="max_linear_velocity" type="double" value="$(arg max_linear_velocity)" />
+      <param name="max_linear_acceleration" type="double" value="$(arg max_linear_acceleration)" />
+      <param name="max_linear_jerk" type="double" value="$(arg max_linear_jerk)" />
+      <param name="publish_target_pose" type="bool" value="$(arg publish_target_pose)" />
       <param name="loop" type="bool" value="$(arg loop)" />
       <param name="start_paused" type="bool" value="$(arg start_paused)" />
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
+      <param name="target_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_state" />
       <param name="preposition/enabled" type="bool" value="$(arg preposition_enabled)" />
       <param name="preposition/require_start_reached" type="bool" value="$(arg require_start_reached)" />
       <param name="preposition/position_tolerance" type="double" value="$(arg start_position_tolerance)" />

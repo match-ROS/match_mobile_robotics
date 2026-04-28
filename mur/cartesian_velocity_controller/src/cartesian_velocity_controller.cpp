@@ -85,6 +85,20 @@ static RepulsiveVelocityMode repulsiveModeFromInt(int v)
   }
 }
 
+static Eigen::Vector3d vector3ToEigen(const geometry_msgs::Vector3& v)
+{
+  return Eigen::Vector3d(v.x, v.y, v.z);
+}
+
+static Eigen::Vector3d rotateVectorByTransform(const geometry_msgs::TransformStamped& transform,
+                                               const Eigen::Vector3d& v)
+{
+  tf2::Quaternion q;
+  tf2::fromMsg(transform.transform.rotation, q);
+  const tf2::Vector3 rotated = tf2::quatRotate(q, tf2::Vector3(v.x(), v.y(), v.z()));
+  return Eigen::Vector3d(rotated.x(), rotated.y(), rotated.z());
+}
+
 static int repulsiveModeToInt(RepulsiveVelocityMode m)
 {
   switch (m)
@@ -387,6 +401,9 @@ void CartesianVelocityController::loadParameters()
 
   pnh_.param("control_rate", control_rate_, 50.0);
   pnh_.param("command_timeout", command_timeout_, 0.5);
+  pnh_.param("target_state_timeout", target_state_timeout_, 0.25);
+  pnh_.param("target_state_zero_velocity_on_timeout", target_state_zero_velocity_on_timeout_, false);
+  target_state_timeout_ = std::max(0.0, target_state_timeout_);
 
   pnh_.param("pose_filter_alpha", pose_filter_alpha_, 0.85);
   pose_filter_alpha_ = std::clamp(pose_filter_alpha_, 0.0, 1.0);
@@ -1022,6 +1039,8 @@ void CartesianVelocityController::setupRosInterfaces()
   // Opzione B: input per-istanza nel namespace privato (~target_pose)
   target_pose_sub_ = pnh_.subscribe("target_pose", 1,
                                    &CartesianVelocityController::targetPoseCallback, this);
+  target_state_sub_ = pnh_.subscribe("target_state", 1,
+                                     &CartesianVelocityController::targetStateCallback, this);
 
   // Debug service for frame verification
   get_frame_info_server_ = pnh_.advertiseService("get_frame_info",
@@ -1917,7 +1936,35 @@ void CartesianVelocityController::jointStateCallback(const sensor_msgs::JointSta
 
 void CartesianVelocityController::targetPoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg)
 {
+  {
+    std::lock_guard<std::mutex> lock(target_state_mutex_);
+    target_state_mode_active_ = false;
+    target_state_.active = false;
+  }
   setTargetPose(*msg);
+}
+
+void CartesianVelocityController::targetStateCallback(const CartesianTrajectorySetpoint::ConstPtr& msg)
+{
+  Eigen::Isometry3d pose;
+  Eigen::Matrix<double, 6, 1> velocity;
+  if (!transformTrajectorySetpoint(*msg, pose, velocity))
+  {
+    return;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(target_state_mutex_);
+    target_state_.pose = pose;
+    target_state_.velocity = msg->active ? velocity : Eigen::Matrix<double, 6, 1>::Zero();
+    target_state_.stamp = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
+    target_state_.active = msg->active;
+    target_state_.valid = true;
+    target_state_mode_active_ = true;
+  }
+
+  has_target_ = true;
+  idle_until_target_ = false;
 }
 
 void CartesianVelocityController::controlLoopCallback(const ros::TimerEvent& event)
@@ -1979,13 +2026,47 @@ void CartesianVelocityController::executePipeline(double dt)
   // Lightly filter the TCP pose to attenuate sensor noise without lagging the loop
   Eigen::Isometry3d current_tcp_pose = filterTcpPose(raw_tcp_pose);
 
-  // ========== Level A: Global Planner ==========
+  // ========== Level A: Global Planner / Trajectory Setpoint ==========
+  TargetStateCache trajectory_setpoint;
+  bool trajectory_mode = false;
+  {
+    std::lock_guard<std::mutex> lock(target_state_mutex_);
+    trajectory_mode = target_state_mode_active_ && target_state_.valid;
+    if (trajectory_mode)
+    {
+      trajectory_setpoint = target_state_;
+    }
+  }
+
+  if (trajectory_mode && target_state_timeout_ > 0.0 && !trajectory_setpoint.stamp.isZero())
+  {
+    const double age = (ros::Time::now() - trajectory_setpoint.stamp).toSec();
+    if (age > target_state_timeout_)
+    {
+      trajectory_setpoint.active = false;
+      trajectory_setpoint.velocity.setZero();
+      if (target_state_zero_velocity_on_timeout_)
+      {
+        ROS_WARN_THROTTLE_NAMED(2.0, "cartesian_velocity_controller",
+                                "target_state timed out after %.3f s; publishing zero velocity", age);
+        publishZeroVelocity();
+        return;
+      }
+      ROS_WARN_THROTTLE_NAMED(2.0, "cartesian_velocity_controller",
+                              "target_state timed out after %.3f s; holding last target pose", age);
+    }
+  }
+
   // If no user target is set, hold current pose (still allows repulsion/guardrails to act).
-  const bool has_waypoints = (global_planner_ && global_planner_->hasWaypoints());
+  const bool has_waypoints = (!trajectory_mode && global_planner_ && global_planner_->hasWaypoints());
   std::size_t waypoint_index = 0;
   Eigen::Isometry3d waypoint = current_tcp_pose;
 
-  if (has_waypoints)
+  if (trajectory_mode)
+  {
+    waypoint = trajectory_setpoint.pose;
+  }
+  else if (has_waypoints)
   {
     // Update position and check for waypoint switch
     global_planner_->updateCurrentPosition(current_tcp_pose);
@@ -2007,54 +2088,74 @@ void CartesianVelocityController::executePipeline(double dt)
         obstacles, link_pois, current_tcp_pose, global_frame_, dt);
   }
 
-  LocalPlannerOutput local_output = local_planner_->compute(
-      current_tcp_pose, waypoint, obstacles, link_pois, dt);
+  LocalPlannerOutput local_output;
+  if (trajectory_mode)
+  {
+    local_output.target_raw = waypoint;
+    local_output.combined_linear = trajectory_setpoint.velocity.head<3>();
+    local_output.combined_angular = trajectory_setpoint.velocity.tail<3>();
+    local_output.distance_to_waypoint = (waypoint.translation() - current_tcp_pose.translation()).norm();
+  }
+  else
+  {
+    local_output = local_planner_->compute(
+        current_tcp_pose, waypoint, obstacles, link_pois, dt);
+  }
 
   // ========== Level C: Motion Generator (Velocity Filter) ==========
-  // Pose tracking: generate the motion-generator input velocity from pose error
   const Eigen::Isometry3d target_raw = local_output.target_raw;
-  const Eigen::Isometry3d target_filtered_prev = velocity_filter_->getFilteredPosition();
-
-  const Eigen::Vector3d pos_err_tf = target_raw.translation() - target_filtered_prev.translation();
-  const Eigen::Vector3d ori_err_tf = orientationErrorAxisAngle(
-      Eigen::Quaterniond(target_filtered_prev.rotation()),
-      Eigen::Quaterniond(target_raw.rotation()));
-
-  const double tau_lin = std::clamp(pose_tracking_.tau_linear, 0.01, 5.0);
-  const double tau_ang = std::clamp(pose_tracking_.tau_angular, 0.01, 5.0);
-  const double k_lin = std::clamp(pose_tracking_.k_linear, 0.0, 50.0);
-  const double k_ang = std::clamp(pose_tracking_.k_angular, 0.0, 50.0);
-
-  Eigen::Vector3d v_des_lin = (k_lin / tau_lin) * pos_err_tf;
-  Eigen::Vector3d v_des_ang = (k_ang / tau_ang) * ori_err_tf;
-
-  // Effective caps: pose_tracking caps (scaled) but never above local planner caps
-  const double local_max_lin = local_planner_ ? local_planner_->getMaxLinearVelocity() : 0.5;
-  const double local_max_ang = local_planner_ ? local_planner_->getMaxAngularVelocity() : 1.0;
-
-  const double pose_max_lin_scaled =
-      (pose_tracking_.max_linear_velocity_base > 1e-9)
-          ? (pose_tracking_.max_linear_velocity_base * velocity_scale_factor_)
-          : local_max_lin;
-  const double pose_max_ang_scaled =
-      (pose_tracking_.max_angular_velocity_base > 1e-9)
-          ? (pose_tracking_.max_angular_velocity_base * velocity_scale_factor_)
-          : local_max_ang;
-
-  const double v_cap_lin = std::min(std::max(0.0, pose_max_lin_scaled), local_max_lin);
-  const double v_cap_ang = std::min(std::max(0.0, pose_max_ang_scaled), local_max_ang);
-
-  v_des_lin = limitNorm(v_des_lin, v_cap_lin);
-  v_des_ang = limitNorm(v_des_ang, v_cap_ang);
 
   Eigen::Matrix<double, 6, 1> desired_twist;
-  desired_twist.head<3>() = pose_tracking_.enabled ? v_des_lin : Eigen::Vector3d::Zero();
-  desired_twist.tail<3>() = pose_tracking_.enabled ? v_des_ang : Eigen::Vector3d::Zero();
+  if (trajectory_mode)
+  {
+    desired_twist = trajectory_setpoint.active ? trajectory_setpoint.velocity
+                                               : Eigen::Matrix<double, 6, 1>::Zero();
+  }
+  else
+  {
+    // Pose tracking: generate the motion-generator input velocity from pose error
+    const Eigen::Isometry3d target_filtered_prev = velocity_filter_->getFilteredPosition();
+
+    const Eigen::Vector3d pos_err_tf = target_raw.translation() - target_filtered_prev.translation();
+    const Eigen::Vector3d ori_err_tf = orientationErrorAxisAngle(
+        Eigen::Quaterniond(target_filtered_prev.rotation()),
+        Eigen::Quaterniond(target_raw.rotation()));
+
+    const double tau_lin = std::clamp(pose_tracking_.tau_linear, 0.01, 5.0);
+    const double tau_ang = std::clamp(pose_tracking_.tau_angular, 0.01, 5.0);
+    const double k_lin = std::clamp(pose_tracking_.k_linear, 0.0, 50.0);
+    const double k_ang = std::clamp(pose_tracking_.k_angular, 0.0, 50.0);
+
+    Eigen::Vector3d v_des_lin = (k_lin / tau_lin) * pos_err_tf;
+    Eigen::Vector3d v_des_ang = (k_ang / tau_ang) * ori_err_tf;
+
+    // Effective caps: pose_tracking caps (scaled) but never above local planner caps
+    const double local_max_lin = local_planner_ ? local_planner_->getMaxLinearVelocity() : 0.5;
+    const double local_max_ang = local_planner_ ? local_planner_->getMaxAngularVelocity() : 1.0;
+
+    const double pose_max_lin_scaled =
+        (pose_tracking_.max_linear_velocity_base > 1e-9)
+            ? (pose_tracking_.max_linear_velocity_base * velocity_scale_factor_)
+            : local_max_lin;
+    const double pose_max_ang_scaled =
+        (pose_tracking_.max_angular_velocity_base > 1e-9)
+            ? (pose_tracking_.max_angular_velocity_base * velocity_scale_factor_)
+            : local_max_ang;
+
+    const double v_cap_lin = std::min(std::max(0.0, pose_max_lin_scaled), local_max_lin);
+    const double v_cap_ang = std::min(std::max(0.0, pose_max_ang_scaled), local_max_ang);
+
+    v_des_lin = limitNorm(v_des_lin, v_cap_lin);
+    v_des_ang = limitNorm(v_des_ang, v_cap_ang);
+
+    desired_twist.head<3>() = pose_tracking_.enabled ? v_des_lin : Eigen::Vector3d::Zero();
+    desired_twist.tail<3>() = pose_tracking_.enabled ? v_des_ang : Eigen::Vector3d::Zero();
+  }
 
   Eigen::Matrix<double, 6, 1> filtered_twist = velocity_filter_->filter(desired_twist, dt);
 
   // Get filtered target position for PID
-  Eigen::Isometry3d target_filtered = velocity_filter_->getFilteredPosition();
+  Eigen::Isometry3d target_filtered = trajectory_mode ? target_raw : velocity_filter_->getFilteredPosition();
 
   // ========== Level D: PID Controller ==========
   // Compute position error
@@ -2509,6 +2610,12 @@ bool CartesianVelocityController::setTargetPose(const Eigen::Isometry3d& pose)
     return false;
   }
 
+  {
+    std::lock_guard<std::mutex> lock(target_state_mutex_);
+    target_state_mode_active_ = false;
+    target_state_.active = false;
+  }
+
   // Check reachability via inverse kinematics if enabled.
   // Also compute + cache a valid IK solution for target gating (elbow injection).
   const bool want_ik_solution = (robot_state_ != nullptr) && (reachability_check_enabled_ || elbow_injection_.enabled);
@@ -2621,11 +2728,80 @@ bool CartesianVelocityController::setTargetPose(const geometry_msgs::PoseStamped
   }
 }
 
+bool CartesianVelocityController::transformTrajectorySetpoint(
+    const CartesianTrajectorySetpoint& in,
+    Eigen::Isometry3d& pose_out,
+    Eigen::Matrix<double, 6, 1>& velocity_out) const
+{
+  velocity_out.setZero();
+
+  const std::string in_frame = in.header.frame_id;
+  if (in_frame.empty())
+  {
+    if (!accept_empty_frame_as_global_)
+    {
+      ROS_WARN_THROTTLE(5.0, "Received target_state with empty frame_id (global_frame='%s'). Rejecting.",
+                        global_frame_.c_str());
+      return false;
+    }
+    pose_out = poseToIsometry(in.pose);
+    velocity_out.head<3>() = vector3ToEigen(in.velocity.linear);
+    velocity_out.tail<3>() = vector3ToEigen(in.velocity.angular);
+    return true;
+  }
+
+  if (in_frame == global_frame_)
+  {
+    pose_out = poseToIsometry(in.pose);
+    velocity_out.head<3>() = vector3ToEigen(in.velocity.linear);
+    velocity_out.tail<3>() = vector3ToEigen(in.velocity.angular);
+    return true;
+  }
+
+  try
+  {
+    const geometry_msgs::TransformStamped T =
+        tf_buffer_.lookupTransform(global_frame_, in_frame, ros::Time(0), ros::Duration(tf_timeout_));
+
+    geometry_msgs::PoseStamped pose_in;
+    pose_in.header = in.header;
+    pose_in.pose = in.pose;
+
+    geometry_msgs::PoseStamped pose_transformed;
+    tf2::doTransform(pose_in, pose_transformed, T);
+    pose_out = poseToIsometry(pose_transformed.pose);
+
+    velocity_out.head<3>() = rotateVectorByTransform(T, vector3ToEigen(in.velocity.linear));
+    velocity_out.tail<3>() = rotateVectorByTransform(T, vector3ToEigen(in.velocity.angular));
+    return true;
+  }
+  catch (const tf2::TransformException& ex)
+  {
+    ROS_WARN_THROTTLE(2.0, "TF transform failed for target_state (%s -> %s): %s",
+                      in_frame.c_str(), global_frame_.c_str(), ex.what());
+    if (reject_on_tf_failure_)
+    {
+      return false;
+    }
+
+    pose_out = poseToIsometry(in.pose);
+    velocity_out.head<3>() = vector3ToEigen(in.velocity.linear);
+    velocity_out.tail<3>() = vector3ToEigen(in.velocity.angular);
+    return true;
+  }
+}
+
 bool CartesianVelocityController::setWaypoints(const std::vector<Eigen::Isometry3d>& waypoints)
 {
   if (!global_planner_ || waypoints.empty())
   {
     return false;
+  }
+
+  {
+    std::lock_guard<std::mutex> lock(target_state_mutex_);
+    target_state_mode_active_ = false;
+    target_state_.active = false;
   }
 
   // Check reachability for all waypoints if enabled.
@@ -2700,6 +2876,13 @@ bool CartesianVelocityController::setWaypoints(const std::vector<Eigen::Isometry
 
 void CartesianVelocityController::clearTargetPose()
 {
+  {
+    std::lock_guard<std::mutex> lock(target_state_mutex_);
+    target_state_mode_active_ = false;
+    target_state_.active = false;
+    target_state_.valid = false;
+  }
+
   if (global_planner_)
   {
     global_planner_->clearWaypoints();
@@ -3412,4 +3595,3 @@ bool CartesianVelocityController::getJacobianCallback(GetJacobian::Request& /*re
 }
 
 }  // namespace cartesian_velocity_controller
-

@@ -42,6 +42,7 @@ endif()
 add_message_files(
   FILES
   POIDebugInfo.msg
+  CartesianTrajectorySetpoint.msg
   EndEffectorState.msg
   PipelineDebug.msg
   JointVelocityFeedback.msg

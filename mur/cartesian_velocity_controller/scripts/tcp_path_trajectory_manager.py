@@ -9,14 +9,15 @@ from typing import List, Optional, Sequence, Tuple
 import rospy
 import tf2_ros
 import yaml
-from cartesian_velocity_controller.msg import EndEffectorState
-from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist
+from cartesian_velocity_controller.msg import CartesianTrajectorySetpoint, EndEffectorState
+from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist, Vector3
 from std_msgs.msg import Float64
 from std_srvs.srv import Trigger, TriggerResponse
 from visualization_msgs.msg import Marker
 
 
 Point3 = Tuple[float, float, float]
+QuaternionTuple = Tuple[float, float, float, float]
 
 
 def _as_float(value, name: str) -> float:
@@ -94,6 +95,76 @@ def _quaternion_from_value(value) -> Quaternion:
     raise ValueError("orientation must be [x, y, z, w] or {x, y, z, w}")
 
 
+def _quaternion_tuple(q: Quaternion) -> QuaternionTuple:
+    return (q.x, q.y, q.z, q.w)
+
+
+def _quaternion_from_tuple(q: QuaternionTuple) -> Quaternion:
+    return Quaternion(x=q[0], y=q[1], z=q[2], w=q[3])
+
+
+def _quat_normalize(q: QuaternionTuple) -> QuaternionTuple:
+    n = math.sqrt(q[0] * q[0] + q[1] * q[1] + q[2] * q[2] + q[3] * q[3])
+    if n <= 1e-12:
+        return (0.0, 0.0, 0.0, 1.0)
+    return (q[0] / n, q[1] / n, q[2] / n, q[3] / n)
+
+
+def _quat_slerp(a: QuaternionTuple, b: QuaternionTuple, t: float) -> QuaternionTuple:
+    qa = _quat_normalize(a)
+    qb = _quat_normalize(b)
+    dot = qa[0] * qb[0] + qa[1] * qb[1] + qa[2] * qb[2] + qa[3] * qb[3]
+    if dot < 0.0:
+        qb = (-qb[0], -qb[1], -qb[2], -qb[3])
+        dot = -dot
+    dot = _clamp(dot, -1.0, 1.0)
+    if dot > 0.9995:
+        return _quat_normalize((
+            qa[0] + t * (qb[0] - qa[0]),
+            qa[1] + t * (qb[1] - qa[1]),
+            qa[2] + t * (qb[2] - qa[2]),
+            qa[3] + t * (qb[3] - qa[3]),
+        ))
+    theta_0 = math.acos(dot)
+    sin_theta_0 = math.sin(theta_0)
+    theta = theta_0 * _clamp(t, 0.0, 1.0)
+    s0 = math.cos(theta) - dot * math.sin(theta) / sin_theta_0
+    s1 = math.sin(theta) / sin_theta_0
+    return (
+        s0 * qa[0] + s1 * qb[0],
+        s0 * qa[1] + s1 * qb[1],
+        s0 * qa[2] + s1 * qb[2],
+        s0 * qa[3] + s1 * qb[3],
+    )
+
+
+def _quat_inverse(q: QuaternionTuple) -> QuaternionTuple:
+    qn = _quat_normalize(q)
+    return (-qn[0], -qn[1], -qn[2], qn[3])
+
+
+def _quat_multiply(a: QuaternionTuple, b: QuaternionTuple) -> QuaternionTuple:
+    ax, ay, az, aw = a
+    bx, by, bz, bw = b
+    return (
+        aw * bx + ax * bw + ay * bz - az * by,
+        aw * by - ax * bz + ay * bw + az * bx,
+        aw * bz + ax * by - ay * bx + az * bw,
+        aw * bw - ax * bx - ay * by - az * bz,
+    )
+
+
+def _quat_to_axis_angle(q: QuaternionTuple) -> Point3:
+    qn = _quat_normalize(q)
+    if qn[3] < 0.0:
+        qn = (-qn[0], -qn[1], -qn[2], -qn[3])
+    angle = 2.0 * math.acos(_clamp(qn[3], -1.0, 1.0))
+    s = math.sqrt(max(0.0, 1.0 - qn[3] * qn[3]))
+    if s < 1e-9 or angle < 1e-9:
+        return (0.0, 0.0, 0.0)
+    return (qn[0] / s * angle, qn[1] / s * angle, qn[2] / s * angle)
+
+
 def _distance(a: Point3, b: Point3) -> float:
     return math.sqrt((b[0] - a[0]) ** 2 + (b[1] - a[1]) ** 2 + (b[2] - a[2]) ** 2)
 
@@ -104,6 +175,29 @@ def _clamp(value: float, lower: float, upper: float) -> float:
 
 def _normalize_angle(angle: float) -> float:
     return math.atan2(math.sin(angle), math.cos(angle))
+
+
+def _add(a: Point3, b: Point3) -> Point3:
+    return (a[0] + b[0], a[1] + b[1], a[2] + b[2])
+
+
+def _sub(a: Point3, b: Point3) -> Point3:
+    return (a[0] - b[0], a[1] - b[1], a[2] - b[2])
+
+
+def _scale(v: Point3, s: float) -> Point3:
+    return (v[0] * s, v[1] * s, v[2] * s)
+
+
+def _norm(v: Point3) -> float:
+    return math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2])
+
+
+def _unit(v: Point3) -> Point3:
+    n = _norm(v)
+    if n <= 1e-12:
+        return (0.0, 0.0, 0.0)
+    return (v[0] / n, v[1] / n, v[2] / n)
 
 
 def _rotate_vector(q: Quaternion, v: Point3) -> Point3:
@@ -133,6 +227,182 @@ def _transform_point(transform, point: Point3) -> Point3:
         rotated[1] + translation.y,
         rotated[2] + translation.z,
     )
+
+
+class PathSegment:
+    def __init__(self):
+        self.length = 0.0
+
+    def sample(self, u: float) -> Point3:
+        raise NotImplementedError
+
+    def tangent(self, u: float) -> Point3:
+        raise NotImplementedError
+
+
+class LineSegment(PathSegment):
+    def __init__(self, a: Point3, b: Point3):
+        super().__init__()
+        self.a = a
+        self.b = b
+        self.delta = _sub(b, a)
+        self.length = _norm(self.delta)
+
+    def sample(self, u: float) -> Point3:
+        return _add(self.a, _scale(self.delta, _clamp(u, 0.0, 1.0)))
+
+    def tangent(self, _u: float) -> Point3:
+        return _unit(self.delta)
+
+
+class CubicBezierSegment(PathSegment):
+    def __init__(self, p0: Point3, p1: Point3, p2: Point3, p3: Point3, samples: int = 24):
+        super().__init__()
+        self.p0 = p0
+        self.p1 = p1
+        self.p2 = p2
+        self.p3 = p3
+        self._length_lut: List[Tuple[float, float]] = [(0.0, 0.0)]
+        prev = self.sample(0.0)
+        total = 0.0
+        n = max(4, samples)
+        for i in range(1, n + 1):
+            u = float(i) / float(n)
+            cur = self.sample(u)
+            total += _distance(prev, cur)
+            self._length_lut.append((u, total))
+            prev = cur
+        self.length = total
+
+    def sample(self, u: float) -> Point3:
+        t = _clamp(u, 0.0, 1.0)
+        omt = 1.0 - t
+        return (
+            omt ** 3 * self.p0[0] + 3.0 * omt * omt * t * self.p1[0] + 3.0 * omt * t * t * self.p2[0] + t ** 3 * self.p3[0],
+            omt ** 3 * self.p0[1] + 3.0 * omt * omt * t * self.p1[1] + 3.0 * omt * t * t * self.p2[1] + t ** 3 * self.p3[1],
+            omt ** 3 * self.p0[2] + 3.0 * omt * omt * t * self.p1[2] + 3.0 * omt * t * t * self.p2[2] + t ** 3 * self.p3[2],
+        )
+
+    def tangent(self, u: float) -> Point3:
+        t = _clamp(u, 0.0, 1.0)
+        omt = 1.0 - t
+        d = (
+            3.0 * omt * omt * (self.p1[0] - self.p0[0]) + 6.0 * omt * t * (self.p2[0] - self.p1[0]) + 3.0 * t * t * (self.p3[0] - self.p2[0]),
+            3.0 * omt * omt * (self.p1[1] - self.p0[1]) + 6.0 * omt * t * (self.p2[1] - self.p1[1]) + 3.0 * t * t * (self.p3[1] - self.p2[1]),
+            3.0 * omt * omt * (self.p1[2] - self.p0[2]) + 6.0 * omt * t * (self.p2[2] - self.p1[2]) + 3.0 * t * t * (self.p3[2] - self.p2[2]),
+        )
+        return _unit(d)
+
+    def u_at_distance(self, distance_along_segment: float) -> float:
+        if self.length <= 1e-12:
+            return 0.0
+        s = _clamp(distance_along_segment, 0.0, self.length)
+        for i in range(1, len(self._length_lut)):
+            u0, s0 = self._length_lut[i - 1]
+            u1, s1 = self._length_lut[i]
+            if s <= s1:
+                span = max(1e-12, s1 - s0)
+                return u0 + (u1 - u0) * ((s - s0) / span)
+        return 1.0
+
+
+class SmoothedPath:
+    def __init__(self, points: Sequence[Point3], blend_tolerance: float = 0.0):
+        if len(points) < 2:
+            raise ValueError("path must contain at least two points")
+
+        self.points = list(points)
+        self.segments: List[PathSegment] = []
+        self.total_length = 0.0
+        self.waypoint_s: List[float] = []
+        self._build(max(0.0, blend_tolerance))
+
+        if self.total_length <= 1e-9:
+            raise ValueError("path total length is zero")
+
+    def _append_segment(self, segment: PathSegment):
+        if segment.length <= 1e-9:
+            return
+        self.segments.append(segment)
+        self.total_length += segment.length
+
+    def _build(self, blend_tolerance: float):
+        if blend_tolerance <= 1e-9 or len(self.points) < 3:
+            self.waypoint_s = [0.0]
+            for i in range(len(self.points) - 1):
+                seg = LineSegment(self.points[i], self.points[i + 1])
+                self._append_segment(seg)
+                self.waypoint_s.append(self.total_length)
+            return
+
+        self.waypoint_s = [0.0]
+        current = self.points[0]
+        for i in range(1, len(self.points) - 1):
+            prev_pt = self.points[i - 1]
+            corner = self.points[i]
+            next_pt = self.points[i + 1]
+            len_prev = _distance(prev_pt, corner)
+            len_next = _distance(corner, next_pt)
+            if len_prev <= 1e-9 or len_next <= 1e-9:
+                self._append_segment(LineSegment(current, corner))
+                self.waypoint_s.append(self.total_length)
+                current = corner
+                continue
+
+            d = min(blend_tolerance, 0.45 * len_prev, 0.45 * len_next)
+            if d <= 1e-9:
+                self._append_segment(LineSegment(current, corner))
+                self.waypoint_s.append(self.total_length)
+                current = corner
+                continue
+
+            incoming = _unit(_sub(corner, prev_pt))
+            outgoing = _unit(_sub(next_pt, corner))
+            entry = _sub(corner, _scale(incoming, d))
+            exit_pt = _add(corner, _scale(outgoing, d))
+
+            self._append_segment(LineSegment(current, entry))
+
+            handle = 0.55 * d
+            c1 = _add(entry, _scale(incoming, handle))
+            c2 = _sub(exit_pt, _scale(outgoing, handle))
+            before_blend_s = self.total_length
+            bezier = CubicBezierSegment(entry, c1, c2, exit_pt)
+            self._append_segment(bezier)
+            self.waypoint_s.append(before_blend_s + 0.5 * bezier.length)
+            current = exit_pt
+
+        self._append_segment(LineSegment(current, self.points[-1]))
+        self.waypoint_s.append(self.total_length)
+
+    def _locate(self, distance_along_path: float) -> Tuple[PathSegment, float]:
+        s = min(max(distance_along_path, 0.0), self.total_length)
+        remaining = s
+        for segment in self.segments:
+            if remaining <= segment.length:
+                if isinstance(segment, CubicBezierSegment):
+                    return segment, segment.u_at_distance(remaining)
+                return segment, remaining / max(1e-12, segment.length)
+            remaining -= segment.length
+        return self.segments[-1], 1.0
+
+    def sample(self, distance_along_path: float) -> Point3:
+        segment, u = self._locate(distance_along_path)
+        return segment.sample(u)
+
+    def tangent(self, distance_along_path: float) -> Point3:
+        segment, u = self._locate(distance_along_path)
+        return segment.tangent(u)
+
+    def marker_points(self, samples_per_curve: int = 12) -> List[Point3]:
+        pts: List[Point3] = []
+        for segment in self.segments:
+            n = samples_per_curve if isinstance(segment, CubicBezierSegment) else 1
+            for i in range(n + 1):
+                if pts and i == 0:
+                    continue
+                pts.append(segment.sample(float(i) / float(max(1, n))))
+        return pts
 
 
 class PolylinePath:
@@ -213,6 +483,108 @@ def _load_yaml(path_file: str):
     return data
 
 
+def _orientation_from_waypoint(value, inherited: QuaternionTuple, index: int) -> QuaternionTuple:
+    if not isinstance(value, dict):
+        return inherited
+    if "orientation" in value:
+        return _quaternion_tuple(_quaternion_from_value(value["orientation"]))
+    if "orientation_rpy" in value:
+        rpy = value["orientation_rpy"]
+        if not isinstance(rpy, (list, tuple)) or len(rpy) < 3:
+            raise ValueError(f"waypoints[{index}].orientation_rpy must be [roll, pitch, yaw]")
+        return _quaternion_tuple(_quaternion_from_rpy(float(rpy[0]), float(rpy[1]), float(rpy[2])))
+    return inherited
+
+
+def _point_from_waypoint(value, index: int) -> Point3:
+    if isinstance(value, dict):
+        if "position" in value:
+            return _point_from_value(value["position"], index)
+        return _point_from_value(value, index)
+    return _point_from_value(value, index)
+
+
+class OrientationProfile:
+    def __init__(self, s_values: Sequence[float], orientations: Sequence[QuaternionTuple]):
+        if len(s_values) != len(orientations) or not s_values:
+            raise ValueError("orientation profile requires matching s/orientation entries")
+        self.s_values = list(s_values)
+        self.orientations = [_quat_normalize(q) for q in orientations]
+
+    def sample(self, s: float) -> QuaternionTuple:
+        if s <= self.s_values[0]:
+            return self.orientations[0]
+        if s >= self.s_values[-1]:
+            return self.orientations[-1]
+        for i in range(1, len(self.s_values)):
+            s0 = self.s_values[i - 1]
+            s1 = self.s_values[i]
+            if s <= s1:
+                t = 0.0 if s1 <= s0 else (s - s0) / (s1 - s0)
+                return _quat_slerp(self.orientations[i - 1], self.orientations[i], t)
+        return self.orientations[-1]
+
+    def angular_velocity(self, s: float, s_dot: float, total_length: float) -> Point3:
+        if abs(s_dot) <= 1e-9 or total_length <= 1e-9:
+            return (0.0, 0.0, 0.0)
+        ds = max(1e-4, min(0.01, total_length * 1e-3))
+        s0 = _clamp(s, 0.0, total_length)
+        s1 = _clamp(s0 + (ds if s_dot >= 0.0 else -ds), 0.0, total_length)
+        actual_ds = s1 - s0
+        if abs(actual_ds) <= 1e-9:
+            return (0.0, 0.0, 0.0)
+        q0 = self.sample(s0)
+        q1 = self.sample(s1)
+        dq = _quat_multiply(q1, _quat_inverse(q0))
+        axis_angle = _quat_to_axis_angle(dq)
+        scale = s_dot / actual_ds
+        return (axis_angle[0] * scale, axis_angle[1] * scale, axis_angle[2] * scale)
+
+
+class ScalarMotionProfile:
+    def __init__(self, max_velocity: float, max_acceleration: float, max_jerk: float, response_tau: float = 0.08):
+        self.max_velocity = abs(max_velocity)
+        self.max_acceleration = abs(max_acceleration)
+        self.max_jerk = abs(max_jerk)
+        self.response_tau = max(1e-3, response_tau)
+        self.velocity = 0.0
+        self.acceleration = 0.0
+        self.jerk = 0.0
+
+    def reset(self):
+        self.velocity = 0.0
+        self.acceleration = 0.0
+        self.jerk = 0.0
+
+    def update(self, desired_velocity: float, remaining_distance: float, dt: float, loop: bool) -> Tuple[float, float, float]:
+        if dt <= 1e-9:
+            return self.velocity, self.acceleration, self.jerk
+
+        target_v = _clamp(desired_velocity, 0.0, self.max_velocity)
+        if not loop and self.max_acceleration > 1e-9:
+            braking_v = math.sqrt(max(0.0, 2.0 * self.max_acceleration * max(0.0, remaining_distance)))
+            target_v = min(target_v, braking_v)
+
+        target_acc = (target_v - self.velocity) / self.response_tau
+        target_acc = _clamp(target_acc, -self.max_acceleration, self.max_acceleration)
+
+        if self.max_jerk > 1e-9:
+            self.jerk = _clamp((target_acc - self.acceleration) / dt, -self.max_jerk, self.max_jerk)
+            self.acceleration += self.jerk * dt
+        else:
+            self.acceleration = target_acc
+            self.jerk = 0.0
+        self.acceleration = _clamp(self.acceleration, -self.max_acceleration, self.max_acceleration)
+
+        self.velocity += self.acceleration * dt
+        if self.velocity < 0.0:
+            self.velocity = 0.0
+            if self.acceleration < 0.0:
+                self.acceleration = 0.0
+        self.velocity = min(self.velocity, self.max_velocity)
+        return self.velocity, self.acceleration, self.jerk
+
+
 class TcpPathTrajectoryManager:
     def __init__(self):
         self.path_file = rospy.get_param("~path_file", "")
@@ -259,12 +631,30 @@ class TcpPathTrajectoryManager:
         if self.rate_hz <= 0.0:
             raise ValueError("rate must be > 0")
 
-        points = [_point_from_value(p, i) for i, p in enumerate(path_data["points"])]
-        self.path = PolylinePath(points)
-        self.orientation = self._load_orientation(path_data)
+        points, orientations = self._load_waypoints(path_data)
+        self.blend_tolerance = abs(float(rospy.get_param("~blend_tolerance", path_data.get("blend_tolerance", 0.0))))
+        self.path = SmoothedPath(points, self.blend_tolerance)
+        self.orientation_profile = OrientationProfile(self.path.waypoint_s, orientations)
+
+        self.max_linear_velocity = abs(float(rospy.get_param(
+            "~max_linear_velocity", path_data.get("max_linear_velocity", self.speed))))
+        if self.max_linear_velocity <= 1e-9:
+            self.max_linear_velocity = self.speed
+        self.max_linear_acceleration = abs(float(rospy.get_param(
+            "~max_linear_acceleration", path_data.get("max_linear_acceleration", 0.5))))
+        self.max_linear_jerk = abs(float(rospy.get_param(
+            "~max_linear_jerk", path_data.get("max_linear_jerk", 5.0))))
+        self.motion_profile = ScalarMotionProfile(
+            max_velocity=self.max_linear_velocity,
+            max_acceleration=self.max_linear_acceleration,
+            max_jerk=self.max_linear_jerk,
+        )
 
         target_topic = rospy.get_param("~target_pose_topic", "target_pose")
+        target_state_topic = rospy.get_param("~target_state_topic", "target_state")
+        self.publish_target_pose = _as_bool(rospy.get_param("~publish_target_pose", True), "publish_target_pose")
         self.target_pub = rospy.Publisher(target_topic, PoseStamped, queue_size=1)
+        self.target_state_pub = rospy.Publisher(target_state_topic, CartesianTrajectorySetpoint, queue_size=1)
         self.progress_pub = rospy.Publisher("~progress", Float64, queue_size=1, latch=True)
         self.path_marker_pub = rospy.Publisher("~path_marker", Marker, queue_size=1, latch=True)
         self.current_marker_pub = rospy.Publisher("~current_marker", Marker, queue_size=1)
@@ -288,6 +678,7 @@ class TcpPathTrajectoryManager:
         self.current_tcp_frame = ""
         self.last_start_error: Optional[float] = None
         self.dwell_start_time: Optional[rospy.Time] = None
+        self.last_profile_state = (0.0, 0.0, 0.0)
 
         if self.require_start_reached:
             self.ee_state_sub = rospy.Subscriber(self.ee_state_topic, EndEffectorState, self._ee_state_cb, queue_size=10)
@@ -305,6 +696,8 @@ class TcpPathTrajectoryManager:
             self.speed,
             self.frame_id,
         )
+        if self.blend_tolerance > 0.0:
+            rospy.loginfo("Path smoothing enabled: blend_tolerance=%.3f m", self.blend_tolerance)
         if self.base_control_enabled:
             rospy.loginfo(
                 "Base C-light enabled: topic '%s', base_frame '%s', preferred TCP [%.2f, %.2f]",
@@ -327,9 +720,29 @@ class TcpPathTrajectoryManager:
         data = _load_yaml(path_file)
         if isinstance(data, list):
             return {"points": data}
-        if isinstance(data, dict) and "points" in data:
+        if isinstance(data, dict) and ("points" in data or "waypoints" in data):
             return data
-        raise ValueError("path file must contain a 'points' list")
+        raise ValueError("path file must contain a 'points' or 'waypoints' list")
+
+    def _load_waypoints(self, path_data) -> Tuple[List[Point3], List[QuaternionTuple]]:
+        default_orientation = _quaternion_tuple(self._load_orientation(path_data))
+        points: List[Point3] = []
+        orientations: List[QuaternionTuple] = []
+
+        if "waypoints" in path_data:
+            inherited = default_orientation
+            for i, waypoint in enumerate(path_data["waypoints"]):
+                point = _point_from_waypoint(waypoint, i)
+                inherited = _orientation_from_waypoint(waypoint, inherited, i)
+                points.append(point)
+                orientations.append(inherited)
+        else:
+            points = [_point_from_value(p, i) for i, p in enumerate(path_data["points"])]
+            orientations = [default_orientation for _ in points]
+
+        if len(points) != len(orientations):
+            raise ValueError("internal waypoint/orientation mismatch")
+        return points, orientations
 
     def _load_orientation(self, path_data) -> Quaternion:
         if "orientation" in path_data:
@@ -342,6 +755,8 @@ class TcpPathTrajectoryManager:
 
     def _start_cb(self, _req):
         self.distance_offset = 0.0
+        self.motion_profile.reset()
+        self.last_profile_state = (0.0, 0.0, 0.0)
         self.done = False
         self.stopped = False
         self.paused = False
@@ -369,6 +784,8 @@ class TcpPathTrajectoryManager:
 
     def _restart_cb(self, _req):
         self.distance_offset = 0.0
+        self.motion_profile.reset()
+        self.last_profile_state = (0.0, 0.0, 0.0)
         self.done = False
         self.stopped = False
         self.paused = False
@@ -397,7 +814,10 @@ class TcpPathTrajectoryManager:
             self.last_time = now
 
             if self.state == "tracking" and not self.paused and not self.stopped and not self.done:
-                self.distance_offset += self.speed * dt
+                remaining = max(0.0, self.path.total_length - self.distance_offset)
+                v, a, j = self.motion_profile.update(self.speed, remaining, dt, self.loop)
+                self.last_profile_state = (v, a, j)
+                self.distance_offset += v * dt
                 if self.distance_offset >= self.path.total_length:
                     if self.loop:
                         self.distance_offset = math.fmod(self.distance_offset, self.path.total_length)
@@ -405,6 +825,11 @@ class TcpPathTrajectoryManager:
                         self.distance_offset = self.path.total_length
                         self.done = True
                         self.state = "done"
+                        self.motion_profile.reset()
+                        self.last_profile_state = (0.0, 0.0, 0.0)
+            elif self.paused or self.stopped or self.done:
+                self.motion_profile.reset()
+                self.last_profile_state = (0.0, 0.0, 0.0)
 
             active_motion = self.state == "tracking" and not self.paused and not self.stopped and not self.done
 
@@ -414,7 +839,7 @@ class TcpPathTrajectoryManager:
                 self._publish_zero_base()
             elif self.state == "preposition" and not self.paused and not self.stopped:
                 point = self.path.sample(0.0)
-                self._publish_pose(point, now)
+                self._publish_pose(point, now, active=False)
                 self._publish_current_marker(point, now)
                 self._publish_zero_base()
                 if self._start_reached():
@@ -423,7 +848,7 @@ class TcpPathTrajectoryManager:
                     rospy.loginfo("Start point reached; waiting %.2f s before path following", self.preposition_dwell_s)
             elif self.state == "dwell" and not self.paused and not self.stopped:
                 point = self.path.sample(0.0)
-                self._publish_pose(point, now)
+                self._publish_pose(point, now, active=False)
                 self._publish_current_marker(point, now)
                 self._publish_zero_base()
                 if self.dwell_start_time is None:
@@ -435,7 +860,7 @@ class TcpPathTrajectoryManager:
                     rospy.loginfo("Starting path following")
             elif self.state in ("tracking", "done") and not self.stopped and (self.hold_final_pose or not self.done):
                 point = self.path.sample(self.distance_offset)
-                self._publish_pose(point, now)
+                self._publish_pose(point, now, active=active_motion)
                 self._publish_current_marker(point, now)
                 if active_motion:
                     tangent = self.path.tangent(self.distance_offset)
@@ -449,15 +874,50 @@ class TcpPathTrajectoryManager:
             self.progress_pub.publish(Float64(data=progress))
             rate.sleep()
 
-    def _publish_pose(self, point: Point3, stamp: rospy.Time):
-        msg = PoseStamped()
-        msg.header.stamp = stamp
-        msg.header.frame_id = self.frame_id
-        msg.pose.position.x = point[0]
-        msg.pose.position.y = point[1]
-        msg.pose.position.z = point[2]
-        msg.pose.orientation = self.orientation
-        self.target_pub.publish(msg)
+    def _publish_pose(self, point: Point3, stamp: rospy.Time, active: bool = True):
+        orientation = _quaternion_from_tuple(self.orientation_profile.sample(self.distance_offset))
+        v_scalar, a_scalar, j_scalar = self.last_profile_state if active else (0.0, 0.0, 0.0)
+        tangent = self.path.tangent(self.distance_offset)
+        angular_velocity = self.orientation_profile.angular_velocity(
+            self.distance_offset, v_scalar, self.path.total_length) if active else (0.0, 0.0, 0.0)
+
+        pose_msg = PoseStamped()
+        pose_msg.header.stamp = stamp
+        pose_msg.header.frame_id = self.frame_id
+        pose_msg.pose.position.x = point[0]
+        pose_msg.pose.position.y = point[1]
+        pose_msg.pose.position.z = point[2]
+        pose_msg.pose.orientation = orientation
+
+        state_msg = CartesianTrajectorySetpoint()
+        state_msg.header = pose_msg.header
+        state_msg.pose = pose_msg.pose
+        state_msg.velocity.linear = Vector3(
+            x=tangent[0] * v_scalar,
+            y=tangent[1] * v_scalar,
+            z=tangent[2] * v_scalar,
+        )
+        state_msg.velocity.angular = Vector3(
+            x=angular_velocity[0],
+            y=angular_velocity[1],
+            z=angular_velocity[2],
+        )
+        state_msg.acceleration.linear = Vector3(
+            x=tangent[0] * a_scalar,
+            y=tangent[1] * a_scalar,
+            z=tangent[2] * a_scalar,
+        )
+        state_msg.jerk.linear = Vector3(
+            x=tangent[0] * j_scalar,
+            y=tangent[1] * j_scalar,
+            z=tangent[2] * j_scalar,
+        )
+        state_msg.path_s = self.distance_offset
+        state_msg.path_progress = min(self.distance_offset / self.path.total_length, 1.0)
+        state_msg.active = active
+        if self.publish_target_pose:
+            self.target_pub.publish(pose_msg)
+        self.target_state_pub.publish(state_msg)
 
     def _ee_state_cb(self, msg: EndEffectorState):
         self.current_tcp = (msg.position.x, msg.position.y, msg.position.z)
@@ -564,7 +1024,7 @@ class TcpPathTrajectoryManager:
         marker.color.g = 0.7
         marker.color.b = 1.0
         marker.color.a = 1.0
-        marker.points = [Point(x=p[0], y=p[1], z=p[2]) for p in self.path.points]
+        marker.points = [Point(x=p[0], y=p[1], z=p[2]) for p in self.path.marker_points()]
         self.path_marker_pub.publish(marker)
 
     def _publish_current_marker(self, point: Point3, stamp: rospy.Time):

@@ -5,10 +5,10 @@
     - publishes constant-speed TCP setpoints from a simple YAML/CSV path
 
     Example:
-      roslaunch cartesian_velocity_controller mur620_print_path_mvp.launch arm:=left mur_ns:=mur620d path_frame:=map
+      roslaunch cartesian_velocity_controller mur620_print_path_mvp.launch arm:=right mur_ns:=mur620d path_frame:=map
   -->
 
-  <arg name="arm" default="left" />
+  <arg name="arm" default="right" />
   <arg name="mur_ns" default="mur620d" />
   <arg name="path_file" default="$(find cartesian_velocity_controller)/config/print_path_demo.yaml" />
   <arg name="path_frame" default="map" />

@@ -1,13 +1,13 @@
 <launch>
   <!-- Whole-body demo controller: path TCP + differential base + optional lifter supervisor. -->
 
-  <arg name="arm" default="left" />
+  <arg name="arm" default="right" />
   <arg name="mur_ns" default="mur620d" />
   <arg name="config_file" default="$(find cartesian_velocity_controller)/config/whole_body_print_demo.yaml" />
   <arg name="path_frame" default="map" />
   <arg name="base_enabled" default="true" />
   <arg name="lifter_enabled" default="false" />
-  <arg name="lifter_command_topic" default="UR10_l/lift_position_command" />
+  <arg name="lifter_command_topic" default="" />
 
   <arg name="override_global_frame" default="true" />
   <arg name="auto_load_unsafe_velocity_controllers" default="true" />
@@ -40,7 +40,8 @@
 
       <param name="lifter/enabled" type="bool" value="$(arg lifter_enabled)" />
       <param name="lifter/joint_name" value="$(arg lifter_joint)" />
-      <param name="lifter/command_topic" value="$(arg lifter_command_topic)" />
+      <param name="lifter/command_topic"
+             value="$(eval lifter_command_topic if lifter_command_topic else ('UR10_r/ewellix_tlt_node_r/command' if arm == 'right' else 'UR10_l/ewellix_tlt_node_l/command'))" />
 
       <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
       <param name="ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />

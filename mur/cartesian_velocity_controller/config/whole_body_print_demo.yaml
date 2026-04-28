@@ -58,9 +58,9 @@ base:
 
 lifter:
   enabled: false
-  joint_name: "left_lift_joint"
+  joint_name: "right_lift_joint"
   joint_state_topic: "joint_states"
-  command_topic: "UR10_l/lift_position_command"
+  command_topic: "UR10_r/ewellix_tlt_node_r/command"
   min_position: 0.0
   max_position: 0.5
   max_velocity: 0.015

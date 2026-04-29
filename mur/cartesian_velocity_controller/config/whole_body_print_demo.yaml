@@ -50,6 +50,10 @@ base:
   preferred_tcp_y: 0.0
   max_linear_velocity: 0.08
   max_angular_velocity: 0.25
+  # Conservative command ramp for MiR600-class base.
+  # MiR600 nominal max linear acceleration is about 0.37 m/s^2 at full payload.
+  max_linear_acceleration: 0.10
+  max_angular_acceleration: 0.30
   weight_linear: 4.0
   weight_angular: 2.0
   k_preferred_x: 0.25

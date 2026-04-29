@@ -345,6 +345,8 @@ private:
     pnh_.param("base/preferred_tcp_y", base_preferred_y_, 0.0);
     pnh_.param("base/max_linear_velocity", base_max_linear_, 0.08);
     pnh_.param("base/max_angular_velocity", base_max_angular_, 0.25);
+    pnh_.param("base/max_linear_acceleration", base_max_linear_acceleration_, 0.10);
+    pnh_.param("base/max_angular_acceleration", base_max_angular_acceleration_, 0.30);
     pnh_.param("base/weight_linear", base_weight_linear_, 4.0);
     pnh_.param("base/weight_angular", base_weight_angular_, 2.0);
     pnh_.param("base/k_preferred_x", base_k_preferred_x_, 0.25);
@@ -997,12 +999,41 @@ private:
       return;
     }
     geometry_msgs::Twist cmd;
-    cmd.linear.x = u.size() >= 1 ? u(0) : 0.0;
-    cmd.angular.z = u.size() >= 2 ? u(1) : 0.0;
-    last_base_nominal_command_ = cmd;
-    last_base_command_ = applyLaserAvoidance(cmd, now);
+    cmd.linear.x = clamp(u.size() >= 1 ? u(0) : 0.0, -base_max_linear_, base_max_linear_);
+    cmd.angular.z = clamp(u.size() >= 2 ? u(1) : 0.0, -base_max_angular_, base_max_angular_);
+    const double dt = last_base_pub_time_.isZero() ? (1.0 / std::max(1.0, base_rate_hz_))
+                                                   : std::max(0.0, (now - last_base_pub_time_).toSec());
+    last_base_nominal_command_ = limitBaseAcceleration(cmd, last_base_nominal_command_, dt);
+    last_base_command_ = applyLaserAvoidance(last_base_nominal_command_, now);
     base_pub_.publish(last_base_command_);
     last_base_pub_time_ = now;
+  }
+
+  geometry_msgs::Twist limitBaseAcceleration(const geometry_msgs::Twist& target,
+                                             const geometry_msgs::Twist& previous,
+                                             double dt) const
+  {
+    if (dt <= 0.0)
+    {
+      return previous;
+    }
+
+    geometry_msgs::Twist limited = target;
+    if (base_max_linear_acceleration_ > 1e-9)
+    {
+      const double max_step = base_max_linear_acceleration_ * dt;
+      limited.linear.x = previous.linear.x +
+                         clamp(target.linear.x - previous.linear.x, -max_step, max_step);
+    }
+    if (base_max_angular_acceleration_ > 1e-9)
+    {
+      const double max_step = base_max_angular_acceleration_ * dt;
+      limited.angular.z = previous.angular.z +
+                          clamp(target.angular.z - previous.angular.z, -max_step, max_step);
+    }
+    limited.linear.x = clamp(limited.linear.x, -base_max_linear_, base_max_linear_);
+    limited.angular.z = clamp(limited.angular.z, -base_max_angular_, base_max_angular_);
+    return limited;
   }
 
   geometry_msgs::Twist applyLaserAvoidance(const geometry_msgs::Twist& nominal, const ros::Time& now)
@@ -1281,6 +1312,8 @@ private:
   double base_preferred_y_{0.0};
   double base_max_linear_{0.08};
   double base_max_angular_{0.25};
+  double base_max_linear_acceleration_{0.10};
+  double base_max_angular_acceleration_{0.30};
   double base_weight_linear_{4.0};
   double base_weight_angular_{2.0};
   double base_k_preferred_x_{0.25};

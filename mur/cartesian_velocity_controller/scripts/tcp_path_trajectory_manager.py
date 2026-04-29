@@ -613,6 +613,10 @@ class TcpPathTrajectoryManager:
         self.base_k_heading = float(rospy.get_param("~base_control/k_heading", 0.4))
         self.base_max_linear = abs(float(rospy.get_param("~base_control/max_linear_velocity", 0.08)))
         self.base_max_angular = abs(float(rospy.get_param("~base_control/max_angular_velocity", 0.25)))
+        self.base_max_linear_acceleration = abs(float(rospy.get_param(
+            "~base_control/max_linear_acceleration", 0.10)))
+        self.base_max_angular_acceleration = abs(float(rospy.get_param(
+            "~base_control/max_angular_acceleration", 0.30)))
         self.base_x_deadband = abs(float(rospy.get_param("~base_control/x_deadband", 0.05)))
         self.base_y_deadband = abs(float(rospy.get_param("~base_control/y_deadband", 0.04)))
         self.base_heading_deadband = abs(float(rospy.get_param("~base_control/heading_deadband", 0.10)))
@@ -717,6 +721,8 @@ class TcpPathTrajectoryManager:
         self.origin_transform: Optional[TransformStamped] = None
         self.origin_captured = False
         self.path_marker_published = False
+        self.last_base_cmd = Twist()
+        self.last_base_cmd_time: Optional[rospy.Time] = None
         if self.base_control_enabled:
             self.base_cmd_pub = rospy.Publisher(self.base_cmd_vel_topic, Twist, queue_size=1)
         if self.origin_enabled or self.base_control_enabled or self.require_start_reached or self.tracking_guard_enabled:
@@ -1288,11 +1294,43 @@ class TcpPathTrajectoryManager:
         cmd = Twist()
         cmd.linear.x = linear
         cmd.angular.z = angular
+        cmd = self._limit_base_acceleration(cmd)
         self.base_cmd_pub.publish(cmd)
 
     def _publish_zero_base(self):
         if self.base_control_enabled and self.base_cmd_pub is not None:
-            self.base_cmd_pub.publish(Twist())
+            cmd = Twist()
+            self.last_base_cmd = cmd
+            self.last_base_cmd_time = rospy.Time.now()
+            self.base_cmd_pub.publish(cmd)
+
+    def _limit_base_acceleration(self, target: Twist) -> Twist:
+        now = rospy.Time.now()
+        if self.last_base_cmd_time is None:
+            dt = 1.0 / max(1.0, self.rate_hz)
+        else:
+            dt = max(0.0, (now - self.last_base_cmd_time).to_sec())
+        if dt <= 0.0:
+            return self.last_base_cmd
+
+        limited = Twist()
+        limited.linear.x = target.linear.x
+        limited.angular.z = target.angular.z
+
+        if self.base_max_linear_acceleration > 1e-9:
+            max_step = self.base_max_linear_acceleration * dt
+            limited.linear.x = self.last_base_cmd.linear.x + _clamp(
+                target.linear.x - self.last_base_cmd.linear.x, -max_step, max_step)
+        if self.base_max_angular_acceleration > 1e-9:
+            max_step = self.base_max_angular_acceleration * dt
+            limited.angular.z = self.last_base_cmd.angular.z + _clamp(
+                target.angular.z - self.last_base_cmd.angular.z, -max_step, max_step)
+
+        limited.linear.x = _clamp(limited.linear.x, -self.base_max_linear, self.base_max_linear)
+        limited.angular.z = _clamp(limited.angular.z, -self.base_max_angular, self.base_max_angular)
+        self.last_base_cmd = limited
+        self.last_base_cmd_time = now
+        return limited
 
     def _publish_path_marker(self):
         marker = Marker()

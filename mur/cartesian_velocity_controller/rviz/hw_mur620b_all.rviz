@@ -662,7 +662,7 @@ Visualization Manager:
       Frames:
         All Enabled: false
         map:
-          Value: true
+          Value: false
         mur620b/UR10_l/base:
           Value: false
         mur620b/UR10_l/base_ideal:
@@ -970,6 +970,22 @@ Visualization Manager:
         {}
       Queue Size: 100
       Value: false
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mur620b/tcp_path_trajectory_manager/current_marker
+      Name: Marker
+      Namespaces:
+        tcp_print_path: true
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mur620b/tcp_path_trajectory_manager/path_marker
+      Name: Marker
+      Namespaces:
+        tcp_print_path: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -998,7 +1014,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 51.83568572998047
+      Distance: 0.015178171917796135
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1006,17 +1022,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 3.8952693939208984
-        Y: -9.459671020507812
-        Z: 20.75950813293457
+        X: -2.0624687671661377
+        Y: -11.295368194580078
+        Z: 11.512730598449707
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.39479702711105347
+      Pitch: 0.6797970533370972
       Target Frame: <Fixed Frame>
-      Yaw: 4.375409126281738
+      Yaw: 4.125408172607422
     Saved: ~
 Window Geometry:
   Displays:

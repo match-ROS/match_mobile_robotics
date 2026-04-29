@@ -11,7 +11,7 @@ import tf2_ros
 import yaml
 from cartesian_velocity_controller.msg import CartesianTrajectorySetpoint, EndEffectorState
 from cartesian_velocity_controller.srv import ValidatePoses
-from geometry_msgs.msg import Point, PoseStamped, Quaternion, Twist, Vector3
+from geometry_msgs.msg import Point, PoseStamped, Quaternion, TransformStamped, Twist, Vector3
 from std_msgs.msg import Bool, Float64, Header, String
 from std_srvs.srv import Trigger, TriggerResponse
 from visualization_msgs.msg import Marker
@@ -595,6 +595,8 @@ class TcpPathTrajectoryManager:
 
         path_data = self._load_path_data(self.path_file)
         self.frame_id = str(rospy.get_param("~frame_id", path_data.get("frame_id", "map")))
+        self.waypoint_mode = str(rospy.get_param(
+            "~waypoint_mode", path_data.get("waypoint_mode", "absolute"))).strip().lower()
         self.speed = float(rospy.get_param("~speed", path_data.get("speed", 0.03)))
         self.rate_hz = float(rospy.get_param("~rate", 20.0))
         self.loop = _as_bool(rospy.get_param("~loop", False), "loop")
@@ -617,6 +619,28 @@ class TcpPathTrajectoryManager:
         self.base_allow_reverse = _as_bool(rospy.get_param("~base_control/allow_reverse", False), "base_control/allow_reverse")
         self.base_align_to_path = _as_bool(rospy.get_param("~base_control/align_to_path", True), "base_control/align_to_path")
         self.base_tf_timeout = float(rospy.get_param("~base_control/tf_timeout", 0.05))
+        path_origin = path_data.get("path_origin", {}) if isinstance(path_data, dict) else {}
+        if not isinstance(path_origin, dict):
+            raise ValueError("path_origin must be a dictionary")
+        self.origin_enabled = _as_bool(rospy.get_param(
+            "~path_origin/enabled", path_origin.get("enabled", False)), "path_origin/enabled")
+        self.origin_capture = str(rospy.get_param(
+            "~path_origin/capture", path_origin.get("capture", "start"))).strip().lower()
+        self.origin_parent_frame = str(rospy.get_param(
+            "~path_origin/parent_frame", path_origin.get("parent_frame", self.frame_id)))
+        self.origin_source_frame = str(rospy.get_param(
+            "~path_origin/source_frame", path_origin.get("source_frame", self.base_frame)))
+        self.origin_frame_id = str(rospy.get_param(
+            "~path_origin/frame_id", path_origin.get("frame_id", self.frame_id)))
+        self.origin_capture_timeout = max(0.0, float(rospy.get_param(
+            "~path_origin/capture_timeout", path_origin.get("capture_timeout", 2.0))))
+        if self.origin_enabled:
+            if self.origin_capture not in ("start", "node_start"):
+                raise ValueError("path_origin/capture must be 'start' or 'node_start'")
+            if not self.origin_parent_frame or not self.origin_source_frame or not self.origin_frame_id:
+                raise ValueError("path_origin parent_frame, source_frame and frame_id are required")
+            self.frame_id = self.origin_frame_id
+
         self.preposition_enabled = _as_bool(rospy.get_param("~preposition/enabled", True), "preposition/enabled")
         self.require_start_reached = _as_bool(
             rospy.get_param("~preposition/require_start_reached",
@@ -684,11 +708,17 @@ class TcpPathTrajectoryManager:
         self.base_cmd_pub = None
         self.tf_buffer = None
         self.tf_listener = None
+        self.origin_tf_broadcaster = None
+        self.origin_transform: Optional[TransformStamped] = None
+        self.origin_captured = False
+        self.path_marker_published = False
         if self.base_control_enabled:
             self.base_cmd_pub = rospy.Publisher(self.base_cmd_vel_topic, Twist, queue_size=1)
-        if self.base_control_enabled or self.require_start_reached or self.tracking_guard_enabled:
+        if self.origin_enabled or self.base_control_enabled or self.require_start_reached or self.tracking_guard_enabled:
             self.tf_buffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+        if self.origin_enabled:
+            self.origin_tf_broadcaster = tf2_ros.TransformBroadcaster()
 
         self.paused = False
         self.stopped = False
@@ -706,7 +736,14 @@ class TcpPathTrajectoryManager:
         if self.require_start_reached or self.tracking_guard_enabled:
             self.ee_state_sub = rospy.Subscriber(self.ee_state_topic, EndEffectorState, self._ee_state_cb, queue_size=10)
 
-        if self.validate_waypoints:
+        if self.origin_enabled and self.origin_capture == "node_start":
+            self._capture_origin_or_raise()
+        elif self.origin_enabled and not self.start_paused:
+            rospy.logwarn(
+                "path_origin/capture=start with start_paused=false: capturing origin at node start")
+            self._capture_origin_or_raise()
+
+        if self.validate_waypoints and self._path_frame_ready():
             self._validate_waypoints_or_raise()
 
         rospy.Service("~start", Trigger, self._start_cb)
@@ -731,6 +768,14 @@ class TcpPathTrajectoryManager:
                 self.base_frame,
                 self.base_preferred_x,
                 self.base_preferred_y,
+            )
+        if self.origin_enabled:
+            rospy.loginfo(
+                "Path origin enabled: %s coincides with %s in %s, capture=%s",
+                self.origin_frame_id,
+                self.origin_source_frame,
+                self.origin_parent_frame,
+                self.origin_capture,
             )
         if self.preposition_enabled:
             rospy.loginfo(
@@ -783,7 +828,23 @@ class TcpPathTrajectoryManager:
 
         if len(points) != len(orientations):
             raise ValueError("internal waypoint/orientation mismatch")
+        points = self._resolve_waypoint_mode(points)
         return points, orientations
+
+    def _resolve_waypoint_mode(self, points: List[Point3]) -> List[Point3]:
+        if self.waypoint_mode in ("absolute", ""):
+            return points
+        if self.waypoint_mode in (
+            "first_absolute_then_relative",
+            "first_absolute_rest_relative",
+            "first_absolute_then_offsets",
+        ):
+            if not points:
+                return points
+            first = points[0]
+            return [first] + [_add(first, delta) for delta in points[1:]]
+        raise ValueError(
+            "waypoint_mode must be 'absolute' or 'first_absolute_then_relative'")
 
     def _validate_waypoints_or_raise(self):
         if not self.validation_service:
@@ -823,6 +884,16 @@ class TcpPathTrajectoryManager:
         return _quaternion_from_rpy(float(rpy[0]), float(rpy[1]), float(rpy[2]))
 
     def _start_cb(self, _req):
+        try:
+            if self.origin_enabled and self.origin_capture == "start":
+                self._capture_origin_or_raise()
+            if self.validate_waypoints:
+                self._validate_waypoints_or_raise()
+        except Exception as exc:
+            self._publish_zero_base()
+            rospy.logerr("Cannot start path: %s", exc)
+            return TriggerResponse(success=False, message=str(exc))
+
         self.distance_offset = 0.0
         self.motion_profile.reset()
         self.last_profile_state = (0.0, 0.0, 0.0)
@@ -881,7 +952,9 @@ class TcpPathTrajectoryManager:
         return TriggerResponse(success=True, message="stopped")
 
     def run(self):
-        self._publish_path_marker()
+        if self._path_frame_ready():
+            self._publish_path_marker()
+            self.path_marker_published = True
         self.last_time = rospy.Time.now()
         rate = rospy.Rate(self.rate_hz)
 
@@ -889,6 +962,21 @@ class TcpPathTrajectoryManager:
             now = rospy.Time.now()
             dt = max(0.0, (now - self.last_time).to_sec()) if self.last_time else 0.0
             self.last_time = now
+            self._publish_origin_transform(now)
+
+            if not self._path_frame_ready():
+                self._publish_zero_base()
+                self.progress_pub.publish(Float64(data=0.0))
+                self.speed_scale_pub.publish(Float64(data=0.0))
+                self.tracking_error_pub.publish(Float64(data=-1.0))
+                self.tracking_guard_active_pub.publish(Bool(data=False))
+                self.tracking_guard_state_pub.publish(String(data="waiting_origin"))
+                rate.sleep()
+                continue
+
+            if not self.path_marker_published:
+                self._publish_path_marker()
+                self.path_marker_published = True
 
             nominal_point = self.path.sample(self.distance_offset)
             self.speed_scale = self._tracking_guard_speed_scale(nominal_point)
@@ -962,6 +1050,8 @@ class TcpPathTrajectoryManager:
             rate.sleep()
 
     def _tracking_guard_state(self) -> str:
+        if not self._path_frame_ready():
+            return "waiting_origin"
         if not self.tracking_guard_enabled:
             return "disabled"
         if self.tracking_guard_last_error is None:
@@ -1011,6 +1101,53 @@ class TcpPathTrajectoryManager:
 
         span = self.tracking_guard_stop_error - self.tracking_guard_slowdown_error
         return _clamp((self.tracking_guard_stop_error - error) / span, 0.0, 1.0)
+
+    def _path_frame_ready(self) -> bool:
+        return not self.origin_enabled or self.origin_captured
+
+    def _capture_origin_or_raise(self):
+        if self.tf_buffer is None or self.origin_tf_broadcaster is None:
+            raise RuntimeError("path origin requested but TF is not initialized")
+
+        transform = self.tf_buffer.lookup_transform(
+            self.origin_parent_frame,
+            self.origin_source_frame,
+            rospy.Time(0),
+            rospy.Duration(self.origin_capture_timeout),
+        )
+
+        origin = TransformStamped()
+        origin.header.frame_id = self.origin_parent_frame
+        origin.header.stamp = rospy.Time.now()
+        origin.child_frame_id = self.origin_frame_id
+        origin.transform.translation = transform.transform.translation
+        origin.transform.rotation = transform.transform.rotation
+
+        self.origin_transform = origin
+        self.origin_captured = True
+        self.path_marker_published = False
+        self._broadcast_origin_burst()
+        rospy.loginfo(
+            "Captured path origin '%s' from %s -> %s",
+            self.origin_frame_id,
+            self.origin_parent_frame,
+            self.origin_source_frame,
+        )
+
+    def _publish_origin_transform(self, stamp: rospy.Time):
+        if not self.origin_enabled or not self.origin_captured or self.origin_transform is None:
+            return
+        self.origin_transform.header.stamp = stamp
+        self.origin_tf_broadcaster.sendTransform(self.origin_transform)
+
+    def _broadcast_origin_burst(self, duration: float = 0.20):
+        if self.origin_transform is None:
+            return
+        end_time = rospy.Time.now() + rospy.Duration(duration)
+        rate = rospy.Rate(50.0)
+        while not rospy.is_shutdown() and rospy.Time.now() < end_time:
+            self._publish_origin_transform(rospy.Time.now())
+            rate.sleep()
 
     def _publish_pose(self, point: Point3, stamp: rospy.Time, active: bool = True):
         orientation = _quaternion_from_tuple(self.orientation_profile.sample(self.distance_offset))

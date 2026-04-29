@@ -704,6 +704,7 @@ class TcpPathTrajectoryManager:
         self.validation_timeout = max(0.0, float(rospy.get_param("~validation_timeout", 2.0)))
         self.validation_service = str(rospy.get_param(
             "~validation_service", self._infer_controller_service(target_state_topic, "validate_poses")))
+        self.waypoints_validated = False
         self.target_pub = rospy.Publisher(target_topic, PoseStamped, queue_size=1)
         self.target_state_pub = rospy.Publisher(target_state_topic, CartesianTrajectorySetpoint, queue_size=1)
         self.progress_pub = rospy.Publisher("~progress", Float64, queue_size=1, latch=True)
@@ -754,8 +755,8 @@ class TcpPathTrajectoryManager:
                 "path_origin/capture=start with start_paused=false: capturing origin at node start")
             self._capture_origin_or_raise()
 
-        if self.validate_waypoints and self._path_frame_ready() and not self.origin_enabled:
-            self._validate_waypoints_or_raise()
+        if self.validate_waypoints and self._path_frame_ready() and not self.origin_enabled and not self._defer_waypoint_validation():
+            self._ensure_waypoints_validated_or_raise()
 
         rospy.Service("~start", Trigger, self._start_cb)
         rospy.Service("~pause", Trigger, self._pause_cb)
@@ -885,6 +886,15 @@ class TcpPathTrajectoryManager:
                 f"Waypoint validation failed via '{self.validation_service}': {resp.message}; invalid indexes: {', '.join(invalid)}")
         rospy.loginfo("Waypoint validation OK: %d waypoint(s) reachable", len(poses))
 
+    def _defer_waypoint_validation(self) -> bool:
+        return self.preposition_enabled and self.require_start_reached
+
+    def _ensure_waypoints_validated_or_raise(self):
+        if not self.validate_waypoints or self.waypoints_validated:
+            return
+        self._validate_waypoints_or_raise()
+        self.waypoints_validated = True
+
     def _load_orientation(self, path_data) -> Quaternion:
         if "orientation" in path_data:
             return _quaternion_from_value(path_data["orientation"])
@@ -895,11 +905,12 @@ class TcpPathTrajectoryManager:
         return _quaternion_from_rpy(float(rpy[0]), float(rpy[1]), float(rpy[2]))
 
     def _start_cb(self, _req):
+        self.waypoints_validated = False
         try:
             if self.origin_enabled and self.origin_capture == "start":
                 self._capture_origin_or_raise()
-            if self.validate_waypoints:
-                self._validate_waypoints_or_raise()
+            if self.validate_waypoints and not self._defer_waypoint_validation():
+                self._ensure_waypoints_validated_or_raise()
         except Exception as exc:
             self._publish_zero_base()
             rospy.logerr("Cannot start path: %s", exc)
@@ -1026,9 +1037,21 @@ class TcpPathTrajectoryManager:
                 self._publish_shuttle_target_marker(point, self.path.tangent(0.0), now)
                 self._publish_zero_base()
                 if self._start_reached():
-                    self.state = "dwell"
-                    self.dwell_start_time = now
-                    rospy.loginfo("Start point reached; waiting %.2f s before path following", self.preposition_dwell_s)
+                    try:
+                        self._ensure_waypoints_validated_or_raise()
+                    except Exception as exc:
+                        self.distance_offset = 0.0
+                        self.motion_profile.reset()
+                        self.last_profile_state = (0.0, 0.0, 0.0)
+                        self.has_started = False
+                        self.state = "idle"
+                        self.dwell_start_time = None
+                        self._publish_zero_base()
+                        rospy.logerr("Cannot continue path after preposition: %s", exc)
+                    else:
+                        self.state = "dwell"
+                        self.dwell_start_time = now
+                        rospy.loginfo("Start point reached; waiting %.2f s before path following", self.preposition_dwell_s)
             elif self.state == "dwell" and not self.paused and not self.stopped:
                 point = self.path.sample(0.0)
                 self._publish_pose(point, now, active=False)

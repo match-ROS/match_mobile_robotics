@@ -12,6 +12,7 @@
 
   <arg name="auto_load_unsafe_velocity_controllers" default="false" />
   <arg name="auto_switch_to_velocity" default="false" />
+  <arg name="validate_waypoints" default="false" />
 
   <include file="$(find cartesian_velocity_controller)/launch/mur620b_hw_single_arm_cartesian_velocity_controller.launch">
     <arg name="arm" value="$(arg arm)" />

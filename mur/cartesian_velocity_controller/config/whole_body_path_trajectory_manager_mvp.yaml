@@ -7,7 +7,7 @@ path_file: "$(arg path_file)"
 rate: 30.0
 start_paused: true
 hold_final_pose: true
-validate_waypoints: true
+validate_waypoints: $(arg validate_waypoints)
 validation_timeout: 10.0
 publish_target_pose: false
 

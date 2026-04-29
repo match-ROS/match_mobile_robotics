@@ -40,14 +40,14 @@ base:
   base_frame: "$(arg mur_ns)/base_link"
   # Desired path target position expressed in base_frame.
   # x is forward/backward, y is lateral left/right in the robot base frame.
-  preferred_tcp_x: 0.65
-  preferred_tcp_y: 0.0
-  max_linear_velocity: 0.08
-  max_angular_velocity: 0.25
+  preferred_tcp_x: 0.50
+  preferred_tcp_y: -0.80
+  max_linear_velocity: 0.5
+  max_angular_velocity: 0.8
   # Conservative command ramp for MiR600-class base.
   # MiR600 nominal max linear acceleration is about 0.37 m/s^2 at full payload.
-  max_linear_acceleration: 0.10
-  max_angular_acceleration: 0.30
+  max_linear_acceleration: 0.30
+  max_angular_acceleration: 0.80
   weight_linear: 4.0
   weight_angular: 2.0
   k_preferred_x: 0.25

@@ -8,7 +8,7 @@ frame_id: "mur620b/print_origin"
 waypoint_mode: "first_absolute_then_relative"
 path_origin:
   enabled: true
-  capture: "start"
+  capture: "node_start"
   parent_frame: "mur620b/odom"
   source_frame: "mur620b/base_link"
   frame_id: "mur620b/print_origin"

@@ -619,6 +619,10 @@ class TcpPathTrajectoryManager:
         self.base_allow_reverse = _as_bool(rospy.get_param("~base_control/allow_reverse", False), "base_control/allow_reverse")
         self.base_align_to_path = _as_bool(rospy.get_param("~base_control/align_to_path", True), "base_control/align_to_path")
         self.base_tf_timeout = float(rospy.get_param("~base_control/tf_timeout", 0.05))
+        self.shuttle_marker_enabled = _as_bool(
+            rospy.get_param("~shuttle_marker/enabled", True), "shuttle_marker/enabled")
+        self.shuttle_marker_z = float(rospy.get_param("~shuttle_marker/z", 0.03))
+        self.shuttle_marker_scale = float(rospy.get_param("~shuttle_marker/scale", 0.25))
         path_origin = path_data.get("path_origin", {}) if isinstance(path_data, dict) else {}
         if not isinstance(path_origin, dict):
             raise ValueError("path_origin must be a dictionary")
@@ -705,6 +709,7 @@ class TcpPathTrajectoryManager:
         self.tracking_guard_state_pub = rospy.Publisher("~tracking_guard_state", String, queue_size=1, latch=True)
         self.path_marker_pub = rospy.Publisher("~path_marker", Marker, queue_size=1, latch=True)
         self.current_marker_pub = rospy.Publisher("~current_marker", Marker, queue_size=1)
+        self.shuttle_marker_pub = rospy.Publisher("~shuttle_target_marker", Marker, queue_size=2)
         self.base_cmd_pub = None
         self.tf_buffer = None
         self.tf_listener = None
@@ -1006,11 +1011,13 @@ class TcpPathTrajectoryManager:
             if self.state == "idle":
                 point = self.path.sample(0.0)
                 self._publish_current_marker(point, now)
+                self._publish_shuttle_target_marker(point, self.path.tangent(0.0), now)
                 self._publish_zero_base()
             elif self.state == "preposition" and not self.paused and not self.stopped:
                 point = self.path.sample(0.0)
                 self._publish_pose(point, now, active=False)
                 self._publish_current_marker(point, now)
+                self._publish_shuttle_target_marker(point, self.path.tangent(0.0), now)
                 self._publish_zero_base()
                 if self._start_reached():
                     self.state = "dwell"
@@ -1020,6 +1027,7 @@ class TcpPathTrajectoryManager:
                 point = self.path.sample(0.0)
                 self._publish_pose(point, now, active=False)
                 self._publish_current_marker(point, now)
+                self._publish_shuttle_target_marker(point, self.path.tangent(0.0), now)
                 self._publish_zero_base()
                 if self.dwell_start_time is None:
                     self.dwell_start_time = now
@@ -1032,8 +1040,9 @@ class TcpPathTrajectoryManager:
                 point = self.path.sample(self.distance_offset)
                 self._publish_pose(point, now, active=active_motion)
                 self._publish_current_marker(point, now)
+                tangent = self.path.tangent(self.distance_offset)
+                self._publish_shuttle_target_marker(point, tangent, now)
                 if active_motion:
-                    tangent = self.path.tangent(self.distance_offset)
                     self._publish_base_command(point, tangent)
                 else:
                     self._publish_zero_base()
@@ -1322,6 +1331,62 @@ class TcpPathTrajectoryManager:
         marker.color.b = 0.1
         marker.color.a = 1.0
         self.current_marker_pub.publish(marker)
+
+    def _shuttle_target_point(self, point: Point3, tangent: Point3) -> Point3:
+        offset_x = self.base_preferred_x
+        offset_y = self.base_preferred_y
+        if self.base_align_to_path:
+            yaw = math.atan2(tangent[1], tangent[0])
+            c = math.cos(yaw)
+            s = math.sin(yaw)
+            offset_x = c * self.base_preferred_x - s * self.base_preferred_y
+            offset_y = s * self.base_preferred_x + c * self.base_preferred_y
+        return (point[0] - offset_x, point[1] - offset_y, self.shuttle_marker_z)
+
+    def _publish_shuttle_target_marker(self, point: Point3, tangent: Point3, stamp: rospy.Time):
+        if not self.shuttle_marker_enabled:
+            return
+
+        shuttle = self._shuttle_target_point(point, tangent)
+
+        marker = Marker()
+        marker.header.frame_id = self.frame_id
+        marker.header.stamp = stamp
+        marker.ns = "tcp_print_shuttle_target"
+        marker.id = 0
+        marker.type = Marker.CYLINDER
+        marker.action = Marker.ADD
+        marker.pose.position.x = shuttle[0]
+        marker.pose.position.y = shuttle[1]
+        marker.pose.position.z = shuttle[2]
+        marker.pose.orientation.w = 1.0
+        marker.scale.x = self.shuttle_marker_scale
+        marker.scale.y = self.shuttle_marker_scale
+        marker.scale.z = max(0.01, self.shuttle_marker_scale * 0.12)
+        marker.color.r = 0.0
+        marker.color.g = 0.45
+        marker.color.b = 1.0
+        marker.color.a = 0.85
+        self.shuttle_marker_pub.publish(marker)
+
+        link = Marker()
+        link.header.frame_id = self.frame_id
+        link.header.stamp = stamp
+        link.ns = "tcp_print_shuttle_target"
+        link.id = 1
+        link.type = Marker.LINE_STRIP
+        link.action = Marker.ADD
+        link.pose.orientation.w = 1.0
+        link.scale.x = max(0.005, self.marker_scale * 0.5)
+        link.color.r = 0.0
+        link.color.g = 0.45
+        link.color.b = 1.0
+        link.color.a = 0.55
+        link.points = [
+            Point(x=shuttle[0], y=shuttle[1], z=shuttle[2]),
+            Point(x=point[0], y=point[1], z=point[2]),
+        ]
+        self.shuttle_marker_pub.publish(link)
 
 
 def main():

@@ -1,6 +1,7 @@
 # =============================================================================
 # Level C: Motion Generator - Velocity Filter Configuration
 # =============================================================================
+# Keep filter-specific parameters only in this file.
 
 
 # Enable/disable the velocity filter
@@ -45,4 +46,4 @@ acceleration_scale_factor: 1.0          # Scales both linear and angular acceler
 # =============================================================================
 # Filter Behavior
 # =============================================================================
-reset_filter_on_target_change: true     # Reset velocity filter internal state when target changes
+reset_filter_on_target_change: false     # Keep filter state when target changes

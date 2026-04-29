@@ -61,7 +61,6 @@ command_timeout: 0.5
 target_state_timeout: 0.25
 target_state_zero_velocity_on_timeout: false
 pose_filter_alpha: 0.8
-reset_filter_on_target_change: false
 
 # Startup behavior:
 # - "hold_current_pose" (default): capture current TCP pose and hold it as initial target

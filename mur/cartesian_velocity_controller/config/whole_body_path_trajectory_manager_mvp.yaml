@@ -1,16 +1,12 @@
-# TCP path trajectory manager configuration for mur620_whole_body_print_mvp.launch.
+# Trajectory manager parameters for mur620_whole_body_print_mvp.launch.
+# Change the runtime/topic behavior here.
+# The TCP path itself is configured only in print_path_demo.yaml.
 
 path_file: "$(arg path_file)"
 
-frame_id: "map"
-speed: 0.05
 rate: 30.0
-loop: false
 start_paused: true
-blend_tolerance: 0.04
-max_linear_velocity: 0.05
-max_linear_acceleration: 0.20
-max_linear_jerk: 1.5
+hold_final_pose: true
 validate_waypoints: true
 validation_timeout: 10.0
 publish_target_pose: false
@@ -18,6 +14,10 @@ publish_target_pose: false
 target_pose_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_pose"
 target_state_topic: "whole_body_print_controller/input_target_state"
 validation_service: "cartesian_velocity_controller_$(arg controller_suffix)/validate_poses"
+
+# For this launch the base is controlled only by whole_body_print_controller.
+base_control:
+  enabled: false
 
 preposition:
   ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state"

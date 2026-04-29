@@ -1,4 +1,5 @@
-# Smoothed waypoint path for the TCP trajectory manager.
+# TCP path for mur620_whole_body_print_mvp.launch.
+# Change the path geometry and path motion profile here.
 #
 # A fixed path origin is captured when the start service is called. At that
 # instant mur620b/print_origin coincides with mur620b/base_link, then stays
@@ -14,6 +15,7 @@ path_origin:
   capture_timeout: 2.0
 
 speed: 0.10
+loop: false
 max_linear_velocity: 0.20
 max_linear_acceleration: 1.8
 max_linear_jerk: 18.0

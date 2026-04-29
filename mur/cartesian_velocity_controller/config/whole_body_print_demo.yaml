@@ -1,3 +1,7 @@
+# Whole-body controller parameters for mur620_whole_body_print_mvp.launch.
+# Change the mobile-base behavior here.
+# The TCP path is NOT configured here; it lives in print_path_demo.yaml.
+
 start_paused: false
 
 target_pose_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_pose"
@@ -8,21 +12,11 @@ ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effe
 
 rates:
   # The arm controller runs independently at its own high control_rate.
-  # This node only updates the moving TCP reference and slow subsystems.
+  # This node only updates the moving TCP reference and the slow subsystems.
   path: 30.0
   base: 20.0
   lifter: 10.0
   debug: 10.0
-
-path:
-  frame_id: "map"
-  speed: 0.05
-  loop: false
-  # TCP local Z points downward relative to base_link Z-up.
-  orientation_rpy: [3.141592653589793, 0.0, 0.0]
-  points:
-    - [0.45, -0.30, 0.85]
-    - [0.50, -0.30, 0.85]
 
 tracking:
   kp_position: 0.8

@@ -1,4 +1,5 @@
 # TCP path trajectory manager configuration for mur620_print_path_mvp.launch.
+# This file is NOT used by mur620_whole_body_print_mvp.launch.
 
 path_file: "$(arg path_file)"
 
@@ -28,9 +29,9 @@ base_control:
   base_frame: "$(arg mur_ns)/base_link"
   preferred_tcp_x: 0.50
   preferred_tcp_y: -0.80
-  max_linear_velocity: 0.08
-  max_angular_velocity: 0.25
+  max_linear_velocity: 0.8
+  max_angular_velocity: 0.8
   # Conservative command ramp for MiR600-class base.
   # MiR600 nominal max linear acceleration is about 0.37 m/s^2 at full payload.
-  max_linear_acceleration: 0.10
-  max_angular_acceleration: 0.30
+  max_linear_acceleration: 0.30
+  max_angular_acceleration: 0.80

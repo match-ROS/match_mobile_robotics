@@ -26,8 +26,8 @@ base_control:
   enabled: false
   cmd_vel_topic: "cmd_vel"
   base_frame: "$(arg mur_ns)/base_link"
-  preferred_tcp_x: 0.65
-  preferred_tcp_y: 0.0
+  preferred_tcp_x: 0.50
+  preferred_tcp_y: -0.80
   max_linear_velocity: 0.08
   max_angular_velocity: 0.25
   # Conservative command ramp for MiR600-class base.

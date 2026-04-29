@@ -44,7 +44,7 @@ marker_publisher:
 
 # Parameter used by MoveIt RobotModelLoader
 # (usually overridden in the launch to point to /mur620/robot_description)
-robot_description_param: "robot_description"
+robot_description_param: "/$(arg robot_ns)/robot_description"
 
 # TCP offset from link (position [x, y, z] in meters)
 tcp_offset_position: [0.0, 0.0, 0.0]

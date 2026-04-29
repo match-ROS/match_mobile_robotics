@@ -1,0 +1,29 @@
+# TCP path trajectory manager configuration for mur620_whole_body_print_mvp.launch.
+
+path_file: "$(arg path_file)"
+
+frame_id: "map"
+speed: 0.05
+rate: 30.0
+loop: false
+start_paused: true
+blend_tolerance: 0.04
+max_linear_velocity: 0.05
+max_linear_acceleration: 0.20
+max_linear_jerk: 1.5
+validate_waypoints: true
+validation_timeout: 10.0
+publish_target_pose: false
+
+target_pose_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_pose"
+target_state_topic: "whole_body_print_controller/input_target_state"
+validation_service: "cartesian_velocity_controller_$(arg controller_suffix)/validate_poses"
+
+preposition:
+  ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state"
+
+tracking_guard:
+  enabled: true
+  slowdown_error: 0.03
+  stop_error: 0.08
+  resume_hysteresis: 0.05

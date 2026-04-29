@@ -1,4 +1,10 @@
-start_paused: true
+start_paused: false
+
+target_pose_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_pose"
+target_state_input:
+  enabled: true
+  topic: "whole_body_print_controller/input_target_state"
+ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state"
 
 rates:
   # The arm controller runs independently at its own high control_rate.
@@ -37,7 +43,7 @@ solver:
 base:
   enabled: true
   cmd_vel_topic: "cmd_vel"
-  base_frame: "mur620b/base_link"
+  base_frame: "$(arg mur_ns)/base_link"
   # Desired path target position expressed in base_frame.
   # x is forward/backward, y is lateral left/right in the robot base frame.
   preferred_tcp_x: 0.65
@@ -70,9 +76,9 @@ base_avoidance:
 
 lifter:
   enabled: false
-  joint_name: "right_lift_joint"
+  joint_name: "$(arg lifter_joint)"
   joint_state_topic: "joint_states"
-  command_topic: "UR10_r/ewellix_tlt_node_r/command"
+  command_topic: "$(arg lifter_command_topic)"
   min_position: 0.0
   max_position: 0.5
   max_velocity: 0.015

@@ -28,7 +28,7 @@ global_frame: "$(arg robot_ns)/base_link"
 jacobian_source_frame: "$(arg robot_ns)/UR10_r/base_link"
 # Target frame for the Jacobian (defaults to global_frame if omitted)
 jacobian_target_frame: "$(arg robot_ns)/base_link"
-robot_description_param: "robot_description"
+robot_description_param: "/$(arg robot_ns)/robot_description"
 
 # =============================================================================
 # RViz Marker Visualization

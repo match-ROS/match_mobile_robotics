@@ -11,34 +11,14 @@
   <arg name="arm" default="right" />
   <arg name="mur_ns" default="mur620b" />
   <arg name="path_file" default="$(find cartesian_velocity_controller)/config/print_path_demo.yaml" />
-  <arg name="rate" default="20.0" />
-  <arg name="path_origin_capture" default="node_start" />
-  <arg name="publish_target_pose" default="false" />
-  <arg name="validate_waypoints" default="true" />
-  <arg name="validation_timeout" default="10.0" />
-  <arg name="loop" default="false" />
-  <arg name="start_paused" default="true" />
-  <arg name="base_control_enabled" default="false" />
-  <arg name="base_cmd_vel_topic" default="cmd_vel" />
-  <arg name="base_frame" default="$(arg mur_ns)/base_link" />
-  <arg name="base_preferred_tcp_x" default="0.65" />
-  <arg name="base_preferred_tcp_y" default="0.0" />
-  <arg name="base_max_linear_velocity" default="0.08" />
-  <arg name="base_max_angular_velocity" default="0.25" />
-  <arg name="preposition_enabled" default="true" />
-  <arg name="require_start_reached" default="true" />
-  <arg name="start_position_tolerance" default="0.01" />
-  <arg name="preposition_dwell_s" default="1.0" />
+  <arg name="manager_config_file" default="$(find cartesian_velocity_controller)/config/print_path_trajectory_manager_mvp.yaml" />
 
-  <!-- Controller frame override is useful on the full MUR robot. -->
-  <arg name="override_global_frame" default="true" />
   <arg name="auto_load_unsafe_velocity_controllers" default="false" />
   <arg name="auto_switch_to_velocity" default="false" />
 
   <include file="$(find cartesian_velocity_controller)/launch/mur620b_hw_single_arm_cartesian_velocity_controller.launch">
     <arg name="arm" value="$(arg arm)" />
     <arg name="mur_ns" value="$(arg mur_ns)" />
-    <arg name="override_global_frame" value="$(arg override_global_frame)" />
     <arg name="auto_load_unsafe_velocity_controllers" value="$(arg auto_load_unsafe_velocity_controllers)" />
     <arg name="auto_switch_to_velocity" value="$(arg auto_switch_to_velocity)" />
   </include>
@@ -51,28 +31,7 @@
           type="tcp_path_trajectory_manager.py"
           name="tcp_path_trajectory_manager"
           output="screen">
-      <param name="path_file" value="$(arg path_file)" />
-      <param name="rate" type="double" value="$(arg rate)" />
-      <param name="path_origin/capture" value="$(arg path_origin_capture)" />
-      <param name="publish_target_pose" type="bool" value="$(arg publish_target_pose)" />
-      <param name="validate_waypoints" type="bool" value="$(arg validate_waypoints)" />
-      <param name="validation_timeout" type="double" value="$(arg validation_timeout)" />
-      <param name="loop" type="bool" value="$(arg loop)" />
-      <param name="start_paused" type="bool" value="$(arg start_paused)" />
-      <param name="target_pose_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_pose" />
-      <param name="target_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/target_state" />
-      <param name="preposition/enabled" type="bool" value="$(arg preposition_enabled)" />
-      <param name="preposition/require_start_reached" type="bool" value="$(arg require_start_reached)" />
-      <param name="preposition/position_tolerance" type="double" value="$(arg start_position_tolerance)" />
-      <param name="preposition/dwell_s" type="double" value="$(arg preposition_dwell_s)" />
-      <param name="preposition/ee_state_topic" value="cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state" />
-      <param name="base_control/enabled" type="bool" value="$(arg base_control_enabled)" />
-      <param name="base_control/cmd_vel_topic" value="$(arg base_cmd_vel_topic)" />
-      <param name="base_control/base_frame" value="$(arg base_frame)" />
-      <param name="base_control/preferred_tcp_x" type="double" value="$(arg base_preferred_tcp_x)" />
-      <param name="base_control/preferred_tcp_y" type="double" value="$(arg base_preferred_tcp_y)" />
-      <param name="base_control/max_linear_velocity" type="double" value="$(arg base_max_linear_velocity)" />
-      <param name="base_control/max_angular_velocity" type="double" value="$(arg base_max_angular_velocity)" />
+      <rosparam file="$(arg manager_config_file)" command="load" subst_value="true" />
     </node>
   </group>
 </launch>

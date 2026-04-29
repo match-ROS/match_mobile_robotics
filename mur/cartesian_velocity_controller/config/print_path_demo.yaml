@@ -4,10 +4,10 @@
 # the generated path is blended near corners according to blend_tolerance.
 # For the first mur620b hardware test, keep the path fixed in the robot base frame.
 frame_id: "mur620b/base_link"
-speed: 0.05
-max_linear_velocity: 0.05
-max_linear_acceleration: 0.20
-max_linear_jerk: 1.5
+speed: 0.10
+max_linear_velocity: 0.20
+max_linear_acceleration: 1.8
+max_linear_jerk: 18.0
 blend_tolerance: 0.04
 
 # TCP local Z points downward relative to base_link Z-up.

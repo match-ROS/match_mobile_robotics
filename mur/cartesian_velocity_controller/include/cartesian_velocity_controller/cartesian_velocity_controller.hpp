@@ -19,8 +19,10 @@
 #include <sensor_msgs/JointState.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <dynamic_reconfigure/server.h>
+#include "cartesian_velocity_controller/CartesianTrajectorySetpoint.h"
 #include "cartesian_velocity_controller/GetFrameInfo.h"
 #include "cartesian_velocity_controller/GetJacobian.h"
+#include "cartesian_velocity_controller/ValidatePoses.h"
 #include <boost/thread/recursive_mutex.hpp>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -172,6 +174,7 @@ private:
   // ROS Callbacks
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& msg);
   void targetPoseCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+  void targetStateCallback(const CartesianTrajectorySetpoint::ConstPtr& msg);
   void controlLoopCallback(const ros::TimerEvent& event);
 
   // Pipeline execution
@@ -194,10 +197,14 @@ private:
   bool resetVirtualTargetsToCurrentPose();
   bool ensureJacobianFrameTransformReady();
   bool applyJacobianFrameTransformIfConfigured(Eigen::MatrixXd& jacobian);
+  bool transformTrajectorySetpoint(const CartesianTrajectorySetpoint& in,
+                                   Eigen::Isometry3d& pose_out,
+                                   Eigen::Matrix<double, 6, 1>& velocity_out) const;
   void setupDynamicReconfigure();
   void dynamicReconfigureCallback(ControllerTuningConfig& config, uint32_t level);
   bool getFrameInfoCallback(GetFrameInfo::Request& req, GetFrameInfo::Response& res);
   bool getJacobianCallback(GetJacobian::Request& req, GetJacobian::Response& res);
+  bool validatePosesCallback(ValidatePoses::Request& req, ValidatePoses::Response& res);
 
   // ============== ROS Interfaces ==============
   ros::NodeHandle nh_;
@@ -218,11 +225,13 @@ private:
 
   ros::Subscriber joint_state_sub_;
   ros::Subscriber target_pose_sub_;
+  ros::Subscriber target_state_sub_;
   ros::Publisher velocity_pub_;
   ros::ServiceClient switch_client_;
   ros::ServiceClient list_client_;
   ros::ServiceServer get_frame_info_server_;
   ros::ServiceServer get_jacobian_server_;
+  ros::ServiceServer validate_poses_server_;
   ros::Timer control_timer_;
 
   // ============== Pipeline Components ==============
@@ -311,6 +320,20 @@ private:
 
   bool reset_filter_on_target_change_{true};
   bool reachability_check_enabled_{true};  ///< If true, validate poses via IK before accepting
+
+  struct TargetStateCache
+  {
+    Eigen::Isometry3d pose{Eigen::Isometry3d::Identity()};
+    Eigen::Matrix<double, 6, 1> velocity{Eigen::Matrix<double, 6, 1>::Zero()};
+    ros::Time stamp;
+    bool active{false};
+    bool valid{false};
+  };
+  mutable std::mutex target_state_mutex_;
+  TargetStateCache target_state_;
+  double target_state_timeout_{0.25};
+  bool target_state_zero_velocity_on_timeout_{false};
+  bool target_state_mode_active_{false};
 
   // Controller-only joint limits (reachability + runtime guardrail)
   ControllerJointLimitsConfig controller_joint_limits_;

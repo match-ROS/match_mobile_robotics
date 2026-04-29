@@ -1,0 +1,6 @@
+std_msgs/Header header
+geometry_msgs/Pose[] poses
+---
+bool success
+string message
+bool[] valid

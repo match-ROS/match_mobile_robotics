@@ -13,7 +13,6 @@ Panels:
         - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
-        - /Map1
         - /Map1/Position1
         - /Map1/Orientation1
       Splitter Ratio: 0.6393972039222717
@@ -770,7 +769,7 @@ Visualization Manager:
         mur620b/left_wheel_link:
           Value: false
         mur620b/odom:
-          Value: true
+          Value: false
         mur620b/right_lift_bottom:
           Value: false
         mur620b/right_lift_top:
@@ -986,6 +985,14 @@ Visualization Manager:
         tcp_print_path: true
       Queue Size: 100
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mur620b/tcp_path_trajectory_manager/shuttle_target_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1014,7 +1021,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.015178171917796135
+      Distance: 3.363609790802002
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1022,17 +1029,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -2.0624687671661377
-        Y: -11.295368194580078
-        Z: 11.512730598449707
+        X: -2.8742928504943848
+        Y: -8.449646949768066
+        Z: 10.294641494750977
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6797970533370972
+      Pitch: 0.6447979211807251
       Target Frame: <Fixed Frame>
-      Yaw: 4.125408172607422
+      Yaw: 3.7303860187530518
     Saved: ~
 Window Geometry:
   Displays:

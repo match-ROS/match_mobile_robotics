@@ -748,7 +748,7 @@ class TcpPathTrajectoryManager:
                 "path_origin/capture=start with start_paused=false: capturing origin at node start")
             self._capture_origin_or_raise()
 
-        if self.validate_waypoints and self._path_frame_ready():
+        if self.validate_waypoints and self._path_frame_ready() and not self.origin_enabled:
             self._validate_waypoints_or_raise()
 
         rospy.Service("~start", Trigger, self._start_cb)

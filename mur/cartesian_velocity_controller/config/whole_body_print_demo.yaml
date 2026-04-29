@@ -29,6 +29,7 @@ tracking:
   arm_start_x_error: 0.45
   arm_start_y_error: 0.35
   arm_far_scale: 0.0
+  arm_gate_only_preposition: true
 
 solver:
   damping: 0.02

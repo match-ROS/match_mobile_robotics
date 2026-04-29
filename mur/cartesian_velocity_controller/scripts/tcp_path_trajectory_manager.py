@@ -655,7 +655,9 @@ class TcpPathTrajectoryManager:
                             rospy.get_param("~preposition/require_start_reached_on_resume", True)),
             "preposition/require_start_reached",
         )
+        self.start_reached_mode = str(rospy.get_param("~preposition/reached_mode", "tcp")).strip().lower()
         self.start_position_tolerance = abs(float(rospy.get_param("~preposition/position_tolerance", 0.01)))
+        self.start_base_target_tolerance = abs(float(rospy.get_param("~preposition/base_target_tolerance", 0.15)))
         self.preposition_dwell_s = max(0.0, float(rospy.get_param("~preposition/dwell_s", 1.0)))
         self.ee_state_topic = str(rospy.get_param("~preposition/ee_state_topic", "end_effector_state"))
         self.tracking_guard_enabled = _as_bool(
@@ -670,6 +672,8 @@ class TcpPathTrajectoryManager:
 
         if self.tracking_guard_stop_error <= self.tracking_guard_slowdown_error:
             raise ValueError("tracking_guard/stop_error must be greater than tracking_guard/slowdown_error")
+        if self.start_reached_mode not in ("tcp", "base_target"):
+            raise ValueError("preposition/reached_mode must be 'tcp' or 'base_target'")
 
         if self.speed <= 0.0:
             raise ValueError("speed must be > 0")
@@ -790,11 +794,18 @@ class TcpPathTrajectoryManager:
                 self.origin_capture,
             )
         if self.preposition_enabled:
-            rospy.loginfo(
-                "Preposition enabled: start service moves to first point, waits %.2f s, start tolerance %.3f m",
-                self.preposition_dwell_s,
-                self.start_position_tolerance,
-            )
+            if self.start_reached_mode == "base_target":
+                rospy.loginfo(
+                    "Preposition enabled: start service aligns base target, waits %.2f s, base target tolerance %.3f m",
+                    self.preposition_dwell_s,
+                    self.start_base_target_tolerance,
+                )
+            else:
+                rospy.loginfo(
+                    "Preposition enabled: start service moves to first point, waits %.2f s, start tolerance %.3f m",
+                    self.preposition_dwell_s,
+                    self.start_position_tolerance,
+                )
         if self.tracking_guard_enabled:
             rospy.loginfo(
                 "Tracking guard enabled: slowdown %.3f m, stop %.3f m, resume hysteresis %.3f m",
@@ -1262,9 +1273,39 @@ class TcpPathTrajectoryManager:
             return None
         return _transform_point(transform, self.current_tcp)
 
+    def _target_in_base_frame(self, point: Point3) -> Optional[Point3]:
+        if self.tf_buffer is None:
+            return None
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.base_frame,
+                self.frame_id,
+                rospy.Time(0),
+                rospy.Duration(self.base_tf_timeout),
+            )
+        except Exception as exc:
+            rospy.logwarn_throttle(
+                2.0,
+                "Preposition base-target TF failed (%s -> %s): %s",
+                self.frame_id,
+                self.base_frame,
+                exc,
+            )
+            return None
+        return _transform_point(transform, point)
+
     def _start_reached(self) -> bool:
         if not self.require_start_reached:
             return True
+        if self.start_reached_mode == "base_target":
+            target_in_base = self._target_in_base_frame(self.path.sample(0.0))
+            if target_in_base is None:
+                self.last_start_error = None
+                return False
+            x_error = target_in_base[0] - self.base_preferred_x
+            y_error = target_in_base[1] - self.base_preferred_y
+            self.last_start_error = math.hypot(x_error, y_error)
+            return self.last_start_error <= self.start_base_target_tolerance
         tcp = self._current_tcp_in_path_frame()
         if tcp is None:
             self.last_start_error = None

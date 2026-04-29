@@ -332,6 +332,7 @@ private:
     pnh_.param("tracking/arm_start_x_error", arm_start_x_error_, 0.45);
     pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
     pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
+    pnh_.param("tracking/arm_gate_only_preposition", arm_gate_only_preposition_, false);
     pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_r/target_pose");
     pnh_.param("target_state_input/enabled", external_target_enabled_, false);
     pnh_.param<std::string>("target_state_input/topic", target_state_topic_, "cartesian_velocity_controller_r/target_state");
@@ -728,13 +729,14 @@ private:
 
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
-    const double arm_scale = computeArmTrackingScale(target_in_base);
+    const bool prepositioning = !external_active_ && external_path_s_ <= 1e-6 && external_path_progress_ <= 1e-6;
+    const bool gate_arm_by_base_zone = !arm_gate_only_preposition_ || prepositioning;
+    const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base) : 1.0;
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
 
     publishTargetPose(arm_target, now);
     publishCurrentMarker(target, now);
 
-    const bool prepositioning = !external_active_ && external_path_s_ <= 1e-6 && external_path_progress_ <= 1e-6;
     if (!paused_ && !stopped_ && (external_active_ || prepositioning))
     {
       Eigen::Vector3d desired_linear = external_velocity_ + kp_position_ * (base_tracking_target_ - tcp);
@@ -1301,6 +1303,7 @@ private:
   double arm_start_x_error_{0.45};
   double arm_start_y_error_{0.35};
   double arm_far_scale_{0.0};
+  bool arm_gate_only_preposition_{false};
   Eigen::Vector3d current_tcp_{Eigen::Vector3d::Zero()};
   std::string current_tcp_frame_;
   bool have_tcp_{false};

@@ -739,6 +739,22 @@ Visualization Manager:
           Value: false
         mur620b/camera_depth_optical_frame:
           Value: false
+        mur620b/camera_floor_left_color_frame:
+          Value: true
+        mur620b/camera_floor_left_color_optical_frame:
+          Value: true
+        mur620b/camera_floor_left_depth_optical_frame:
+          Value: true
+        mur620b/camera_floor_left_link:
+          Value: true
+        mur620b/camera_floor_right_color_frame:
+          Value: true
+        mur620b/camera_floor_right_color_optical_frame:
+          Value: true
+        mur620b/camera_floor_right_depth_optical_frame:
+          Value: true
+        mur620b/camera_floor_right_link:
+          Value: true
         mur620b/camera_infra1_frame:
           Value: false
         mur620b/camera_infra1_optical_frame:
@@ -814,12 +830,24 @@ Visualization Manager:
                     mur620b/camera_depth_frame:
                       mur620b/camera_depth_optical_frame:
                         {}
-                    mur620b/camera_infra1_frame:
-                      mur620b/camera_infra1_optical_frame:
-                        {}
-                    mur620b/camera_infra2_frame:
-                      mur620b/camera_infra2_optical_frame:
-                        {}
+                mur620b/camera_floor_left_link:
+                  mur620b/camera_floor_left_color_frame:
+                    mur620b/camera_floor_left_color_optical_frame:
+                      {}
+                  mur620b/camera_floor_left_depth_optical_frame:
+                    {}
+                mur620b/camera_floor_right_link:
+                  mur620b/camera_floor_right_color_frame:
+                    mur620b/camera_floor_right_color_optical_frame:
+                      {}
+                  mur620b/camera_floor_right_depth_optical_frame:
+                    {}
+                  mur620b/camera_infra1_frame:
+                    mur620b/camera_infra1_optical_frame:
+                      {}
+                  mur620b/camera_infra2_frame:
+                    mur620b/camera_infra2_optical_frame:
+                      {}
                 mur620b/fl_caster_rotation_link:
                   mur620b/fl_caster_wheel_link:
                     {}
@@ -979,7 +1007,7 @@ Visualization Manager:
       Marker Topic: /mur620b/tcp_path_trajectory_manager/current_marker
       Name: Marker
       Namespaces:
-        {}
+        tcp_print_path: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -987,7 +1015,7 @@ Visualization Manager:
       Marker Topic: /mur620b/tcp_path_trajectory_manager/path_marker
       Name: Marker
       Namespaces:
-        {}
+        tcp_print_path: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -995,14 +1023,14 @@ Visualization Manager:
       Marker Topic: /mur620b/tcp_path_trajectory_manager/shuttle_target_marker
       Name: Marker
       Namespaces:
-        {}
+        tcp_print_shuttle_target: true
       Queue Size: 100
       Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: mur620b/odom
+    Fixed Frame: mur620b/print_origin
     Frame Rate: 30
   Name: root
   Tools:
@@ -1026,7 +1054,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.3383513689041138
+      Distance: 6.641257286071777
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1034,17 +1062,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -3.003680944442749
-        Y: -8.460925102233887
-        Z: 10.156996726989746
+        X: 2.447333335876465
+        Y: -5.822742462158203
+        Z: 7.63674783706665
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6497984528541565
-      Target Frame: mur620b/print_origin
-      Yaw: 4.100396633148193
+      Pitch: 0.6797980070114136
+      Target Frame: mur620b/odom
+      Yaw: 3.915391683578491
     Saved: ~
 Window Geometry:
   Displays:

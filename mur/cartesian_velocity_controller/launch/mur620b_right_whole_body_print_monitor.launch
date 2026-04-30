@@ -1,0 +1,6 @@
+<launch>
+  <include file="$(find cartesian_velocity_controller)/launch/whole_body_print_monitor.launch">
+    <arg name="mur_ns" value="mur620b" />
+    <arg name="arm" value="right" />
+  </include>
+</launch>

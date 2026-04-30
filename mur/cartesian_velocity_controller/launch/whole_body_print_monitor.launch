@@ -1,0 +1,20 @@
+<launch>
+  <arg name="mur_ns" default="mur620b" />
+  <arg name="arm" default="right" />
+  <arg name="refresh_hz" default="5.0" />
+  <arg name="stale_timeout" default="1.0" />
+  <arg name="max_joint_rows" default="6" />
+  <arg name="clear_screen" default="true" />
+
+  <node pkg="cartesian_velocity_controller"
+        type="whole_body_print_monitor.py"
+        name="whole_body_print_monitor"
+        output="screen">
+    <param name="mur_ns" value="$(arg mur_ns)" />
+    <param name="arm" value="$(arg arm)" />
+    <param name="refresh_hz" value="$(arg refresh_hz)" />
+    <param name="stale_timeout" value="$(arg stale_timeout)" />
+    <param name="max_joint_rows" value="$(arg max_joint_rows)" />
+    <param name="clear_screen" value="$(arg clear_screen)" />
+  </node>
+</launch>

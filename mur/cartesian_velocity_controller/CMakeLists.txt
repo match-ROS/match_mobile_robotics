@@ -282,6 +282,7 @@ catkin_install_python(PROGRAMS
   scripts/ensure_mur620_single_arm_velocity_controller.py
   scripts/print_jacobian.py
   scripts/tcp_path_trajectory_manager.py
+  scripts/whole_body_print_monitor.py
   scripts/whole_body_preflight_check.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

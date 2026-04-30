@@ -16,7 +16,7 @@ ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effe
 preposition:
   enabled: true
   reached_mode: "base_target"
-  base_target_tolerance: 0.15
+  base_target_tolerance: 0.25
   position_tolerance: 0.05
   dwell_s: 1.0
 
@@ -39,7 +39,7 @@ tracking:
   arm_start_x_error: 0.45
   arm_start_y_error: 0.35
   arm_far_scale: 0.0
-  arm_gate_only_preposition: true
+  arm_gate_only_preposition: false
 
 solver:
   damping: 0.02

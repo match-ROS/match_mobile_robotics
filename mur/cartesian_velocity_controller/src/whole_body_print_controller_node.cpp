@@ -874,7 +874,11 @@ private:
         dwell_started_ = false;
         Eigen::Vector3d desired_linear = kp_position_ * (base_tracking_target_ - tcp);
         desired_linear.z() *= task_weight_z_;
-        Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, start_tangent, dt);
+        Eigen::VectorXd u = solveBaseLifter(desired_linear,
+                                           base_tracking_target_,
+                                           start_tangent,
+                                           currentTcpInBase(target_in_base),
+                                           dt);
         publishBaseCommand(u, now);
         publishLifterCommand(u, dt, now);
       }
@@ -895,8 +899,9 @@ private:
 
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
+    const Eigen::Vector3d tcp_in_base = currentTcpInBase(target_in_base);
     const bool gate_arm_by_base_zone = !arm_gate_only_preposition_;
-    const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base) : 1.0;
+    const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base, tcp_in_base) : 1.0;
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
     Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
 
@@ -907,7 +912,7 @@ private:
       Eigen::Vector3d desired_linear = speed_ * tangent + kp_position_ * (base_tracking_target_ - tcp);
       desired_linear.z() *= task_weight_z_;
 
-      Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
+      Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, tcp_in_base, dt);
       arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
       publishArmReference(arm_target, arm_velocity, now, true);
       publishBaseCommand(u, now);
@@ -951,9 +956,10 @@ private:
 
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
+    const Eigen::Vector3d tcp_in_base = currentTcpInBase(target_in_base);
     const bool prepositioning = !external_active_ && external_path_s_ <= 1e-6 && external_path_progress_ <= 1e-6;
     const bool gate_arm_by_base_zone = !arm_gate_only_preposition_ || prepositioning;
-    const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base) : 1.0;
+    const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base, tcp_in_base) : 1.0;
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
     Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
 
@@ -964,7 +970,7 @@ private:
       Eigen::Vector3d desired_linear = external_velocity_ + kp_position_ * (base_tracking_target_ - tcp);
       desired_linear.z() *= task_weight_z_;
 
-      Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
+      Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, tcp_in_base, dt);
       if (prepositioning)
       {
         publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
@@ -989,6 +995,7 @@ private:
   Eigen::VectorXd solveBaseLifter(const Eigen::Vector3d& desired_linear,
                                   const Eigen::Vector3d& base_reference_point,
                                   const Eigen::Vector3d& tangent,
+                                  const Eigen::Vector3d& tcp_in_base,
                                   double dt)
   {
     const int cols = (base_enabled_ ? 2 : 0) + (lifter_enabled_ ? 1 : 0);
@@ -1033,10 +1040,11 @@ private:
       J.col(c) = base_x;
       J.col(c + 1) = yaw_col;
 
-      Eigen::Vector3d tcp_in_base = transformPoint(tf_base_path, base_reference_point);
+      const Eigen::Vector3d target_in_base = transformPoint(tf_base_path, base_reference_point);
       const Eigen::Vector3d tangent_in_base = rotateVector(tf_base_path, tangent);
-      const double x_error = tcp_in_base.x() - base_preferred_x_;
-      const double y_error = tcp_in_base.y() - base_preferred_y_;
+      const Eigen::Vector3d zone_reference_in_base = have_tcp_ ? tcp_in_base : target_in_base;
+      const double x_error = zone_reference_in_base.x() - base_preferred_x_;
+      const double y_error = zone_reference_in_base.y() - base_preferred_y_;
       u_ref(c) = base_k_preferred_x_ * x_error;
       if (!base_allow_reverse_)
       {
@@ -1283,7 +1291,8 @@ private:
     return external_velocity;
   }
 
-  double computeArmTrackingScale(const Eigen::Vector3d& target_in_base)
+  double computeArmTrackingScale(const Eigen::Vector3d& target_in_base,
+                                 const Eigen::Vector3d& tcp_in_base)
   {
     if (!base_enabled_)
     {
@@ -1291,14 +1300,19 @@ private:
       return 1.0;
     }
 
-    const double dx = std::abs(target_in_base.x() - base_preferred_x_);
-    const double dy = std::abs(target_in_base.y() - base_preferred_y_);
+    const double target_dx = std::abs(target_in_base.x() - base_preferred_x_);
+    const double target_dy = std::abs(target_in_base.y() - base_preferred_y_);
+    const double tcp_dx = std::abs(tcp_in_base.x() - base_preferred_x_);
+    const double tcp_dy = std::abs(tcp_in_base.y() - base_preferred_y_);
+    const double dx = std::max(target_dx, tcp_dx);
+    const double dy = std::max(target_dy, tcp_dy);
     const double full_x = std::max(1e-6, arm_full_x_error_);
     const double full_y = std::max(1e-6, arm_full_y_error_);
     const double start_x = std::max(full_x + 1e-6, arm_start_x_error_);
     const double start_y = std::max(full_y + 1e-6, arm_start_y_error_);
 
-    base_in_tracking_zone_ = (dx <= full_x && dy <= full_y);
+    base_in_tracking_zone_ =
+        (target_dx <= full_x && target_dy <= full_y && tcp_dx <= full_x && tcp_dy <= full_y);
     if (base_in_tracking_zone_)
     {
       return 1.0;

@@ -16,8 +16,10 @@ target_state_topic: "whole_body_print_controller/input_target_state"
 validation_service: "cartesian_velocity_controller_$(arg controller_suffix)/validate_poses"
 
 # For this launch the base is controlled only by whole_body_print_controller.
+# Keep this disabled here: enabling it creates a second cmd_vel publisher on the
+# same base topic and conflicts with the whole-body controller.
 base_control:
-  enabled: true
+  enabled: false
   base_frame: "$(arg mur_ns)/base_link"
   preferred_tcp_x: 0.50
   preferred_tcp_y: -0.80
@@ -29,7 +31,7 @@ preposition:
   ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state"
 
 tracking_guard:
-  enabled: false
+  enabled: true
   slowdown_error: 0.03
   stop_error: 0.08
   resume_hysteresis: 0.05

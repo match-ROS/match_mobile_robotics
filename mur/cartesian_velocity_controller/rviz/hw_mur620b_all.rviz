@@ -47,7 +47,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: true
+      Enabled: false
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -60,7 +60,7 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
-      Value: true
+      Value: false
     - Acceleration_Scaling_Factor: 0.1
       Class: moveit_rviz_plugin/MotionPlanning
       Enabled: true
@@ -836,18 +836,18 @@ Visualization Manager:
                       {}
                   mur620b/camera_floor_left_depth_optical_frame:
                     {}
-                mur620b/camera_floor_right_link:
-                  mur620b/camera_floor_right_color_frame:
-                    mur620b/camera_floor_right_color_optical_frame:
-                      {}
-                  mur620b/camera_floor_right_depth_optical_frame:
-                    {}
                   mur620b/camera_infra1_frame:
                     mur620b/camera_infra1_optical_frame:
                       {}
                   mur620b/camera_infra2_frame:
                     mur620b/camera_infra2_optical_frame:
                       {}
+                mur620b/camera_floor_right_link:
+                  mur620b/camera_floor_right_color_frame:
+                    mur620b/camera_floor_right_color_optical_frame:
+                      {}
+                  mur620b/camera_floor_right_depth_optical_frame:
+                    {}
                 mur620b/fl_caster_rotation_link:
                   mur620b/fl_caster_wheel_link:
                     {}
@@ -1015,7 +1015,7 @@ Visualization Manager:
       Marker Topic: /mur620b/tcp_path_trajectory_manager/path_marker
       Name: Marker
       Namespaces:
-        tcp_print_path: true
+        {}
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1026,11 +1026,35 @@ Visualization Manager:
         tcp_print_shuttle_target: true
       Queue Size: 100
       Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mur620b/whole_body_print_controller/current_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mur620b/whole_body_print_controller/path_marker
+      Name: Marker
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /mur620b/whole_body_print_controller/preferred_tcp_marker
+      Name: Marker
+      Namespaces:
+        preferred_tcp: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: mur620b/print_origin
+    Fixed Frame: mur620b/base_footprint
     Frame Rate: 30
   Name: root
   Tools:
@@ -1054,7 +1078,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.641257286071777
+      Distance: 6.084321022033691
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1062,17 +1086,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 2.447333335876465
-        Y: -5.822742462158203
-        Z: 7.63674783706665
+        X: -2.4993560314178467
+        Y: -3.327446937561035
+        Z: 5.3188252449035645
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6797980070114136
-      Target Frame: mur620b/odom
-      Yaw: 3.915391683578491
+      Pitch: 0.6647984981536865
+      Target Frame: mur620b/base_footprint
+      Yaw: 3.6604111194610596
     Saved: ~
 Window Geometry:
   Displays:

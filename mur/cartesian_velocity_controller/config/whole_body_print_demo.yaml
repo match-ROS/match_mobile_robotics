@@ -1,6 +1,6 @@
 # Whole-body controller parameters for mur620_whole_body_print_mvp.launch.
 # Change the mobile-base behavior here.
-# The TCP path is NOT configured here; it lives in print_path_demo.yaml.
+# The TCP path is loaded separately from print_path_demo.yaml under ~path_spec.
 
 start_paused: false
 
@@ -9,9 +9,16 @@ publish_target_pose: false
 publish_target_state: true
 arm_target_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_state"
 target_state_input:
-  enabled: true
+  enabled: false
   topic: "whole_body_print_controller/input_target_state"
 ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state"
+
+preposition:
+  enabled: true
+  reached_mode: "base_target"
+  base_target_tolerance: 0.15
+  position_tolerance: 0.01
+  dwell_s: 1.0
 
 rates:
   # The arm controller runs independently at its own high control_rate.

@@ -2,6 +2,7 @@
 #include <cmath>
 #include <limits>
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -19,6 +20,7 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 #include <visualization_msgs/Marker.h>
 #include <xmlrpcpp/XmlRpcValue.h>
@@ -128,6 +130,11 @@ bool readPoint(const XmlRpc::XmlRpcValue& value, Eigen::Vector3d& out)
     return true;
   }
 
+  if (value.getType() == XmlRpc::XmlRpcValue::TypeStruct && value.hasMember("position"))
+  {
+    return readPoint(value["position"], out);
+  }
+
   return false;
 }
 
@@ -143,7 +150,7 @@ public:
       return false;
     }
 
-    points_.clear();
+    std::vector<Eigen::Vector3d> points;
     for (int i = 0; i < raw_points.size(); ++i)
     {
       Eigen::Vector3d p;
@@ -152,6 +159,16 @@ public:
         ROS_ERROR("Invalid path point at index %d", i);
         return false;
       }
+      points.push_back(p);
+    }
+    return setPoints(points);
+  }
+
+  bool setPoints(const std::vector<Eigen::Vector3d>& points)
+  {
+    points_.clear();
+    for (const auto& p : points)
+    {
       points_.push_back({p});
     }
 
@@ -244,10 +261,19 @@ public:
     , tf_listener_(tf_buffer_)
   {
     loadParams();
-    if (!external_target_enabled_ && !path_.load(pnh_))
+    if (!external_target_enabled_ && !path_.setPoints(configured_path_points_))
     {
       ros::shutdown();
       return;
+    }
+
+    if (origin_enabled_)
+    {
+      origin_tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>();
+      if (origin_capture_mode_ == "node_start" || (!paused_ && origin_capture_mode_ == "start"))
+      {
+        captureOrigin();
+      }
     }
 
     target_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(target_pose_topic_, 1);
@@ -364,6 +390,7 @@ private:
     pnh_.param("base/align_to_path", base_align_to_path_, true);
     pnh_.param("base/tf_timeout", base_tf_timeout_, 0.05);
     pnh_.param("base/target_filter_tau", base_target_filter_tau_, 1.0);
+    loadPathSpecParams();
 
     pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
     pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "mir/scan");
@@ -390,11 +417,110 @@ private:
 
     pnh_.param("solver/damping", solver_damping_, 0.02);
     pnh_.param("solver/task_weight_z", task_weight_z_, 0.7);
+    pnh_.param("preposition/enabled", preposition_enabled_, true);
+    pnh_.param<std::string>("preposition/reached_mode", preposition_reached_mode_, "base_target");
+    pnh_.param("preposition/position_tolerance", start_position_tolerance_, 0.01);
+    pnh_.param("preposition/base_target_tolerance", start_base_target_tolerance_, 0.15);
+    pnh_.param("preposition/dwell_s", preposition_dwell_s_, 1.0);
+
+    if (preposition_reached_mode_ != "base_target" && preposition_reached_mode_ != "tcp")
+    {
+      ROS_WARN("Invalid preposition/reached_mode='%s'; falling back to 'base_target'",
+               preposition_reached_mode_.c_str());
+      preposition_reached_mode_ = "base_target";
+    }
+    preposition_done_ = !preposition_enabled_;
 
     if (publish_target_pose_ && publish_target_state_)
     {
       ROS_WARN("whole_body_print_controller: both publish_target_pose and publish_target_state are enabled; target_pose can disable trajectory mode in the arm controller");
     }
+  }
+
+  void loadPathSpecParams()
+  {
+    if (!pnh_.hasParam("path_spec/waypoints") && !pnh_.hasParam("path_spec/points"))
+    {
+      if (!pnh_.getParam("path/points", configured_path_points_raw_))
+      {
+        return;
+      }
+      configured_path_points_ = parsePathPoints(configured_path_points_raw_, "path/points", "absolute");
+      return;
+    }
+
+    pnh_.param<std::string>("path_spec/frame_id", path_frame_, path_frame_);
+    pnh_.param("path_spec/speed", speed_, speed_);
+    pnh_.param("path_spec/loop", loop_, loop_);
+
+    std::vector<double> rpy;
+    if (pnh_.getParam("path_spec/orientation_rpy", rpy) && rpy.size() >= 3)
+    {
+      target_orientation_ = rpyToQuat(rpy[0], rpy[1], rpy[2]);
+    }
+
+    pnh_.param("path_spec/path_origin/enabled", origin_enabled_, false);
+    pnh_.param<std::string>("path_spec/path_origin/capture", origin_capture_mode_, "node_start");
+    pnh_.param<std::string>("path_spec/path_origin/parent_frame", origin_parent_frame_, path_frame_);
+    pnh_.param<std::string>("path_spec/path_origin/source_frame", origin_source_frame_, base_frame_);
+    pnh_.param<std::string>("path_spec/path_origin/frame_id", origin_frame_id_, path_frame_);
+    pnh_.param("path_spec/path_origin/capture_timeout", origin_capture_timeout_, 2.0);
+    if (origin_enabled_)
+    {
+      path_frame_ = origin_frame_id_;
+    }
+
+    std::string waypoint_mode = "absolute";
+    pnh_.param<std::string>("path_spec/waypoint_mode", waypoint_mode, "absolute");
+
+    XmlRpc::XmlRpcValue raw_points;
+    const bool has_waypoints = pnh_.getParam("path_spec/waypoints", raw_points);
+    const bool has_points = !has_waypoints && pnh_.getParam("path_spec/points", raw_points);
+    if (!has_waypoints && !has_points)
+    {
+      return;
+    }
+    const std::string source = has_waypoints ? "path_spec/waypoints" : "path_spec/points";
+    configured_path_points_ = parsePathPoints(raw_points, source, waypoint_mode);
+  }
+
+  std::vector<Eigen::Vector3d> parsePathPoints(const XmlRpc::XmlRpcValue& raw_points,
+                                               const std::string& source_name,
+                                               const std::string& waypoint_mode) const
+  {
+    std::vector<Eigen::Vector3d> points;
+    if (raw_points.getType() != XmlRpc::XmlRpcValue::TypeArray)
+    {
+      ROS_ERROR("%s must be an array", source_name.c_str());
+      return points;
+    }
+
+    for (int i = 0; i < raw_points.size(); ++i)
+    {
+      Eigen::Vector3d p;
+      if (!readPoint(raw_points[i], p))
+      {
+        ROS_ERROR("Invalid point in %s at index %d", source_name.c_str(), i);
+        points.clear();
+        return points;
+      }
+      points.push_back(p);
+    }
+
+    if (waypoint_mode == "first_absolute_then_relative" ||
+        waypoint_mode == "first_absolute_rest_relative" ||
+        waypoint_mode == "first_absolute_then_offsets")
+    {
+      if (!points.empty())
+      {
+        const Eigen::Vector3d first = points.front();
+        for (std::size_t i = 1; i < points.size(); ++i)
+        {
+          points[i] = first + points[i];
+        }
+      }
+    }
+    return points;
   }
 
   void loadScanTopics()
@@ -609,6 +735,10 @@ private:
 
   bool resumeCb(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
   {
+    if (origin_enabled_ && origin_capture_mode_ == "start" && !origin_captured_)
+    {
+      captureOrigin();
+    }
     paused_ = false;
     stopped_ = false;
     has_started_ = true;
@@ -625,6 +755,12 @@ private:
     stopped_ = false;
     paused_ = true;
     has_started_ = false;
+    preposition_done_ = !preposition_enabled_;
+    dwell_started_ = false;
+    if (origin_enabled_ && origin_capture_mode_ == "start")
+    {
+      origin_captured_ = false;
+    }
     publishZeroBase();
     res.success = true;
     res.message = "restarted";
@@ -646,6 +782,7 @@ private:
     const ros::Time now = ros::Time::now();
     const double dt = std::max(0.0, (now - last_time_).toSec());
     last_time_ = now;
+    publishOriginTransform(now);
 
     if (external_target_enabled_)
     {
@@ -653,7 +790,16 @@ private:
       return;
     }
 
-    if (has_started_ && !paused_ && !stopped_ && !done_)
+    if (!pathFrameReady())
+    {
+      publishZeroBase();
+      return;
+    }
+
+    const Eigen::Vector3d start_target = path_.sample(0.0);
+    const Eigen::Vector3d start_tangent = path_.tangent(0.0);
+
+    if (has_started_ && !paused_ && !stopped_ && !done_ && preposition_done_)
     {
       s_ += speed_ * dt;
       if (s_ >= path_.totalLength())
@@ -672,6 +818,7 @@ private:
 
     if (!has_started_ || stopped_)
     {
+      publishArmReference(currentTcpInPath(start_target), Eigen::Vector3d::Zero(), now, false);
       publishZeroBase();
       publishDebug(now,
                    stateString(),
@@ -683,13 +830,73 @@ private:
       return;
     }
 
+    if (paused_)
+    {
+      publishArmReference(currentTcpInPath(start_target), Eigen::Vector3d::Zero(), now, false);
+      publishZeroBase();
+      publishDebug(now,
+                   stateString(),
+                   start_target,
+                   currentTcpInPath(start_target),
+                   currentTcpInPath(start_target),
+                   targetInBase(start_target),
+                   0.0);
+      return;
+    }
+
+    if (!preposition_done_)
+    {
+      updateBaseTrackingTarget(start_target, dt);
+      const Eigen::Vector3d tcp = currentTcpInPath(start_target);
+      const Eigen::Vector3d target_in_base = targetInBase(start_target);
+      publishCurrentMarker(start_target, now);
+      publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
+
+      if (startReached(start_target))
+      {
+        if (!dwell_started_)
+        {
+          dwell_started_ = true;
+          dwell_start_time_ = now;
+          ROS_INFO("Whole-body preposition reached; dwelling for %.2f s", preposition_dwell_s_);
+        }
+        publishZeroBase();
+        if ((now - dwell_start_time_).toSec() >= std::max(0.0, preposition_dwell_s_))
+        {
+          preposition_done_ = true;
+          dwell_started_ = false;
+          last_time_ = now;
+          ROS_INFO("Whole-body path tracking started");
+        }
+      }
+      else
+      {
+        dwell_started_ = false;
+        Eigen::Vector3d desired_linear = kp_position_ * (base_tracking_target_ - tcp);
+        desired_linear.z() *= task_weight_z_;
+        Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, start_tangent, dt);
+        publishBaseCommand(u, now);
+        publishLifterCommand(u, dt, now);
+      }
+
+      publishDebug(now,
+                   stateString(),
+                   start_target,
+                   tcp,
+                   tcp,
+                   target_in_base,
+                   0.0);
+      return;
+    }
+
     const Eigen::Vector3d target = path_.sample(s_);
     const Eigen::Vector3d tangent = path_.tangent(s_);
     updateBaseTrackingTarget(target, dt);
 
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
-    const double arm_scale = computeArmTrackingScale(target_in_base);
+    const bool gate_arm_by_base_zone = !arm_gate_only_preposition_;
+    const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base) : 1.0;
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
     Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
 
@@ -964,6 +1171,53 @@ private:
     }
   }
 
+  bool pathFrameReady() const
+  {
+    return !origin_enabled_ || origin_captured_;
+  }
+
+  void captureOrigin()
+  {
+    if (!origin_enabled_)
+    {
+      origin_captured_ = true;
+      return;
+    }
+    try
+    {
+      origin_transform_ = tf_buffer_.lookupTransform(origin_parent_frame_,
+                                                     origin_source_frame_,
+                                                     ros::Time(0),
+                                                     ros::Duration(origin_capture_timeout_));
+      origin_transform_.child_frame_id = origin_frame_id_;
+      origin_transform_.header.frame_id = origin_parent_frame_;
+      origin_transform_.header.stamp = ros::Time::now();
+      origin_captured_ = true;
+      ROS_INFO("Captured whole-body path origin '%s' from %s -> %s",
+               origin_frame_id_.c_str(),
+               origin_parent_frame_.c_str(),
+               origin_source_frame_.c_str());
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      origin_captured_ = false;
+      ROS_WARN("Failed to capture whole-body path origin (%s <- %s): %s",
+               origin_parent_frame_.c_str(),
+               origin_source_frame_.c_str(),
+               ex.what());
+    }
+  }
+
+  void publishOriginTransform(const ros::Time& stamp)
+  {
+    if (!origin_enabled_ || !origin_captured_ || !origin_tf_broadcaster_)
+    {
+      return;
+    }
+    origin_transform_.header.stamp = stamp;
+    origin_tf_broadcaster_->sendTransform(origin_transform_);
+  }
+
   bool lookupPathToBaseTransform(geometry_msgs::TransformStamped& tf) const
   {
     try
@@ -1058,6 +1312,27 @@ private:
     const double ry = std::max(0.0, (dy - full_y) / (start_y - full_y));
     const double blend = clamp(std::max(rx, ry), 0.0, 1.0);
     return clamp(1.0 - blend * (1.0 - arm_far_scale_), 0.0, 1.0);
+  }
+
+  bool startReached(const Eigen::Vector3d& start_target)
+  {
+    if (!preposition_enabled_)
+    {
+      return true;
+    }
+
+    if (preposition_reached_mode_ == "base_target")
+    {
+      const Eigen::Vector3d target_in_base = targetInBase(start_target);
+      const double x_error = target_in_base.x() - base_preferred_x_;
+      const double y_error = target_in_base.y() - base_preferred_y_;
+      last_start_error_ = std::hypot(x_error, y_error);
+      return last_start_error_ <= start_base_target_tolerance_;
+    }
+
+    const Eigen::Vector3d tcp = currentTcpInPath(start_target);
+    last_start_error_ = (start_target - tcp).norm();
+    return last_start_error_ <= start_position_tolerance_;
   }
 
   void updateBaseTrackingTarget(const Eigen::Vector3d& target, double dt)
@@ -1385,11 +1660,13 @@ private:
 
   std::string stateString() const
   {
+    if (!pathFrameReady()) return "waiting_origin";
     if (stopped_) return "stopped";
     if (!has_started_) return "idle";
     if (paused_) return "paused";
+    if (!preposition_done_) return dwell_started_ ? "dwell" : "preposition";
     if (done_) return "done";
-    return "running";
+    return "tracking";
   }
 
   void publishDebug(const ros::Time& stamp,
@@ -1454,6 +1731,7 @@ private:
   ros::NodeHandle pnh_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
+  std::unique_ptr<tf2_ros::TransformBroadcaster> origin_tf_broadcaster_;
 
   ros::Publisher target_pub_;
   ros::Publisher arm_target_state_pub_;
@@ -1474,6 +1752,8 @@ private:
   ros::Timer timer_;
 
   PolylinePath path_;
+  XmlRpc::XmlRpcValue configured_path_points_raw_;
+  std::vector<Eigen::Vector3d> configured_path_points_;
   std::string path_frame_;
   Eigen::Quaterniond target_orientation_{Eigen::Quaterniond::Identity()};
   double speed_{0.03};
@@ -1487,6 +1767,23 @@ private:
   bool stopped_{false};
   bool done_{false};
   bool has_started_{false};
+  bool preposition_enabled_{true};
+  bool preposition_done_{false};
+  bool dwell_started_{false};
+  std::string preposition_reached_mode_{"base_target"};
+  double start_position_tolerance_{0.01};
+  double start_base_target_tolerance_{0.15};
+  double preposition_dwell_s_{1.0};
+  double last_start_error_{std::numeric_limits<double>::infinity()};
+  ros::Time dwell_start_time_;
+  bool origin_enabled_{false};
+  bool origin_captured_{false};
+  std::string origin_capture_mode_{"node_start"};
+  std::string origin_parent_frame_;
+  std::string origin_source_frame_;
+  std::string origin_frame_id_;
+  double origin_capture_timeout_{2.0};
+  geometry_msgs::TransformStamped origin_transform_;
   ros::Time last_time_;
 
   std::string target_pose_topic_;

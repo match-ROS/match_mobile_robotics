@@ -2,7 +2,7 @@
 # Change the mobile-base behavior here.
 # The TCP path is loaded separately from print_path_demo.yaml under ~path_spec.
 
-start_paused: false
+start_paused: true
 
 target_pose_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_pose"
 publish_target_pose: false

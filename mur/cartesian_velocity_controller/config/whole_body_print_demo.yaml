@@ -5,6 +5,9 @@
 start_paused: false
 
 target_pose_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_pose"
+publish_target_pose: false
+publish_target_state: true
+arm_target_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/target_state"
 target_state_input:
   enabled: true
   topic: "whole_body_print_controller/input_target_state"

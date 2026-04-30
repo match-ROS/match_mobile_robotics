@@ -251,6 +251,8 @@ public:
     }
 
     target_pub_ = nh_.advertise<geometry_msgs::PoseStamped>(target_pose_topic_, 1);
+    arm_target_state_pub_ = nh_.advertise<cartesian_velocity_controller::CartesianTrajectorySetpoint>(
+        arm_target_state_topic_, 1);
     base_pub_ = nh_.advertise<geometry_msgs::Twist>(base_cmd_vel_topic_, 1);
     debug_pub_ = pnh_.advertise<cartesian_velocity_controller::WholeBodyPrintDebug>("debug", 10);
     if (lifter_enabled_)
@@ -336,6 +338,9 @@ private:
     pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
     pnh_.param("tracking/arm_gate_only_preposition", arm_gate_only_preposition_, false);
     pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_r/target_pose");
+    pnh_.param("publish_target_pose", publish_target_pose_, true);
+    pnh_.param("publish_target_state", publish_target_state_, false);
+    pnh_.param<std::string>("arm_target_state_topic", arm_target_state_topic_, "cartesian_velocity_controller_r/target_state");
     pnh_.param("target_state_input/enabled", external_target_enabled_, false);
     pnh_.param<std::string>("target_state_input/topic", target_state_topic_, "cartesian_velocity_controller_r/target_state");
     pnh_.param("target_state_input/timeout", target_state_timeout_, 0.5);
@@ -385,6 +390,11 @@ private:
 
     pnh_.param("solver/damping", solver_damping_, 0.02);
     pnh_.param("solver/task_weight_z", task_weight_z_, 0.7);
+
+    if (publish_target_pose_ && publish_target_state_)
+    {
+      ROS_WARN("whole_body_print_controller: both publish_target_pose and publish_target_state are enabled; target_pose can disable trajectory mode in the arm controller");
+    }
   }
 
   void loadScanTopics()
@@ -681,8 +691,8 @@ private:
     const Eigen::Vector3d target_in_base = targetInBase(target);
     const double arm_scale = computeArmTrackingScale(target_in_base);
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
+    Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
 
-    publishTargetPose(arm_target, now);
     publishCurrentMarker(target, now);
 
     if (!paused_ && !done_)
@@ -691,11 +701,14 @@ private:
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
+      arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
+      publishArmReference(arm_target, arm_velocity, now, true);
       publishBaseCommand(u, now);
       publishLifterCommand(u, dt, now);
     }
     else
     {
+      publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
       publishZeroBase();
     }
 
@@ -735,8 +748,8 @@ private:
     const bool gate_arm_by_base_zone = !arm_gate_only_preposition_ || prepositioning;
     const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base) : 1.0;
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
+    Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
 
-    publishTargetPose(arm_target, now);
     publishCurrentMarker(target, now);
 
     if (!paused_ && !stopped_ && (external_active_ || prepositioning))
@@ -745,11 +758,21 @@ private:
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, dt);
+      if (prepositioning)
+      {
+        publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
+      }
+      else
+      {
+        arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
+        publishArmReference(arm_target, arm_velocity, now, true);
+      }
       publishBaseCommand(u, now);
       publishLifterCommand(u, dt, now);
     }
     else
     {
+      publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
       publishZeroBase();
     }
 
@@ -915,6 +938,95 @@ private:
                         path_frame_.c_str(), base_frame_.c_str(), ex.what());
       return last_target_in_base_;
     }
+  }
+
+  Eigen::Vector3d currentTcpInBase(const Eigen::Vector3d& fallback)
+  {
+    if (!have_tcp_)
+    {
+      return fallback;
+    }
+    if (current_tcp_frame_.empty() || current_tcp_frame_ == base_frame_)
+    {
+      return current_tcp_;
+    }
+    try
+    {
+      const geometry_msgs::TransformStamped tf =
+          tf_buffer_.lookupTransform(base_frame_, current_tcp_frame_, ros::Time(0), ros::Duration(base_tf_timeout_));
+      return transformPoint(tf, current_tcp_);
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE(2.0, "TCP-in-base TF failed (%s -> %s): %s",
+                        current_tcp_frame_.c_str(), base_frame_.c_str(), ex.what());
+      return fallback;
+    }
+  }
+
+  bool lookupPathToBaseTransform(geometry_msgs::TransformStamped& tf) const
+  {
+    try
+    {
+      tf = tf_buffer_.lookupTransform(base_frame_, path_frame_, ros::Time(0), ros::Duration(base_tf_timeout_));
+      return true;
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE(2.0, "Path-to-base TF failed (%s -> %s): %s",
+                        path_frame_.c_str(), base_frame_.c_str(), ex.what());
+      return false;
+    }
+  }
+
+  Eigen::Quaterniond rotateOrientation(const geometry_msgs::TransformStamped& tf, const Eigen::Quaterniond& q) const
+  {
+    const Eigen::Quaterniond q_tf(tf.transform.rotation.w,
+                                  tf.transform.rotation.x,
+                                  tf.transform.rotation.y,
+                                  tf.transform.rotation.z);
+    return (q_tf.normalized() * q).normalized();
+  }
+
+  Eigen::Vector3d computeExternalTcpVelocityInPath(const Eigen::Vector3d& base_reference_point,
+                                                   const Eigen::VectorXd& u)
+  {
+    Eigen::Vector3d external_velocity = Eigen::Vector3d::Zero();
+    int c = 0;
+
+    if (base_enabled_ && u.size() >= 2)
+    {
+      geometry_msgs::TransformStamped tf_path_base;
+      try
+      {
+        tf_path_base = tf_buffer_.lookupTransform(path_frame_, base_frame_, ros::Time(0), ros::Duration(base_tf_timeout_));
+      }
+      catch (const tf2::TransformException& ex)
+      {
+        ROS_WARN_THROTTLE(2.0, "External TCP velocity TF failed (%s <- %s): %s",
+                          path_frame_.c_str(), base_frame_.c_str(), ex.what());
+        return external_velocity;
+      }
+
+      const Eigen::Vector3d base_pos(tf_path_base.transform.translation.x,
+                                     tf_path_base.transform.translation.y,
+                                     tf_path_base.transform.translation.z);
+      const Eigen::Quaterniond q_path_base(tf_path_base.transform.rotation.w,
+                                           tf_path_base.transform.rotation.x,
+                                           tf_path_base.transform.rotation.y,
+                                           tf_path_base.transform.rotation.z);
+      const Eigen::Vector3d base_x = q_path_base.normalized() * Eigen::Vector3d::UnitX();
+      const Eigen::Vector3d r = base_reference_point - base_pos;
+      const Eigen::Vector3d yaw_col(-r.y(), r.x(), 0.0);
+      external_velocity += u(c) * base_x + u(c + 1) * yaw_col;
+      c += 2;
+    }
+
+    if (lifter_enabled_ && u.size() > c)
+    {
+      external_velocity.z() += u(c);
+    }
+    return external_velocity;
   }
 
   double computeArmTrackingScale(const Eigen::Vector3d& target_in_base)
@@ -1121,16 +1233,53 @@ private:
     }
   }
 
-  void publishTargetPose(const Eigen::Vector3d& p, const ros::Time& stamp)
+  void publishArmReference(const Eigen::Vector3d& p_path,
+                           const Eigen::Vector3d& v_path,
+                           const ros::Time& stamp,
+                           bool active)
   {
-    geometry_msgs::PoseStamped msg;
-    msg.header.stamp = stamp;
-    msg.header.frame_id = path_frame_;
-    msg.pose.position.x = p.x();
-    msg.pose.position.y = p.y();
-    msg.pose.position.z = p.z();
-    msg.pose.orientation = toMsg(target_orientation_);
-    target_pub_.publish(msg);
+    geometry_msgs::TransformStamped tf_base_path;
+    if (!lookupPathToBaseTransform(tf_base_path))
+    {
+      return;
+    }
+
+    const Eigen::Vector3d p_base = transformPoint(tf_base_path, p_path);
+    const Eigen::Vector3d v_base = rotateVector(tf_base_path, v_path);
+    const Eigen::Quaterniond q_base = rotateOrientation(tf_base_path, target_orientation_);
+
+    if (publish_target_pose_)
+    {
+      geometry_msgs::PoseStamped msg;
+      msg.header.stamp = stamp;
+      msg.header.frame_id = base_frame_;
+      msg.pose.position.x = p_base.x();
+      msg.pose.position.y = p_base.y();
+      msg.pose.position.z = p_base.z();
+      msg.pose.orientation = toMsg(q_base);
+      target_pub_.publish(msg);
+    }
+
+    if (publish_target_state_)
+    {
+      cartesian_velocity_controller::CartesianTrajectorySetpoint msg;
+      msg.header.stamp = stamp;
+      msg.header.frame_id = base_frame_;
+      msg.pose.position.x = p_base.x();
+      msg.pose.position.y = p_base.y();
+      msg.pose.position.z = p_base.z();
+      msg.pose.orientation = toMsg(q_base);
+      msg.velocity.linear = vectorToMsg(active ? v_base : Eigen::Vector3d::Zero());
+      msg.velocity.angular = geometry_msgs::Vector3();
+      msg.acceleration.linear = geometry_msgs::Vector3();
+      msg.acceleration.angular = geometry_msgs::Vector3();
+      msg.jerk.linear = geometry_msgs::Vector3();
+      msg.jerk.angular = geometry_msgs::Vector3();
+      msg.path_s = s_;
+      msg.path_progress = external_path_progress_;
+      msg.active = active;
+      arm_target_state_pub_.publish(msg);
+    }
   }
 
   void publishPathMarker()
@@ -1307,6 +1456,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   ros::Publisher target_pub_;
+  ros::Publisher arm_target_state_pub_;
   ros::Publisher base_pub_;
   ros::Publisher lifter_pub_;
   ros::Publisher path_marker_pub_;
@@ -1340,6 +1490,9 @@ private:
   ros::Time last_time_;
 
   std::string target_pose_topic_;
+  bool publish_target_pose_{true};
+  bool publish_target_state_{false};
+  std::string arm_target_state_topic_;
   bool external_target_enabled_{false};
   std::string target_state_topic_;
   double target_state_timeout_{0.5};

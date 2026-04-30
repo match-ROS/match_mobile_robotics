@@ -17,14 +17,14 @@ preposition:
   enabled: true
   reached_mode: "base_target"
   base_target_tolerance: 0.15
-  position_tolerance: 0.01
+  position_tolerance: 0.05
   dwell_s: 1.0
 
 rates:
   # The arm controller runs independently at its own high control_rate.
   # This node only updates the moving TCP reference and the slow subsystems.
   path: 30.0
-  base: 20.0
+  base: 25.0
   lifter: 10.0
   debug: 10.0
 

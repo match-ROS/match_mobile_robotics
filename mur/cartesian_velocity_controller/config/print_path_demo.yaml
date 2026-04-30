@@ -14,12 +14,12 @@ path_origin:
   frame_id: "mur620b/print_origin"
   capture_timeout: 2.0
 
-speed: 0.10
+speed: 0.20
 loop: false
 max_linear_velocity: 0.20
 max_linear_acceleration: 1.8
 max_linear_jerk: 18.0
-blend_tolerance: 0.04
+blend_tolerance: 0.08
 
 # TCP local Z points downward relative to base_link Z-up.
 orientation_rpy: [3.141592653589793, 0.0, 0.0]

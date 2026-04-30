@@ -34,9 +34,9 @@ tracking:
   # Errors are computed on target_position expressed in base/base_frame.
   # Inside full_* the arm tracks the path target fully.
   # Outside start_* the arm target is held/limited and the base does coarse positioning.
-  arm_full_x_error: 0.15
-  arm_full_y_error: 0.12
-  arm_start_x_error: 0.45
+  arm_full_x_error: 0.20
+  arm_full_y_error: 0.20
+  arm_start_x_error: 0.35
   arm_start_y_error: 0.35
   arm_far_scale: 0.0
   arm_gate_only_preposition: false
@@ -51,8 +51,8 @@ base:
   base_frame: "$(arg mur_ns)/base_link"
   # Desired path target position expressed in base_frame.
   # x is forward/backward, y is lateral left/right in the robot base frame.
-  preferred_tcp_x: 0.50
-  preferred_tcp_y: -0.80
+  preferred_tcp_x: 0.25
+  preferred_tcp_y: -0.75
   max_linear_velocity: 0.5
   max_angular_velocity: 0.8
   # Conservative command ramp for MiR600-class base.
@@ -61,13 +61,13 @@ base:
   max_angular_acceleration: 0.80
   weight_linear: 4.0
   weight_angular: 2.0
-  k_preferred_x: 0.25
-  k_lateral: 0.6
-  k_heading: 0.25
+  k_preferred_x: 0.8
+  k_lateral: 0.8
+  k_heading: 0.8
   allow_reverse: false
   align_to_path: true
   tf_timeout: 0.05
-  target_filter_tau: 1.0
+  target_filter_tau: 0.5
 
 base_avoidance:
   enabled: false

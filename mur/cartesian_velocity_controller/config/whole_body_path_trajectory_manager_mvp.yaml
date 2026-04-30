@@ -17,7 +17,7 @@ validation_service: "cartesian_velocity_controller_$(arg controller_suffix)/vali
 
 # For this launch the base is controlled only by whole_body_print_controller.
 base_control:
-  enabled: false
+  enabled: true
   base_frame: "$(arg mur_ns)/base_link"
   preferred_tcp_x: 0.50
   preferred_tcp_y: -0.80
@@ -25,11 +25,11 @@ base_control:
 
 preposition:
   reached_mode: "base_target"
-  base_target_tolerance: 0.15
+  base_target_tolerance: 0.25
   ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effector_state"
 
 tracking_guard:
-  enabled: true
+  enabled: false
   slowdown_error: 0.03
   stop_error: 0.08
   resume_hysteresis: 0.05

@@ -26,7 +26,7 @@ orientation_rpy: [3.141592653589793, 0.0, 0.0]
 
 waypoints:
   # First point: absolute in mur620b/print_origin.
-  - position: [1.5, -1.0, 1.3]
+  - position: [2.5, -1.0, 1.3]
   # Following points: offsets relative to the first point.
   # - position: [0.60, 0.0, 0.0]
   # - position: [0.90, -0.5, 0.0]
@@ -34,3 +34,4 @@ waypoints:
   # - position: [2.0, -0.8, 0.0]
   - position: [0.60, 0.0, 0.0]
   - position: [1.20, 0.0, 0.0]
+  - position: [3.20, 0.0, 0.0]

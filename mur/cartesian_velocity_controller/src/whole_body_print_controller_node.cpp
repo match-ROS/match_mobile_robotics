@@ -277,6 +277,7 @@ public:
 
     path_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("path_marker", 1, true);
     current_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("current_marker", 1);
+    preferred_tcp_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("preferred_tcp_marker", 2, true);
 
     pause_srv_ = pnh_.advertiseService("pause", &WholeBodyPrintController::pauseCb, this);
     resume_srv_ = pnh_.advertiseService("resume", &WholeBodyPrintController::resumeCb, this);
@@ -288,6 +289,7 @@ public:
     {
       publishPathMarker();
     }
+    publishPreferredTcpMarker();
     timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
                              &WholeBodyPrintController::timerCb, this);
 
@@ -1180,6 +1182,58 @@ private:
     current_marker_pub_.publish(marker);
   }
 
+  void publishPreferredTcpMarker()
+  {
+    const ros::Time stamp = ros::Time::now();
+
+    visualization_msgs::Marker target;
+    target.header.frame_id = base_frame_;
+    target.header.stamp = stamp;
+    target.ns = "preferred_tcp";
+    target.id = 0;
+    target.type = visualization_msgs::Marker::SPHERE;
+    target.action = visualization_msgs::Marker::ADD;
+    target.frame_locked = true;
+    target.pose.position.x = base_preferred_x_;
+    target.pose.position.y = base_preferred_y_;
+    target.pose.position.z = 0.0;
+    target.pose.orientation.w = 1.0;
+    target.scale.x = 0.10;
+    target.scale.y = 0.10;
+    target.scale.z = 0.10;
+    target.color.r = 0.0;
+    target.color.g = 0.85;
+    target.color.b = 0.25;
+    target.color.a = 0.95;
+    preferred_tcp_marker_pub_.publish(target);
+
+    visualization_msgs::Marker link;
+    link.header.frame_id = base_frame_;
+    link.header.stamp = stamp;
+    link.ns = "preferred_tcp";
+    link.id = 1;
+    link.type = visualization_msgs::Marker::LINE_STRIP;
+    link.action = visualization_msgs::Marker::ADD;
+    link.frame_locked = true;
+    link.pose.orientation.w = 1.0;
+    link.scale.x = 0.02;
+    link.color.r = 0.0;
+    link.color.g = 0.85;
+    link.color.b = 0.25;
+    link.color.a = 0.7;
+    geometry_msgs::Point origin;
+    origin.x = 0.0;
+    origin.y = 0.0;
+    origin.z = 0.0;
+    geometry_msgs::Point preferred;
+    preferred.x = base_preferred_x_;
+    preferred.y = base_preferred_y_;
+    preferred.z = 0.0;
+    link.points.push_back(origin);
+    link.points.push_back(preferred);
+    preferred_tcp_marker_pub_.publish(link);
+  }
+
   std::string stateString() const
   {
     if (stopped_) return "stopped";
@@ -1257,6 +1311,7 @@ private:
   ros::Publisher lifter_pub_;
   ros::Publisher path_marker_pub_;
   ros::Publisher current_marker_pub_;
+  ros::Publisher preferred_tcp_marker_pub_;
   ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;

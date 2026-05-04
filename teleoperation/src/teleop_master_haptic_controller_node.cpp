@@ -223,6 +223,41 @@ public:
                      slave_pose_twist_rotation_rpy_.z());
     }
 
+    pnh_.param<bool>("motion_scaling/enabled", motion_scaling_enabled_, motion_scaling_enabled_);
+    pnh_.param<double>("motion_scaling/translation_scale", motion_translation_scale_, motion_translation_scale_);
+    pnh_.param<double>("motion_scaling/rotation_scale", motion_rotation_scale_, motion_rotation_scale_);
+    if (!std::isfinite(motion_translation_scale_) || motion_translation_scale_ <= teleoperation::kMathEps)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "motion_scaling/translation_scale must be > 0. Using 1.0.");
+      motion_translation_scale_ = 1.0;
+    }
+    if (!std::isfinite(motion_rotation_scale_) || motion_rotation_scale_ <= teleoperation::kMathEps)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "motion_scaling/rotation_scale must be > 0. Using 1.0.");
+      motion_rotation_scale_ = 1.0;
+    }
+
+    const bool has_motion_master_pos =
+        tryGetVector3Param(pnh_, "motion_scaling/master_neutral_position", motion_master_neutral_pos_);
+    const bool has_motion_master_ori =
+        tryGetQuaternionParam(pnh_, "motion_scaling/master_neutral_orientation_xyzw", motion_master_neutral_ori_);
+
+    motion_scaling_config_valid_ = has_motion_master_pos && has_motion_master_ori;
+    if (motion_scaling_enabled_ && !motion_scaling_config_valid_)
+    {
+      ROS_WARN_NAMED("teleop_master_haptic_controller",
+                     "motion_scaling is enabled but master neutral pose params are incomplete. "
+                     "Scaling will stay inactive and the legacy mapping will be used.");
+    }
+    else if (motion_scaling_enabled_)
+    {
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Motion scaling enabled: translation_scale=%.6f rotation_scale=%.6f",
+                     motion_translation_scale_, motion_rotation_scale_);
+    }
+
     pnh_.param<bool>("home_return/enabled", home_return_enabled_, home_return_enabled_);
     pnh_.param<double>("home_return/timeout_s", home_return_timeout_s_, home_return_timeout_s_);
     pnh_.param<double>("home_return/force_activity_threshold",
@@ -516,6 +551,71 @@ private:
         .toRotationMatrix();
   }
 
+  static Eigen::Vector3d quaternionLog(const Eigen::Quaterniond& q_in)
+  {
+    Eigen::Quaterniond q = q_in.normalized();
+    if (q.w() < 0.0)
+    {
+      q.coeffs() = -q.coeffs();
+    }
+
+    const Eigen::AngleAxisd aa(q);
+    const double angle = aa.angle();
+    if (!std::isfinite(angle) || std::abs(angle) < teleoperation::kMathEps)
+    {
+      return Eigen::Vector3d::Zero();
+    }
+    return angle * aa.axis();
+  }
+
+  static Eigen::Quaterniond quaternionExp(const Eigen::Vector3d& rotvec)
+  {
+    const double angle = rotvec.norm();
+    if (!std::isfinite(angle) || angle < teleoperation::kMathEps)
+    {
+      return Eigen::Quaterniond::Identity();
+    }
+    return Eigen::Quaterniond(Eigen::AngleAxisd(angle, rotvec / angle)).normalized();
+  }
+
+  static Eigen::Quaterniond scaledRelativeOrientation(const Eigen::Quaterniond& reference,
+                                                      const Eigen::Quaterniond& current,
+                                                      double scale)
+  {
+    Eigen::Quaterniond q_ref = reference.normalized();
+    Eigen::Quaterniond q_curr = current.normalized();
+    if (q_ref.dot(q_curr) < 0.0)
+    {
+      q_curr.coeffs() = -q_curr.coeffs();
+    }
+
+    const Eigen::Quaterniond q_delta = (q_ref.conjugate() * q_curr).normalized();
+    const Eigen::Vector3d rotvec = quaternionLog(q_delta);
+    return (q_ref * quaternionExp(rotvec / scale)).normalized();
+  }
+
+  static Eigen::Quaterniond inverseScaledRelativeOrientation(const Eigen::Quaterniond& master_reference,
+                                                             const Eigen::Quaterniond& slave_reference,
+                                                             const Eigen::Quaterniond& slave_current,
+                                                             double scale)
+  {
+    Eigen::Quaterniond q_slave_ref = slave_reference.normalized();
+    Eigen::Quaterniond q_slave_curr = slave_current.normalized();
+    if (q_slave_ref.dot(q_slave_curr) < 0.0)
+    {
+      q_slave_curr.coeffs() = -q_slave_curr.coeffs();
+    }
+
+    const Eigen::Quaterniond q_delta = (q_slave_ref.conjugate() * q_slave_curr).normalized();
+    const Eigen::Vector3d rotvec = quaternionLog(q_delta);
+    return (master_reference.normalized() * quaternionExp(scale * rotvec)).normalized();
+  }
+
+  bool motionScalingActive() const
+  {
+    return motion_scaling_enabled_ && motion_scaling_config_valid_;
+  }
+
   // softDeadzoneNormWithHysteresis is now in teleoperation::math_utils.hpp
 
   static double computeFilterAlpha(double dt, double alpha_param, double cutoff_hz_param)
@@ -701,14 +801,34 @@ private:
 
   void slaveActualPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
   {
-    std::lock_guard<std::mutex> lock(mutex_);
-    slave_actual_pos_ = Eigen::Vector3d(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
+    const Eigen::Vector3d raw_pos(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
     Eigen::Quaterniond q(msg->pose.orientation.w, msg->pose.orientation.x,
                          msg->pose.orientation.y, msg->pose.orientation.z);
-    if (q.norm() > teleoperation::kMathEps)
+    if (!(q.norm() > teleoperation::kMathEps) || !std::isfinite(q.norm()))
     {
-      slave_actual_ori_ = q.normalized();
+      ROS_WARN_THROTTLE_NAMED(1.0, "teleop_master_haptic_controller",
+                              "slaveActualPoseCb received an invalid quaternion. Dropping sample.");
+      return;
     }
+    const Eigen::Quaterniond raw_ori = q.normalized();
+
+    Eigen::Vector3d spring_pos = raw_pos;
+    Eigen::Quaterniond spring_ori = raw_ori;
+    if (motionScalingActive())
+    {
+      spring_pos = motion_master_neutral_pos_ +
+                   motion_translation_scale_ * (raw_pos - motion_master_neutral_pos_);
+      spring_ori = inverseScaledRelativeOrientation(motion_master_neutral_ori_,
+                                                    motion_master_neutral_ori_,
+                                                    raw_ori,
+                                                    motion_rotation_scale_);
+    }
+
+    std::lock_guard<std::mutex> lock(mutex_);
+    slave_actual_raw_pos_ = raw_pos;
+    slave_actual_raw_ori_ = raw_ori;
+    slave_actual_pos_ = spring_pos;
+    slave_actual_ori_ = spring_ori;
     slave_actual_pose_stamp_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
     has_slave_actual_pose_ = true;
   }
@@ -770,8 +890,8 @@ private:
     {
       std::lock_guard<std::mutex> lock(mutex_);
       has_pose = has_slave_actual_pose_;
-      slave_pos = slave_actual_pos_;
-      slave_ori = slave_actual_ori_;
+      slave_pos = slave_actual_raw_pos_;
+      slave_ori = slave_actual_raw_ori_;
       pose_stamp = slave_actual_pose_stamp_;
     }
 
@@ -805,9 +925,24 @@ private:
     {
       return;
     }
-    const Eigen::Vector3d p_out = slave_pose_twist_rotation_ * p_master;
-    Eigen::Quaterniond q_out = slave_pose_twist_rotation_q_ * q_master;
-    q_out.normalize();
+
+    Eigen::Vector3d p_out = slave_pose_twist_rotation_ * p_master;
+    Eigen::Quaterniond q_out = (slave_pose_twist_rotation_q_ * q_master).normalized();
+    if (motionScalingActive())
+    {
+      const Eigen::Vector3d p_master_mapped = p_out;
+      const Eigen::Vector3d p_master_neutral_mapped =
+          slave_pose_twist_rotation_ * motion_master_neutral_pos_;
+      const Eigen::Quaterniond q_master_mapped = q_out;
+      const Eigen::Quaterniond q_master_neutral_mapped =
+          (slave_pose_twist_rotation_q_ * motion_master_neutral_ori_).normalized();
+
+      p_out = p_master_neutral_mapped +
+              (p_master_mapped - p_master_neutral_mapped) / motion_translation_scale_;
+      q_out = scaledRelativeOrientation(q_master_neutral_mapped,
+                                        q_master_mapped,
+                                        motion_rotation_scale_);
+    }
 
     // Publish PoseStamped
     geometry_msgs::PoseStamped pose_msg;
@@ -829,8 +964,13 @@ private:
       v_lin = v_lin_cmd_;
       v_ang = v_ang_cmd_;
     }
-    const Eigen::Vector3d v_lin_out = slave_pose_twist_rotation_ * v_lin;
-    const Eigen::Vector3d v_ang_out = slave_pose_twist_rotation_ * v_ang;
+    Eigen::Vector3d v_lin_out = slave_pose_twist_rotation_ * v_lin;
+    Eigen::Vector3d v_ang_out = slave_pose_twist_rotation_ * v_ang;
+    if (motionScalingActive())
+    {
+      v_lin_out /= motion_translation_scale_;
+      v_ang_out /= motion_rotation_scale_;
+    }
 
     geometry_msgs::TwistStamped twist_msg;
     twist_msg.header.stamp = now;
@@ -1810,6 +1950,13 @@ private:
   Eigen::Matrix3d slave_pose_twist_rotation_{Eigen::Matrix3d::Identity()};
   Eigen::Quaterniond slave_pose_twist_rotation_q_{Eigen::Quaterniond::Identity()};
 
+  bool motion_scaling_enabled_{false};
+  bool motion_scaling_config_valid_{false};
+  double motion_translation_scale_{1.0};
+  double motion_rotation_scale_{1.0};
+  Eigen::Vector3d motion_master_neutral_pos_{Eigen::Vector3d::Zero()};
+  Eigen::Quaterniond motion_master_neutral_ori_{Eigen::Quaterniond::Identity()};
+
   bool home_return_enabled_{false};
   bool has_home_target_{false};
   double home_return_timeout_s_{2.0};
@@ -1883,6 +2030,8 @@ private:
 
   // Virtual spring state
   bool has_slave_actual_pose_{false};
+  Eigen::Vector3d slave_actual_raw_pos_{Eigen::Vector3d::Zero()};
+  Eigen::Quaterniond slave_actual_raw_ori_{Eigen::Quaterniond::Identity()};
   Eigen::Vector3d slave_actual_pos_{Eigen::Vector3d::Zero()};
   Eigen::Quaterniond slave_actual_ori_{Eigen::Quaterniond::Identity()};
   ros::Time slave_actual_pose_stamp_{0};
@@ -1908,4 +2057,3 @@ int main(int argc, char** argv)
   }
   return 0;
 }
-

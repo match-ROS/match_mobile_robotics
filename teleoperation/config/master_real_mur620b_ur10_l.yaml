@@ -282,6 +282,27 @@ slave_tcp_frame: mur620b/UR10_r/tool0
 slave_publish_rate: 500.0
 
 ## ----------------------------
+## Motion scaling master -> slave (optional)
+## ----------------------------
+# Disabled by default: with enabled=false the legacy direct mapping is used.
+#
+# translation_scale=2.0 means:
+#   master displacement 0.50 m -> slave displacement 0.25 m
+# rotation_scale=2.0 means:
+#   master rotation 20 deg -> slave rotation 10 deg
+#
+# Neutral pose is a manual anchor expressed in the master's target-publishing
+# frame (the frame used by slave_base_frame before slave_pose_twist_rotation_rpy).
+# The corresponding slave neutral pose is obtained automatically with the same
+# static master->slave rotation already used by the legacy mapping.
+motion_scaling:
+  enabled: false
+  translation_scale: 1.0
+  rotation_scale: 1.0
+  master_neutral_position: [0.0, 0.0, 0.0]
+  master_neutral_orientation_xyzw: [0.0, 0.0, 0.0, 1.0]
+
+## ----------------------------
 ## Virtual spring coupling (position-based feedback from slave)
 ## ----------------------------
 # Subscribes to the slave's actual TCP pose and computes:
@@ -329,4 +350,3 @@ home_return:
   feedback_timeout_s: 0.25
   arrival_position_tolerance_m: 0.02
   arrival_orientation_tolerance_rad: 0.10
-

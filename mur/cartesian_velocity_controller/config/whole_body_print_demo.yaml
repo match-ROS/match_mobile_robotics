@@ -16,7 +16,7 @@ ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effe
 preposition:
   enabled: true
   # Delay after /resume before the base starts prepositioning. Useful for video recording.
-  resume_delay_s: 5.0
+  resume_delay_s: 12.0
   reached_mode: "tcp"
   base_target_tolerance: 0.25
   position_tolerance: 0.05

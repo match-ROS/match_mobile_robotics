@@ -44,12 +44,12 @@ waypoints:
 # position x/y are offsets from the first waypoint x/y; z remains absolute unless
 # relative_z is set to true.
 obstacles:
-  enabled: false
+  enabled: true
   relative_to_first_waypoint: true
   relative_z: false
   marker_height: 0.12
   items:
     - name: "sim_obstacle_1"
-      position: [1.60, 0.2, 0.0]
-      radius: 0.20
+      position: [3.20, -0.4, 0.0]
+      radius: 0.10
   

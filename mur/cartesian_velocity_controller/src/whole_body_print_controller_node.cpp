@@ -460,6 +460,9 @@ private:
     pnh_.param("preposition/position_tolerance", start_position_tolerance_, 0.01);
     pnh_.param("preposition/base_target_tolerance", start_base_target_tolerance_, 0.15);
     pnh_.param("preposition/dwell_s", preposition_dwell_s_, 1.0);
+    pnh_.param("resume_delay_s", resume_delay_s_, 0.0);
+    pnh_.param("preposition/resume_delay_s", resume_delay_s_, resume_delay_s_);
+    resume_delay_s_ = std::max(0.0, resume_delay_s_);
 
     if (preposition_reached_mode_ != "base_target" && preposition_reached_mode_ != "tcp")
     {
@@ -909,9 +912,37 @@ private:
     }
   }
 
+  void updateResumeDelayParam()
+  {
+    double delay = resume_delay_s_;
+    pnh_.param("resume_delay_s", delay, delay);
+    pnh_.param("preposition/resume_delay_s", delay, delay);
+    resume_delay_s_ = std::max(0.0, delay);
+  }
+
+  bool resumeDelayActive(const ros::Time& now)
+  {
+    if (!resume_delay_active_ || paused_ || stopped_ || !has_started_)
+    {
+      return false;
+    }
+    if (now < resume_delay_until_)
+    {
+      return true;
+    }
+
+    resume_delay_active_ = false;
+    resume_delay_until_ = ros::Time();
+    last_time_ = now;
+    ROS_INFO("Whole-body resume delay elapsed; starting prepositioning");
+    return true;
+  }
+
   bool pauseCb(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
   {
     paused_ = true;
+    resume_delay_active_ = false;
+    resume_delay_until_ = ros::Time();
     publishZeroBase();
     res.success = true;
     res.message = "paused";
@@ -920,16 +951,30 @@ private:
 
   bool resumeCb(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
   {
+    const ros::Time now = ros::Time::now();
     if (origin_enabled_ && origin_capture_mode_ == "start" && !origin_captured_)
     {
       captureOrigin();
     }
+    updateResumeDelayParam();
     paused_ = false;
     stopped_ = false;
     has_started_ = true;
-    last_time_ = ros::Time::now();
+    last_time_ = now;
+    if (resume_delay_s_ > 1e-9)
+    {
+      resume_delay_active_ = true;
+      resume_delay_until_ = now + ros::Duration(resume_delay_s_);
+      publishZeroBase();
+      res.message = "resumed; waiting " + std::to_string(resume_delay_s_) + " s before prepositioning";
+    }
+    else
+    {
+      resume_delay_active_ = false;
+      resume_delay_until_ = ros::Time();
+      res.message = "resumed";
+    }
     res.success = true;
-    res.message = "resumed";
     return true;
   }
 
@@ -942,6 +987,8 @@ private:
     has_started_ = false;
     preposition_done_ = !preposition_enabled_;
     dwell_started_ = false;
+    resume_delay_active_ = false;
+    resume_delay_until_ = ros::Time();
     if (origin_enabled_ && origin_capture_mode_ == "start")
     {
       origin_captured_ = false;
@@ -956,6 +1003,8 @@ private:
   {
     stopped_ = true;
     paused_ = true;
+    resume_delay_active_ = false;
+    resume_delay_until_ = ros::Time();
     publishZeroBase();
     res.success = true;
     res.message = "stopped";
@@ -984,6 +1033,22 @@ private:
 
     const Eigen::Vector3d start_target = path_.sample(0.0);
     const Eigen::Vector3d start_tangent = path_.tangent(0.0);
+
+    if (resumeDelayActive(now))
+    {
+      const Eigen::Vector3d tcp = currentTcpInPath(start_target);
+      publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
+      publishZeroBase();
+      publishCurrentMarker(start_target, now);
+      publishDebug(now,
+                   stateString(),
+                   start_target,
+                   tcp,
+                   tcp,
+                   targetInBase(start_target),
+                   0.0);
+      return;
+    }
 
     if (has_started_ && !paused_ && !stopped_ && !done_ && preposition_done_)
     {
@@ -2027,6 +2092,7 @@ private:
     if (stopped_) return "stopped";
     if (!has_started_) return "idle";
     if (paused_) return "paused";
+    if (resume_delay_active_) return "resume_delay";
     if (!preposition_done_) return dwell_started_ ? "dwell" : "preposition";
     if (done_) return "done";
     return "tracking";
@@ -2141,6 +2207,9 @@ private:
   double preposition_dwell_s_{1.0};
   double last_start_error_{std::numeric_limits<double>::infinity()};
   ros::Time dwell_start_time_;
+  double resume_delay_s_{0.0};
+  bool resume_delay_active_{false};
+  ros::Time resume_delay_until_;
   bool origin_enabled_{false};
   bool origin_captured_{false};
   std::string origin_capture_mode_{"node_start"};

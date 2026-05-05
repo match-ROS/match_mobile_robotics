@@ -14,9 +14,9 @@ path_origin:
   frame_id: "mur620b/print_origin"
   capture_timeout: 2.0
 
-speed: 0.20
+speed: 0.25
 loop: false
-max_linear_velocity: 0.20
+max_linear_velocity: 0.40
 max_linear_acceleration: 1.8
 max_linear_jerk: 18.0
 blend_tolerance: 0.08
@@ -26,12 +26,13 @@ orientation_rpy: [3.141592653589793, 0.0, 0.0]
 
 waypoints:
   # First point: absolute in mur620b/print_origin.
-  - position: [1.0, -0.8, 1.3]
+  - position: [0.6, -0.8, 1.3]
   # Following points: offsets relative to the first point.
   - position: [0.00, 0.0, 0.0]
   - position: [0.60, 0.0, 0.0]
   - position: [1.20, 0.0, 0.0]
   - position: [3.20, 0.0, 0.0]
+  - position: [5.20, 0.0, 0.0]
   
   # - position: [0.60, 0.0, 0.0]
   # - position: [0.90, -0.5, 0.0]
@@ -43,7 +44,7 @@ waypoints:
 # position x/y are offsets from the first waypoint x/y; z remains absolute unless
 # relative_z is set to true.
 obstacles:
-  enabled: true
+  enabled: false
   relative_to_first_waypoint: true
   relative_z: false
   marker_height: 0.12

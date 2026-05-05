@@ -371,6 +371,8 @@ private:
   {
     pnh_.param<std::string>("path/frame_id", path_frame_, "map");
     pnh_.param("path/speed", speed_, 0.03);
+    pnh_.param("path/max_linear_velocity", path_max_linear_velocity_, speed_);
+    pnh_.param("path/max_linear_acceleration", path_max_linear_acceleration_, 0.0);
     pnh_.param("path/loop", loop_, false);
     pnh_.param("start_paused", paused_, true);
     stopped_ = false;
@@ -493,7 +495,13 @@ private:
 
     pnh_.param<std::string>("path_spec/frame_id", path_frame_, path_frame_);
     pnh_.param("path_spec/speed", speed_, speed_);
+    pnh_.param("path_spec/max_linear_velocity", path_max_linear_velocity_, path_max_linear_velocity_);
+    pnh_.param("path_spec/max_linear_acceleration", path_max_linear_acceleration_, path_max_linear_acceleration_);
     pnh_.param("path_spec/loop", loop_, loop_);
+    if (path_max_linear_velocity_ > 1e-9)
+    {
+      speed_ = std::min(speed_, path_max_linear_velocity_);
+    }
 
     std::vector<double> rpy;
     if (pnh_.getParam("path_spec/orientation_rpy", rpy) && rpy.size() >= 3)
@@ -981,6 +989,7 @@ private:
   bool restartCb(std_srvs::Trigger::Request&, std_srvs::Trigger::Response& res)
   {
     s_ = 0.0;
+    path_speed_current_ = 0.0;
     done_ = false;
     stopped_ = false;
     paused_ = true;
@@ -1067,12 +1076,14 @@ private:
 
       if (tcp_ok && base_x_ok && base_y_ok)
       {
-        s_ += speed_ * dt;
+        updatePathSpeed(pathSpeedTarget(path_.totalLength() - s_), dt);
+        s_ += path_speed_current_ * dt;
         if (s_ >= path_.totalLength())
         {
           if (loop_)
           {
             s_ = std::fmod(s_, path_.totalLength());
+            path_speed_current_ = std::min(path_speed_current_, speed_);
           }
           else
           {
@@ -1083,6 +1094,7 @@ private:
       }
       else
       {
+        updatePathSpeed(0.0, dt);
         ROS_WARN_THROTTLE(1.0,
                           "Holding path progress: tcp_error=%.3f/%.3f base_error=[%.3f/%.3f, %.3f/%.3f]",
                           tcp_error_for_progress,
@@ -1139,11 +1151,12 @@ private:
           dwell_start_time_ = now;
           ROS_INFO("Whole-body preposition reached; dwelling for %.2f s", preposition_dwell_s_);
         }
-        publishZeroBase();
+        publishSmoothZeroBase(now);
         if ((now - dwell_start_time_).toSec() >= std::max(0.0, preposition_dwell_s_))
         {
           preposition_done_ = true;
           dwell_started_ = false;
+          path_speed_current_ = 0.0;
           last_time_ = now;
           ROS_INFO("Whole-body path tracking started");
         }
@@ -1191,7 +1204,7 @@ private:
 
     if (!paused_ && !done_)
     {
-      Eigen::Vector3d desired_linear = speed_ * tangent + kp_position_ * (base_tracking_target_ - tcp);
+      Eigen::Vector3d desired_linear = path_speed_current_ * tangent + kp_position_ * (base_tracking_target_ - tcp);
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, tcp_in_base, dt);
@@ -1203,7 +1216,14 @@ private:
     else
     {
       publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
-      publishZeroBase();
+      if (done_)
+      {
+        publishSmoothZeroBase(now);
+      }
+      else
+      {
+        publishZeroBase();
+      }
     }
 
     publishDebug(now, stateString(), target, arm_target, tcp, target_in_base, arm_scale);
@@ -1643,6 +1663,33 @@ private:
     base_tracking_target_ += alpha * (target - base_tracking_target_);
   }
 
+  double pathSpeedTarget(double remaining_distance) const
+  {
+    const double cruise_speed = std::max(0.0, speed_);
+    if (path_max_linear_acceleration_ <= 1e-9 || loop_)
+    {
+      return cruise_speed;
+    }
+
+    const double braking_speed =
+        std::sqrt(std::max(0.0, 2.0 * path_max_linear_acceleration_ * std::max(0.0, remaining_distance)));
+    return std::min(cruise_speed, braking_speed);
+  }
+
+  void updatePathSpeed(double target_speed, double dt)
+  {
+    target_speed = clamp(target_speed, 0.0, std::max(0.0, speed_));
+    if (dt <= 0.0 || path_max_linear_acceleration_ <= 1e-9)
+    {
+      path_speed_current_ = target_speed;
+      return;
+    }
+
+    const double max_step = path_max_linear_acceleration_ * dt;
+    path_speed_current_ += clamp(target_speed - path_speed_current_, -max_step, max_step);
+    path_speed_current_ = clamp(path_speed_current_, 0.0, std::max(0.0, speed_));
+  }
+
   Eigen::Vector3d rotateVector(const geometry_msgs::TransformStamped& tf, const Eigen::Vector3d& v) const
   {
     const Eigen::Quaterniond q(tf.transform.rotation.w,
@@ -1865,6 +1912,28 @@ private:
       last_base_angular_saturated_ = false;
       base_pub_.publish(last_base_command_);
     }
+  }
+
+  void publishSmoothZeroBase(const ros::Time& now)
+  {
+    if (!base_enabled_)
+    {
+      return;
+    }
+    if (!dueByRate(now, last_base_pub_time_, base_rate_hz_))
+    {
+      return;
+    }
+
+    const double dt = last_base_pub_time_.isZero() ? (1.0 / std::max(1.0, base_rate_hz_))
+                                                   : std::max(0.0, (now - last_base_pub_time_).toSec());
+    const geometry_msgs::Twist zero;
+    last_base_nominal_command_ = limitBaseAcceleration(zero, last_base_nominal_command_, dt);
+    last_base_command_ = applyLaserAvoidance(last_base_nominal_command_, now);
+    last_base_linear_saturated_ = false;
+    last_base_angular_saturated_ = false;
+    base_pub_.publish(last_base_command_);
+    last_base_pub_time_ = now;
   }
 
   void publishArmReference(const Eigen::Vector3d& p_path,
@@ -2187,6 +2256,9 @@ private:
   std::string path_frame_;
   Eigen::Quaterniond target_orientation_{Eigen::Quaterniond::Identity()};
   double speed_{0.03};
+  double path_speed_current_{0.0};
+  double path_max_linear_velocity_{0.0};
+  double path_max_linear_acceleration_{0.0};
   double path_rate_hz_{30.0};
   double base_rate_hz_{20.0};
   double lifter_rate_hz_{10.0};

@@ -58,7 +58,8 @@ base:
   # Desired path target position expressed in base_frame.
   # x is forward/backward, y is lateral left/right in the robot base frame.
   preferred_tcp_x: 0.25
-  preferred_tcp_y: -0.75
+  #preferred_tcp_y: -0.75
+  preferred_tcp_y: -1.0
   max_linear_velocity: 0.5
   max_angular_velocity: 0.8
   # Conservative command ramp for MiR600-class base.

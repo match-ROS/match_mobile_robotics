@@ -849,8 +849,9 @@ private:
       updateBaseTrackingTarget(start_target, dt);
       const Eigen::Vector3d tcp = currentTcpInPath(start_target);
       const Eigen::Vector3d target_in_base = targetInBase(start_target);
+      const Eigen::Vector3d arm_target = start_target;
+      Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
       publishCurrentMarker(start_target, now);
-      publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
 
       if (startReached(start_target))
       {
@@ -868,6 +869,7 @@ private:
           last_time_ = now;
           ROS_INFO("Whole-body path tracking started");
         }
+        publishArmReference(arm_target, Eigen::Vector3d::Zero(), now, false);
       }
       else
       {
@@ -879,6 +881,8 @@ private:
                                            start_tangent,
                                            currentTcpInBase(target_in_base),
                                            dt);
+        arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
+        publishArmReference(arm_target, arm_velocity, now, true);
         publishBaseCommand(u, now);
         publishLifterCommand(u, dt, now);
       }
@@ -886,10 +890,10 @@ private:
       publishDebug(now,
                    stateString(),
                    start_target,
-                   tcp,
+                   arm_target,
                    tcp,
                    target_in_base,
-                   0.0);
+                   1.0);
       return;
     }
 

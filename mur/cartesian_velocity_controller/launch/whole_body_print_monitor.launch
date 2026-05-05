@@ -1,7 +1,7 @@
 <launch>
   <arg name="mur_ns" default="mur620b" />
   <arg name="arm" default="right" />
-  <arg name="refresh_hz" default="5.0" />
+  <arg name="refresh_hz" default="1.0" />
   <arg name="stale_timeout" default="1.0" />
   <arg name="max_joint_rows" default="6" />
   <arg name="clear_screen" default="true" />

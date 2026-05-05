@@ -1,0 +1,2632 @@
+Script started on 2026-05-05 11:56:38+02:00 [TERM="xterm-256color" TTY="/dev/pts/12" COLUMNS="211" LINES="57"]
+]0;pantanetti@pantanetti-ssd: ~[01;32mpantanetti@pantanetti-ssd[00m:[01;34m~[00m$ exitroslaunch cartesian_velocity_controller whole_body_print_monitor.launch 
+WARNING: Package name "mirMsgs" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits, underscores, and dashes.
+... logging to /home/pantanetti/.ros/log/140920b4-485f-11f1-b821-4105823e351e/roslaunch-pantanetti-ssd-20280.log
+Checking log directory for disk usage. This may take a while.
+Press Ctrl-C to interrupt
+[31mWARNING: disk usage in log directory [/home/pantanetti/.ros/log] is over 1GB.
+It's recommended that you use the 'rosclean' command.[0m
+]2;/home/pantanetti/catkin_ws/src/match_mobile_robotics/mur/cartesian_velocity_controller/launch/whole_body_print_monitor.launch
+[1mstarted roslaunch server http://pantanetti-ssd:43831/[0m
+
+SUMMARY
+========
+
+PARAMETERS
+ * /rosdistro: noetic
+ * /rosversion: 1.17.4
+ * /whole_body_print_monitor/arm: right
+ * /whole_body_print_monitor/clear_screen: True
+ * /whole_body_print_monitor/max_joint_rows: 6
+ * /whole_body_print_monitor/mur_ns: mur620b
+ * /whole_body_print_monitor/refresh_hz: 1.0
+ * /whole_body_print_monitor/stale_timeout: 1.0
+
+NODES
+  /
+    whole_body_print_monitor (cartesian_velocity_controller/whole_body_print_monitor.py)
+
+[1mROS_MASTER_URI=http://localhost:11311/[0m
+]2;/home/pantanetti/catkin_ws/src/match_mobile_robotics/mur/cartesian_velocity_controller/launch/whole_body_print_monitor.launch http://localhost:11311/
+WARNING: Package name "mirMsgs" does not follow the naming conventions. It should start with a lower case letter and only contain lower case letters, digits, underscores, and dashes.
+[1mprocess[whole_body_print_monitor-1]: started with pid [20296][0m
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975001.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=idle         age=0.03s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 0.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.298, -1.043, 1.440]
+  tcp_error       [0.702, 0.243, -0.140]  |e|= 0.755
+  target_in_base   [0.000, 0.000, 0.000]  preferred=[ 0.250, -0.750]  delta=[-0.250,  0.750]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.000  dist_raw= 0.000  dist_filt= 0.000
+  current_pose    [0.298, -1.043, 1.440]
+  active_waypoint [0.298, -1.043, 1.440]
+  target_raw      [0.298, -1.043, 1.440]
+  target_filtered [0.298, -1.043, 1.440]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, 0.000, 0.000]
+  cart_cmd_lin     [-0.000, -0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.000]
+  pid_err_pos      [0.000, 0.000, 0.000]  |e|= 0.000
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31477  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, -0.000, 0.000, -0.000, 0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0003    0.0000    -1.6629
+  UR10_r/shoulder_lift_j   -0.0002   -0.0002    0.0000    -1.6649
+  UR10_r/elbow_joint        0.0004    0.0007   -0.0003    -1.5556
+  UR10_r/wrist_1_joint     -0.0002   -0.0003    0.0001    -1.4919
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0003   -0.0002   -0.0000    -3.2391
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.298, -1.043, 1.440]
+  linear vel      [-0.004, -0.001, -0.002]  |v|= 0.005
+  linear acc      [-1.330, -0.330, -1.033]  |a|= 1.717
+  orientation    rpy=[-3.142, -0.000, 0.001]
+  angular vel     [0.005, 0.001, -0.006]  |w|= 0.008
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975002.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=idle         age=0.06s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 0.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.298, -1.043, 1.440]
+  tcp_error       [0.702, 0.243, -0.140]  |e|= 0.756
+  target_in_base   [0.000, 0.000, 0.000]  preferred=[ 0.250, -0.750]  delta=[-0.250,  0.750]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.000  dist_raw= 0.000  dist_filt= 0.000
+  current_pose    [0.298, -1.043, 1.440]
+  active_waypoint [0.298, -1.043, 1.440]
+  target_raw      [0.298, -1.043, 1.440]
+  target_filtered [0.298, -1.043, 1.440]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, 0.000, 0.000]
+  cart_cmd_lin     [-0.000, -0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.000]
+  pid_err_pos      [0.000, 0.000, 0.000]  |e|= 0.000
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31471  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, -0.000, 0.000, -0.000, 0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0003   -0.0000    -1.6631
+  UR10_r/shoulder_lift_j   -0.0002   -0.0003    0.0000    -1.6651
+  UR10_r/elbow_joint        0.0004    0.0004    0.0001    -1.5552
+  UR10_r/wrist_1_joint     -0.0002   -0.0003    0.0001    -1.4921
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0003   -0.0003    0.0001    -3.2394
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.298, -1.043, 1.440]
+  linear vel      [0.002, 0.001, -0.003]  |v|= 0.004
+  linear acc      [1.727, 0.283, -1.863]  |a|= 2.557
+  orientation    rpy=[-3.142, -0.000, 0.001]
+  angular vel     [0.001, 0.004, 0.006]  |w|= 0.007
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975003.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=idle         age=0.03s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 0.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.298, -1.043, 1.440]
+  tcp_error       [0.702, 0.243, -0.140]  |e|= 0.756
+  target_in_base   [0.000, 0.000, 0.000]  preferred=[ 0.250, -0.750]  delta=[-0.250,  0.750]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.000  dist_raw= 0.000  dist_filt= 0.000
+  current_pose    [0.298, -1.043, 1.440]
+  active_waypoint [0.298, -1.043, 1.440]
+  target_raw      [0.298, -1.043, 1.440]
+  target_filtered [0.298, -1.043, 1.440]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, 0.000, 0.000]
+  cart_cmd_lin     [-0.000, -0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.000]
+  pid_err_pos      [0.000, 0.000, 0.000]  |e|= 0.000
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31464  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, -0.000, 0.000, -0.000, 0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0003   -0.0000    -1.6634
+  UR10_r/shoulder_lift_j   -0.0002   -0.0003    0.0000    -1.6654
+  UR10_r/elbow_joint        0.0004    0.0002    0.0002    -1.5547
+  UR10_r/wrist_1_joint     -0.0002   -0.0003    0.0001    -1.4923
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0003   -0.0004    0.0001    -3.2397
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.298, -1.043, 1.440]
+  linear vel      [-0.000, -0.001, 0.003]  |v|= 0.003
+  linear acc      [-0.520, -0.495, -0.159]  |a|= 0.736
+  orientation    rpy=[-3.142, -0.000, 0.001]
+  angular vel     [-0.005, 0.005, -0.005]  |w|= 0.009
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975004.763
+whole_body: ok age=0.13s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=idle         age=0.13s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 0.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.298, -1.043, 1.440]
+  tcp_error       [0.702, 0.243, -0.140]  |e|= 0.756
+  target_in_base   [0.000, 0.000, 0.000]  preferred=[ 0.250, -0.750]  delta=[-0.250,  0.750]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.000  dist_raw= 0.000  dist_filt= 0.000
+  current_pose    [0.298, -1.043, 1.440]
+  active_waypoint [0.298, -1.043, 1.440]
+  target_raw      [0.298, -1.043, 1.440]
+  target_filtered [0.298, -1.043, 1.440]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, 0.000, 0.000]
+  cart_cmd_lin     [-0.000, -0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.000]
+  pid_err_pos      [0.000, 0.000, 0.000]  |e|= 0.000
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31458  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, -0.000, 0.000, -0.000, 0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0003    0.0001    -1.6637
+  UR10_r/shoulder_lift_j   -0.0002   -0.0002    0.0000    -1.6656
+  UR10_r/elbow_joint        0.0004    0.0003    0.0001    -1.5543
+  UR10_r/wrist_1_joint     -0.0002   -0.0002    0.0000    -1.4926
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0003   -0.0003    0.0000    -3.2400
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.298, -1.043, 1.440]
+  linear vel      [-0.000, 0.003, 0.006]  |v|= 0.007
+  linear acc      [0.020, 0.968, 1.072]  |a|= 1.444
+  orientation    rpy=[-3.142, -0.000, 0.001]
+  angular vel     [-0.005, -0.001, 0.002]  |w|= 0.006
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975005.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=idle         age=0.06s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 0.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.298, -1.043, 1.440]
+  tcp_error       [0.702, 0.243, -0.140]  |e|= 0.756
+  target_in_base   [0.000, 0.000, 0.000]  preferred=[ 0.250, -0.750]  delta=[-0.250,  0.750]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.000  dist_raw= 0.000  dist_filt= 0.000
+  current_pose    [0.298, -1.043, 1.440]
+  active_waypoint [0.298, -1.043, 1.440]
+  target_raw      [0.298, -1.043, 1.440]
+  target_filtered [0.298, -1.043, 1.440]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, 0.000, 0.000]
+  cart_cmd_lin     [-0.000, -0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.000]
+  pid_err_pos      [0.000, 0.000, 0.000]  |e|= 0.000
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31452  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, -0.000, 0.000, -0.000, 0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0003    0.0000    -1.6640
+  UR10_r/shoulder_lift_j   -0.0002   -0.0003    0.0001    -1.6658
+  UR10_r/elbow_joint        0.0004    0.0006   -0.0001    -1.5539
+  UR10_r/wrist_1_joint     -0.0002   -0.0003    0.0001    -1.4928
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0003   -0.0003    0.0001    -3.2402
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.298, -1.043, 1.440]
+  linear vel      [-0.006, 0.002, -0.003]  |v|= 0.007
+  linear acc      [-0.959, 0.247, -0.944]  |a|= 1.368
+  orientation    rpy=[-3.142, -0.000, 0.001]
+  angular vel     [0.007, -0.001, -0.010]  |w|= 0.012
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975006.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=idle         age=0.06s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 0.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.297, -1.043, 1.441]
+  tcp_error       [0.703, 0.243, -0.141]  |e|= 0.757
+  target_in_base   [0.000, 0.000, 0.000]  preferred=[ 0.250, -0.750]  delta=[-0.250,  0.750]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.000  dist_raw= 0.000  dist_filt= 0.000
+  current_pose    [0.297, -1.043, 1.441]
+  active_waypoint [0.297, -1.043, 1.441]
+  target_raw      [0.297, -1.043, 1.441]
+  target_filtered [0.297, -1.043, 1.441]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, 0.000, 0.000]
+  cart_cmd_lin     [-0.000, -0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.000]
+  pid_err_pos      [0.000, 0.000, 0.000]  |e|= 0.000
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31446  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, -0.000, 0.000, -0.000, 0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0003    0.0000    -1.6642
+  UR10_r/shoulder_lift_j   -0.0002   -0.0003    0.0001    -1.6661
+  UR10_r/elbow_joint        0.0004    0.0004    0.0001    -1.5534
+  UR10_r/wrist_1_joint     -0.0002   -0.0003    0.0001    -1.4929
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0003   -0.0003   -0.0000    -3.2405
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.297, -1.043, 1.441]
+  linear vel      [0.002, -0.001, 0.000]  |v|= 0.002
+  linear acc      [-0.218, 0.171, -0.147]  |a|= 0.314
+  orientation    rpy=[-3.142, -0.000, 0.001]
+  angular vel     [-0.001, -0.000, 0.006]  |w|= 0.006
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975007.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=preposition  age=0.10s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.396, -1.009, 1.425]
+  tcp_error       [0.604, 0.209, -0.125]  |e|= 0.651
+  target_in_base   [0.989, -0.800, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.739, -0.050]
+  base_cmd         lin.x=  0.172  ang.z= -0.002   nominal lin.x=  0.172  ang.z= -0.002
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.617  dist_raw= 0.617  dist_filt= 0.617
+  current_pose    [0.406, -1.000, 1.420]
+  active_waypoint [0.976, -0.799, 1.300]
+  target_raw      [0.976, -0.799, 1.300]
+  target_filtered [0.976, -0.799, 1.300]
+  v_desired_lin    [0.279, 0.170, -0.068]  v_filtered_lin   [0.212, 0.123, -0.050]
+  cart_cmd_lin     [0.229, 0.089, -0.049]  cart_cmd_ang     [0.007, -0.001, 0.007]
+  pid_err_pos      [0.570, 0.202, -0.120]  |e|= 0.617
+  pid_err_ori      [0.003, -0.000, 0.003]  |e|= 0.004
+  jacobian         sigma_min= 0.33380  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.335, 0.217, -0.301, 0.076, -0.000, 0.329]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.3351    0.3369   -0.0018    -1.5129
+  UR10_r/shoulder_lift_j    0.2174    0.2162    0.0012    -1.5522
+  UR10_r/elbow_joint       -0.3008   -0.3026    0.0018    -1.7091
+  UR10_r/wrist_1_joint      0.0755    0.0764   -0.0009    -1.4484
+  UR10_r/wrist_2_joint     -0.0003   -0.0007    0.0004    -4.7128
+  UR10_r/wrist_3_joint      0.3286    0.3296   -0.0009    -3.0866
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.406, -1.000, 1.420]
+  linear vel      [0.141, 0.056, -0.040]  |v|= 0.157
+  linear acc      [-19.519, -9.023, 2.014]  |a|=21.597
+  orientation    rpy=[3.139, 0.000, -0.002]
+  angular vel     [0.021, -0.007, 0.012]  |w|= 0.025
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975008.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=preposition  age=0.06s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.809, -0.907, 1.363]
+  tcp_error       [0.191, 0.107, -0.063]  |e|= 0.228
+  target_in_base   [0.786, -0.775, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.536, -0.025]
+  base_cmd         lin.x=  0.260  ang.z= -0.058   nominal lin.x=  0.260  ang.z= -0.058
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.206  dist_raw= 0.206  dist_filt= 0.206
+  current_pose    [0.608, -0.877, 1.358]
+  active_waypoint [0.776, -0.773, 1.300]
+  target_raw      [0.776, -0.773, 1.300]
+  target_filtered [0.776, -0.773, 1.300]
+  v_desired_lin    [-0.078, 0.132, -0.034]  v_filtered_lin   [-0.064, 0.136, -0.036]
+  cart_cmd_lin     [0.149, 0.183, -0.082]  cart_cmd_ang     [0.000, -0.000, 0.037]
+  pid_err_pos      [0.168, 0.104, -0.058]  |e|= 0.206
+  pid_err_ori      [-0.001, -0.000, 0.016]  |e|= 0.016
+  jacobian         sigma_min= 0.33615  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.396, 0.257, -0.334, 0.077, 0.001, 0.361]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.3957    0.3964   -0.0007    -1.1392
+  UR10_r/shoulder_lift_j    0.2571    0.2581   -0.0011    -1.3352
+  UR10_r/elbow_joint       -0.3342   -0.3314   -0.0028    -2.0047
+  UR10_r/wrist_1_joint      0.0767    0.0771   -0.0004    -1.3731
+  UR10_r/wrist_2_joint      0.0006    0.0007   -0.0001    -4.7122
+  UR10_r/wrist_3_joint      0.3613    0.3580    0.0033    -2.7303
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.608, -0.877, 1.358]
+  linear vel      [0.205, 0.224, -0.098]  |v|= 0.319
+  linear acc      [27.017, 31.304, -10.744]  |a|=42.724
+  orientation    rpy=[-3.141, 0.000, 0.016]
+  angular vel     [-0.012, -0.001, 0.046]  |w|= 0.048
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975009.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=dwell        age=0.03s path=  0.000/  3.200 m progress=  0.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.000, -0.800, 1.300]
+  arm_target      [1.000, -0.800, 1.300]
+  tcp_current     [0.995, -0.802, 1.300]
+  tcp_error       [0.005, 0.002, -0.000]  |e|= 0.006
+  target_in_base   [0.629, -0.745, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.379,  0.005]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.005  dist_raw= 0.005  dist_filt= 0.005
+  current_pose    [0.625, -0.747, 1.300]
+  active_waypoint [0.629, -0.745, 1.300]
+  target_raw      [0.629, -0.745, 1.300]
+  target_filtered [0.629, -0.745, 1.300]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [0.000, -0.000, 0.000]
+  cart_cmd_lin     [0.019, 0.014, -0.005]  cart_cmd_ang     [-0.000, -0.000, 0.030]
+  pid_err_pos      [0.004, 0.002, 0.000]  |e|= 0.005
+  pid_err_ori      [-0.001, 0.000, 0.008]  |e|= 0.008
+  jacobian         sigma_min= 0.25685  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.073, 0.034, -0.031, -0.003, -0.000, 0.034]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0729    0.0730   -0.0001    -0.9721
+  UR10_r/shoulder_lift_j    0.0340    0.0321    0.0019    -1.1049
+  UR10_r/elbow_joint       -0.0311   -0.0343    0.0032    -2.2530
+  UR10_r/wrist_1_joint     -0.0027   -0.0035    0.0008    -1.3551
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7120
+  UR10_r/wrist_3_joint      0.0337    0.0333    0.0004    -2.6113
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.625, -0.747, 1.300]
+  linear vel      [0.021, 0.019, -0.015]  |v|= 0.032
+  linear acc      [0.179, -1.072, -0.717]  |a|= 1.302
+  orientation    rpy=[-3.141, -0.000, 0.064]
+  angular vel     [0.015, 0.012, 0.036]  |w|= 0.041
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975010.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.10s path=  0.080/  3.200 m progress=  2.50%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.080, -0.800, 1.300]
+  arm_target      [1.080, -0.800, 1.300]
+  tcp_current     [1.048, -0.800, 1.298]
+  tcp_error       [0.032, -0.000, 0.002]  |e|= 0.032
+  target_in_base   [0.660, -0.738, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.410,  0.012]
+  base_cmd         lin.x=  0.276  ang.z=  0.025   nominal lin.x=  0.276  ang.z=  0.025
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.025  dist_raw= 0.025  dist_filt= 0.025
+  current_pose    [0.626, -0.739, 1.298]
+  active_waypoint [0.650, -0.738, 1.300]
+  target_raw      [0.650, -0.738, 1.300]
+  target_filtered [0.650, -0.738, 1.300]
+  v_desired_lin    [-0.115, -0.001, 0.001]  v_filtered_lin   [-0.113, -0.002, 0.001]
+  cart_cmd_lin     [-0.042, 0.011, 0.001]  cart_cmd_ang     [-0.000, 0.000, 0.001]
+  pid_err_pos      [0.025, 0.001, 0.002]  |e|= 0.025
+  pid_err_ori      [-0.001, 0.000, -0.006]  |e|= 0.006
+  jacobian         sigma_min= 0.25160  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.049, 0.035, -0.016, -0.019, -0.000, -0.053]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0489   -0.0492    0.0003    -0.9597
+  UR10_r/shoulder_lift_j    0.0352    0.0356   -0.0004    -1.0887
+  UR10_r/elbow_joint       -0.0159   -0.0152   -0.0007    -2.2643
+  UR10_r/wrist_1_joint     -0.0190   -0.0197    0.0007    -1.3598
+  UR10_r/wrist_2_joint     -0.0002   -0.0003    0.0000    -4.7120
+  UR10_r/wrist_3_joint     -0.0528   -0.0478   -0.0049    -2.6135
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.626, -0.739, 1.298]
+  linear vel      [-0.031, 0.007, -0.001]  |v|= 0.031
+  linear acc      [-0.302, -0.568, -0.688]  |a|= 0.942
+  orientation    rpy=[-3.141, -0.000, 0.078]
+  angular vel     [0.006, 0.009, -0.003]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975011.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.06s path=  0.287/  3.200 m progress=  8.96%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.287, -0.800, 1.300]
+  arm_target      [1.287, -0.800, 1.300]
+  tcp_current     [1.268, -0.797, 1.299]
+  tcp_error       [0.019, -0.003, 0.001]  |e|= 0.019
+  target_in_base   [0.587, -0.736, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.337,  0.014]
+  base_cmd         lin.x=  0.230  ang.z=  0.018   nominal lin.x=  0.230  ang.z=  0.018
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.017  dist_raw= 0.017  dist_filt= 0.017
+  current_pose    [0.567, -0.734, 1.299]
+  active_waypoint [0.584, -0.736, 1.300]
+  target_raw      [0.584, -0.736, 1.300]
+  target_filtered [0.584, -0.736, 1.300]
+  v_desired_lin    [-0.102, -0.004, 0.001]  v_filtered_lin   [-0.104, -0.004, 0.001]
+  cart_cmd_lin     [-0.042, 0.000, 0.000]  cart_cmd_ang     [0.000, 0.000, -0.018]
+  pid_err_pos      [0.017, -0.003, 0.001]  |e|= 0.017
+  pid_err_ori      [-0.000, 0.000, -0.013]  |e|= 0.013
+  jacobian         sigma_min= 0.24287  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.108, 0.009, -0.004, -0.005, -0.000, -0.090]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.1079   -0.1091    0.0011    -1.0817
+  UR10_r/shoulder_lift_j    0.0092    0.0087    0.0005    -1.0592
+  UR10_r/elbow_joint       -0.0037   -0.0023   -0.0014    -2.2775
+  UR10_r/wrist_1_joint     -0.0055   -0.0051   -0.0004    -1.3758
+  UR10_r/wrist_2_joint     -0.0001   -0.0001    0.0000    -4.7122
+  UR10_r/wrist_3_joint     -0.0901   -0.0922    0.0021    -2.7245
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.567, -0.734, 1.299]
+  linear vel      [-0.025, 0.003, 0.001]  |v|= 0.025
+  linear acc      [5.854, 1.021, 0.642]  |a|= 5.977
+  orientation    rpy=[-3.141, -0.000, 0.067]
+  angular vel     [-0.006, -0.007, -0.001]  |w|= 0.009
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975012.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.10s path=  0.480/  3.200 m progress= 15.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.480, -0.800, 1.300]
+  arm_target      [1.480, -0.800, 1.300]
+  tcp_current     [1.461, -0.797, 1.299]
+  tcp_error       [0.019, -0.003, 0.001]  |e|= 0.019
+  target_in_base   [0.558, -0.736, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.308,  0.014]
+  base_cmd         lin.x=  0.211  ang.z=  0.013   nominal lin.x=  0.211  ang.z=  0.013
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.016  dist_raw= 0.016  dist_filt= 0.016
+  current_pose    [0.537, -0.733, 1.299]
+  active_waypoint [0.552, -0.736, 1.300]
+  target_raw      [0.552, -0.736, 1.300]
+  target_filtered [0.552, -0.736, 1.300]
+  v_desired_lin    [-0.083, -0.003, 0.001]  v_filtered_lin   [-0.083, -0.003, 0.001]
+  cart_cmd_lin     [-0.017, -0.000, 0.000]  cart_cmd_ang     [-0.000, -0.000, -0.018]
+  pid_err_pos      [0.015, -0.002, 0.001]  |e|= 0.016
+  pid_err_ori      [-0.000, -0.000, -0.010]  |e|= 0.010
+  jacobian         sigma_min= 0.24227  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.044, -0.001, 0.001, 0.000, -0.000, -0.026]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0445   -0.0448    0.0003    -1.1529
+  UR10_r/shoulder_lift_j   -0.0010   -0.0008   -0.0002    -1.0571
+  UR10_r/elbow_joint        0.0012    0.0022   -0.0010    -2.2781
+  UR10_r/wrist_1_joint      0.0001    0.0000    0.0001    -1.3775
+  UR10_r/wrist_2_joint     -0.0001    0.0000   -0.0001    -4.7123
+  UR10_r/wrist_3_joint     -0.0260   -0.0268    0.0008    -2.7770
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.537, -0.733, 1.299]
+  linear vel      [-0.018, -0.001, 0.003]  |v|= 0.018
+  linear acc      [0.106, 0.208, -0.115]  |a|= 0.260
+  orientation    rpy=[-3.141, 0.000, 0.049]
+  angular vel     [-0.008, 0.001, -0.013]  |w|= 0.016
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975013.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.03s path=  0.693/  3.200 m progress= 21.67%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.693, -0.800, 1.300]
+  arm_target      [1.693, -0.800, 1.300]
+  tcp_current     [1.677, -0.797, 1.299]
+  tcp_error       [0.016, -0.003, 0.001]  |e|= 0.016
+  target_in_base   [0.542, -0.736, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.292,  0.014]
+  base_cmd         lin.x=  0.202  ang.z=  0.007   nominal lin.x=  0.202  ang.z=  0.007
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.013  dist_raw= 0.013  dist_filt= 0.013
+  current_pose    [0.526, -0.734, 1.299]
+  active_waypoint [0.538, -0.736, 1.300]
+  target_raw      [0.538, -0.736, 1.300]
+  target_filtered [0.538, -0.736, 1.300]
+  v_desired_lin    [-0.074, -0.002, 0.001]  v_filtered_lin   [-0.074, -0.002, 0.001]
+  cart_cmd_lin     [-0.006, 0.000, 0.000]  cart_cmd_ang     [-0.000, 0.000, -0.013]
+  pid_err_pos      [0.013, -0.002, 0.001]  |e|= 0.013
+  pid_err_ori      [-0.000, 0.000, -0.005]  |e|= 0.005
+  jacobian         sigma_min= 0.24255  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.014, -0.000, 0.000, -0.000, -0.000, -0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0140   -0.0149    0.0009    -1.1801
+  UR10_r/shoulder_lift_j   -0.0002   -0.0001   -0.0001    -1.0578
+  UR10_r/elbow_joint        0.0004    0.0008   -0.0004    -2.2773
+  UR10_r/wrist_1_joint     -0.0002    0.0000   -0.0002    -1.3774
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7123
+  UR10_r/wrist_3_joint     -0.0004   -0.0000   -0.0004    -2.7879
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.526, -0.734, 1.299]
+  linear vel      [-0.006, -0.001, 0.002]  |v|= 0.006
+  linear acc      [0.204, -0.327, 1.057]  |a|= 1.125
+  orientation    rpy=[-3.141, -0.000, 0.032]
+  angular vel     [-0.004, 0.005, -0.013]  |w|= 0.014
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975014.764
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.10s path=  0.880/  3.200 m progress= 27.50%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [1.880, -0.800, 1.300]
+  arm_target      [1.880, -0.800, 1.300]
+  tcp_current     [1.866, -0.798, 1.299]
+  tcp_error       [0.014, -0.002, 0.001]  |e|= 0.014
+  target_in_base   [0.536, -0.735, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.286,  0.015]
+  base_cmd         lin.x=  0.200  ang.z=  0.003   nominal lin.x=  0.200  ang.z=  0.003
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.012  dist_raw= 0.012  dist_filt= 0.012
+  current_pose    [0.522, -0.733, 1.299]
+  active_waypoint [0.533, -0.735, 1.300]
+  target_raw      [0.533, -0.735, 1.300]
+  target_filtered [0.533, -0.735, 1.300]
+  v_desired_lin    [-0.071, -0.000, 0.000]  v_filtered_lin   [-0.071, -0.000, 0.000]
+  cart_cmd_lin     [0.000, 0.001, 0.000]  cart_cmd_ang     [0.000, 0.000, -0.007]
+  pid_err_pos      [0.012, -0.002, 0.001]  |e|= 0.012
+  pid_err_ori      [-0.000, 0.000, -0.002]  |e|= 0.002
+  jacobian         sigma_min= 0.24246  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.006, 0.002, -0.001, -0.001, -0.000, 0.002]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0062   -0.0046   -0.0016    -1.1896
+  UR10_r/shoulder_lift_j    0.0018    0.0016    0.0002    -1.0574
+  UR10_r/elbow_joint       -0.0006   -0.0001   -0.0005    -2.2771
+  UR10_r/wrist_1_joint     -0.0012   -0.0015    0.0003    -1.3780
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7123
+  UR10_r/wrist_3_joint      0.0017    0.0033   -0.0017    -2.7865
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.522, -0.733, 1.299]
+  linear vel      [-0.001, -0.001, -0.004]  |v|= 0.004
+  linear acc      [-0.094, -0.608, -1.009]  |a|= 1.182
+  orientation    rpy=[-3.141, -0.000, 0.021]
+  angular vel     [0.010, 0.008, -0.008]  |w|= 0.015
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975015.764
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.06s path=  1.087/  3.200 m progress= 33.96%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [2.087, -0.800, 1.300]
+  arm_target      [2.087, -0.800, 1.300]
+  tcp_current     [2.074, -0.799, 1.299]
+  tcp_error       [0.012, -0.001, 0.001]  |e|= 0.013
+  target_in_base   [0.535, -0.733, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.285,  0.017]
+  base_cmd         lin.x=  0.200  ang.z=  0.003   nominal lin.x=  0.200  ang.z=  0.003
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.008  dist_raw= 0.008  dist_filt= 0.008
+  current_pose    [0.522, -0.731, 1.299]
+  active_waypoint [0.530, -0.733, 1.300]
+  target_raw      [0.530, -0.733, 1.300]
+  target_filtered [0.530, -0.733, 1.300]
+  v_desired_lin    [-0.072, 0.000, 0.000]  v_filtered_lin   [-0.072, 0.000, 0.000]
+  cart_cmd_lin     [-0.004, 0.002, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.004]
+  pid_err_pos      [0.007, -0.001, 0.001]  |e|= 0.008
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.24113  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.002, 0.005, -0.002, -0.003, 0.000, 0.006]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0017    0.0015    0.0001    -1.1863
+  UR10_r/shoulder_lift_j    0.0048    0.0051   -0.0002    -1.0528
+  UR10_r/elbow_joint       -0.0019   -0.0017   -0.0002    -2.2790
+  UR10_r/wrist_1_joint     -0.0032   -0.0038    0.0006    -1.3808
+  UR10_r/wrist_2_joint      0.0001    0.0001    0.0000    -4.7123
+  UR10_r/wrist_3_joint      0.0056    0.0047    0.0008    -2.7786
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.522, -0.731, 1.299]
+  linear vel      [-0.002, 0.001, 0.002]  |v|= 0.003
+  linear acc      [-1.059, -0.477, 0.406]  |a|= 1.231
+  orientation    rpy=[-3.141, -0.000, 0.017]
+  angular vel     [-0.009, 0.009, -0.011]  |w|= 0.016
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975016.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.10s path=  1.280/  3.200 m progress= 40.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [2.280, -0.800, 1.300]
+  arm_target      [2.280, -0.800, 1.300]
+  tcp_current     [2.269, -0.799, 1.299]
+  tcp_error       [0.011, -0.001, 0.001]  |e|= 0.011
+  target_in_base   [0.533, -0.731, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.283,  0.019]
+  base_cmd         lin.x=  0.200  ang.z=  0.002   nominal lin.x=  0.200  ang.z=  0.002
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.006  dist_raw= 0.006  dist_filt= 0.006
+  current_pose    [0.522, -0.729, 1.300]
+  active_waypoint [0.528, -0.731, 1.300]
+  target_raw      [0.528, -0.731, 1.300]
+  target_filtered [0.528, -0.731, 1.300]
+  v_desired_lin    [-0.073, 0.000, 0.000]  v_filtered_lin   [-0.073, 0.000, 0.000]
+  cart_cmd_lin     [-0.003, 0.001, 0.000]  cart_cmd_ang     [-0.000, 0.000, -0.001]
+  pid_err_pos      [0.006, -0.001, 0.000]  |e|= 0.006
+  pid_err_ori      [-0.000, 0.000, 0.001]  |e|= 0.001
+  jacobian         sigma_min= 0.23981  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.004, 0.004, -0.001, -0.002, -0.000, -0.002]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0036   -0.0049    0.0013    -1.1846
+  UR10_r/shoulder_lift_j    0.0036    0.0040   -0.0005    -1.0483
+  UR10_r/elbow_joint       -0.0015   -0.0015    0.0000    -2.2808
+  UR10_r/wrist_1_joint     -0.0019   -0.0015   -0.0004    -1.3834
+  UR10_r/wrist_2_joint     -0.0001   -0.0000   -0.0001    -4.7123
+  UR10_r/wrist_3_joint     -0.0018   -0.0033    0.0015    -2.7740
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.522, -0.729, 1.300]
+  linear vel      [0.000, 0.000, -0.001]  |v|= 0.001
+  linear acc      [0.838, -0.837, -0.714]  |a|= 1.383
+  orientation    rpy=[-3.141, -0.000, 0.014]
+  angular vel     [0.002, 0.000, 0.004]  |w|= 0.004
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975017.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.03s path=  1.493/  3.200 m progress= 46.67%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [2.493, -0.800, 1.300]
+  arm_target      [2.493, -0.800, 1.300]
+  tcp_current     [2.484, -0.799, 1.300]
+  tcp_error       [0.009, -0.001, 0.000]  |e|= 0.009
+  target_in_base   [0.532, -0.729, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.282,  0.021]
+  base_cmd         lin.x=  0.200  ang.z=  0.001   nominal lin.x=  0.200  ang.z=  0.001
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.004  dist_raw= 0.004  dist_filt= 0.004
+  current_pose    [0.522, -0.728, 1.300]
+  active_waypoint [0.526, -0.729, 1.300]
+  target_raw      [0.526, -0.729, 1.300]
+  target_filtered [0.526, -0.729, 1.300]
+  v_desired_lin    [-0.073, 0.000, 0.000]  v_filtered_lin   [-0.073, 0.000, 0.000]
+  cart_cmd_lin     [-0.004, 0.001, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.003]
+  pid_err_pos      [0.004, -0.001, 0.000]  |e|= 0.004
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23886  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, 0.003, -0.001, -0.002, -0.000, 0.002]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0000    0.0002   -0.0003    -1.1827
+  UR10_r/shoulder_lift_j    0.0030    0.0040   -0.0010    -1.0451
+  UR10_r/elbow_joint       -0.0012   -0.0009   -0.0003    -2.2822
+  UR10_r/wrist_1_joint     -0.0018   -0.0013   -0.0005    -1.3853
+  UR10_r/wrist_2_joint     -0.0000   -0.0001    0.0001    -4.7123
+  UR10_r/wrist_3_joint      0.0023    0.0009    0.0014    -2.7699
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.522, -0.728, 1.300]
+  linear vel      [-0.002, 0.002, 0.001]  |v|= 0.003
+  linear acc      [-1.788, 0.311, -0.749]  |a|= 1.964
+  orientation    rpy=[-3.141, -0.000, 0.012]
+  angular vel     [0.002, -0.007, -0.008]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975018.763
+whole_body: ok age=0.13s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.13s path=  1.673/  3.200 m progress= 52.29%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [2.673, -0.800, 1.300]
+  arm_target      [2.673, -0.800, 1.300]
+  tcp_current     [2.665, -0.799, 1.300]
+  tcp_error       [0.008, -0.001, 0.000]  |e|= 0.009
+  target_in_base   [0.531, -0.728, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.281,  0.022]
+  base_cmd         lin.x=  0.199  ang.z=  0.000   nominal lin.x=  0.199  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.005  dist_raw= 0.005  dist_filt= 0.005
+  current_pose    [0.522, -0.727, 1.300]
+  active_waypoint [0.527, -0.728, 1.300]
+  target_raw      [0.527, -0.728, 1.300]
+  target_filtered [0.527, -0.728, 1.300]
+  v_desired_lin    [-0.073, 0.000, 0.000]  v_filtered_lin   [-0.073, 0.000, 0.000]
+  cart_cmd_lin     [0.000, 0.001, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.003]
+  pid_err_pos      [0.005, -0.001, 0.000]  |e|= 0.005
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23814  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.002, 0.002, -0.001, -0.001, 0.000, 0.000]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0020   -0.0007   -0.0014    -1.1823
+  UR10_r/shoulder_lift_j    0.0018    0.0015    0.0003    -1.0426
+  UR10_r/elbow_joint       -0.0007   -0.0008    0.0001    -2.2832
+  UR10_r/wrist_1_joint     -0.0011   -0.0012    0.0000    -1.3868
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7123
+  UR10_r/wrist_3_joint      0.0005    0.0000    0.0005    -2.7672
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.522, -0.727, 1.300]
+  linear vel      [-0.001, 0.002, -0.004]  |v|= 0.005
+  linear acc      [0.119, 0.340, -1.492]  |a|= 1.535
+  orientation    rpy=[-3.141, -0.000, 0.009]
+  angular vel     [0.003, -0.001, -0.001]  |w|= 0.004
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975019.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.06s path=  1.887/  3.200 m progress= 58.96%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [2.887, -0.800, 1.300]
+  arm_target      [2.887, -0.800, 1.300]
+  tcp_current     [2.879, -0.799, 1.300]
+  tcp_error       [0.008, -0.001, 0.000]  |e|= 0.008
+  target_in_base   [0.530, -0.727, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.280,  0.023]
+  base_cmd         lin.x=  0.199  ang.z= -0.000   nominal lin.x=  0.199  ang.z= -0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.522, -0.726, 1.300]
+  active_waypoint [0.524, -0.727, 1.300]
+  target_raw      [0.524, -0.727, 1.300]
+  target_filtered [0.524, -0.727, 1.300]
+  v_desired_lin    [-0.073, 0.000, 0.000]  v_filtered_lin   [-0.073, 0.000, 0.000]
+  cart_cmd_lin     [-0.004, 0.001, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.003]
+  pid_err_pos      [0.002, -0.001, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23754  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.000, 0.002, -0.001, -0.001, -0.000, 0.002]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0000    0.0008   -0.0008    -1.1815
+  UR10_r/shoulder_lift_j    0.0018    0.0027   -0.0009    -1.0405
+  UR10_r/elbow_joint       -0.0007   -0.0003   -0.0004    -2.2840
+  UR10_r/wrist_1_joint     -0.0010   -0.0014    0.0004    -1.3879
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0015    0.0008    0.0007    -2.7647
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.522, -0.726, 1.300]
+  linear vel      [0.000, -0.000, -0.002]  |v|= 0.002
+  linear acc      [-0.179, -0.089, 0.744]  |a|= 0.770
+  orientation    rpy=[-3.142, 0.000, 0.008]
+  angular vel     [0.001, 0.001, -0.004]  |w|= 0.004
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975020.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.06s path=  2.087/  3.200 m progress= 65.21%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [3.087, -0.800, 1.300]
+  arm_target      [3.087, -0.800, 1.300]
+  tcp_current     [3.079, -0.800, 1.300]
+  tcp_error       [0.008, -0.000, 0.000]  |e|= 0.008
+  target_in_base   [0.530, -0.726, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.280,  0.024]
+  base_cmd         lin.x=  0.200  ang.z=  0.000   nominal lin.x=  0.200  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.003  dist_raw= 0.003  dist_filt= 0.003
+  current_pose    [0.523, -0.725, 1.300]
+  active_waypoint [0.526, -0.725, 1.300]
+  target_raw      [0.526, -0.725, 1.300]
+  target_filtered [0.526, -0.725, 1.300]
+  v_desired_lin    [-0.074, 0.001, 0.000]  v_filtered_lin   [-0.074, 0.001, 0.000]
+  cart_cmd_lin     [0.001, 0.002, 0.000]  cart_cmd_ang     [-0.000, 0.000, 0.002]
+  pid_err_pos      [0.003, -0.000, 0.000]  |e|= 0.003
+  pid_err_ori      [-0.000, 0.000, 0.002]  |e|= 0.002
+  jacobian         sigma_min= 0.23694  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.003, 0.004, -0.002, -0.002, -0.000, 0.002]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0034    0.0028    0.0006    -1.1793
+  UR10_r/shoulder_lift_j    0.0044    0.0048   -0.0004    -1.0385
+  UR10_r/elbow_joint       -0.0018   -0.0015   -0.0004    -2.2849
+  UR10_r/wrist_1_joint     -0.0025   -0.0022   -0.0003    -1.3891
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0018    0.0009    0.0009    -2.7612
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.523, -0.725, 1.300]
+  linear vel      [0.001, 0.003, -0.003]  |v|= 0.004
+  linear acc      [0.553, -0.105, -0.258]  |a|= 0.619
+  orientation    rpy=[-3.142, -0.000, 0.006]
+  angular vel     [0.006, 0.003, 0.002]  |w|= 0.007
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975021.764
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.06s path=  2.287/  3.200 m progress= 71.46%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [3.287, -0.800, 1.300]
+  arm_target      [3.287, -0.800, 1.300]
+  tcp_current     [3.280, -0.800, 1.300]
+  tcp_error       [0.007, -0.000, 0.000]  |e|= 0.007
+  target_in_base   [0.531, -0.723, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.281,  0.027]
+  base_cmd         lin.x=  0.200  ang.z=  0.002   nominal lin.x=  0.200  ang.z=  0.002
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.004  dist_raw= 0.004  dist_filt= 0.004
+  current_pose    [0.524, -0.723, 1.300]
+  active_waypoint [0.527, -0.723, 1.300]
+  target_raw      [0.527, -0.723, 1.300]
+  target_filtered [0.527, -0.723, 1.300]
+  v_desired_lin    [-0.076, 0.000, 0.000]  v_filtered_lin   [-0.076, 0.000, 0.000]
+  cart_cmd_lin     [0.001, 0.002, 0.000]  cart_cmd_ang     [0.000, 0.000, 0.001]
+  pid_err_pos      [0.004, -0.000, 0.000]  |e|= 0.004
+  pid_err_ori      [-0.000, 0.000, 0.001]  |e|= 0.001
+  jacobian         sigma_min= 0.23538  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.005, 0.004, -0.002, -0.002, -0.000, 0.004]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0048    0.0045    0.0004    -1.1743
+  UR10_r/shoulder_lift_j    0.0043    0.0047   -0.0004    -1.0332
+  UR10_r/elbow_joint       -0.0018   -0.0017   -0.0001    -2.2871
+  UR10_r/wrist_1_joint     -0.0025   -0.0020   -0.0004    -1.3921
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0039    0.0046   -0.0007    -2.7580
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.524, -0.723, 1.300]
+  linear vel      [-0.002, 0.002, 0.005]  |v|= 0.005
+  linear acc      [-1.003, 0.111, 2.162]  |a|= 2.386
+  orientation    rpy=[-3.142, -0.000, 0.008]
+  angular vel     [-0.010, -0.003, -0.005]  |w|= 0.012
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975022.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.03s path=  2.493/  3.200 m progress= 77.92%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [3.493, -0.800, 1.300]
+  arm_target      [3.493, -0.800, 1.300]
+  tcp_current     [3.487, -0.800, 1.300]
+  tcp_error       [0.006, -0.000, 0.000]  |e|= 0.006
+  target_in_base   [0.526, -0.722, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.276,  0.028]
+  base_cmd         lin.x=  0.200  ang.z=  0.002   nominal lin.x=  0.200  ang.z=  0.002
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.524, -0.721, 1.300]
+  active_waypoint [0.526, -0.722, 1.300]
+  target_raw      [0.526, -0.722, 1.300]
+  target_filtered [0.526, -0.722, 1.300]
+  v_desired_lin    [-0.077, -0.000, 0.000]  v_filtered_lin   [-0.077, 0.000, 0.000]
+  cart_cmd_lin     [-0.002, 0.001, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.001]
+  pid_err_pos      [0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23421  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.003, 0.003, -0.001, -0.002, 0.000, -0.002]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0031   -0.0047    0.0016    -1.1711
+  UR10_r/shoulder_lift_j    0.0034    0.0036   -0.0002    -1.0292
+  UR10_r/elbow_joint       -0.0015   -0.0015    0.0001    -2.2888
+  UR10_r/wrist_1_joint     -0.0019   -0.0019    0.0000    -1.3945
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0022   -0.0028    0.0006    -2.7547
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.524, -0.721, 1.300]
+  linear vel      [-0.001, -0.002, -0.009]  |v|= 0.009
+  linear acc      [1.027, -1.318, -1.978]  |a|= 2.590
+  orientation    rpy=[-3.142, 0.000, 0.008]
+  angular vel     [0.020, 0.007, -0.007]  |w|= 0.023
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975023.764
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.10s path=  2.680/  3.200 m progress= 83.75%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [3.680, -0.800, 1.300]
+  arm_target      [3.680, -0.800, 1.300]
+  tcp_current     [3.679, -0.800, 1.300]
+  tcp_error       [0.001, -0.000, 0.000]  |e|= 0.002
+  target_in_base   [0.525, -0.721, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.275,  0.029]
+  base_cmd         lin.x=  0.200  ang.z=  0.002   nominal lin.x=  0.200  ang.z=  0.002
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.003  dist_raw= 0.003  dist_filt= 0.003
+  current_pose    [0.523, -0.720, 1.300]
+  active_waypoint [0.526, -0.721, 1.300]
+  target_raw      [0.526, -0.721, 1.300]
+  target_filtered [0.526, -0.721, 1.300]
+  v_desired_lin    [-0.076, -0.000, 0.000]  v_filtered_lin   [-0.077, -0.000, 0.000]
+  cart_cmd_lin     [0.001, 0.000, -0.000]  cart_cmd_ang     [0.000, -0.000, -0.001]
+  pid_err_pos      [0.003, -0.000, 0.000]  |e|= 0.003
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23362  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.000, 0.001, -0.000, -0.001, 0.000, 0.001]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0003   -0.0018    0.0015    -1.1725
+  UR10_r/shoulder_lift_j    0.0011    0.0014   -0.0003    -1.0272
+  UR10_r/elbow_joint       -0.0004   -0.0007    0.0002    -2.2896
+  UR10_r/wrist_1_joint     -0.0007   -0.0008    0.0001    -1.3956
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0009    0.0000    0.0009    -2.7549
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.523, -0.720, 1.300]
+  linear vel      [-0.001, -0.001, 0.002]  |v|= 0.002
+  linear acc      [-0.084, -0.511, -0.481]  |a|= 0.707
+  orientation    rpy=[-3.142, -0.000, 0.007]
+  angular vel     [-0.002, -0.001, -0.001]  |w|= 0.002
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975024.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.06s path=  2.887/  3.200 m progress= 90.21%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [3.887, -0.800, 1.300]
+  arm_target      [3.887, -0.800, 1.300]
+  tcp_current     [3.882, -0.800, 1.300]
+  tcp_error       [0.005, -0.000, 0.000]  |e|= 0.005
+  target_in_base   [0.528, -0.721, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.278,  0.029]
+  base_cmd         lin.x=  0.200  ang.z=  0.001   nominal lin.x=  0.200  ang.z=  0.001
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.523, -0.720, 1.300]
+  active_waypoint [0.526, -0.721, 1.300]
+  target_raw      [0.526, -0.721, 1.300]
+  target_filtered [0.526, -0.721, 1.300]
+  v_desired_lin    [-0.076, -0.000, 0.000]  v_filtered_lin   [-0.076, -0.000, 0.000]
+  cart_cmd_lin     [0.002, 0.000, -0.000]  cart_cmd_ang     [0.000, -0.000, -0.001]
+  pid_err_pos      [0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23335  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.005, 0.001, -0.000, -0.001, 0.000, 0.006]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0047    0.0046    0.0001    -1.1721
+  UR10_r/shoulder_lift_j    0.0010    0.0012   -0.0003    -1.0262
+  UR10_r/elbow_joint       -0.0004   -0.0004    0.0000    -2.2900
+  UR10_r/wrist_1_joint     -0.0006   -0.0006   -0.0000    -1.3962
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0059    0.0069   -0.0010    -2.7533
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.523, -0.720, 1.300]
+  linear vel      [0.003, -0.001, 0.002]  |v|= 0.003
+  linear acc      [0.204, 0.172, 0.324]  |a|= 0.420
+  orientation    rpy=[-3.142, -0.000, 0.006]
+  angular vel     [0.002, -0.002, -0.007]  |w|= 0.007
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975025.763
+whole_body: ok age=0.13s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=tracking     age=0.13s path=  3.073/  3.200 m progress= 96.04%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.073, -0.800, 1.300]
+  arm_target      [4.073, -0.800, 1.300]
+  tcp_current     [4.069, -0.800, 1.300]
+  tcp_error       [0.004, -0.000, 0.000]  |e|= 0.004
+  target_in_base   [0.528, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.278,  0.030]
+  base_cmd         lin.x=  0.200  ang.z=  0.000   nominal lin.x=  0.200  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.523, -0.720, 1.300]
+  active_waypoint [0.522, -0.720, 1.300]
+  target_raw      [0.522, -0.720, 1.300]
+  target_filtered [0.522, -0.720, 1.300]
+  v_desired_lin    [-0.076, 0.000, 0.000]  v_filtered_lin   [-0.076, 0.000, 0.000]
+  cart_cmd_lin     [-0.005, 0.000, 0.000]  cart_cmd_ang     [0.000, -0.000, -0.001]
+  pid_err_pos      [-0.001, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23315  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [-0.005, 0.001, -0.000, -0.000, 0.000, -0.004]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo   -0.0055   -0.0079    0.0024    -1.1724
+  UR10_r/shoulder_lift_j    0.0006    0.0007   -0.0001    -1.0256
+  UR10_r/elbow_joint       -0.0002   -0.0002   -0.0000    -2.2903
+  UR10_r/wrist_1_joint     -0.0004   -0.0003   -0.0000    -1.3966
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint     -0.0043   -0.0048    0.0005    -2.7524
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.523, -0.720, 1.300]
+  linear vel      [-0.005, 0.000, 0.001]  |v|= 0.005
+  linear acc      [-0.905, 0.210, -0.444]  |a|= 1.029
+  orientation    rpy=[-3.142, -0.000, 0.004]
+  angular vel     [-0.009, 0.002, -0.010]  |w|= 0.013
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975026.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.241, -0.799, 1.300]
+  tcp_error       [-0.041, -0.001, 0.000]  |e|= 0.041
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.544, -0.719, 1.300]
+  active_waypoint [0.542, -0.719, 1.300]
+  target_raw      [0.542, -0.719, 1.300]
+  target_filtered [0.542, -0.719, 1.300]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.066, 0.001, -0.000]  cart_cmd_ang     [0.000, -0.000, -0.001]
+  pid_err_pos      [-0.002, -0.000, -0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23222  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.166, 0.004, -0.002, -0.002, 0.000, 0.167]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.1662    0.1654    0.0007    -1.1194
+  UR10_r/shoulder_lift_j    0.0044    0.0046   -0.0002    -1.0224
+  UR10_r/elbow_joint       -0.0022   -0.0024    0.0003    -2.2917
+  UR10_r/wrist_1_joint     -0.0022   -0.0026    0.0004    -1.3983
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.1674    0.1691   -0.0017    -2.6983
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.544, -0.719, 1.300]
+  linear vel      [0.069, 0.000, -0.001]  |v|= 0.069
+  linear acc      [1.053, -0.836, -0.935]  |a|= 1.638
+  orientation    rpy=[-3.142, -0.000, 0.003]
+  angular vel     [-0.002, 0.006, 0.003]  |w|= 0.007
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975027.764
+whole_body: ok age=0.13s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.13s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.303, -0.797, 1.300]
+  tcp_error       [-0.103, -0.003, 0.000]  |e|= 0.103
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.611, -0.717, 1.300]
+  active_waypoint [0.609, -0.717, 1.300]
+  target_raw      [0.609, -0.717, 1.300]
+  target_filtered [0.609, -0.717, 1.300]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.065, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, 0.001]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [-0.000, 0.000, 0.001]  |e|= 0.001
+  jacobian         sigma_min= 0.23466  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.152, -0.021, 0.009, 0.012, -0.000, 0.152]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.1522    0.1534   -0.0012    -0.9585
+  UR10_r/shoulder_lift_j   -0.0213   -0.0217    0.0004    -1.0308
+  UR10_r/elbow_joint        0.0091    0.0076    0.0015    -2.2883
+  UR10_r/wrist_1_joint      0.0123    0.0120    0.0003    -1.3933
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7123
+  UR10_r/wrist_3_joint      0.1524    0.1554   -0.0030    -2.5365
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.611, -0.717, 1.300]
+  linear vel      [0.065, 0.003, -0.002]  |v|= 0.065
+  linear acc      [-0.406, 0.188, -0.401]  |a|= 0.600
+  orientation    rpy=[-3.142, -0.000, 0.003]
+  angular vel     [0.005, -0.001, -0.007]  |w|= 0.008
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975028.764
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.374, -0.796, 1.300]
+  tcp_error       [-0.174, -0.004, 0.000]  |e|= 0.174
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.677, -0.715, 1.300]
+  active_waypoint [0.675, -0.715, 1.300]
+  target_raw      [0.675, -0.715, 1.300]
+  target_filtered [0.675, -0.715, 1.300]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.065, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, 0.001]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [-0.000, 0.000, 0.001]  |e|= 0.001
+  jacobian         sigma_min= 0.24443  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.130, -0.044, 0.020, 0.024, -0.000, 0.130]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.1299    0.1296    0.0003    -0.8171
+  UR10_r/shoulder_lift_j   -0.0443   -0.0440   -0.0003    -1.0639
+  UR10_r/elbow_joint        0.0204    0.0182    0.0022    -2.2736
+  UR10_r/wrist_1_joint      0.0239    0.0232    0.0007    -1.3749
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.1303    0.1310   -0.0007    -2.3951
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.677, -0.715, 1.300]
+  linear vel      [0.067, 0.003, 0.001]  |v|= 0.067
+  linear acc      [0.673, 0.404, 0.908]  |a|= 1.200
+  orientation    rpy=[-3.142, -0.000, 0.003]
+  angular vel     [-0.000, -0.005, -0.001]  |w|= 0.005
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975029.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.10s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.438, -0.794, 1.299]
+  tcp_error       [-0.238, -0.006, 0.001]  |e|= 0.238
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.743, -0.713, 1.299]
+  active_waypoint [0.741, -0.713, 1.299]
+  target_raw      [0.741, -0.713, 1.299]
+  target_filtered [0.741, -0.713, 1.299]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.064, 0.001, -0.000]  cart_cmd_ang     [0.000, 0.000, 0.001]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.001]  |e|= 0.001
+  jacobian         sigma_min= 0.26048  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.107, -0.062, 0.032, 0.030, -0.000, 0.107]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.1071    0.1094   -0.0023    -0.6986
+  UR10_r/shoulder_lift_j   -0.0619   -0.0627    0.0008    -1.1173
+  UR10_r/elbow_joint        0.0315    0.0294    0.0021    -2.2478
+  UR10_r/wrist_1_joint      0.0304    0.0286    0.0017    -1.3473
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.1067    0.1088   -0.0021    -2.2766
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.743, -0.713, 1.299]
+  linear vel      [0.064, 0.004, -0.003]  |v|= 0.064
+  linear acc      [-0.304, 0.084, -1.125]  |a|= 1.169
+  orientation    rpy=[3.142, -0.000, 0.002]
+  angular vel     [-0.001, 0.008, -0.008]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975030.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.505, -0.792, 1.299]
+  tcp_error       [-0.305, -0.008, 0.001]  |e|= 0.306
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.808, -0.711, 1.299]
+  active_waypoint [0.807, -0.711, 1.299]
+  target_raw      [0.807, -0.711, 1.299]
+  target_filtered [0.807, -0.711, 1.299]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.064, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.28141  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.087, -0.074, 0.042, 0.031, -0.000, 0.087]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0868    0.0868    0.0000    -0.6018
+  UR10_r/shoulder_lift_j   -0.0739   -0.0750    0.0011    -1.1857
+  UR10_r/elbow_joint        0.0424    0.0408    0.0016    -2.2108
+  UR10_r/wrist_1_joint      0.0315    0.0310    0.0005    -1.3159
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0866    0.0863    0.0002    -2.1799
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.808, -0.711, 1.299]
+  linear vel      [0.064, 0.003, -0.001]  |v|= 0.064
+  linear acc      [-0.740, -0.296, 1.132]  |a|= 1.384
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [-0.002, 0.010, 0.016]  |w|= 0.020
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975031.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.03s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.572, -0.791, 1.298]
+  tcp_error       [-0.372, -0.009, 0.002]  |e|= 0.372
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.873, -0.710, 1.298]
+  active_waypoint [0.871, -0.710, 1.298]
+  target_raw      [0.871, -0.710, 1.298]
+  target_filtered [0.871, -0.710, 1.298]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.063, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.30558  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.070, -0.081, 0.053, 0.028, -0.000, 0.070]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0700    0.0697    0.0002    -0.5237
+  UR10_r/shoulder_lift_j   -0.0809   -0.0801   -0.0009    -1.2634
+  UR10_r/elbow_joint        0.0527    0.0527    0.0000    -2.1633
+  UR10_r/wrist_1_joint      0.0283    0.0291   -0.0008    -1.2857
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0702    0.0716   -0.0014    -2.1018
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.873, -0.710, 1.298]
+  linear vel      [0.066, 0.001, -0.007]  |v|= 0.066
+  linear acc      [0.581, -0.040, -1.402]  |a|= 1.518
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [0.006, 0.009, 0.001]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975032.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.634, -0.790, 1.298]
+  tcp_error       [-0.434, -0.010, 0.002]  |e|= 0.434
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [0.937, -0.708, 1.298]
+  active_waypoint [0.936, -0.708, 1.298]
+  target_raw      [0.936, -0.708, 1.298]
+  target_filtered [0.936, -0.708, 1.298]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.063, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.33080  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.057, -0.084, 0.062, 0.022, -0.000, 0.057]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0566    0.0573   -0.0007    -0.4606
+  UR10_r/shoulder_lift_j   -0.0844   -0.0856    0.0013    -1.3463
+  UR10_r/elbow_joint        0.0622    0.0617    0.0005    -2.1057
+  UR10_r/wrist_1_joint      0.0221    0.0226   -0.0005    -1.2604
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0568    0.0580   -0.0011    -2.0387
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [0.937, -0.708, 1.298]
+  linear vel      [0.085, 0.000, 0.001]  |v|= 0.085
+  linear acc      [12.000, -0.567, 1.047]  |a|=12.059
+  orientation    rpy=[-3.142, 0.000, 0.003]
+  angular vel     [-0.001, -0.002, -0.003]  |w|= 0.004
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975033.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.10s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.696, -0.789, 1.297]
+  tcp_error       [-0.496, -0.011, 0.003]  |e|= 0.496
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.001, -0.707, 1.297]
+  active_waypoint [0.999, -0.707, 1.297]
+  target_raw      [0.999, -0.707, 1.297]
+  target_filtered [0.999, -0.707, 1.297]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.062, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, -0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.35025  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.046, -0.086, 0.071, 0.014, -0.000, 0.046]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0462    0.0470   -0.0008    -0.4094
+  UR10_r/shoulder_lift_j   -0.0857   -0.0858    0.0002    -1.4312
+  UR10_r/elbow_joint        0.0712    0.0690    0.0021    -2.0391
+  UR10_r/wrist_1_joint      0.0145    0.0146   -0.0001    -1.2420
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0464    0.0451    0.0013    -1.9876
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.001, -0.707, 1.297]
+  linear vel      [0.034, 0.003, 0.004]  |v|= 0.034
+  linear acc      [-7.971, 0.603, 2.095]  |a|= 8.264
+  orientation    rpy=[-3.142, 0.000, 0.003]
+  angular vel     [-0.003, -0.005, 0.002]  |w|= 0.006
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975034.764
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.761, -0.788, 1.297]
+  tcp_error       [-0.561, -0.012, 0.003]  |e|= 0.561
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.064, -0.706, 1.297]
+  active_waypoint [1.062, -0.706, 1.297]
+  target_raw      [1.062, -0.706, 1.297]
+  target_filtered [1.062, -0.706, 1.297]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.062, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.35432  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.038, -0.086, 0.080, 0.006, -0.000, 0.038]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0382    0.0377    0.0004    -0.3673
+  UR10_r/shoulder_lift_j   -0.0857   -0.0854   -0.0003    -1.5170
+  UR10_r/elbow_joint        0.0795    0.0797   -0.0002    -1.9638
+  UR10_r/wrist_1_joint      0.0062    0.0068   -0.0005    -1.2316
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0382    0.0382    0.0001    -1.9454
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.064, -0.706, 1.297]
+  linear vel      [0.057, 0.002, 0.002]  |v|= 0.057
+  linear acc      [5.132, 0.332, 1.192]  |a|= 5.279
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [-0.003, -0.005, 0.004]  |w|= 0.007
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975035.764
+whole_body: ok age=0.13s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.13s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.819, -0.787, 1.296]
+  tcp_error       [-0.619, -0.013, 0.004]  |e|= 0.619
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.126, -0.704, 1.296]
+  active_waypoint [1.124, -0.705, 1.296]
+  target_raw      [1.124, -0.705, 1.296]
+  target_filtered [1.124, -0.705, 1.296]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.061, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.35057  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.032, -0.085, 0.087, -0.002, 0.000, 0.031]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0319    0.0326   -0.0007    -0.3323
+  UR10_r/shoulder_lift_j   -0.0852   -0.0846   -0.0005    -1.6027
+  UR10_r/elbow_joint        0.0873    0.0878   -0.0005    -1.8802
+  UR10_r/wrist_1_joint     -0.0022   -0.0024    0.0003    -1.2294
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0314    0.0318   -0.0004    -1.9104
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.126, -0.704, 1.296]
+  linear vel      [0.060, 0.002, 0.003]  |v|= 0.060
+  linear acc      [-0.832, -0.122, 0.452]  |a|= 0.955
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [0.001, -0.010, -0.004]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975036.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.03s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.887, -0.786, 1.296]
+  tcp_error       [-0.687, -0.014, 0.004]  |e|= 0.687
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.188, -0.703, 1.296]
+  active_waypoint [1.186, -0.703, 1.296]
+  target_raw      [1.186, -0.703, 1.296]
+  target_filtered [1.186, -0.703, 1.296]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.060, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, -0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.34301  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.027, -0.085, 0.095, -0.010, -0.000, 0.027]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0269    0.0274   -0.0005    -0.3030
+  UR10_r/shoulder_lift_j   -0.0848   -0.0852    0.0004    -1.6877
+  UR10_r/elbow_joint        0.0951    0.0967   -0.0016    -1.7890
+  UR10_r/wrist_1_joint     -0.0102   -0.0104    0.0001    -1.2357
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0267    0.0251    0.0016    -1.8811
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.188, -0.703, 1.296]
+  linear vel      [0.063, 0.006, -0.001]  |v|= 0.064
+  linear acc      [1.113, 3.169, -0.294]  |a|= 3.371
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [-0.004, 0.000, 0.011]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975037.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.03s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [4.948, -0.785, 1.295]
+  tcp_error       [-0.748, -0.015, 0.005]  |e|= 0.748
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.249, -0.702, 1.295]
+  active_waypoint [1.247, -0.702, 1.295]
+  target_raw      [1.247, -0.702, 1.295]
+  target_filtered [1.247, -0.702, 1.295]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.060, 0.001, -0.000]  cart_cmd_ang     [-0.000, 0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.33247  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.023, -0.085, 0.103, -0.018, 0.000, 0.023]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0229    0.0229    0.0000    -0.2782
+  UR10_r/shoulder_lift_j   -0.0847   -0.0843   -0.0004    -1.7722
+  UR10_r/elbow_joint        0.1030    0.1024    0.0006    -1.6903
+  UR10_r/wrist_1_joint     -0.0183   -0.0182   -0.0001    -1.2499
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0228    0.0228    0.0000    -1.8563
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.249, -0.702, 1.295]
+  linear vel      [0.060, 0.004, 0.003]  |v|= 0.060
+  linear acc      [5.141, -0.344, 1.975]  |a|= 5.518
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [0.001, -0.010, 0.004]  |w|= 0.011
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975038.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.007, -0.784, 1.295]
+  tcp_error       [-0.807, -0.016, 0.005]  |e|= 0.807
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.309, -0.701, 1.295]
+  active_waypoint [1.308, -0.701, 1.295]
+  target_raw      [1.308, -0.701, 1.295]
+  target_filtered [1.308, -0.701, 1.295]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.059, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, -0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.31901  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.020, -0.085, 0.111, -0.026, 0.000, 0.020]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0197    0.0196    0.0001    -0.2569
+  UR10_r/shoulder_lift_j   -0.0850   -0.0835   -0.0015    -1.8572
+  UR10_r/elbow_joint        0.1111    0.1079    0.0032    -1.5832
+  UR10_r/wrist_1_joint     -0.0261   -0.0248   -0.0013    -1.2720
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0197    0.0197   -0.0000    -1.8350
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.309, -0.701, 1.295]
+  linear vel      [0.065, 0.002, -0.005]  |v|= 0.065
+  linear acc      [0.844, -0.306, -3.142]  |a|= 3.268
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [0.001, 0.001, 0.007]  |w|= 0.007
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975039.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.067, -0.783, 1.294]
+  tcp_error       [-0.867, -0.017, 0.006]  |e|= 0.867
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.369, -0.700, 1.294]
+  active_waypoint [1.368, -0.700, 1.294]
+  target_raw      [1.368, -0.700, 1.294]
+  target_filtered [1.368, -0.700, 1.294]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.058, 0.001, 0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.30256  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.017, -0.087, 0.121, -0.034, 0.000, 0.017]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0171    0.0169    0.0002    -0.2385
+  UR10_r/shoulder_lift_j   -0.0865   -0.0871    0.0006    -1.9430
+  UR10_r/elbow_joint        0.1206    0.1179    0.0027    -1.4672
+  UR10_r/wrist_1_joint     -0.0341   -0.0340   -0.0001    -1.3021
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0171    0.0170    0.0001    -1.8166
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.369, -0.700, 1.294]
+  linear vel      [0.063, -0.000, -0.007]  |v|= 0.063
+  linear acc      [0.777, -1.236, 0.077]  |a|= 1.462
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [0.005, 0.009, -0.000]  |w|= 0.010
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975040.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.126, -0.782, 1.294]
+  tcp_error       [-0.926, -0.018, 0.006]  |e|= 0.926
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.429, -0.699, 1.294]
+  active_waypoint [1.427, -0.699, 1.294]
+  target_raw      [1.427, -0.699, 1.294]
+  target_filtered [1.427, -0.699, 1.294]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.058, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, 0.000, -0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.28277  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.015, -0.089, 0.132, -0.043, -0.000, 0.015]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0150    0.0152   -0.0002    -0.2224
+  UR10_r/shoulder_lift_j   -0.0893   -0.0905    0.0012    -2.0308
+  UR10_r/elbow_joint        0.1321    0.1324   -0.0003    -1.3411
+  UR10_r/wrist_1_joint     -0.0428   -0.0424   -0.0004    -1.3405
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0151    0.0152   -0.0001    -1.8005
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.429, -0.699, 1.294]
+  linear vel      [0.061, 0.004, -0.002]  |v|= 0.062
+  linear acc      [0.634, 2.088, -2.242]  |a|= 3.128
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [0.002, 0.002, 0.005]  |w|= 0.005
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975041.764
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.185, -0.782, 1.293]
+  tcp_error       [-0.985, -0.018, 0.007]  |e|= 0.985
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.487, -0.698, 1.293]
+  active_waypoint [1.486, -0.698, 1.293]
+  target_raw      [1.486, -0.698, 1.293]
+  target_filtered [1.486, -0.698, 1.293]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.058, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.25905  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.013, -0.094, 0.147, -0.053, 0.000, 0.013]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0132    0.0140   -0.0008    -0.2083
+  UR10_r/shoulder_lift_j   -0.0939   -0.0933   -0.0007    -2.1222
+  UR10_r/elbow_joint        0.1467    0.1447    0.0020    -1.2022
+  UR10_r/wrist_1_joint     -0.0528   -0.0536    0.0008    -1.3881
+  UR10_r/wrist_2_joint      0.0000    0.0000    0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0131    0.0133   -0.0002    -1.7864
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.487, -0.698, 1.293]
+  linear vel      [0.061, 0.004, -0.003]  |v|= 0.061
+  linear acc      [-3.309, 0.766, -1.877]  |a|= 3.881
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [0.008, 0.006, -0.003]  |w|= 0.010
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975042.763
+whole_body: ok age=0.03s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.03s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.245, -0.781, 1.293]
+  tcp_error       [-1.045, -0.019, 0.007]  |e|= 1.045
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.545, -0.697, 1.293]
+  active_waypoint [1.544, -0.697, 1.293]
+  target_raw      [1.544, -0.697, 1.293]
+  target_filtered [1.544, -0.697, 1.293]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.057, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.23022  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.012, -0.102, 0.167, -0.065, -0.000, 0.012]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0118    0.0117    0.0000    -0.1958
+  UR10_r/shoulder_lift_j   -0.1016   -0.1018    0.0002    -2.2197
+  UR10_r/elbow_joint        0.1671    0.1674   -0.0003    -1.0458
+  UR10_r/wrist_1_joint     -0.0655   -0.0658    0.0003    -1.4468
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0118    0.0123   -0.0005    -1.7740
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.545, -0.697, 1.293]
+  linear vel      [0.076, -0.002, -0.001]  |v|= 0.076
+  linear acc      [10.111, -0.522, 2.250]  |a|=10.371
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [-0.007, 0.000, 0.005]  |w|= 0.009
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975043.763
+whole_body: ok age=0.06s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.06s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.300, -0.780, 1.292]
+  tcp_error       [-1.100, -0.020, 0.008]  |e|= 1.100
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.603, -0.696, 1.292]
+  active_waypoint [1.601, -0.696, 1.292]
+  target_raw      [1.601, -0.696, 1.292]
+  target_filtered [1.601, -0.696, 1.292]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.057, 0.001, 0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.19429  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.011, -0.115, 0.199, -0.084, -0.000, 0.011]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0105    0.0114   -0.0009    -0.1847
+  UR10_r/shoulder_lift_j   -0.1153   -0.1148   -0.0005    -2.3275
+  UR10_r/elbow_joint        0.1992    0.1984    0.0007    -0.8642
+  UR10_r/wrist_1_joint     -0.0839   -0.0836   -0.0003    -1.5208
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0105    0.0105    0.0000    -1.7628
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.603, -0.696, 1.292]
+  linear vel      [0.060, 0.003, -0.013]  |v|= 0.061
+  linear acc      [0.819, 1.002, -4.553]  |a|= 4.733
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [-0.006, 0.016, -0.000]  |w|= 0.017
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975044.763
+whole_body: ok age=0.10s | pipeline: ok age=0.00s | joint_fb: ok age=0.00s | ee: ok age=0.00s
+
+[Whole-body]
+  state=done         age=0.10s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.354, -0.779, 1.291]
+  tcp_error       [-1.154, -0.021, 0.009]  |e|= 1.155
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.00s  waypoint=1/1  dist_wp= 0.002  dist_raw= 0.002  dist_filt= 0.002
+  current_pose    [1.659, -0.695, 1.291]
+  active_waypoint [1.657, -0.695, 1.291]
+  target_raw      [1.657, -0.695, 1.291]
+  target_filtered [1.657, -0.695, 1.291]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.056, 0.001, 0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.002, -0.000, 0.000]  |e|= 0.002
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.14633  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.010, -0.146, 0.265, -0.119, -0.000, 0.009]
+
+[Joint feedback]
+  age=0.00s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0095    0.0099   -0.0004    -0.1747
+  UR10_r/shoulder_lift_j   -0.1455   -0.1444   -0.0011    -2.4554
+  UR10_r/elbow_joint        0.2650    0.2639    0.0011    -0.6373
+  UR10_r/wrist_1_joint     -0.1194   -0.1176   -0.0018    -1.6198
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0095    0.0103   -0.0008    -1.7528
+
+[End effector]
+  frame=mur620b/base_link  age=0.00s
+  position       [1.659, -0.695, 1.291]
+  linear vel      [0.059, 0.003, -0.010]  |v|= 0.060
+  linear acc      [1.598, 1.782, -2.778]  |a|= 3.667
+  orientation    rpy=[3.142, 0.000, 0.003]
+  angular vel     [-0.000, 0.004, -0.001]  |w|= 0.004
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975045.763
+whole_body: ok age=0.96s | pipeline: ok age=0.91s | joint_fb: ok age=0.91s | ee: ok age=0.91s
+
+[Whole-body]
+  state=done         age=0.96s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.362, -0.779, 1.291]
+  tcp_error       [-1.162, -0.021, 0.009]  |e|= 1.162
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=0.91s  waypoint=1/1  dist_wp= 0.001  dist_raw= 0.001  dist_filt= 0.001
+  current_pose    [1.664, -0.695, 1.291]
+  active_waypoint [1.663, -0.695, 1.291]
+  target_raw      [1.663, -0.695, 1.291]
+  target_filtered [1.663, -0.695, 1.291]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.057, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.001, -0.000, -0.000]  |e|= 0.001
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.14069  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.009, -0.151, 0.276, -0.125, -0.000, 0.009]
+
+[Joint feedback]
+  age=0.91s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0094    0.0101   -0.0007    -0.1738
+  UR10_r/shoulder_lift_j   -0.1508   -0.1509    0.0002    -2.4694
+  UR10_r/elbow_joint        0.2759    0.2753    0.0007    -0.6115
+  UR10_r/wrist_1_joint     -0.1252   -0.1274    0.0022    -1.6314
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0094    0.0102   -0.0008    -1.7519
+
+[End effector]
+  frame=mur620b/base_link  age=0.91s
+  position       [1.664, -0.695, 1.291]
+  linear vel      [0.053, -0.002, -0.000]  |v|= 0.053
+  linear acc      [-1.080, -2.937, -0.599]  |a|= 3.186
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [-0.002, 0.002, -0.005]  |w|= 0.005
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975046.764
+whole_body: STALE age=1.96s | pipeline: STALE age=1.91s | joint_fb: STALE age=1.91s | ee: STALE age=1.91s
+
+[Whole-body]
+  state=done         age=1.96s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.362, -0.779, 1.291]
+  tcp_error       [-1.162, -0.021, 0.009]  |e|= 1.162
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=1.91s  waypoint=1/1  dist_wp= 0.001  dist_raw= 0.001  dist_filt= 0.001
+  current_pose    [1.664, -0.695, 1.291]
+  active_waypoint [1.663, -0.695, 1.291]
+  target_raw      [1.663, -0.695, 1.291]
+  target_filtered [1.663, -0.695, 1.291]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.057, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.001, -0.000, -0.000]  |e|= 0.001
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.14069  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.009, -0.151, 0.276, -0.125, -0.000, 0.009]
+
+[Joint feedback]
+  age=1.91s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0094    0.0101   -0.0007    -0.1738
+  UR10_r/shoulder_lift_j   -0.1508   -0.1509    0.0002    -2.4694
+  UR10_r/elbow_joint        0.2759    0.2753    0.0007    -0.6115
+  UR10_r/wrist_1_joint     -0.1252   -0.1274    0.0022    -1.6314
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0094    0.0102   -0.0008    -1.7519
+
+[End effector]
+  frame=mur620b/base_link  age=1.91s
+  position       [1.664, -0.695, 1.291]
+  linear vel      [0.053, -0.002, -0.000]  |v|= 0.053
+  linear acc      [-1.080, -2.937, -0.599]  |a|= 3.186
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [-0.002, 0.002, -0.005]  |w|= 0.005
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975047.763
+whole_body: STALE age=2.96s | pipeline: STALE age=2.91s | joint_fb: STALE age=2.91s | ee: STALE age=2.91s
+
+[Whole-body]
+  state=done         age=2.96s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.362, -0.779, 1.291]
+  tcp_error       [-1.162, -0.021, 0.009]  |e|= 1.162
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=2.91s  waypoint=1/1  dist_wp= 0.001  dist_raw= 0.001  dist_filt= 0.001
+  current_pose    [1.664, -0.695, 1.291]
+  active_waypoint [1.663, -0.695, 1.291]
+  target_raw      [1.663, -0.695, 1.291]
+  target_filtered [1.663, -0.695, 1.291]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.057, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.001, -0.000, -0.000]  |e|= 0.001
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.14069  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.009, -0.151, 0.276, -0.125, -0.000, 0.009]
+
+[Joint feedback]
+  age=2.91s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0094    0.0101   -0.0007    -0.1738
+  UR10_r/shoulder_lift_j   -0.1508   -0.1509    0.0002    -2.4694
+  UR10_r/elbow_joint        0.2759    0.2753    0.0007    -0.6115
+  UR10_r/wrist_1_joint     -0.1252   -0.1274    0.0022    -1.6314
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0094    0.0102   -0.0008    -1.7519
+
+[End effector]
+  frame=mur620b/base_link  age=2.91s
+  position       [1.664, -0.695, 1.291]
+  linear vel      [0.053, -0.002, -0.000]  |v|= 0.053
+  linear acc      [-1.080, -2.937, -0.599]  |a|= 3.186
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [-0.002, 0.002, -0.005]  |w|= 0.005
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+^C[whole_body_print_monitor-1] killing on exit
+[2J[HWhole-Body Print Monitor  mur_ns=/mur620b  arm=right  refresh=1.0 Hz  time=1777975048.763
+whole_body: STALE age=3.96s | pipeline: STALE age=3.91s | joint_fb: STALE age=3.91s | ee: STALE age=3.91s
+
+[Whole-body]
+  state=done         age=3.96s path=  3.200/  3.200 m progress=100.00%
+  path_frame=mur620b/print_origin  base_frame=mur620b/base_link  arm_scale= 1.00
+  target_world    [4.200, -0.800, 1.300]
+  arm_target      [4.200, -0.800, 1.300]
+  tcp_current     [5.362, -0.779, 1.291]
+  tcp_error       [-1.162, -0.021, 0.009]  |e|= 1.162
+  target_in_base   [0.499, -0.720, 1.300]  preferred=[ 0.250, -0.750]  delta=[ 0.249,  0.030]
+  base_cmd         lin.x=  0.000  ang.z=  0.000   nominal lin.x=  0.000  ang.z=  0.000
+  base_flags       enabled=yes  tf_ok=yes  in_zone= no  sat_lin= no  sat_ang= no
+  avoidance        enabled= no  active= no  min_dist= -1.000  omega=  0.000  speed_scale=  1.00
+  lifter           enabled= no  have_state= no  pos=  0.000  tgt=  0.000  vel_cmd=  0.000
+
+[Arm pipeline]
+  age=3.91s  waypoint=1/1  dist_wp= 0.001  dist_raw= 0.001  dist_filt= 0.001
+  current_pose    [1.664, -0.695, 1.291]
+  active_waypoint [1.663, -0.695, 1.291]
+  target_raw      [1.663, -0.695, 1.291]
+  target_filtered [1.663, -0.695, 1.291]
+  v_desired_lin    [0.000, 0.000, 0.000]  v_filtered_lin   [-0.000, 0.000, 0.000]
+  cart_cmd_lin     [0.057, 0.001, -0.000]  cart_cmd_ang     [-0.000, -0.000, -0.000]
+  pid_err_pos      [-0.001, -0.000, -0.000]  |e|= 0.001
+  pid_err_ori      [0.000, 0.000, 0.000]  |e|= 0.000
+  jacobian         sigma_min= 0.14069  damping= 0.00000  safety_scale= 1.000
+  safety_reason    -
+  closest_obs      id=-  link=-  dist=     --  active_poi=0
+  qdot_after_lim  [0.009, -0.151, 0.276, -0.125, -0.000, 0.009]
+
+[Joint feedback]
+  age=3.91s
+  joint                      cmd        act        err        pos
+  UR10_r/shoulder_pan_jo    0.0094    0.0101   -0.0007    -0.1738
+  UR10_r/shoulder_lift_j   -0.1508   -0.1509    0.0002    -2.4694
+  UR10_r/elbow_joint        0.2759    0.2753    0.0007    -0.6115
+  UR10_r/wrist_1_joint     -0.1252   -0.1274    0.0022    -1.6314
+  UR10_r/wrist_2_joint     -0.0000    0.0000   -0.0000    -4.7124
+  UR10_r/wrist_3_joint      0.0094    0.0102   -0.0008    -1.7519
+
+[End effector]
+  frame=mur620b/base_link  age=3.91s
+  position       [1.664, -0.695, 1.291]
+  linear vel      [0.053, -0.002, -0.000]  |v|= 0.053
+  linear acc      [-1.080, -2.937, -0.599]  |a|= 3.186
+  orientation    rpy=[3.142, -0.000, 0.003]
+  angular vel     [-0.002, 0.002, -0.005]  |w|= 0.005
+
+Topics:
+  whole_body    /mur620b/whole_body_print_controller/debug
+  pipeline      /mur620b/cartesian_velocity_controller_r/pipeline_debug
+  joint_feedback /mur620b/cartesian_velocity_controller_r/joint_velocity_feedback
+  end_effector  /mur620b/cartesian_velocity_controller_r/end_effector_state
+shutting down processing monitor...
+... shutting down processing monitor complete
+[1mdone[0m
+]0;pantanetti@pantanetti-ssd: ~[01;32mpantanetti@pantanetti-ssd[00m:[01;34m~[00m$ exit
+exit
+
+Script done on 2026-05-05 11:57:32+02:00 [COMMAND_EXIT_CODE="0"]

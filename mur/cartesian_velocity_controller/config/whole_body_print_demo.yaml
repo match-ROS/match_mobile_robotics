@@ -89,7 +89,7 @@ base_avoidance:
   lateral_window: 0.9
   front_min_x: 0.05
   k_omega: 0.8
-  max_omega: 0.4
+  max_omega: 0.25
   filter_tau: 0.3
   stale_timeout: 0.5
 

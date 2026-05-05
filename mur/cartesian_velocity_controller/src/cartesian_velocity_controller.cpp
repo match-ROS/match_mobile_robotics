@@ -2058,6 +2058,7 @@ void CartesianVelocityController::executePipeline(double dt)
                               "target_state timed out after %.3f s; holding last target pose", age);
     }
   }
+  const bool trajectory_hold_mode = trajectory_mode && !trajectory_setpoint.active;
 
   // If no user target is set, hold current pose (still allows repulsion/guardrails to act).
   const bool has_waypoints = (!trajectory_mode && global_planner_ && global_planner_->hasWaypoints());
@@ -2066,7 +2067,28 @@ void CartesianVelocityController::executePipeline(double dt)
 
   if (trajectory_mode)
   {
-    waypoint = trajectory_setpoint.pose;
+    waypoint = trajectory_hold_mode ? current_tcp_pose : trajectory_setpoint.pose;
+    if (trajectory_hold_mode)
+    {
+      resetPIDControllers();
+      if (velocity_filter_)
+      {
+        velocity_filter_->resetToPosition(current_tcp_pose);
+      }
+      if (local_planner_)
+      {
+        local_planner_->resetToPosition(current_tcp_pose);
+      }
+      if (joint_velocity_filter_)
+      {
+        joint_velocity_filter_->reset();
+      }
+      if (safety_limiter_)
+      {
+        safety_limiter_->reset();
+      }
+      previous_joint_velocity_ = Eigen::VectorXd::Zero(num_joints);
+    }
   }
   else if (has_waypoints)
   {

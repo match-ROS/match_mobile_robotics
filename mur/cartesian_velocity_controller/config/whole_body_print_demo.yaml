@@ -27,6 +27,7 @@ rates:
   base: 25.0
   lifter: 10.0
   debug: 10.0
+  path_marker: 2.0
 
 tracking:
   kp_position: 0.8
@@ -40,6 +41,11 @@ tracking:
   arm_start_y_error: 0.35
   arm_far_scale: 1.0
   arm_gate_only_preposition: true
+  # Prevent the time-based path reference from running away if the real robot lags.
+  # Set any of these to 0.0 to disable that specific guard.
+  max_tcp_error_for_progress: 0.20
+  max_base_x_error_for_progress: 0.75
+  max_base_y_error_for_progress: 0.45
 
 solver:
   damping: 0.02

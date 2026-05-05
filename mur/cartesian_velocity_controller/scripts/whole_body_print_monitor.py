@@ -11,6 +11,7 @@ from cartesian_velocity_controller.msg import EndEffectorState
 from cartesian_velocity_controller.msg import JointVelocityFeedback
 from cartesian_velocity_controller.msg import PipelineDebug
 from cartesian_velocity_controller.msg import WholeBodyPrintDebug
+from visualization_msgs.msg import Marker
 
 
 def clamp(value: float, lo: float, hi: float) -> float:
@@ -110,17 +111,29 @@ class WholeBodyPrintMonitor:
                 "~end_effector_state_topic",
                 f"{root}/cartesian_velocity_controller_{self.arm_suffix}/end_effector_state",
             ),
+            "path_marker": rospy.get_param(
+                "~path_marker_topic",
+                f"{root}/whole_body_print_controller/path_marker",
+            ),
+            "current_marker": rospy.get_param(
+                "~current_marker_topic",
+                f"{root}/whole_body_print_controller/current_marker",
+            ),
         }
 
         self.whole_body = TopicCache("whole_body")
         self.pipeline = TopicCache("pipeline")
         self.joint_feedback = TopicCache("joint_feedback")
         self.end_effector = TopicCache("end_effector")
+        self.path_marker = TopicCache("path_marker")
+        self.current_marker = TopicCache("current_marker")
 
         rospy.Subscriber(self.topics["whole_body"], WholeBodyPrintDebug, self._whole_body_cb, queue_size=20)
         rospy.Subscriber(self.topics["pipeline"], PipelineDebug, self._pipeline_cb, queue_size=20)
         rospy.Subscriber(self.topics["joint_feedback"], JointVelocityFeedback, self._joint_feedback_cb, queue_size=20)
         rospy.Subscriber(self.topics["end_effector"], EndEffectorState, self._end_effector_cb, queue_size=20)
+        rospy.Subscriber(self.topics["path_marker"], Marker, self._path_marker_cb, queue_size=5)
+        rospy.Subscriber(self.topics["current_marker"], Marker, self._current_marker_cb, queue_size=20)
 
         self.timer = rospy.Timer(rospy.Duration(1.0 / self.refresh_hz), self._render_timer_cb)
 
@@ -140,6 +153,14 @@ class WholeBodyPrintMonitor:
         with self.lock:
             self.end_effector.update(msg)
 
+    def _path_marker_cb(self, msg: Marker) -> None:
+        with self.lock:
+            self.path_marker.update(msg)
+
+    def _current_marker_cb(self, msg: Marker) -> None:
+        with self.lock:
+            self.current_marker.update(msg)
+
     def _render_timer_cb(self, _event) -> None:
         now = rospy.Time.now()
         with self.lock:
@@ -147,10 +168,14 @@ class WholeBodyPrintMonitor:
             pipeline = self.pipeline.msg
             joint_feedback = self.joint_feedback.msg
             end_effector = self.end_effector.msg
+            path_marker = self.path_marker.msg
+            current_marker = self.current_marker.msg
             whole_body_stamp = self.whole_body.stamp
             pipeline_stamp = self.pipeline.stamp
             joint_feedback_stamp = self.joint_feedback.stamp
             end_effector_stamp = self.end_effector.stamp
+            path_marker_stamp = self.path_marker.stamp
+            current_marker_stamp = self.current_marker.stamp
 
         lines = self._build_lines(
             now,
@@ -162,6 +187,10 @@ class WholeBodyPrintMonitor:
             joint_feedback_stamp,
             end_effector,
             end_effector_stamp,
+            path_marker,
+            path_marker_stamp,
+            current_marker,
+            current_marker_stamp,
         )
         self._draw(lines)
 
@@ -183,6 +212,10 @@ class WholeBodyPrintMonitor:
         joint_feedback_stamp: Optional[rospy.Time],
         end_effector: Optional[EndEffectorState],
         end_effector_stamp: Optional[rospy.Time],
+        path_marker: Optional[Marker],
+        path_marker_stamp: Optional[rospy.Time],
+        current_marker: Optional[Marker],
+        current_marker_stamp: Optional[rospy.Time],
     ) -> List[str]:
         lines = []
         lines.append(
@@ -208,9 +241,39 @@ class WholeBodyPrintMonitor:
         lines.append("")
         lines.extend(self._end_effector_lines(now, end_effector, end_effector_stamp))
         lines.append("")
+        lines.extend(self._marker_lines(now, path_marker, path_marker_stamp, current_marker, current_marker_stamp))
+        lines.append("")
         lines.append("Topics:")
-        for key in ("whole_body", "pipeline", "joint_feedback", "end_effector"):
+        for key in ("whole_body", "pipeline", "joint_feedback", "end_effector", "path_marker", "current_marker"):
             lines.append(f"  {key:13s} {self.topics[key]}")
+        return lines
+
+    def _marker_lines(
+        self,
+        now: rospy.Time,
+        path_marker: Optional[Marker],
+        path_stamp: Optional[rospy.Time],
+        current_marker: Optional[Marker],
+        current_stamp: Optional[rospy.Time],
+    ) -> List[str]:
+        lines = ["[RViz markers]"]
+        if path_marker is None:
+            lines.append("  path_marker    no data")
+        else:
+            lines.append(
+                "  "
+                f"path_marker    frame={path_marker.header.frame_id or '-'}  age={age_string(path_stamp, now)}  "
+                f"points={len(path_marker.points)}"
+            )
+        if current_marker is None:
+            lines.append("  current_marker no data")
+        else:
+            p = current_marker.pose.position
+            lines.append(
+                "  "
+                f"current_marker frame={current_marker.header.frame_id or '-'}  age={age_string(current_stamp, now)}  "
+                f"pos={fmt_vec3([p.x, p.y, p.z])}"
+            )
         return lines
 
     def _whole_body_lines(

@@ -321,7 +321,7 @@ public:
     timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
                              &WholeBodyPrintController::timerCb, this);
 
-    ROS_INFO("Whole-body print demo ready: frame=%s length=%.3f m speed=%.3f m/s rates[path=%.1f base=%.1f lifter=%.1f debug=%.1f] base=%s lifter=%s",
+    ROS_INFO("Whole-body print demo ready: frame=%s length=%.3f m speed=%.3f m/s rates[path=%.1f base=%.1f lifter=%.1f debug=%.1f path_marker=%.1f] base=%s lifter=%s",
              path_frame_.c_str(),
              external_target_enabled_ ? 0.0 : path_.totalLength(),
              speed_,
@@ -329,6 +329,7 @@ public:
              base_rate_hz_,
              lifter_rate_hz_,
              debug_rate_hz_,
+             path_marker_rate_hz_,
              base_enabled_ ? "enabled" : "disabled",
              lifter_enabled_ ? "enabled" : "disabled");
   }
@@ -356,6 +357,7 @@ private:
     pnh_.param("rates/base", base_rate_hz_, 20.0);
     pnh_.param("rates/lifter", lifter_rate_hz_, 10.0);
     pnh_.param("rates/debug", debug_rate_hz_, 10.0);
+    pnh_.param("rates/path_marker", path_marker_rate_hz_, 2.0);
     pnh_.param("tracking/kp_position", kp_position_, 0.8);
     pnh_.param("tracking/arm_full_x_error", arm_full_x_error_, 0.15);
     pnh_.param("tracking/arm_full_y_error", arm_full_y_error_, 0.12);
@@ -363,6 +365,9 @@ private:
     pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
     pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
     pnh_.param("tracking/arm_gate_only_preposition", arm_gate_only_preposition_, false);
+    pnh_.param("tracking/max_tcp_error_for_progress", max_tcp_error_for_progress_, 0.0);
+    pnh_.param("tracking/max_base_x_error_for_progress", max_base_x_error_for_progress_, 0.0);
+    pnh_.param("tracking/max_base_y_error_for_progress", max_base_y_error_for_progress_, 0.0);
     pnh_.param<std::string>("target_pose_topic", target_pose_topic_, "cartesian_velocity_controller_r/target_pose");
     pnh_.param("publish_target_pose", publish_target_pose_, true);
     pnh_.param("publish_target_state", publish_target_state_, false);
@@ -795,24 +800,52 @@ private:
       publishZeroBase();
       return;
     }
+    publishPathMarkerIfDue(now);
 
     const Eigen::Vector3d start_target = path_.sample(0.0);
     const Eigen::Vector3d start_tangent = path_.tangent(0.0);
 
     if (has_started_ && !paused_ && !stopped_ && !done_ && preposition_done_)
     {
-      s_ += speed_ * dt;
-      if (s_ >= path_.totalLength())
+      const Eigen::Vector3d progress_target = path_.sample(s_);
+      const Eigen::Vector3d progress_tcp = currentTcpInPath(progress_target);
+      const Eigen::Vector3d progress_target_in_base = targetInBase(progress_target);
+      const double tcp_error_for_progress = have_tcp_ ? (progress_target - progress_tcp).norm() : 0.0;
+      const double base_x_error_for_progress = std::abs(progress_target_in_base.x() - base_preferred_x_);
+      const double base_y_error_for_progress = std::abs(progress_target_in_base.y() - base_preferred_y_);
+      const bool tcp_ok = max_tcp_error_for_progress_ <= 0.0 ||
+                          tcp_error_for_progress <= max_tcp_error_for_progress_;
+      const bool base_x_ok = max_base_x_error_for_progress_ <= 0.0 ||
+                             base_x_error_for_progress <= max_base_x_error_for_progress_;
+      const bool base_y_ok = max_base_y_error_for_progress_ <= 0.0 ||
+                             base_y_error_for_progress <= max_base_y_error_for_progress_;
+
+      if (tcp_ok && base_x_ok && base_y_ok)
       {
-        if (loop_)
+        s_ += speed_ * dt;
+        if (s_ >= path_.totalLength())
         {
-          s_ = std::fmod(s_, path_.totalLength());
+          if (loop_)
+          {
+            s_ = std::fmod(s_, path_.totalLength());
+          }
+          else
+          {
+            s_ = path_.totalLength();
+            done_ = true;
+          }
         }
-        else
-        {
-          s_ = path_.totalLength();
-          done_ = true;
-        }
+      }
+      else
+      {
+        ROS_WARN_THROTTLE(1.0,
+                          "Holding path progress: tcp_error=%.3f/%.3f base_error=[%.3f/%.3f, %.3f/%.3f]",
+                          tcp_error_for_progress,
+                          max_tcp_error_for_progress_,
+                          base_x_error_for_progress,
+                          max_base_x_error_for_progress_,
+                          base_y_error_for_progress,
+                          max_base_y_error_for_progress_);
       }
     }
 
@@ -1601,6 +1634,20 @@ private:
     path_marker_pub_.publish(marker);
   }
 
+  void publishPathMarkerIfDue(const ros::Time& now)
+  {
+    if (external_target_enabled_ || path_marker_rate_hz_ <= 0.0)
+    {
+      return;
+    }
+    if (!dueByRate(now, last_path_marker_pub_time_, path_marker_rate_hz_))
+    {
+      return;
+    }
+    publishPathMarker();
+    last_path_marker_pub_time_ = now;
+  }
+
   void publishCurrentMarker(const Eigen::Vector3d& p, const ros::Time& stamp)
   {
     visualization_msgs::Marker marker;
@@ -1779,6 +1826,7 @@ private:
   double base_rate_hz_{20.0};
   double lifter_rate_hz_{10.0};
   double debug_rate_hz_{10.0};
+  double path_marker_rate_hz_{2.0};
   double s_{0.0};
   bool loop_{false};
   bool paused_{true};
@@ -1827,6 +1875,9 @@ private:
   double arm_start_y_error_{0.35};
   double arm_far_scale_{0.0};
   bool arm_gate_only_preposition_{false};
+  double max_tcp_error_for_progress_{0.0};
+  double max_base_x_error_for_progress_{0.0};
+  double max_base_y_error_for_progress_{0.0};
   Eigen::Vector3d current_tcp_{Eigen::Vector3d::Zero()};
   std::string current_tcp_frame_;
   bool have_tcp_{false};
@@ -1861,6 +1912,7 @@ private:
   ros::Time last_base_pub_time_;
   ros::Time last_lifter_pub_time_;
   ros::Time last_debug_pub_time_;
+  ros::Time last_path_marker_pub_time_;
 
   bool avoidance_enabled_{false};
   std::string avoidance_scan_topic_;

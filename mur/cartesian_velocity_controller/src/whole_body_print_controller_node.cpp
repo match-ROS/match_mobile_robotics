@@ -23,6 +23,7 @@
 #include <tf2_ros/transform_broadcaster.h>
 #include <tf2_ros/transform_listener.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <xmlrpcpp/XmlRpcValue.h>
 
 #include "cartesian_velocity_controller/CartesianTrajectorySetpoint.h"
@@ -42,6 +43,13 @@ struct ScanAvoidanceState
   double min_distance{std::numeric_limits<double>::infinity()};
   double raw_omega{0.0};
   ros::Time stamp;
+};
+
+struct SimulatedObstacle
+{
+  std::string name;
+  Eigen::Vector3d center{Eigen::Vector3d::Zero()};
+  double radius{0.0};
 };
 
 double clamp(double v, double lo, double hi)
@@ -100,6 +108,21 @@ bool xmlRpcNumber(const XmlRpc::XmlRpcValue& v, double& out)
   if (v.getType() == XmlRpc::XmlRpcValue::TypeInt)
   {
     out = static_cast<int>(v);
+    return true;
+  }
+  return false;
+}
+
+bool xmlRpcBool(const XmlRpc::XmlRpcValue& v, bool& out)
+{
+  if (v.getType() == XmlRpc::XmlRpcValue::TypeBoolean)
+  {
+    out = static_cast<bool>(v);
+    return true;
+  }
+  if (v.getType() == XmlRpc::XmlRpcValue::TypeInt)
+  {
+    out = static_cast<int>(v) != 0;
     return true;
   }
   return false;
@@ -291,7 +314,7 @@ public:
     {
       target_state_sub_ = nh_.subscribe(target_state_topic_, 20, &WholeBodyPrintController::targetStateCb, this);
     }
-    if (avoidance_enabled_)
+    if (avoidance_enabled_ && avoidance_use_laser_scans_)
     {
       for (const auto& topic : avoidance_scan_topics_)
       {
@@ -306,6 +329,8 @@ public:
     path_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("path_marker", 1, true);
     current_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("current_marker", 1);
     preferred_tcp_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("preferred_tcp_marker", 2, true);
+    simulated_obstacle_marker_pub_ =
+        pnh_.advertise<visualization_msgs::MarkerArray>("simulated_obstacle_markers", 1, true);
 
     pause_srv_ = pnh_.advertiseService("pause", &WholeBodyPrintController::pauseCb, this);
     resume_srv_ = pnh_.advertiseService("resume", &WholeBodyPrintController::resumeCb, this);
@@ -316,6 +341,7 @@ public:
     if (!external_target_enabled_)
     {
       publishPathMarker();
+      publishSimulatedObstacleMarkers(ros::Time::now());
     }
     publishPreferredTcpMarker();
     timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
@@ -332,6 +358,12 @@ public:
              path_marker_rate_hz_,
              base_enabled_ ? "enabled" : "disabled",
              lifter_enabled_ ? "enabled" : "disabled");
+    if (simulated_obstacles_enabled_ && !simulated_obstacles_.empty())
+    {
+      ROS_INFO("Whole-body simulated obstacle avoidance loaded %zu circular obstacle(s) in frame %s",
+               simulated_obstacles_.size(),
+               path_frame_.c_str());
+    }
   }
 
 private:
@@ -398,6 +430,7 @@ private:
     loadPathSpecParams();
 
     pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
+    pnh_.param("base_avoidance/use_laser_scans", avoidance_use_laser_scans_, true);
     pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "mir/scan");
     loadScanTopics();
     pnh_.param("base_avoidance/influence_distance", avoidance_influence_distance_, 1.2);
@@ -451,6 +484,7 @@ private:
         return;
       }
       configured_path_points_ = parsePathPoints(configured_path_points_raw_, "path/points", "absolute");
+      loadSimulatedObstacleParams();
       return;
     }
 
@@ -487,6 +521,152 @@ private:
     }
     const std::string source = has_waypoints ? "path_spec/waypoints" : "path_spec/points";
     configured_path_points_ = parsePathPoints(raw_points, source, waypoint_mode);
+    loadSimulatedObstacleParams();
+  }
+
+  void loadSimulatedObstacleParams()
+  {
+    simulated_obstacles_.clear();
+    simulated_obstacles_enabled_ = false;
+
+    XmlRpc::XmlRpcValue raw;
+    std::string source = "path_spec/obstacles";
+    if (!pnh_.getParam(source, raw))
+    {
+      source = "path_spec/simulated_obstacles";
+      if (!pnh_.getParam(source, raw))
+      {
+        return;
+      }
+    }
+
+    XmlRpc::XmlRpcValue raw_items = raw;
+    bool relative_to_first = false;
+    bool relative_z = false;
+
+    if (raw.getType() == XmlRpc::XmlRpcValue::TypeStruct)
+    {
+      if (raw.hasMember("enabled") && !xmlRpcBool(raw["enabled"], simulated_obstacles_enabled_))
+      {
+        ROS_WARN("Ignoring non-boolean %s/enabled", source.c_str());
+      }
+      if (!raw.hasMember("enabled"))
+      {
+        simulated_obstacles_enabled_ = true;
+      }
+      if (raw.hasMember("relative_to_first_waypoint") &&
+          !xmlRpcBool(raw["relative_to_first_waypoint"], relative_to_first))
+      {
+        ROS_WARN("Ignoring non-boolean %s/relative_to_first_waypoint", source.c_str());
+      }
+      if (raw.hasMember("relative_z") && !xmlRpcBool(raw["relative_z"], relative_z))
+      {
+        ROS_WARN("Ignoring non-boolean %s/relative_z", source.c_str());
+      }
+      if (raw.hasMember("marker_height"))
+      {
+        double marker_height = simulated_obstacle_marker_height_;
+        if (xmlRpcNumber(raw["marker_height"], marker_height))
+        {
+          simulated_obstacle_marker_height_ = std::max(0.01, marker_height);
+        }
+      }
+
+      if (raw.hasMember("items"))
+      {
+        raw_items = raw["items"];
+      }
+      else if (raw.hasMember("list"))
+      {
+        raw_items = raw["list"];
+      }
+      else
+      {
+        ROS_WARN("%s must contain an 'items' array", source.c_str());
+        return;
+      }
+    }
+    else if (raw.getType() == XmlRpc::XmlRpcValue::TypeArray)
+    {
+      simulated_obstacles_enabled_ = true;
+    }
+
+    if (!simulated_obstacles_enabled_)
+    {
+      return;
+    }
+    if (raw_items.getType() != XmlRpc::XmlRpcValue::TypeArray)
+    {
+      ROS_WARN("%s items must be an array", source.c_str());
+      return;
+    }
+
+    const Eigen::Vector3d first = configured_path_points_.empty()
+                                      ? Eigen::Vector3d::Zero()
+                                      : configured_path_points_.front();
+
+    for (int i = 0; i < raw_items.size(); ++i)
+    {
+      SimulatedObstacle obstacle;
+      obstacle.name = "obstacle_" + std::to_string(i + 1);
+      bool item_enabled = true;
+      bool valid = false;
+
+      if (raw_items[i].getType() == XmlRpc::XmlRpcValue::TypeStruct)
+      {
+        const XmlRpc::XmlRpcValue& item = raw_items[i];
+        if (item.hasMember("enabled") && !xmlRpcBool(item["enabled"], item_enabled))
+        {
+          ROS_WARN("Ignoring non-boolean %s/items[%d]/enabled", source.c_str(), i);
+        }
+        if (item.hasMember("name") && item["name"].getType() == XmlRpc::XmlRpcValue::TypeString)
+        {
+          obstacle.name = static_cast<std::string>(item["name"]);
+        }
+        if (item.hasMember("position"))
+        {
+          valid = readPoint(item["position"], obstacle.center);
+        }
+        else if (item.hasMember("center"))
+        {
+          valid = readPoint(item["center"], obstacle.center);
+        }
+        else
+        {
+          valid = readPoint(item, obstacle.center);
+        }
+        if (!item.hasMember("radius") || !xmlRpcNumber(item["radius"], obstacle.radius))
+        {
+          ROS_WARN("Invalid or missing radius for %s/items[%d]", source.c_str(), i);
+          valid = false;
+        }
+      }
+      else if (raw_items[i].getType() == XmlRpc::XmlRpcValue::TypeArray && raw_items[i].size() >= 4)
+      {
+        valid = readPoint(raw_items[i], obstacle.center) && xmlRpcNumber(raw_items[i][3], obstacle.radius);
+      }
+
+      if (!item_enabled)
+      {
+        continue;
+      }
+      if (!valid || obstacle.radius <= 0.0)
+      {
+        ROS_WARN("Skipping invalid simulated obstacle at %s/items[%d]", source.c_str(), i);
+        continue;
+      }
+
+      if (relative_to_first)
+      {
+        obstacle.center.x() += first.x();
+        obstacle.center.y() += first.y();
+        if (relative_z)
+        {
+          obstacle.center.z() += first.z();
+        }
+      }
+      simulated_obstacles_.push_back(obstacle);
+    }
   }
 
   std::vector<Eigen::Vector3d> parsePathPoints(const XmlRpc::XmlRpcValue& raw_points,
@@ -1488,6 +1668,7 @@ private:
       return cmd;
     }
 
+    updateSimulatedObstacleAvoidance(now);
     updateAggregatedAvoidance(now);
     const bool stale = avoidance_last_scan_time_.isZero() ||
                        (now - avoidance_last_scan_time_).toSec() > avoidance_stale_timeout_;
@@ -1523,6 +1704,68 @@ private:
     cmd.linear.x *= last_avoidance_speed_scale_;
     cmd.angular.z = clamp(cmd.angular.z + last_avoidance_omega_, -base_max_angular_, base_max_angular_);
     return cmd;
+  }
+
+  void updateSimulatedObstacleAvoidance(const ros::Time& now)
+  {
+    if (!simulated_obstacles_enabled_ || simulated_obstacles_.empty())
+    {
+      return;
+    }
+
+    ScanAvoidanceState state;
+    state.stamp = now;
+
+    geometry_msgs::TransformStamped tf_base_path;
+    try
+    {
+      tf_base_path = tf_buffer_.lookupTransform(base_frame_, path_frame_, ros::Time(0), ros::Duration(base_tf_timeout_));
+    }
+    catch (const tf2::TransformException& ex)
+    {
+      ROS_WARN_THROTTLE(2.0, "Simulated obstacle avoidance TF failed (%s -> %s): %s",
+                        path_frame_.c_str(), base_frame_.c_str(), ex.what());
+      scan_avoidance_states_["simulated_obstacles"] = state;
+      return;
+    }
+
+    double omega_sum = 0.0;
+    double weight_sum = 0.0;
+    double min_dist = std::numeric_limits<double>::infinity();
+
+    for (const auto& obstacle : simulated_obstacles_)
+    {
+      const Eigen::Vector3d p = transformPoint(tf_base_path, obstacle.center);
+      if (p.x() + obstacle.radius < avoidance_front_min_x_ ||
+          std::abs(p.y()) - obstacle.radius > avoidance_lateral_window_)
+      {
+        continue;
+      }
+
+      const double center_distance = std::hypot(p.x(), p.y());
+      const double surface_distance = center_distance - obstacle.radius;
+      if (surface_distance > avoidance_influence_distance_)
+      {
+        continue;
+      }
+
+      min_dist = std::min(min_dist, surface_distance);
+      const double influence = clamp((avoidance_influence_distance_ - surface_distance) /
+                                     std::max(1e-6, avoidance_influence_distance_ - avoidance_stop_distance_),
+                                     0.0, 1.0);
+      const double side = (std::abs(p.y()) > 1e-4) ? (p.y() > 0.0 ? 1.0 : -1.0) : 1.0;
+      omega_sum += -side * influence * influence;
+      weight_sum += influence;
+    }
+
+    if (weight_sum > 1e-6)
+    {
+      state.active = true;
+      state.min_distance = min_dist;
+      state.raw_omega = clamp(avoidance_k_omega_ * omega_sum / weight_sum,
+                              -avoidance_max_omega_, avoidance_max_omega_);
+    }
+    scan_avoidance_states_["simulated_obstacles"] = state;
   }
 
   void publishLifterCommand(const Eigen::VectorXd& u, double dt, const ros::Time& now)
@@ -1645,7 +1888,62 @@ private:
       return;
     }
     publishPathMarker();
+    publishSimulatedObstacleMarkers(now);
     last_path_marker_pub_time_ = now;
+  }
+
+  void publishSimulatedObstacleMarkers(const ros::Time& stamp)
+  {
+    if (!simulated_obstacles_enabled_ || simulated_obstacles_.empty())
+    {
+      return;
+    }
+
+    visualization_msgs::MarkerArray arr;
+    int id = 0;
+    for (const auto& obstacle : simulated_obstacles_)
+    {
+      visualization_msgs::Marker marker;
+      marker.header.frame_id = path_frame_;
+      marker.header.stamp = stamp;
+      marker.ns = "simulated_base_obstacles";
+      marker.id = id++;
+      marker.type = visualization_msgs::Marker::CYLINDER;
+      marker.action = visualization_msgs::Marker::ADD;
+      marker.pose.position.x = obstacle.center.x();
+      marker.pose.position.y = obstacle.center.y();
+      marker.pose.position.z = obstacle.center.z() + 0.5 * simulated_obstacle_marker_height_;
+      marker.pose.orientation.w = 1.0;
+      marker.scale.x = 2.0 * obstacle.radius;
+      marker.scale.y = 2.0 * obstacle.radius;
+      marker.scale.z = simulated_obstacle_marker_height_;
+      marker.color.r = 1.0;
+      marker.color.g = 0.18;
+      marker.color.b = 0.05;
+      marker.color.a = 0.45;
+      arr.markers.push_back(marker);
+
+      visualization_msgs::Marker label;
+      label.header.frame_id = path_frame_;
+      label.header.stamp = stamp;
+      label.ns = "simulated_base_obstacle_labels";
+      label.id = id++;
+      label.type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+      label.action = visualization_msgs::Marker::ADD;
+      label.pose.position.x = obstacle.center.x();
+      label.pose.position.y = obstacle.center.y();
+      label.pose.position.z = obstacle.center.z() + simulated_obstacle_marker_height_ + 0.15;
+      label.pose.orientation.w = 1.0;
+      label.scale.z = 0.16;
+      label.color.r = 1.0;
+      label.color.g = 1.0;
+      label.color.b = 1.0;
+      label.color.a = 0.9;
+      label.text = obstacle.name;
+      arr.markers.push_back(label);
+    }
+
+    simulated_obstacle_marker_pub_.publish(arr);
   }
 
   void publishCurrentMarker(const Eigen::Vector3d& p, const ros::Time& stamp)
@@ -1805,6 +2103,7 @@ private:
   ros::Publisher path_marker_pub_;
   ros::Publisher current_marker_pub_;
   ros::Publisher preferred_tcp_marker_pub_;
+  ros::Publisher simulated_obstacle_marker_pub_;
   ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
@@ -1915,6 +2214,7 @@ private:
   ros::Time last_path_marker_pub_time_;
 
   bool avoidance_enabled_{false};
+  bool avoidance_use_laser_scans_{true};
   std::string avoidance_scan_topic_;
   std::vector<std::string> avoidance_scan_topics_;
   std::map<std::string, ScanAvoidanceState> scan_avoidance_states_;
@@ -1933,6 +2233,9 @@ private:
   double last_avoidance_omega_{0.0};
   double last_avoidance_speed_scale_{1.0};
   ros::Time avoidance_last_scan_time_;
+  bool simulated_obstacles_enabled_{false};
+  double simulated_obstacle_marker_height_{0.08};
+  std::vector<SimulatedObstacle> simulated_obstacles_;
 
   bool lifter_enabled_{false};
   std::string lifter_joint_name_;

@@ -37,4 +37,18 @@ waypoints:
   # - position: [0.90, -0.5, 0.0]
   # - position: [1.4, -0.8, 0.0]
   # - position: [2.0, -0.8, 0.0]
+
+# Circular simulated obstacles for base avoidance.
+# Coordinates use the same frame as the path. With relative_to_first_waypoint=true,
+# position x/y are offsets from the first waypoint x/y; z remains absolute unless
+# relative_z is set to true.
+obstacles:
+  enabled: true
+  relative_to_first_waypoint: true
+  relative_z: false
+  marker_height: 0.12
+  items:
+    - name: "sim_obstacle_1"
+      position: [1.60, 0.2, 0.0]
+      radius: 0.20
   

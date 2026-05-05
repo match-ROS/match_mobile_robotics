@@ -27,7 +27,7 @@ rates:
   base: 25.0
   lifter: 10.0
   debug: 10.0
-  path_marker: 2.0
+  path_marker: 30.0
 
 tracking:
   kp_position: 0.8
@@ -77,11 +77,12 @@ base:
   target_filter_tau: 0.5
 
 base_avoidance:
-  enabled: false
+  enabled: true
+  use_laser_scans: false
   scan_topic: "mir/f_scan"
   scan_topics: ["mir/f_scan", "mir/scan"]
   influence_distance: 1.2
-  stop_distance: 0.35
+  stop_distance: 0.45
   slowdown_distance: 0.8
   lateral_window: 0.9
   front_min_x: 0.05

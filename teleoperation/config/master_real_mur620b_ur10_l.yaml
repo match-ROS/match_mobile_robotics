@@ -296,7 +296,7 @@ slave_publish_rate: 500.0
 # The corresponding slave neutral pose is obtained automatically with the same
 # static master->slave rotation already used by the legacy mapping.
 motion_scaling:
-  enabled: false
+  enabled: true
   translation_scale: 1.0
   rotation_scale: 1.0
   master_neutral_position: [0.0, 0.0, 0.0]
@@ -330,7 +330,7 @@ slave_actual_pose_topic: ""
 # `feedback_timeout_s` is the max accepted age of slave_actual_pose used to
 # confirm `home_reached`; stale feedback keeps the status at `active`.
 home_return:
-  enabled: true
+  enabled: false
   timeout_s: 5.0
   force_activity_threshold: 2.0    # N
   torque_activity_threshold: 0.25  # N·m

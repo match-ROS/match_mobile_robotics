@@ -26,8 +26,8 @@
   <arg name="left_slave_to_master_rotation_rpy" default="0.0, 0.0, -0.2305469980736988" />
   <arg name="left_home_position" default="-0.806894581060263, -0.2898162547907234, -0.050432885739712885" />
   <arg name="left_home_orientation_xyzw" default="0.6289655351530469, 0.777346636545271, -0.011530064095607334, 0.00127273852268894" />
-  <arg name="left_motion_master_neutral_position" default="0.0, 0.0, 0.0" />
-  <arg name="left_motion_master_neutral_orientation_xyzw" default="0.0, 0.0, 0.0, 1.0" />
+  <arg name="left_motion_master_neutral_position" default="-0.840, 0.060, -0.117" />
+  <arg name="left_motion_master_neutral_orientation_xyzw" default="0.714, 0.701, -0.010, -0.001" />
   <arg name="left_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/target_pose')" />
   <arg name="left_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/feedforward_twist')" />
   <arg name="left_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/slave_actual_pose')" />
@@ -51,8 +51,8 @@
   <arg name="right_slave_to_master_rotation_rpy" default="0.0, 0.0, -0.22812032433233884" />
   <arg name="right_home_position" default="0.8605060709826873, 0.1163925862675045, -0.021583319483116287" />
   <arg name="right_home_orientation_xyzw" default="-0.7766724367866567, 0.629871644406543, 0.005840862903921362, -0.0027425953058616568" />
-  <arg name="right_motion_master_neutral_position" default="0.0, 0.0, 0.0" />
-  <arg name="right_motion_master_neutral_orientation_xyzw" default="0.0, 0.0, 0.0, 1.0" />
+  <arg name="right_motion_master_neutral_position" default="0.838, 0.049, -0.126" />
+  <arg name="right_motion_master_neutral_orientation_xyzw" default="-0.698, 0.716, 0.005, -0.008" />
   <arg name="right_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/target_pose')" />
   <arg name="right_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/feedforward_twist')" />
   <arg name="right_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/slave_actual_pose')" />

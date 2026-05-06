@@ -13,8 +13,8 @@
   <arg name="enable_robot_2_right" default="false"/>
 
   <arg name="robot_3_ns" default="mur620d"/>
-  <arg name="enable_robot_3_left" default="false"/>
-  <arg name="enable_robot_3_right" default="false"/>
+  <arg name="enable_robot_3_left" default="true"/>
+  <arg name="enable_robot_3_right" default="true"/>
 
   <!-- Robot 1 -->
   <include file="$(find mur_bringup)/launch/ur_enable.launch" if="$(arg enable_robot_1_left)">

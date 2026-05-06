@@ -5,7 +5,7 @@
   <arg name="left_arm_ns" default="UR10_l" />
   <arg name="right_arm_ns" default="UR10_r" />
   <arg name="enable_robot_1" default="true" />
-  <arg name="enable_robot_2" default="false" />
+  <arg name="enable_robot_2" default="true" />
 
   <arg name="do_left" default="true" />
   <arg name="do_right" default="true" />

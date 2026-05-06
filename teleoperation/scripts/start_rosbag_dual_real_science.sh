@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+
+# Come utilizzare
+# ./start_rosbag_dual_real_science.sh prova_contatto_01
+
 set -euo pipefail
 
 WORKSPACE="${WORKSPACE:-/home/pantanetti/catkin_ws}"
-BAG_DIR="${BAG_DIR:-${HOME}/Rosbag}"
+BAG_DIR="${BAG_DIR:-${HOME}/rosbags}"
 LABEL_RAW="${1:-dual_real_science}"
 LABEL="$(printf '%s' "${LABEL_RAW}" | tr -c '[:alnum:]_.-' '_')"
 TIMESTAMP="$(date +%F_%H-%M-%S)"

@@ -297,7 +297,7 @@ slave_publish_rate: 500.0
 # static master->slave rotation already used by the legacy mapping.
 motion_scaling:
   enabled: true
-  translation_scale: 1.0
+  translation_scale: 2.0
   rotation_scale: 1.0
   master_neutral_position: [0.0, 0.0, 0.0]
   master_neutral_orientation_xyzw: [0.0, 0.0, 0.0, 1.0]

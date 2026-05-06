@@ -3,6 +3,7 @@
   <arg name="slave_robot_ns" default="mur620d" />
   <arg name="left_arm_ns" default="UR10_l" />
   <arg name="right_arm_ns" default="UR10_r" />
+  <arg name="override_home_with_master_neutral" default="false" />
 
   <!-- Optional: zero/tare all UR10e FT sensors at startup -->
   <arg name="do_ur10e_zero_loadcell_master_left" default="true" />
@@ -28,6 +29,10 @@
   <arg name="left_home_orientation_xyzw" default="0.6289655351530469, 0.777346636545271, -0.011530064095607334, 0.00127273852268894" />
   <arg name="left_motion_master_neutral_position" default="-0.840, 0.060, -0.117" />
   <arg name="left_motion_master_neutral_orientation_xyzw" default="0.714, 0.701, -0.010, -0.001" />
+  <arg name="left_effective_home_position"
+       default="$(eval arg('left_motion_master_neutral_position') if arg('override_home_with_master_neutral') == 'true' else arg('left_home_position'))" />
+  <arg name="left_effective_home_orientation_xyzw"
+       default="$(eval arg('left_motion_master_neutral_orientation_xyzw') if arg('override_home_with_master_neutral') == 'true' else arg('left_home_orientation_xyzw'))" />
   <arg name="left_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/target_pose')" />
   <arg name="left_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/feedforward_twist')" />
   <arg name="left_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/slave_actual_pose')" />
@@ -53,6 +58,10 @@
   <arg name="right_home_orientation_xyzw" default="-0.7766724367866567, 0.629871644406543, 0.005840862903921362, -0.0027425953058616568" />
   <arg name="right_motion_master_neutral_position" default="0.838, 0.049, -0.126" />
   <arg name="right_motion_master_neutral_orientation_xyzw" default="-0.698, 0.716, 0.005, -0.008" />
+  <arg name="right_effective_home_position"
+       default="$(eval arg('right_motion_master_neutral_position') if arg('override_home_with_master_neutral') == 'true' else arg('right_home_position'))" />
+  <arg name="right_effective_home_orientation_xyzw"
+       default="$(eval arg('right_motion_master_neutral_orientation_xyzw') if arg('override_home_with_master_neutral') == 'true' else arg('right_home_orientation_xyzw'))" />
   <arg name="right_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/target_pose')" />
   <arg name="right_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/feedforward_twist')" />
   <arg name="right_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/slave_actual_pose')" />
@@ -136,8 +145,8 @@
     <rosparam subst_value="true" param="slave_pose_twist_rotation_rpy">[$(arg left_master_to_slave_rotation_rpy)]</rosparam>
     <rosparam subst_value="true" param="motion_scaling/master_neutral_position">[$(arg left_motion_master_neutral_position)]</rosparam>
     <rosparam subst_value="true" param="motion_scaling/master_neutral_orientation_xyzw">[$(arg left_motion_master_neutral_orientation_xyzw)]</rosparam>
-    <rosparam subst_value="true" param="home_return/target_position">[$(arg left_home_position)]</rosparam>
-    <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg left_home_orientation_xyzw)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_position">[$(arg left_effective_home_position)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg left_effective_home_orientation_xyzw)]</rosparam>
     <param name="home_return/status_topic" value="$(arg left_home_return_status_topic)" />
 
     <param name="slave_actual_pose_topic" value="$(arg left_slave_actual_pose_topic)" />
@@ -199,8 +208,8 @@
     <rosparam subst_value="true" param="slave_pose_twist_rotation_rpy">[$(arg right_master_to_slave_rotation_rpy)]</rosparam>
     <rosparam subst_value="true" param="motion_scaling/master_neutral_position">[$(arg right_motion_master_neutral_position)]</rosparam>
     <rosparam subst_value="true" param="motion_scaling/master_neutral_orientation_xyzw">[$(arg right_motion_master_neutral_orientation_xyzw)]</rosparam>
-    <rosparam subst_value="true" param="home_return/target_position">[$(arg right_home_position)]</rosparam>
-    <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg right_home_orientation_xyzw)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_position">[$(arg right_effective_home_position)]</rosparam>
+    <rosparam subst_value="true" param="home_return/target_orientation_xyzw">[$(arg right_effective_home_orientation_xyzw)]</rosparam>
     <param name="home_return/status_topic" value="$(arg right_home_return_status_topic)" />
 
     <param name="slave_actual_pose_topic" value="$(arg right_slave_actual_pose_topic)" />

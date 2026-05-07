@@ -117,12 +117,19 @@ install(TARGETS
 )
 
 catkin_install_python(PROGRAMS
+  scripts/analyze_dual_slave_replay_window.py
   scripts/fake_wrench_hold_publisher.py
   scripts/keyboard_wrench_setpoint.py
   scripts/ur_zero_ftsensor.py
   scripts/ur_dashboard_quit_connect.py
   scripts/moveit_go_home_and_switch.py
   scripts/ensure_controller_configuration.py
+  scripts/replay_dual_slave_twist_from_bag.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+install(PROGRAMS
+  scripts/start_rosbag_dual_slave_replay_snapshot.sh
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
@@ -133,4 +140,3 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY launch config
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
-

@@ -1,0 +1,95 @@
+<launch>
+  <arg name="bag" default="" />
+  <arg name="manifest" />
+  <arg name="robot_ns" default="mur620d" />
+
+  <arg name="left_arm_ns" default="UR10_l" />
+  <arg name="right_arm_ns" default="UR10_r" />
+  <arg name="move_group_name_l" default="UR_arm_l" />
+  <arg name="move_group_name_r" default="UR_arm_r" />
+  <arg name="moveit_ns" default="/$(arg robot_ns)" />
+  <arg name="robot_description_param" default="/$(arg robot_ns)/robot_description" />
+
+  <arg name="start_offset_s" default="manifest" />
+  <arg name="end_offset_s" default="manifest" />
+  <arg name="start_delay_s" default="2.0" />
+  <arg name="dry_run" default="false" />
+  <arg name="home_only" default="false" />
+  <arg name="execute_home" default="true" />
+  <arg name="speed_scale" default="1.0" />
+  <arg name="time_scale" default="1.0" />
+
+  <arg name="planning_time" default="5.0" />
+  <arg name="num_planning_attempts" default="5" />
+  <arg name="max_velocity_scaling_factor" default="0.1" />
+  <arg name="max_acceleration_scaling_factor" default="0.1" />
+  <arg name="goal_joint_tolerance" default="0.001" />
+
+  <arg name="auto_load_controllers" default="true" />
+  <arg name="twist_controller" default="twist_controller" />
+  <arg name="arm_controller" default="arm_controller" />
+  <arg name="force_torque_controller" default="force_torque_sensor_controller" />
+  <arg name="strictness" default="2" />
+  <arg name="start_asap" default="false" />
+  <arg name="switch_timeout_s" default="0.0" />
+  <arg name="wait_services_timeout_s" default="15.0" />
+  <arg name="controller_state_verify_timeout_s" default="5.0" />
+
+  <arg name="tcp_position_tolerance_m" default="0.03" />
+  <arg name="tcp_orientation_tolerance_rad" default="0.15" />
+  <arg name="force_abort_threshold_n" default="150.0" />
+  <arg name="torque_abort_threshold_nm" default="40.0" />
+  <arg name="status_topic" default="/teleop/dual_slave_replay/status" />
+
+  <node pkg="teleoperation"
+        type="replay_dual_slave_twist_from_bag.py"
+        name="replay_dual_slave_twist_from_bag"
+        output="screen"
+        required="true">
+    <param name="bag" value="$(arg bag)" />
+    <param name="manifest" value="$(arg manifest)" />
+    <param name="robot_ns" value="$(arg robot_ns)" />
+    <param name="moveit_ns" value="$(arg moveit_ns)" />
+    <param name="robot_description_param" value="$(arg robot_description_param)" />
+    <param name="move_group_name_l" value="$(arg move_group_name_l)" />
+    <param name="move_group_name_r" value="$(arg move_group_name_r)" />
+
+    <param name="start_offset_s" value="$(arg start_offset_s)" />
+    <param name="end_offset_s" value="$(arg end_offset_s)" />
+    <param name="start_delay_s" value="$(arg start_delay_s)" />
+    <param name="dry_run" value="$(arg dry_run)" />
+    <param name="home_only" value="$(arg home_only)" />
+    <param name="execute_home" value="$(arg execute_home)" />
+    <param name="speed_scale" value="$(arg speed_scale)" />
+    <param name="time_scale" value="$(arg time_scale)" />
+
+    <param name="planning_time" value="$(arg planning_time)" />
+    <param name="num_planning_attempts" value="$(arg num_planning_attempts)" />
+    <param name="max_velocity_scaling_factor" value="$(arg max_velocity_scaling_factor)" />
+    <param name="max_acceleration_scaling_factor" value="$(arg max_acceleration_scaling_factor)" />
+    <param name="goal_joint_tolerance" value="$(arg goal_joint_tolerance)" />
+
+    <param name="auto_load_controllers" value="$(arg auto_load_controllers)" />
+    <param name="twist_controller" value="$(arg twist_controller)" />
+    <param name="arm_controller" value="$(arg arm_controller)" />
+    <param name="force_torque_controller" value="$(arg force_torque_controller)" />
+    <param name="strictness" value="$(arg strictness)" />
+    <param name="start_asap" value="$(arg start_asap)" />
+    <param name="switch_timeout_s" value="$(arg switch_timeout_s)" />
+    <param name="wait_services_timeout_s" value="$(arg wait_services_timeout_s)" />
+    <param name="controller_state_verify_timeout_s" value="$(arg controller_state_verify_timeout_s)" />
+
+    <param name="left_controller_manager_ns" value="/$(arg robot_ns)/$(arg left_arm_ns)/controller_manager" />
+    <param name="right_controller_manager_ns" value="/$(arg robot_ns)/$(arg right_arm_ns)/controller_manager" />
+    <param name="left_command_topic" value="/$(arg robot_ns)/$(arg left_arm_ns)/twist_controller/command_collision_free" />
+    <param name="right_command_topic" value="/$(arg robot_ns)/$(arg right_arm_ns)/twist_controller/command_collision_free" />
+    <param name="left_wrench_topic" value="/$(arg robot_ns)/$(arg left_arm_ns)/wrench" />
+    <param name="right_wrench_topic" value="/$(arg robot_ns)/$(arg right_arm_ns)/wrench" />
+
+    <param name="tcp_position_tolerance_m" value="$(arg tcp_position_tolerance_m)" />
+    <param name="tcp_orientation_tolerance_rad" value="$(arg tcp_orientation_tolerance_rad)" />
+    <param name="force_abort_threshold_n" value="$(arg force_abort_threshold_n)" />
+    <param name="torque_abort_threshold_nm" value="$(arg torque_abort_threshold_nm)" />
+    <param name="status_topic" value="$(arg status_topic)" />
+  </node>
+</launch>

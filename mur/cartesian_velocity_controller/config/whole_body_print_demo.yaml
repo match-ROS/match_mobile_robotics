@@ -83,15 +83,19 @@ base_avoidance:
   use_laser_scans: false
   scan_topic: "mir/f_scan"
   scan_topics: ["mir/f_scan", "mir/scan"]
+  # radial: circular sectors; longitudinal/rectangular: front x-distance;
+  # rounded_front/front_arc: rectangular sides with a circular front arc through the front corners.
+  distance_mode: "rounded_front"
   influence_distance: 1.2
   stop_distance: 0.45
   slowdown_distance: 0.8
   lateral_window: 0.9
-  front_min_x: 0.05
+  front_min_x: -0.60
   k_omega: 0.8
   max_omega: 0.25
   filter_tau: 0.3
   stale_timeout: 0.5
+  perimeter_marker_rate: 10.0
 
 lifter:
   enabled: false

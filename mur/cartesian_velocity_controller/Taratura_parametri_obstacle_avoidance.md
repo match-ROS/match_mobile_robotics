@@ -11,9 +11,15 @@ Per ora tienilo false.
 scan_topic, scan_topics
 Servono solo con use_laser_scans: true. Con ostacoli simulati puoi ignorarli.
 
+distance_mode
+Definisce la forma reale della zona usata dall’avoidance.
+radial: usa la distanza euclidea hypot(x, y), quindi le soglie sono archi/settori circolari.
+longitudinal: usa la distanza frontale x dentro lateral_window, quindi le soglie diventano zone rettangolari davanti alla base.
+rounded_front: usa una zona con lati rettilinei e fronte ad arco. L'arco passa dagli angoli frontali (soglia, +/- lateral_window) e ha raggio pari alla distanza dall'origine della base a quegli angoli. È la modalità usata nel launch MVP per rendere RViz fedele alla zona effettiva.
+
 influence_distance
 Distanza dalla superficie dell’ostacolo entro cui inizia l’avoidance.
-Esempio: 1.2 significa che la base inizia a reagire quando la distanza dal bordo dell’ostacolo scende sotto 1.2 m.
+Esempio: 1.2 significa che la base inizia a reagire quando la distanza scelta da distance_mode scende sotto 1.2 m.
 Aumentalo se vuoi reazioni più anticipate. Riducilo se la base devia troppo presto.
 
 stop_distance
@@ -38,7 +44,8 @@ Aumentalo se vuoi reagire anche a ostacoli più laterali. Riducilo se la base st
 front_min_x
 Ignora ostacoli troppo vicini/dietro rispetto alla base lungo X.
 Esempio: 0.05 considera solo ostacoli davanti a circa 5 cm dalla base.
-Di solito lascialo basso: 0.05-0.15.
+Può essere negativo se l'origine di base_link è al centro del robot e vuoi includere parte del corpo davanti fisico del robot anche quando ha x < 0 nel frame.
+Con rounded_front, questo sposta indietro il bordo posteriore della zona visualizzata e usata dalla logica.
 
 k_omega
 Guadagno della sterzata evasiva.
@@ -67,11 +74,12 @@ Taratura pratica che userei per iniziare:
 base_avoidance:
   enabled: true
   use_laser_scans: false
+  distance_mode: "rounded_front"
   influence_distance: 1.4
   stop_distance: 0.45
   slowdown_distance: 0.9
   lateral_window: 0.8
-  front_min_x: 0.05
+  front_min_x: -0.60
   k_omega: 0.8
   max_omega: 0.30
   filter_tau: 0.4

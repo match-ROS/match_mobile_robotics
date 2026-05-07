@@ -331,6 +331,8 @@ public:
     preferred_tcp_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("preferred_tcp_marker", 2, true);
     simulated_obstacle_marker_pub_ =
         pnh_.advertise<visualization_msgs::MarkerArray>("simulated_obstacle_markers", 1, true);
+    reaction_perimeter_marker_pub_ =
+        pnh_.advertise<visualization_msgs::MarkerArray>("reaction_perimeter_markers", 1);
 
     pause_srv_ = pnh_.advertiseService("pause", &WholeBodyPrintController::pauseCb, this);
     resume_srv_ = pnh_.advertiseService("resume", &WholeBodyPrintController::resumeCb, this);
@@ -344,6 +346,7 @@ public:
       publishSimulatedObstacleMarkers(ros::Time::now());
     }
     publishPreferredTcpMarker();
+    publishReactionPerimeterMarkers(ros::Time::now());
     timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
                              &WholeBodyPrintController::timerCb, this);
 
@@ -435,6 +438,18 @@ private:
     pnh_.param("base_avoidance/use_laser_scans", avoidance_use_laser_scans_, true);
     pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "mir/scan");
     loadScanTopics();
+    pnh_.param<std::string>("base_avoidance/distance_mode", avoidance_distance_mode_, "radial");
+    if (avoidance_distance_mode_ != "radial" &&
+        avoidance_distance_mode_ != "longitudinal" &&
+        avoidance_distance_mode_ != "rectangular" &&
+        avoidance_distance_mode_ != "rounded_front" &&
+        avoidance_distance_mode_ != "front_arc" &&
+        avoidance_distance_mode_ != "front_axis" &&
+        avoidance_distance_mode_ != "x")
+    {
+      ROS_WARN("Invalid base_avoidance/distance_mode='%s'; using 'radial'", avoidance_distance_mode_.c_str());
+      avoidance_distance_mode_ = "radial";
+    }
     pnh_.param("base_avoidance/influence_distance", avoidance_influence_distance_, 1.2);
     pnh_.param("base_avoidance/stop_distance", avoidance_stop_distance_, 0.35);
     pnh_.param("base_avoidance/slowdown_distance", avoidance_slowdown_distance_, 0.8);
@@ -444,6 +459,8 @@ private:
     pnh_.param("base_avoidance/max_omega", avoidance_max_omega_, 0.35);
     pnh_.param("base_avoidance/filter_tau", avoidance_filter_tau_, 0.4);
     pnh_.param("base_avoidance/stale_timeout", avoidance_stale_timeout_, 0.5);
+    pnh_.param("base_avoidance/perimeter_marker_rate", avoidance_perimeter_marker_rate_hz_, path_marker_rate_hz_);
+    avoidance_perimeter_marker_rate_hz_ = std::max(0.0, avoidance_perimeter_marker_rate_hz_);
 
     pnh_.param("lifter/enabled", lifter_enabled_, false);
     pnh_.param<std::string>("lifter/joint_name", lifter_joint_name_, "right_lift_joint");
@@ -852,7 +869,7 @@ private:
         continue;
       }
 
-      const double dist = std::hypot(p.x(), p.y());
+      const double dist = avoidancePointDistance(p);
       if (dist > avoidance_influence_distance_)
       {
         continue;
@@ -885,6 +902,50 @@ private:
     }
     scan_avoidance_states_[source_topic] = state;
     updateAggregatedAvoidance(stamp);
+  }
+
+  bool avoidanceUsesLongitudinalDistance() const
+  {
+    return avoidance_distance_mode_ == "longitudinal" ||
+           avoidance_distance_mode_ == "rectangular" ||
+           avoidance_distance_mode_ == "front_axis" ||
+           avoidance_distance_mode_ == "x";
+  }
+
+  bool avoidanceUsesRoundedFrontDistance() const
+  {
+    return avoidance_distance_mode_ == "rounded_front" ||
+           avoidance_distance_mode_ == "front_arc";
+  }
+
+  double avoidancePointDistance(const Eigen::Vector3d& p) const
+  {
+    if (avoidanceUsesRoundedFrontDistance())
+    {
+      const double r2 = p.x() * p.x() + p.y() * p.y();
+      const double lateral2 = avoidance_lateral_window_ * avoidance_lateral_window_;
+      return std::sqrt(std::max(0.0, r2 - lateral2));
+    }
+    if (avoidanceUsesLongitudinalDistance())
+    {
+      return p.x();
+    }
+    return std::hypot(p.x(), p.y());
+  }
+
+  double avoidanceObstacleSurfaceDistance(const Eigen::Vector3d& p, double radius) const
+  {
+    if (avoidanceUsesRoundedFrontDistance())
+    {
+      const double surface_radius = std::max(0.0, std::hypot(p.x(), p.y()) - radius);
+      const double lateral2 = avoidance_lateral_window_ * avoidance_lateral_window_;
+      return std::sqrt(std::max(0.0, surface_radius * surface_radius - lateral2));
+    }
+    if (avoidanceUsesLongitudinalDistance())
+    {
+      return p.x() - radius;
+    }
+    return std::hypot(p.x(), p.y()) - radius;
   }
 
   void updateAggregatedAvoidance(const ros::Time& now)
@@ -1026,6 +1087,7 @@ private:
     const double dt = std::max(0.0, (now - last_time_).toSec());
     last_time_ = now;
     publishOriginTransform(now);
+    publishReactionPerimeterMarkersIfDue(now);
 
     if (external_target_enabled_)
     {
@@ -1854,8 +1916,7 @@ private:
         continue;
       }
 
-      const double center_distance = std::hypot(p.x(), p.y());
-      const double surface_distance = center_distance - obstacle.radius;
+      const double surface_distance = avoidanceObstacleSurfaceDistance(p, obstacle.radius);
       if (surface_distance > avoidance_influence_distance_)
       {
         continue;
@@ -2080,6 +2141,181 @@ private:
     simulated_obstacle_marker_pub_.publish(arr);
   }
 
+  geometry_msgs::Point reactionPerimeterPoint(double x, double y, double z) const
+  {
+    geometry_msgs::Point p;
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    return p;
+  }
+
+  void appendReactionPerimeterPoints(visualization_msgs::Marker& marker, double radius, double z) const
+  {
+    if (radius <= 1e-6 || avoidance_lateral_window_ <= 1e-6)
+    {
+      return;
+    }
+
+    const double x_min = avoidance_front_min_x_;
+    if (x_min >= radius)
+    {
+      return;
+    }
+
+    if (avoidanceUsesLongitudinalDistance())
+    {
+      const double y_limit = avoidance_lateral_window_;
+      marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(radius, -y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(radius, y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(x_min, y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
+      return;
+    }
+
+    if (avoidanceUsesRoundedFrontDistance())
+    {
+      const double y_limit = avoidance_lateral_window_;
+      const double arc_radius = std::hypot(radius, y_limit);
+      const double theta = std::asin(clamp(y_limit / arc_radius, 0.0, 1.0));
+      marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(radius, -y_limit, z));
+
+      const int segments = std::max(12, static_cast<int>(std::ceil(2.0 * theta / 0.05)));
+      for (int i = 0; i <= segments; ++i)
+      {
+        const double a = -theta + (2.0 * theta * static_cast<double>(i)) / static_cast<double>(segments);
+        marker.points.push_back(reactionPerimeterPoint(arc_radius * std::cos(a), arc_radius * std::sin(a), z));
+      }
+
+      marker.points.push_back(reactionPerimeterPoint(radius, y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(x_min, y_limit, z));
+      marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
+      return;
+    }
+
+    const double theta_front = std::acos(clamp(x_min / radius, -1.0, 1.0));
+    const double theta_side = avoidance_lateral_window_ >= radius
+                                  ? 0.5 * std::acos(-1.0)
+                                  : std::asin(clamp(avoidance_lateral_window_ / radius, 0.0, 1.0));
+    const double theta = std::min(theta_front, theta_side);
+    if (theta <= 1e-6)
+    {
+      return;
+    }
+
+    const double y_limit = radius * std::sin(theta);
+    const double x_arc = radius * std::cos(theta);
+    const bool lateral_clipped = x_arc > x_min + 1e-6;
+    marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
+    if (lateral_clipped)
+    {
+      marker.points.push_back(reactionPerimeterPoint(x_arc, -y_limit, z));
+    }
+
+    const int segments = std::max(12, static_cast<int>(std::ceil(2.0 * theta / 0.05)));
+    for (int i = 0; i <= segments; ++i)
+    {
+      const double a = -theta + (2.0 * theta * static_cast<double>(i)) / static_cast<double>(segments);
+      marker.points.push_back(reactionPerimeterPoint(radius * std::cos(a), radius * std::sin(a), z));
+    }
+
+    if (lateral_clipped)
+    {
+      marker.points.push_back(reactionPerimeterPoint(x_min, y_limit, z));
+    }
+    marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
+  }
+
+  visualization_msgs::Marker reactionPerimeterMarker(const ros::Time& stamp,
+                                                     int id,
+                                                     const std::string& ns,
+                                                     double radius,
+                                                     double z,
+                                                     double line_width,
+                                                     double r,
+                                                     double g,
+                                                     double b,
+                                                     double a) const
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = base_frame_;
+    marker.header.stamp = stamp;
+    marker.ns = ns;
+    marker.id = id;
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.frame_locked = true;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = line_width;
+    marker.color.r = static_cast<float>(r);
+    marker.color.g = static_cast<float>(g);
+    marker.color.b = static_cast<float>(b);
+    marker.color.a = static_cast<float>(a);
+    appendReactionPerimeterPoints(marker, radius, z);
+    if (marker.points.size() < 2)
+    {
+      marker.action = visualization_msgs::Marker::DELETE;
+    }
+    return marker;
+  }
+
+  void publishReactionPerimeterMarkers(const ros::Time& stamp)
+  {
+    visualization_msgs::MarkerArray arr;
+    if (!avoidance_enabled_)
+    {
+      visualization_msgs::Marker marker;
+      marker.action = visualization_msgs::Marker::DELETEALL;
+      arr.markers.push_back(marker);
+      reaction_perimeter_marker_pub_.publish(arr);
+      return;
+    }
+
+    arr.markers.push_back(reactionPerimeterMarker(stamp,
+                                                  0,
+                                                  "reaction_perimeter_influence",
+                                                  avoidance_influence_distance_,
+                                                  0.04,
+                                                  0.025,
+                                                  0.1,
+                                                  0.75,
+                                                  1.0,
+                                                  0.95));
+    arr.markers.push_back(reactionPerimeterMarker(stamp,
+                                                  1,
+                                                  "reaction_perimeter_slowdown",
+                                                  avoidance_slowdown_distance_,
+                                                  0.06,
+                                                  0.02,
+                                                  1.0,
+                                                  0.85,
+                                                  0.1,
+                                                  0.9));
+    arr.markers.push_back(reactionPerimeterMarker(stamp,
+                                                  2,
+                                                  "reaction_perimeter_stop",
+                                                  avoidance_stop_distance_,
+                                                  0.08,
+                                                  0.02,
+                                                  1.0,
+                                                  0.15,
+                                                  0.05,
+                                                  0.95));
+    reaction_perimeter_marker_pub_.publish(arr);
+  }
+
+  void publishReactionPerimeterMarkersIfDue(const ros::Time& now)
+  {
+    if (!dueByRate(now, last_reaction_perimeter_marker_pub_time_, avoidance_perimeter_marker_rate_hz_))
+    {
+      return;
+    }
+    publishReactionPerimeterMarkers(now);
+    last_reaction_perimeter_marker_pub_time_ = now;
+  }
+
   void publishCurrentMarker(const Eigen::Vector3d& p, const ros::Time& stamp)
   {
     visualization_msgs::Marker marker;
@@ -2239,6 +2475,7 @@ private:
   ros::Publisher current_marker_pub_;
   ros::Publisher preferred_tcp_marker_pub_;
   ros::Publisher simulated_obstacle_marker_pub_;
+  ros::Publisher reaction_perimeter_marker_pub_;
   ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
@@ -2353,10 +2590,12 @@ private:
   ros::Time last_lifter_pub_time_;
   ros::Time last_debug_pub_time_;
   ros::Time last_path_marker_pub_time_;
+  ros::Time last_reaction_perimeter_marker_pub_time_;
 
   bool avoidance_enabled_{false};
   bool avoidance_use_laser_scans_{true};
   std::string avoidance_scan_topic_;
+  std::string avoidance_distance_mode_{"radial"};
   std::vector<std::string> avoidance_scan_topics_;
   std::map<std::string, ScanAvoidanceState> scan_avoidance_states_;
   double avoidance_influence_distance_{1.2};
@@ -2368,6 +2607,7 @@ private:
   double avoidance_max_omega_{0.35};
   double avoidance_filter_tau_{0.4};
   double avoidance_stale_timeout_{0.5};
+  double avoidance_perimeter_marker_rate_hz_{2.0};
   bool avoidance_active_{false};
   double avoidance_min_distance_{std::numeric_limits<double>::infinity()};
   double avoidance_raw_omega_{0.0};

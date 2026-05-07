@@ -296,9 +296,9 @@ slave_publish_rate: 500.0
 # The corresponding slave neutral pose is obtained automatically with the same
 # static master->slave rotation already used by the legacy mapping.
 motion_scaling:
-  enabled: false
+  enabled: true
   translation_scale: 2.0
-  rotation_scale: 2.0
+  rotation_scale: 1.0
   master_neutral_position: [0.0, 0.0, 0.0]
   master_neutral_orientation_xyzw: [0.0, 0.0, 0.0, 1.0]
 

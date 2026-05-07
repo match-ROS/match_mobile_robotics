@@ -92,6 +92,7 @@ TOPICS=(
   #/mur620d/UR10_r/ur_hardware_interface/safety_mode
   #/mur620d/UR10_r/ur_hardware_interface/robot_program_running
   /tf_static
+  /tf
 )
 
 echo "Salvataggio rosbag in: ${BAG_PATH}"

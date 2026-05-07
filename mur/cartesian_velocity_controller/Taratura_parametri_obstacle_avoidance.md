@@ -37,9 +37,15 @@ Esempio con i tuoi valori:
 0.8 -> 0.35 m: rallenta progressivamente
 < 0.35 m: ferma linear.x
 lateral_window
-Semi-larghezza laterale della zona controllata davanti alla base.
-Esempio: 0.9 considera ostacoli con abs(y) <= 0.9 m, tenendo conto anche del raggio.
-Aumentalo se vuoi reagire anche a ostacoli più laterali. Riducilo se la base sterza per ostacoli che non intralciano davvero.
+Semi-larghezza laterale di fallback della zona controllata davanti alla base.
+Viene usato solo quando non sono specificati i tre parametri dedicati sotto.
+
+influence_lateral_window, slowdown_lateral_window, stop_lateral_window
+Semi-larghezze laterali indipendenti delle tre zone.
+Esempio: 0.9 considera ostacoli con abs(y) <= 0.9 m, tenendo conto anche del raggio negli ostacoli simulati.
+Aumenta influence_lateral_window se vuoi iniziare a sterzare anche per ostacoli più laterali.
+Aumenta slowdown_lateral_window se vuoi rallentare in una fascia più larga.
+Aumenta stop_lateral_window se vuoi fermare la base in una fascia più larga.
 
 front_min_x
 Ignora ostacoli troppo vicini/dietro rispetto alla base lungo X.
@@ -79,6 +85,9 @@ base_avoidance:
   stop_distance: 0.45
   slowdown_distance: 0.9
   lateral_window: 0.8
+  influence_lateral_window: 0.8
+  slowdown_lateral_window: 0.7
+  stop_lateral_window: 0.6
   front_min_x: -0.60
   k_omega: 0.8
   max_omega: 0.30

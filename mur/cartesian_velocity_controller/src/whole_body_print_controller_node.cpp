@@ -42,6 +42,7 @@ struct ScanAvoidanceState
   bool active{false};
   double min_distance{std::numeric_limits<double>::infinity()};
   double raw_omega{0.0};
+  double raw_speed_scale{1.0};
   ros::Time stamp;
 };
 
@@ -454,6 +455,12 @@ private:
     pnh_.param("base_avoidance/stop_distance", avoidance_stop_distance_, 0.35);
     pnh_.param("base_avoidance/slowdown_distance", avoidance_slowdown_distance_, 0.8);
     pnh_.param("base_avoidance/lateral_window", avoidance_lateral_window_, 0.9);
+    pnh_.param("base_avoidance/influence_lateral_window", avoidance_influence_lateral_window_, avoidance_lateral_window_);
+    pnh_.param("base_avoidance/slowdown_lateral_window", avoidance_slowdown_lateral_window_, avoidance_lateral_window_);
+    pnh_.param("base_avoidance/stop_lateral_window", avoidance_stop_lateral_window_, avoidance_lateral_window_);
+    avoidance_influence_lateral_window_ = std::max(0.0, avoidance_influence_lateral_window_);
+    avoidance_slowdown_lateral_window_ = std::max(0.0, avoidance_slowdown_lateral_window_);
+    avoidance_stop_lateral_window_ = std::max(0.0, avoidance_stop_lateral_window_);
     pnh_.param("base_avoidance/front_min_x", avoidance_front_min_x_, 0.05);
     pnh_.param("base_avoidance/k_omega", avoidance_k_omega_, 0.8);
     pnh_.param("base_avoidance/max_omega", avoidance_max_omega_, 0.35);
@@ -830,6 +837,7 @@ private:
     double omega_sum = 0.0;
     double weight_sum = 0.0;
     double min_dist = std::numeric_limits<double>::infinity();
+    double raw_speed_scale = 1.0;
     const ros::Time stamp = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
 
     geometry_msgs::TransformStamped tf_base_scan;
@@ -845,7 +853,8 @@ private:
       {
         ROS_WARN_THROTTLE(2.0, "Laser avoidance TF failed (%s -> %s): %s",
                           msg->header.frame_id.c_str(), base_frame_.c_str(), ex.what());
-        scan_avoidance_states_[source_topic] = ScanAvoidanceState{false, std::numeric_limits<double>::infinity(), 0.0, stamp};
+        scan_avoidance_states_[source_topic] =
+            ScanAvoidanceState{false, std::numeric_limits<double>::infinity(), 0.0, 1.0, stamp};
         return;
       }
     }
@@ -864,19 +873,26 @@ private:
         p = transformPoint(tf_base_scan, p);
       }
 
-      if (p.x() < avoidance_front_min_x_ || std::abs(p.y()) > avoidance_lateral_window_)
+      const bool in_stop = pointInAvoidanceZone(p, avoidance_stop_distance_, avoidance_stop_lateral_window_);
+      const bool in_slowdown = pointInAvoidanceZone(p, avoidance_slowdown_distance_, avoidance_slowdown_lateral_window_);
+      const bool in_influence = pointInAvoidanceZone(p, avoidance_influence_distance_, avoidance_influence_lateral_window_);
+      if (!in_stop && !in_slowdown && !in_influence)
       {
         continue;
       }
 
-      const double dist = avoidancePointDistance(p);
-      if (dist > avoidance_influence_distance_)
+      const double influence_dist = in_influence
+                                        ? avoidancePointDistance(p, avoidance_influence_lateral_window_)
+                                        : (in_slowdown
+                                               ? avoidancePointDistance(p, avoidance_slowdown_lateral_window_)
+                                               : avoidancePointDistance(p, avoidance_stop_lateral_window_));
+      min_dist = std::min(min_dist, influence_dist);
+      if (in_slowdown || in_stop)
       {
-        continue;
+        raw_speed_scale = std::min(raw_speed_scale, pointAvoidanceSpeedScale(p, in_stop));
       }
 
-      min_dist = std::min(min_dist, dist);
-      const double influence = clamp((avoidance_influence_distance_ - dist) /
+      const double influence = clamp((avoidance_influence_distance_ - influence_dist) /
                                      std::max(1e-6, avoidance_influence_distance_ - avoidance_stop_distance_),
                                      0.0, 1.0);
       const double side = (std::abs(p.y()) > 1e-4) ? (p.y() > 0.0 ? 1.0 : -1.0) : 1.0;
@@ -891,6 +907,7 @@ private:
     {
       state.active = true;
       state.min_distance = min_dist;
+      state.raw_speed_scale = raw_speed_scale;
       state.raw_omega = clamp(avoidance_k_omega_ * omega_sum / weight_sum,
                               -avoidance_max_omega_, avoidance_max_omega_);
     }
@@ -898,6 +915,7 @@ private:
     {
       state.active = false;
       state.min_distance = std::numeric_limits<double>::infinity();
+      state.raw_speed_scale = 1.0;
       state.raw_omega = 0.0;
     }
     scan_avoidance_states_[source_topic] = state;
@@ -918,12 +936,12 @@ private:
            avoidance_distance_mode_ == "front_arc";
   }
 
-  double avoidancePointDistance(const Eigen::Vector3d& p) const
+  double avoidancePointDistance(const Eigen::Vector3d& p, double lateral_window) const
   {
     if (avoidanceUsesRoundedFrontDistance())
     {
       const double r2 = p.x() * p.x() + p.y() * p.y();
-      const double lateral2 = avoidance_lateral_window_ * avoidance_lateral_window_;
+      const double lateral2 = lateral_window * lateral_window;
       return std::sqrt(std::max(0.0, r2 - lateral2));
     }
     if (avoidanceUsesLongitudinalDistance())
@@ -933,12 +951,12 @@ private:
     return std::hypot(p.x(), p.y());
   }
 
-  double avoidanceObstacleSurfaceDistance(const Eigen::Vector3d& p, double radius) const
+  double avoidanceObstacleSurfaceDistance(const Eigen::Vector3d& p, double radius, double lateral_window) const
   {
     if (avoidanceUsesRoundedFrontDistance())
     {
       const double surface_radius = std::max(0.0, std::hypot(p.x(), p.y()) - radius);
-      const double lateral2 = avoidance_lateral_window_ * avoidance_lateral_window_;
+      const double lateral2 = lateral_window * lateral_window;
       return std::sqrt(std::max(0.0, surface_radius * surface_radius - lateral2));
     }
     if (avoidanceUsesLongitudinalDistance())
@@ -948,11 +966,64 @@ private:
     return std::hypot(p.x(), p.y()) - radius;
   }
 
+  bool pointInAvoidanceZone(const Eigen::Vector3d& p, double distance, double lateral_window) const
+  {
+    if (distance <= 1e-6 || lateral_window <= 1e-6)
+    {
+      return false;
+    }
+    if (p.x() < avoidance_front_min_x_ || std::abs(p.y()) > lateral_window)
+    {
+      return false;
+    }
+    return avoidancePointDistance(p, lateral_window) <= distance;
+  }
+
+  bool obstacleInAvoidanceZone(const Eigen::Vector3d& p, double radius, double distance, double lateral_window) const
+  {
+    if (distance <= 1e-6 || lateral_window <= 1e-6)
+    {
+      return false;
+    }
+    if (p.x() + radius < avoidance_front_min_x_ || std::abs(p.y()) - radius > lateral_window)
+    {
+      return false;
+    }
+    return avoidanceObstacleSurfaceDistance(p, radius, lateral_window) <= distance;
+  }
+
+  double pointAvoidanceSpeedScale(const Eigen::Vector3d& p, bool in_stop) const
+  {
+    if (in_stop)
+    {
+      return 0.0;
+    }
+    const double slowdown_dist = avoidancePointDistance(p, avoidance_slowdown_lateral_window_);
+    const double scale = clamp((slowdown_dist - avoidance_stop_distance_) /
+                                   std::max(1e-6, avoidance_slowdown_distance_ - avoidance_stop_distance_),
+                               0.0, 1.0);
+    return std::max(1e-3, scale);
+  }
+
+  double obstacleAvoidanceSpeedScale(const Eigen::Vector3d& p, double radius, bool in_stop) const
+  {
+    if (in_stop)
+    {
+      return 0.0;
+    }
+    const double slowdown_dist = avoidanceObstacleSurfaceDistance(p, radius, avoidance_slowdown_lateral_window_);
+    const double scale = clamp((slowdown_dist - avoidance_stop_distance_) /
+                                   std::max(1e-6, avoidance_slowdown_distance_ - avoidance_stop_distance_),
+                               0.0, 1.0);
+    return std::max(1e-3, scale);
+  }
+
   void updateAggregatedAvoidance(const ros::Time& now)
   {
     avoidance_active_ = false;
     avoidance_min_distance_ = std::numeric_limits<double>::infinity();
     avoidance_raw_omega_ = 0.0;
+    avoidance_raw_speed_scale_ = 1.0;
     avoidance_last_scan_time_ = ros::Time();
 
     double omega_sum = 0.0;
@@ -971,6 +1042,7 @@ private:
       const double distance_weight = 1.0 / std::max(0.05, state.min_distance);
       omega_sum += state.raw_omega * distance_weight;
       weight_sum += distance_weight;
+      avoidance_raw_speed_scale_ = std::min(avoidance_raw_speed_scale_, state.raw_speed_scale);
       avoidance_min_distance_ = std::min(avoidance_min_distance_, state.min_distance);
       avoidance_active_ = true;
     }
@@ -1854,21 +1926,13 @@ private:
     if (!stale && avoidance_active_)
     {
       target_omega = avoidance_raw_omega_;
-      if (avoidance_min_distance_ <= avoidance_stop_distance_)
-      {
-        speed_scale = 0.0;
-      }
-      else if (avoidance_min_distance_ < avoidance_slowdown_distance_)
-      {
-        speed_scale = clamp((avoidance_min_distance_ - avoidance_stop_distance_) /
-                            std::max(1e-6, avoidance_slowdown_distance_ - avoidance_stop_distance_),
-                            0.0, 1.0);
-      }
+      speed_scale = avoidance_raw_speed_scale_;
     }
     else if (stale)
     {
       avoidance_active_ = false;
       avoidance_min_distance_ = std::numeric_limits<double>::infinity();
+      avoidance_raw_speed_scale_ = 1.0;
     }
 
     const double alpha = avoidance_filter_tau_ <= 1e-6 ? 1.0 : clamp(dt / (avoidance_filter_tau_ + dt), 0.0, 1.0);
@@ -1906,23 +1970,36 @@ private:
     double omega_sum = 0.0;
     double weight_sum = 0.0;
     double min_dist = std::numeric_limits<double>::infinity();
+    double raw_speed_scale = 1.0;
 
     for (const auto& obstacle : simulated_obstacles_)
     {
       const Eigen::Vector3d p = transformPoint(tf_base_path, obstacle.center);
-      if (p.x() + obstacle.radius < avoidance_front_min_x_ ||
-          std::abs(p.y()) - obstacle.radius > avoidance_lateral_window_)
+      const bool in_stop =
+          obstacleInAvoidanceZone(p, obstacle.radius, avoidance_stop_distance_, avoidance_stop_lateral_window_);
+      const bool in_slowdown =
+          obstacleInAvoidanceZone(p, obstacle.radius, avoidance_slowdown_distance_, avoidance_slowdown_lateral_window_);
+      const bool in_influence =
+          obstacleInAvoidanceZone(p, obstacle.radius, avoidance_influence_distance_, avoidance_influence_lateral_window_);
+      if (!in_stop && !in_slowdown && !in_influence)
       {
         continue;
       }
 
-      const double surface_distance = avoidanceObstacleSurfaceDistance(p, obstacle.radius);
-      if (surface_distance > avoidance_influence_distance_)
-      {
-        continue;
-      }
-
+      const double surface_distance = in_influence
+                                          ? avoidanceObstacleSurfaceDistance(
+                                                p, obstacle.radius, avoidance_influence_lateral_window_)
+                                          : (in_slowdown
+                                                 ? avoidanceObstacleSurfaceDistance(
+                                                       p, obstacle.radius, avoidance_slowdown_lateral_window_)
+                                                 : avoidanceObstacleSurfaceDistance(
+                                                       p, obstacle.radius, avoidance_stop_lateral_window_));
       min_dist = std::min(min_dist, surface_distance);
+      if (in_slowdown || in_stop)
+      {
+        raw_speed_scale = std::min(raw_speed_scale, obstacleAvoidanceSpeedScale(p, obstacle.radius, in_stop));
+      }
+
       const double influence = clamp((avoidance_influence_distance_ - surface_distance) /
                                      std::max(1e-6, avoidance_influence_distance_ - avoidance_stop_distance_),
                                      0.0, 1.0);
@@ -1935,6 +2012,7 @@ private:
     {
       state.active = true;
       state.min_distance = min_dist;
+      state.raw_speed_scale = raw_speed_scale;
       state.raw_omega = clamp(avoidance_k_omega_ * omega_sum / weight_sum,
                               -avoidance_max_omega_, avoidance_max_omega_);
     }
@@ -2150,9 +2228,12 @@ private:
     return p;
   }
 
-  void appendReactionPerimeterPoints(visualization_msgs::Marker& marker, double radius, double z) const
+  void appendReactionPerimeterPoints(visualization_msgs::Marker& marker,
+                                     double radius,
+                                     double lateral_window,
+                                     double z) const
   {
-    if (radius <= 1e-6 || avoidance_lateral_window_ <= 1e-6)
+    if (radius <= 1e-6 || lateral_window <= 1e-6)
     {
       return;
     }
@@ -2165,7 +2246,7 @@ private:
 
     if (avoidanceUsesLongitudinalDistance())
     {
-      const double y_limit = avoidance_lateral_window_;
+      const double y_limit = lateral_window;
       marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
       marker.points.push_back(reactionPerimeterPoint(radius, -y_limit, z));
       marker.points.push_back(reactionPerimeterPoint(radius, y_limit, z));
@@ -2176,7 +2257,7 @@ private:
 
     if (avoidanceUsesRoundedFrontDistance())
     {
-      const double y_limit = avoidance_lateral_window_;
+      const double y_limit = lateral_window;
       const double arc_radius = std::hypot(radius, y_limit);
       const double theta = std::asin(clamp(y_limit / arc_radius, 0.0, 1.0));
       marker.points.push_back(reactionPerimeterPoint(x_min, -y_limit, z));
@@ -2196,9 +2277,9 @@ private:
     }
 
     const double theta_front = std::acos(clamp(x_min / radius, -1.0, 1.0));
-    const double theta_side = avoidance_lateral_window_ >= radius
+    const double theta_side = lateral_window >= radius
                                   ? 0.5 * std::acos(-1.0)
-                                  : std::asin(clamp(avoidance_lateral_window_ / radius, 0.0, 1.0));
+                                  : std::asin(clamp(lateral_window / radius, 0.0, 1.0));
     const double theta = std::min(theta_front, theta_side);
     if (theta <= 1e-6)
     {
@@ -2232,6 +2313,7 @@ private:
                                                      int id,
                                                      const std::string& ns,
                                                      double radius,
+                                                     double lateral_window,
                                                      double z,
                                                      double line_width,
                                                      double r,
@@ -2253,7 +2335,7 @@ private:
     marker.color.g = static_cast<float>(g);
     marker.color.b = static_cast<float>(b);
     marker.color.a = static_cast<float>(a);
-    appendReactionPerimeterPoints(marker, radius, z);
+    appendReactionPerimeterPoints(marker, radius, lateral_window, z);
     if (marker.points.size() < 2)
     {
       marker.action = visualization_msgs::Marker::DELETE;
@@ -2277,6 +2359,7 @@ private:
                                                   0,
                                                   "reaction_perimeter_influence",
                                                   avoidance_influence_distance_,
+                                                  avoidance_influence_lateral_window_,
                                                   0.04,
                                                   0.025,
                                                   0.1,
@@ -2287,6 +2370,7 @@ private:
                                                   1,
                                                   "reaction_perimeter_slowdown",
                                                   avoidance_slowdown_distance_,
+                                                  avoidance_slowdown_lateral_window_,
                                                   0.06,
                                                   0.02,
                                                   1.0,
@@ -2297,6 +2381,7 @@ private:
                                                   2,
                                                   "reaction_perimeter_stop",
                                                   avoidance_stop_distance_,
+                                                  avoidance_stop_lateral_window_,
                                                   0.08,
                                                   0.02,
                                                   1.0,
@@ -2602,6 +2687,9 @@ private:
   double avoidance_stop_distance_{0.35};
   double avoidance_slowdown_distance_{0.8};
   double avoidance_lateral_window_{0.9};
+  double avoidance_influence_lateral_window_{0.9};
+  double avoidance_slowdown_lateral_window_{0.9};
+  double avoidance_stop_lateral_window_{0.9};
   double avoidance_front_min_x_{0.05};
   double avoidance_k_omega_{0.8};
   double avoidance_max_omega_{0.35};
@@ -2611,6 +2699,7 @@ private:
   bool avoidance_active_{false};
   double avoidance_min_distance_{std::numeric_limits<double>::infinity()};
   double avoidance_raw_omega_{0.0};
+  double avoidance_raw_speed_scale_{1.0};
   double last_avoidance_omega_{0.0};
   double last_avoidance_speed_scale_{1.0};
   ros::Time avoidance_last_scan_time_;

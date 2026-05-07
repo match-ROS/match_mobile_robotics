@@ -87,10 +87,13 @@ base_avoidance:
   # rounded_front/front_arc: rectangular sides with a circular front arc through the front corners.
   distance_mode: "rounded_front"
   influence_distance: 1.2
-  stop_distance: 0.45
+  stop_distance: 0.7
   slowdown_distance: 0.8
   lateral_window: 0.9
-  front_min_x: -0.60
+  influence_lateral_window: 0.9
+  slowdown_lateral_window: 0.65
+  stop_lateral_window: 0.5
+  front_min_x: -0.20
   k_omega: 0.8
   max_omega: 0.25
   filter_tau: 0.3

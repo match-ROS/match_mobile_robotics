@@ -20,6 +20,7 @@ from controller_manager_msgs.srv import (
 )
 from geometry_msgs.msg import Twist, WrenchStamped
 from std_msgs.msg import String
+from std_srvs.srv import Trigger
 
 
 def _get_str(name: str, default: str) -> str:
@@ -282,6 +283,8 @@ class DualSlaveTwistReplay:
         self.force_abort_threshold_n = _get_float("~force_abort_threshold_n", 150.0)
         self.torque_abort_threshold_nm = _get_float("~torque_abort_threshold_nm", 40.0)
         self.wrench_timeout_s = _get_float("~wrench_timeout_s", 0.5)
+        self.zero_ft_delay_s = _get_float("~ur10e_zero_loadcell_delay_s", 0.5)
+        self.zero_ft_wait_timeout_s = _get_float("~ur10e_zero_loadcell_wait_timeout_s", 10.0)
         self.moveit_ns = _get_str("~moveit_ns", f"/{self.robot_ns}")
         self.robot_description_param = _get_str(
             "~robot_description_param", f"/{self.robot_ns}/robot_description"
@@ -358,6 +361,14 @@ class DualSlaveTwistReplay:
             arm["wrench_topic"] = _get_str(
                 f"~{side}_wrench_topic",
                 f"/{self.robot_ns}/{arm_ns}/wrench",
+            )
+            arm["zero_ftsensor_enabled"] = _get_bool(
+                f"~do_ur10e_zero_loadcell_slave_{side}",
+                True,
+            )
+            arm["zero_ftsensor_service"] = _get_str(
+                f"~{side}_zero_ftsensor_service",
+                f"/{self.robot_ns}/{arm_ns}/ur_hardware_interface/zero_ftsensor",
             )
             out[side] = arm
         return out
@@ -556,6 +567,41 @@ class DualSlaveTwistReplay:
                     f"{side}: TCP orientation error {ori_err:.4f} rad > {self.tcp_orientation_tolerance_rad:.4f} rad"
                 )
 
+    def _zero_ft_sensors(self) -> None:
+        if self.dry_run:
+            return
+
+        for side, arm in self.arms.items():
+            if not arm.get("zero_ftsensor_enabled", True):
+                rospy.loginfo("%s: FT sensor zero disabled", side)
+                continue
+
+            service_name = str(arm["zero_ftsensor_service"])
+            resolved_service = rospy.resolve_name(service_name)
+            self._publish_status(f"{side}: zeroing FT sensor {resolved_service}")
+
+            try:
+                if self.zero_ft_wait_timeout_s <= 0.0:
+                    rospy.wait_for_service(service_name)
+                else:
+                    rospy.wait_for_service(service_name, timeout=self.zero_ft_wait_timeout_s)
+            except rospy.ROSException as exc:
+                raise ReplayAbort(f"{side}: FT zero service not available ({resolved_service}): {exc}")
+
+            if self.zero_ft_delay_s > 0.0:
+                rospy.sleep(self.zero_ft_delay_s)
+
+            try:
+                response = rospy.ServiceProxy(service_name, Trigger)()
+            except rospy.ServiceException as exc:
+                raise ReplayAbort(f"{side}: FT zero service call failed ({resolved_service}): {exc}")
+
+            if not response.success:
+                raise ReplayAbort(
+                    f"{side}: FT zero request returned success=false ({resolved_service}): {response.message}"
+                )
+            rospy.loginfo("%s: FT sensor zeroed successfully: %s", side, response.message)
+
     def _load_events(self) -> List[Tuple[float, str, object]]:
         source_topics = {
             self.arms["left"]["command_topic"]: "left",
@@ -624,6 +670,7 @@ class DualSlaveTwistReplay:
             self._moveit_to_initial_joint_state()
             self._ensure_twist_controllers(controllers)
             self._verify_tcp_pose()
+            self._zero_ft_sensors()
             if self.home_only:
                 self._publish_status("home_only_complete")
                 self._publish_zero_for(self.zero_after_s)

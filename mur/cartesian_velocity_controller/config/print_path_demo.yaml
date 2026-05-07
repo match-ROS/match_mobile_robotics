@@ -50,6 +50,6 @@ obstacles:
   marker_height: 0.12
   items:
     - name: "sim_obstacle_1"
-      position: [3.20, -0.4, 0.0]
+      position: [3.20, -0.3, 0.0]
       radius: 0.10
   

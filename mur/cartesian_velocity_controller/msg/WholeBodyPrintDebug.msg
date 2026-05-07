@@ -22,6 +22,11 @@ bool base_linear_saturated
 bool base_angular_saturated
 geometry_msgs/Twist base_command
 geometry_msgs/Twist base_nominal_command
+geometry_msgs/Twist base_compensation_command
+geometry_msgs/Twist base_odom_twist
+geometry_msgs/Twist base_compensation_twist
+float64 base_compensation_odom_weight
+bool base_compensation_odom_active
 
 bool lifter_enabled
 bool lifter_have_state

@@ -323,6 +323,15 @@ class WholeBodyPrintMonitor:
         )
         lines.append(
             "  "
+            f"base_comp        lin=[{msg.base_compensation_twist.linear.x:7.3f}, "
+            f"{msg.base_compensation_twist.linear.y:7.3f}]  "
+            f"ang.z={msg.base_compensation_twist.angular.z:7.3f}  "
+            f"odom_w={msg.base_compensation_odom_weight:4.2f}  "
+            f"odom_active={fmt_bool(msg.base_compensation_odom_active):>3s}  "
+            f"odom lin.x={msg.base_odom_twist.linear.x:7.3f}  ang.z={msg.base_odom_twist.angular.z:7.3f}"
+        )
+        lines.append(
+            "  "
             f"base_flags       enabled={fmt_bool(msg.base_enabled):>3s}  tf_ok={fmt_bool(msg.base_tf_ok):>3s}  "
             f"in_zone={fmt_bool(msg.base_in_tracking_zone):>3s}  "
             f"sat_lin={fmt_bool(msg.base_linear_saturated):>3s}  sat_ang={fmt_bool(msg.base_angular_saturated):>3s}"

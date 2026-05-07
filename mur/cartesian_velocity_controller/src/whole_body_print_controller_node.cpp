@@ -11,6 +11,7 @@
 
 #include <geometry_msgs/PoseStamped.h>
 #include <geometry_msgs/Twist.h>
+#include <nav_msgs/Odometry.h>
 #include <ros/ros.h>
 #include <sensor_msgs/JointState.h>
 
@@ -51,6 +52,13 @@ struct SimulatedObstacle
   std::string name;
   Eigen::Vector3d center{Eigen::Vector3d::Zero()};
   double radius{0.0};
+};
+
+struct PlanarBaseVelocity
+{
+  double vx{0.0};
+  double vy{0.0};
+  double wz{0.0};
 };
 
 double clamp(double v, double lo, double hi)
@@ -311,6 +319,10 @@ public:
       joint_state_sub_ = nh_.subscribe(joint_state_topic_, 20, &WholeBodyPrintController::jointStateCb, this);
     }
     ee_sub_ = nh_.subscribe(ee_state_topic_, 20, &WholeBodyPrintController::eeStateCb, this);
+    if (base_enabled_ && base_compensation_enabled_ && !base_odom_topic_.empty())
+    {
+      base_odom_sub_ = nh_.subscribe(base_odom_topic_, 20, &WholeBodyPrintController::baseOdomCb, this);
+    }
     if (external_target_enabled_)
     {
       target_state_sub_ = nh_.subscribe(target_state_topic_, 20, &WholeBodyPrintController::targetStateCb, this);
@@ -433,6 +445,12 @@ private:
     pnh_.param("base/align_to_path", base_align_to_path_, true);
     pnh_.param("base/tf_timeout", base_tf_timeout_, 0.05);
     pnh_.param("base/target_filter_tau", base_target_filter_tau_, 1.0);
+    pnh_.param("base_compensation/enabled", base_compensation_enabled_, true);
+    pnh_.param<std::string>("base_compensation/odom_topic", base_odom_topic_, "mobile_base_controller/odom");
+    pnh_.param("base_compensation/odom_weight", base_compensation_odom_weight_, 0.0);
+    pnh_.param("base_compensation/odom_timeout", base_compensation_odom_timeout_, 0.25);
+    base_compensation_odom_weight_ = clamp(base_compensation_odom_weight_, 0.0, 1.0);
+    base_compensation_odom_timeout_ = std::max(0.0, base_compensation_odom_timeout_);
     loadPathSpecParams();
 
     pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
@@ -803,6 +821,47 @@ private:
         return;
       }
     }
+  }
+
+  void baseOdomCb(const nav_msgs::Odometry::ConstPtr& msg)
+  {
+    Eigen::Vector3d linear(msg->twist.twist.linear.x,
+                           msg->twist.twist.linear.y,
+                           msg->twist.twist.linear.z);
+    Eigen::Vector3d angular(msg->twist.twist.angular.x,
+                            msg->twist.twist.angular.y,
+                            msg->twist.twist.angular.z);
+
+    const std::string twist_frame = msg->child_frame_id.empty() ? base_frame_ : msg->child_frame_id;
+    if (!base_frame_.empty() && !twist_frame.empty() && twist_frame != base_frame_)
+    {
+      try
+      {
+        const geometry_msgs::TransformStamped tf =
+            tf_buffer_.lookupTransform(base_frame_, twist_frame, ros::Time(0), ros::Duration(base_tf_timeout_));
+        linear = rotateVector(tf, linear);
+        angular = rotateVector(tf, angular);
+      }
+      catch (const tf2::TransformException& ex)
+      {
+        ROS_WARN_THROTTLE(2.0, "Base odom twist TF failed (%s -> %s): %s",
+                          twist_frame.c_str(), base_frame_.c_str(), ex.what());
+        have_base_odom_ = false;
+        return;
+      }
+    }
+
+    last_base_odom_velocity_.vx = linear.x();
+    last_base_odom_velocity_.vy = linear.y();
+    last_base_odom_velocity_.wz = angular.z();
+    last_base_odom_twist_.linear.x = linear.x();
+    last_base_odom_twist_.linear.y = linear.y();
+    last_base_odom_twist_.linear.z = linear.z();
+    last_base_odom_twist_.angular.x = angular.x();
+    last_base_odom_twist_.angular.y = angular.y();
+    last_base_odom_twist_.angular.z = angular.z();
+    last_base_odom_time_ = msg->header.stamp.isZero() ? ros::Time::now() : msg->header.stamp;
+    have_base_odom_ = true;
   }
 
   void targetStateCb(const cartesian_velocity_controller::CartesianTrajectorySetpoint::ConstPtr& msg)
@@ -1306,9 +1365,13 @@ private:
                                            start_tangent,
                                            currentTcpInBase(target_in_base),
                                            dt);
-        arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
+        const geometry_msgs::Twist base_command = publishBaseCommand(u, now);
+        const PlanarBaseVelocity base_compensation = baseCompensationVelocity(u, base_command, now);
+        arm_velocity = desired_linear -
+                       computeExternalTcpVelocityInPath(base_tracking_target_,
+                                                        base_compensation,
+                                                        lifterVelocityFromCommand(u));
         publishArmReference(arm_target, arm_velocity, now, true);
-        publishBaseCommand(u, now);
         publishLifterCommand(u, dt, now);
       }
 
@@ -1342,9 +1405,13 @@ private:
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, tcp_in_base, dt);
-      arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
+      const geometry_msgs::Twist base_command = publishBaseCommand(u, now);
+      const PlanarBaseVelocity base_compensation = baseCompensationVelocity(u, base_command, now);
+      arm_velocity = desired_linear -
+                     computeExternalTcpVelocityInPath(base_tracking_target_,
+                                                      base_compensation,
+                                                      lifterVelocityFromCommand(u));
       publishArmReference(arm_target, arm_velocity, now, true);
-      publishBaseCommand(u, now);
       publishLifterCommand(u, dt, now);
     }
     else
@@ -1407,16 +1474,20 @@ private:
       desired_linear.z() *= task_weight_z_;
 
       Eigen::VectorXd u = solveBaseLifter(desired_linear, base_tracking_target_, tangent, tcp_in_base, dt);
+      const geometry_msgs::Twist base_command = publishBaseCommand(u, now);
       if (prepositioning)
       {
         publishArmReference(tcp, Eigen::Vector3d::Zero(), now, false);
       }
       else
       {
-        arm_velocity = desired_linear - computeExternalTcpVelocityInPath(base_tracking_target_, u);
+        const PlanarBaseVelocity base_compensation = baseCompensationVelocity(u, base_command, now);
+        arm_velocity = desired_linear -
+                       computeExternalTcpVelocityInPath(base_tracking_target_,
+                                                        base_compensation,
+                                                        lifterVelocityFromCommand(u));
         publishArmReference(arm_target, arm_velocity, now, true);
       }
-      publishBaseCommand(u, now);
       publishLifterCommand(u, dt, now);
     }
     else
@@ -1686,13 +1757,105 @@ private:
     return (q_tf.normalized() * q).normalized();
   }
 
+  PlanarBaseVelocity twistToPlanarBaseVelocity(const geometry_msgs::Twist& twist) const
+  {
+    PlanarBaseVelocity velocity;
+    velocity.vx = twist.linear.x;
+    velocity.vy = twist.linear.y;
+    velocity.wz = twist.angular.z;
+    return velocity;
+  }
+
+  geometry_msgs::Twist planarBaseVelocityToTwist(const PlanarBaseVelocity& velocity) const
+  {
+    geometry_msgs::Twist twist;
+    twist.linear.x = velocity.vx;
+    twist.linear.y = velocity.vy;
+    twist.angular.z = velocity.wz;
+    return twist;
+  }
+
+  PlanarBaseVelocity planarBaseVelocityFromSolver(const Eigen::VectorXd& u) const
+  {
+    PlanarBaseVelocity velocity;
+    if (base_enabled_ && u.size() >= 2)
+    {
+      velocity.vx = u(0);
+      velocity.wz = u(1);
+    }
+    return velocity;
+  }
+
+  double lifterVelocityFromCommand(const Eigen::VectorXd& u) const
+  {
+    int idx = 0;
+    if (base_enabled_)
+    {
+      idx += 2;
+    }
+    if (lifter_enabled_ && u.size() > idx)
+    {
+      return u(idx);
+    }
+    return 0.0;
+  }
+
+  PlanarBaseVelocity fusedBaseCompensationVelocity(const geometry_msgs::Twist& commanded_base_twist,
+                                                   const ros::Time& now)
+  {
+    pnh_.param("base_compensation/enabled", base_compensation_enabled_, base_compensation_enabled_);
+    pnh_.param("base_compensation/odom_weight", base_compensation_odom_weight_, base_compensation_odom_weight_);
+    pnh_.param("base_compensation/odom_timeout", base_compensation_odom_timeout_, base_compensation_odom_timeout_);
+    base_compensation_odom_weight_ = clamp(base_compensation_odom_weight_, 0.0, 1.0);
+    base_compensation_odom_timeout_ = std::max(0.0, base_compensation_odom_timeout_);
+
+    const PlanarBaseVelocity commanded = twistToPlanarBaseVelocity(commanded_base_twist);
+    PlanarBaseVelocity fused = commanded;
+
+    const bool odom_fresh = have_base_odom_ &&
+                            !last_base_odom_time_.isZero() &&
+                            (base_compensation_odom_timeout_ <= 1e-9 ||
+                             (now - last_base_odom_time_).toSec() <= base_compensation_odom_timeout_);
+    const double odom_weight =
+        (base_compensation_enabled_ && odom_fresh) ? base_compensation_odom_weight_ : 0.0;
+    const double command_weight = 1.0 - odom_weight;
+
+    fused.vx = command_weight * commanded.vx + odom_weight * last_base_odom_velocity_.vx;
+    fused.vy = command_weight * commanded.vy + odom_weight * last_base_odom_velocity_.vy;
+    fused.wz = command_weight * commanded.wz + odom_weight * last_base_odom_velocity_.wz;
+
+    last_base_compensation_command_ = commanded_base_twist;
+    last_base_compensation_twist_ = planarBaseVelocityToTwist(fused);
+    last_base_compensation_odom_weight_applied_ = odom_weight;
+    last_base_compensation_odom_active_ = odom_weight > 1e-9;
+    return fused;
+  }
+
+  PlanarBaseVelocity baseCompensationVelocity(const Eigen::VectorXd& u,
+                                              const geometry_msgs::Twist& commanded_base_twist,
+                                              const ros::Time& now)
+  {
+    pnh_.param("base_compensation/enabled", base_compensation_enabled_, base_compensation_enabled_);
+    if (!base_compensation_enabled_)
+    {
+      const PlanarBaseVelocity nominal = planarBaseVelocityFromSolver(u);
+      last_base_compensation_command_ = planarBaseVelocityToTwist(nominal);
+      last_base_compensation_twist_ = last_base_compensation_command_;
+      last_base_compensation_odom_weight_applied_ = 0.0;
+      last_base_compensation_odom_active_ = false;
+      return nominal;
+    }
+
+    return fusedBaseCompensationVelocity(commanded_base_twist, now);
+  }
+
   Eigen::Vector3d computeExternalTcpVelocityInPath(const Eigen::Vector3d& base_reference_point,
-                                                   const Eigen::VectorXd& u)
+                                                   const PlanarBaseVelocity& base_velocity,
+                                                   double lifter_velocity)
   {
     Eigen::Vector3d external_velocity = Eigen::Vector3d::Zero();
-    int c = 0;
 
-    if (base_enabled_ && u.size() >= 2)
+    if (base_enabled_)
     {
       geometry_msgs::TransformStamped tf_path_base;
       try
@@ -1713,16 +1876,18 @@ private:
                                            tf_path_base.transform.rotation.x,
                                            tf_path_base.transform.rotation.y,
                                            tf_path_base.transform.rotation.z);
-      const Eigen::Vector3d base_x = q_path_base.normalized() * Eigen::Vector3d::UnitX();
+      const Eigen::Quaterniond q = q_path_base.normalized();
       const Eigen::Vector3d r = base_reference_point - base_pos;
-      const Eigen::Vector3d yaw_col(-r.y(), r.x(), 0.0);
-      external_velocity += u(c) * base_x + u(c + 1) * yaw_col;
-      c += 2;
+      const Eigen::Vector3d linear_path =
+          q * Eigen::Vector3d(base_velocity.vx, base_velocity.vy, 0.0);
+      const Eigen::Vector3d angular_path =
+          q * Eigen::Vector3d(0.0, 0.0, base_velocity.wz);
+      external_velocity += linear_path + angular_path.cross(r);
     }
 
-    if (lifter_enabled_ && u.size() > c)
+    if (lifter_enabled_)
     {
-      external_velocity.z() += u(c);
+      external_velocity.z() += lifter_velocity;
     }
     return external_velocity;
   }
@@ -1855,16 +2020,16 @@ private:
     return (now - last).toSec() >= (1.0 / rate_hz);
   }
 
-  void publishBaseCommand(const Eigen::VectorXd& u, const ros::Time& now)
+  geometry_msgs::Twist publishBaseCommand(const Eigen::VectorXd& u, const ros::Time& now)
   {
     if (!base_enabled_ || !base_tf_ok_)
     {
       publishZeroBase();
-      return;
+      return last_base_command_;
     }
     if (!dueByRate(now, last_base_pub_time_, base_rate_hz_))
     {
-      return;
+      return last_base_command_;
     }
     geometry_msgs::Twist cmd;
     cmd.linear.x = clamp(u.size() >= 1 ? u(0) : 0.0, -base_max_linear_, base_max_linear_);
@@ -1875,6 +2040,7 @@ private:
     last_base_command_ = applyLaserAvoidance(last_base_nominal_command_, now);
     base_pub_.publish(last_base_command_);
     last_base_pub_time_ = now;
+    return last_base_command_;
   }
 
   geometry_msgs::Twist limitBaseAcceleration(const geometry_msgs::Twist& target,
@@ -2047,6 +2213,10 @@ private:
     {
       last_base_command_ = geometry_msgs::Twist();
       last_base_nominal_command_ = geometry_msgs::Twist();
+      last_base_compensation_command_ = geometry_msgs::Twist();
+      last_base_compensation_twist_ = geometry_msgs::Twist();
+      last_base_compensation_odom_weight_applied_ = 0.0;
+      last_base_compensation_odom_active_ = false;
       last_base_linear_saturated_ = false;
       last_base_angular_saturated_ = false;
       base_pub_.publish(last_base_command_);
@@ -2069,6 +2239,10 @@ private:
     const geometry_msgs::Twist zero;
     last_base_nominal_command_ = limitBaseAcceleration(zero, last_base_nominal_command_, dt);
     last_base_command_ = applyLaserAvoidance(last_base_nominal_command_, now);
+    last_base_compensation_command_ = last_base_command_;
+    last_base_compensation_twist_ = last_base_command_;
+    last_base_compensation_odom_weight_applied_ = 0.0;
+    last_base_compensation_odom_active_ = false;
     last_base_linear_saturated_ = false;
     last_base_angular_saturated_ = false;
     base_pub_.publish(last_base_command_);
@@ -2530,6 +2704,11 @@ private:
     msg.base_angular_saturated = last_base_angular_saturated_;
     msg.base_command = last_base_command_;
     msg.base_nominal_command = last_base_nominal_command_;
+    msg.base_compensation_command = last_base_compensation_command_;
+    msg.base_odom_twist = last_base_odom_twist_;
+    msg.base_compensation_twist = last_base_compensation_twist_;
+    msg.base_compensation_odom_weight = last_base_compensation_odom_weight_applied_;
+    msg.base_compensation_odom_active = last_base_compensation_odom_active_;
     msg.lifter_enabled = lifter_enabled_;
     msg.lifter_have_state = have_lifter_;
     msg.lifter_position = current_lifter_;
@@ -2564,6 +2743,7 @@ private:
   ros::Publisher debug_pub_;
   ros::Subscriber ee_sub_;
   ros::Subscriber joint_state_sub_;
+  ros::Subscriber base_odom_sub_;
   std::vector<ros::Subscriber> scan_subs_;
   ros::Subscriber target_state_sub_;
   ros::ServiceServer pause_srv_;
@@ -2665,12 +2845,24 @@ private:
   bool base_tf_ok_{true};
   bool base_in_tracking_zone_{false};
   bool base_tracking_target_initialized_{false};
+  bool base_compensation_enabled_{true};
+  std::string base_odom_topic_;
+  double base_compensation_odom_weight_{0.0};
+  double base_compensation_odom_timeout_{0.25};
+  bool have_base_odom_{false};
+  bool last_base_compensation_odom_active_{false};
+  double last_base_compensation_odom_weight_applied_{0.0};
   bool last_base_linear_saturated_{false};
   bool last_base_angular_saturated_{false};
   Eigen::Vector3d base_tracking_target_{Eigen::Vector3d::Zero()};
   Eigen::Vector3d last_target_in_base_{Eigen::Vector3d::Zero()};
+  PlanarBaseVelocity last_base_odom_velocity_;
   geometry_msgs::Twist last_base_command_;
   geometry_msgs::Twist last_base_nominal_command_;
+  geometry_msgs::Twist last_base_odom_twist_;
+  geometry_msgs::Twist last_base_compensation_command_;
+  geometry_msgs::Twist last_base_compensation_twist_;
+  ros::Time last_base_odom_time_;
   ros::Time last_base_pub_time_;
   ros::Time last_lifter_pub_time_;
   ros::Time last_debug_pub_time_;

@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   std_srvs
   geometry_msgs
+  nav_msgs
   sensor_msgs
   visualization_msgs
   controller_manager_msgs
@@ -70,7 +71,7 @@ generate_dynamic_reconfigure_options(
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs std_srvs geometry_msgs sensor_msgs visualization_msgs controller_manager_msgs moveit_core moveit_ros_planning tf2 tf2_ros tf2_geometry_msgs tf2_eigen message_runtime dynamic_reconfigure
+  CATKIN_DEPENDS roscpp std_msgs std_srvs geometry_msgs nav_msgs sensor_msgs visualization_msgs controller_manager_msgs moveit_core moveit_ros_planning tf2 tf2_ros tf2_geometry_msgs tf2_eigen message_runtime dynamic_reconfigure
   DEPENDS EIGEN3
 )
 

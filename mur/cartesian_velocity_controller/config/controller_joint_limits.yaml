@@ -13,20 +13,21 @@
 #
 
 controller_joint_limits:
-  enabled: false
+  enabled: true
 
   limits:
-    # Example for UR robots. Keep disabled until you decide your controller-only bounds.
-    elbow_joint:
-      enabled: false
-      min: -2.9
-      max:  -0.3
+    # Right UR10 arm elbow controller-only bounds.
+    # Keep the elbow away from the extended/singular region while printing.
+    "UR10_r/elbow_joint":
+      enabled: true
+      min: 0.35
+      max: 2.75
 
       runtime_guard:
-        enabled: false
-        soft_zone: 0.25
-        margin: 0.08
-        reentry_velocity: 0.3
+        enabled: true
+        soft_zone: 0.35
+        margin: 0.05
+        reentry_velocity: 0.08
 
     # Add more joints as needed (same schema).
     # shoulder_pan_joint:
@@ -38,4 +39,3 @@ controller_joint_limits:
     #     soft_zone: 0.25
     #     margin: 0.01
     #     reentry_velocity: 0.05
-

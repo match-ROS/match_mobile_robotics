@@ -78,6 +78,16 @@ base:
   tf_timeout: 0.05
   target_filter_tau: 0.5
 
+base_compensation:
+  # Feed-forward used by the arm to compensate base motion.
+  # The commanded term is the final cmd_vel after acceleration limiting and avoidance.
+  enabled: true
+  odom_topic: "mobile_base_controller/odom"
+  # 0.0 = use only commanded velocity after avoidance.
+  # 1.0 = use only odometry velocity. Intermediate values blend both in base_frame.
+  odom_weight: 0.0
+  odom_timeout: 0.25
+
 base_avoidance:
   enabled: true
   use_laser_scans: false
@@ -91,8 +101,8 @@ base_avoidance:
   slowdown_distance: 0.8
   lateral_window: 0.9
   influence_lateral_window: 0.9
-  slowdown_lateral_window: 0.65
-  stop_lateral_window: 0.5
+  slowdown_lateral_window: 0.5
+  stop_lateral_window: 0.4
   front_min_x: -0.20
   k_omega: 0.8
   max_omega: 0.25

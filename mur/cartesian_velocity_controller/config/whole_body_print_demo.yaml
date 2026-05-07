@@ -16,7 +16,7 @@ ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effe
 preposition:
   enabled: true
   # Delay after /resume before the base starts prepositioning. Useful for video recording.
-  resume_delay_s: 12.0
+  resume_delay_s: 3.0
   reached_mode: "tcp"
   base_target_tolerance: 0.25
   position_tolerance: 0.05
@@ -30,17 +30,20 @@ rates:
   lifter: 10.0
   debug: 10.0
   path_marker: 30.0
+  tracking_zone_marker: 10.0
 
 tracking:
-  kp_position: 0.8
-  # Zone allocation between base and arm.
-  # Errors are computed on target_position expressed in base/base_frame.
-  # Inside full_* the arm tracks the path target fully.
-  # Outside start_* the arm target is held/limited and the base does coarse positioning.
+  kp_position: 2.0
+  # Preferred TCP zones around base/preferred_tcp_x,y, expressed in base/base_frame.
+  # With arm_gate_only_preposition=true these zones are visual/debug bands during tracking:
+  # the arm is not limited, while the base tries to recover toward the preferred TCP.
   arm_full_x_error: 0.20
   arm_full_y_error: 0.20
   arm_start_x_error: 0.35
   arm_start_y_error: 0.35
+  zone_markers_enabled: true
+  zone_marker_z: 1.3
+  zone_marker_height: 0.02
   arm_far_scale: 1.0
   arm_gate_only_preposition: true
   # Prevent the time-based path reference from running away if the real robot lags.
@@ -70,9 +73,9 @@ base:
   max_angular_acceleration: 0.80
   weight_linear: 4.0
   weight_angular: 2.0
-  k_preferred_x: 0.8
-  k_lateral: 0.8
-  k_heading: 0.8
+  k_preferred_x: 2.0
+  k_lateral: 1.2
+  k_heading: 1.0
   allow_reverse: true
   align_to_path: true
   tf_timeout: 0.05
@@ -85,7 +88,7 @@ base_compensation:
   odom_topic: "mobile_base_controller/odom"
   # 0.0 = use only commanded velocity after avoidance.
   # 1.0 = use only odometry velocity. Intermediate values blend both in base_frame.
-  odom_weight: 0.0
+  odom_weight: 0.5
   odom_timeout: 0.25
 
 base_avoidance:

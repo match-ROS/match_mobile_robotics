@@ -91,9 +91,9 @@ global_planner:
 # Level B: Local Planner Configuration (Attractive Component Only)
 # =============================================================================
 local_planner:
-  attractive_gain: 2.0
-  max_linear_velocity: &max_linear_velocity 0.25
-  max_angular_velocity: &max_angular_velocity 1.0
+  attractive_gain: 2.5
+  max_linear_velocity: &max_linear_velocity 0.4
+  max_angular_velocity: &max_angular_velocity 1.2
   velocity_scale_factor: 1.0
   integration_freeze_linear: 0.0001
   integration_freeze_angular: 0.001

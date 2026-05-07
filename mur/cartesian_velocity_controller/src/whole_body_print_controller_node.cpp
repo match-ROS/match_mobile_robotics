@@ -342,6 +342,8 @@ public:
     path_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("path_marker", 1, true);
     current_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("current_marker", 1);
     preferred_tcp_marker_pub_ = pnh_.advertise<visualization_msgs::Marker>("preferred_tcp_marker", 2, true);
+    tcp_tracking_zone_marker_pub_ =
+        pnh_.advertise<visualization_msgs::MarkerArray>("tcp_tracking_zone_markers", 1, true);
     simulated_obstacle_marker_pub_ =
         pnh_.advertise<visualization_msgs::MarkerArray>("simulated_obstacle_markers", 1, true);
     reaction_perimeter_marker_pub_ =
@@ -359,6 +361,7 @@ public:
       publishSimulatedObstacleMarkers(ros::Time::now());
     }
     publishPreferredTcpMarker();
+    publishTcpTrackingZoneMarkers(ros::Time::now());
     publishReactionPerimeterMarkers(ros::Time::now());
     timer_ = nh_.createTimer(ros::Duration(1.0 / std::max(1.0, path_rate_hz_)),
                              &WholeBodyPrintController::timerCb, this);
@@ -408,11 +411,15 @@ private:
     pnh_.param("rates/lifter", lifter_rate_hz_, 10.0);
     pnh_.param("rates/debug", debug_rate_hz_, 10.0);
     pnh_.param("rates/path_marker", path_marker_rate_hz_, 2.0);
+    pnh_.param("rates/tracking_zone_marker", tracking_zone_marker_rate_hz_, path_marker_rate_hz_);
     pnh_.param("tracking/kp_position", kp_position_, 0.8);
     pnh_.param("tracking/arm_full_x_error", arm_full_x_error_, 0.15);
     pnh_.param("tracking/arm_full_y_error", arm_full_y_error_, 0.12);
     pnh_.param("tracking/arm_start_x_error", arm_start_x_error_, 0.45);
     pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
+    pnh_.param("tracking/zone_markers_enabled", tracking_zone_markers_enabled_, true);
+    pnh_.param("tracking/zone_marker_z", tracking_zone_marker_z_, 0.05);
+    pnh_.param("tracking/zone_marker_height", tracking_zone_marker_height_, 0.02);
     pnh_.param("tracking/arm_far_scale", arm_far_scale_, 0.0);
     pnh_.param("tracking/arm_gate_only_preposition", arm_gate_only_preposition_, false);
     pnh_.param("tracking/max_tcp_error_for_progress", max_tcp_error_for_progress_, 0.0);
@@ -451,6 +458,8 @@ private:
     pnh_.param("base_compensation/odom_timeout", base_compensation_odom_timeout_, 0.25);
     base_compensation_odom_weight_ = clamp(base_compensation_odom_weight_, 0.0, 1.0);
     base_compensation_odom_timeout_ = std::max(0.0, base_compensation_odom_timeout_);
+    tracking_zone_marker_rate_hz_ = std::max(0.0, tracking_zone_marker_rate_hz_);
+    tracking_zone_marker_height_ = std::max(0.001, tracking_zone_marker_height_);
     loadPathSpecParams();
 
     pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
@@ -1219,6 +1228,7 @@ private:
     last_time_ = now;
     publishOriginTransform(now);
     publishReactionPerimeterMarkersIfDue(now);
+    publishTcpTrackingZoneMarkersIfDue(now);
 
     if (external_target_enabled_)
     {
@@ -1332,6 +1342,8 @@ private:
       updateBaseTrackingTarget(start_target, dt);
       const Eigen::Vector3d tcp = currentTcpInPath(start_target);
       const Eigen::Vector3d target_in_base = targetInBase(start_target);
+      const Eigen::Vector3d tcp_in_base = currentTcpInBase(target_in_base);
+      updateTrackingZoneState(target_in_base, tcp_in_base);
       const Eigen::Vector3d arm_target = start_target;
       Eigen::Vector3d arm_velocity = Eigen::Vector3d::Zero();
       publishCurrentMarker(start_target, now);
@@ -1363,7 +1375,7 @@ private:
         Eigen::VectorXd u = solveBaseLifter(desired_linear,
                                            base_tracking_target_,
                                            start_tangent,
-                                           currentTcpInBase(target_in_base),
+                                           tcp_in_base,
                                            dt);
         const geometry_msgs::Twist base_command = publishBaseCommand(u, now);
         const PlanarBaseVelocity base_compensation = baseCompensationVelocity(u, base_command, now);
@@ -1392,6 +1404,7 @@ private:
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
     const Eigen::Vector3d tcp_in_base = currentTcpInBase(target_in_base);
+    updateTrackingZoneState(target_in_base, tcp_in_base);
     const bool gate_arm_by_base_zone = !arm_gate_only_preposition_;
     const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base, tcp_in_base) : 1.0;
     const Eigen::Vector3d arm_target = have_tcp_ ? tcp + arm_scale * (target - tcp) : target;
@@ -1460,6 +1473,7 @@ private:
     const Eigen::Vector3d tcp = currentTcpInPath(target);
     const Eigen::Vector3d target_in_base = targetInBase(target);
     const Eigen::Vector3d tcp_in_base = currentTcpInBase(target_in_base);
+    updateTrackingZoneState(target_in_base, tcp_in_base);
     const bool prepositioning = !external_active_ && external_path_s_ <= 1e-6 && external_path_progress_ <= 1e-6;
     const bool gate_arm_by_base_zone = !arm_gate_only_preposition_ || prepositioning;
     const double arm_scale = gate_arm_by_base_zone ? computeArmTrackingScale(target_in_base, tcp_in_base) : 1.0;
@@ -1901,6 +1915,8 @@ private:
       return 1.0;
     }
 
+    updateTrackingZoneState(target_in_base, tcp_in_base);
+
     const double target_dx = std::abs(target_in_base.x() - base_preferred_x_);
     const double target_dy = std::abs(target_in_base.y() - base_preferred_y_);
     const double tcp_dx = std::abs(tcp_in_base.x() - base_preferred_x_);
@@ -1912,8 +1928,6 @@ private:
     const double start_x = std::max(full_x + 1e-6, arm_start_x_error_);
     const double start_y = std::max(full_y + 1e-6, arm_start_y_error_);
 
-    base_in_tracking_zone_ =
-        (target_dx <= full_x && target_dy <= full_y && tcp_dx <= full_x && tcp_dy <= full_y);
     if (base_in_tracking_zone_)
     {
       return 1.0;
@@ -1927,6 +1941,25 @@ private:
     const double ry = std::max(0.0, (dy - full_y) / (start_y - full_y));
     const double blend = clamp(std::max(rx, ry), 0.0, 1.0);
     return clamp(1.0 - blend * (1.0 - arm_far_scale_), 0.0, 1.0);
+  }
+
+  void updateTrackingZoneState(const Eigen::Vector3d& target_in_base,
+                               const Eigen::Vector3d& tcp_in_base)
+  {
+    if (!base_enabled_)
+    {
+      base_in_tracking_zone_ = true;
+      return;
+    }
+
+    const double full_x = std::max(1e-6, arm_full_x_error_);
+    const double full_y = std::max(1e-6, arm_full_y_error_);
+    const double target_dx = std::abs(target_in_base.x() - base_preferred_x_);
+    const double target_dy = std::abs(target_in_base.y() - base_preferred_y_);
+    const double tcp_dx = std::abs(tcp_in_base.x() - base_preferred_x_);
+    const double tcp_dy = std::abs(tcp_in_base.y() - base_preferred_y_);
+    base_in_tracking_zone_ =
+        (target_dx <= full_x && target_dy <= full_y && tcp_dx <= full_x && tcp_dy <= full_y);
   }
 
   bool startReached(const Eigen::Vector3d& start_target)
@@ -2650,6 +2683,176 @@ private:
     preferred_tcp_marker_pub_.publish(link);
   }
 
+  geometry_msgs::Point tcpTrackingZonePoint(double x, double y, double z) const
+  {
+    geometry_msgs::Point p;
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    return p;
+  }
+
+  void appendTcpTrackingZoneRectangle(visualization_msgs::Marker& marker,
+                                      double half_x,
+                                      double half_y,
+                                      double z) const
+  {
+    if (half_x <= 1e-6 || half_y <= 1e-6)
+    {
+      return;
+    }
+
+    const double min_x = base_preferred_x_ - half_x;
+    const double max_x = base_preferred_x_ + half_x;
+    const double min_y = base_preferred_y_ - half_y;
+    const double max_y = base_preferred_y_ + half_y;
+    marker.points.push_back(tcpTrackingZonePoint(min_x, min_y, z));
+    marker.points.push_back(tcpTrackingZonePoint(max_x, min_y, z));
+    marker.points.push_back(tcpTrackingZonePoint(max_x, max_y, z));
+    marker.points.push_back(tcpTrackingZonePoint(min_x, max_y, z));
+    marker.points.push_back(tcpTrackingZonePoint(min_x, min_y, z));
+  }
+
+  visualization_msgs::Marker tcpTrackingZoneFillMarker(const ros::Time& stamp,
+                                                       int id,
+                                                       const std::string& ns,
+                                                       double half_x,
+                                                       double half_y,
+                                                       double r,
+                                                       double g,
+                                                       double b,
+                                                       double a) const
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = base_frame_;
+    marker.header.stamp = stamp;
+    marker.ns = ns;
+    marker.id = id;
+    marker.type = visualization_msgs::Marker::CUBE;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.frame_locked = true;
+    marker.pose.position.x = base_preferred_x_;
+    marker.pose.position.y = base_preferred_y_;
+    marker.pose.position.z = tracking_zone_marker_z_;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = std::max(0.0, 2.0 * half_x);
+    marker.scale.y = std::max(0.0, 2.0 * half_y);
+    marker.scale.z = tracking_zone_marker_height_;
+    marker.color.r = static_cast<float>(r);
+    marker.color.g = static_cast<float>(g);
+    marker.color.b = static_cast<float>(b);
+    marker.color.a = static_cast<float>(a);
+    if (half_x <= 1e-6 || half_y <= 1e-6)
+    {
+      marker.action = visualization_msgs::Marker::DELETE;
+    }
+    return marker;
+  }
+
+  visualization_msgs::Marker tcpTrackingZoneOutlineMarker(const ros::Time& stamp,
+                                                          int id,
+                                                          const std::string& ns,
+                                                          double half_x,
+                                                          double half_y,
+                                                          double line_width,
+                                                          double r,
+                                                          double g,
+                                                          double b,
+                                                          double a) const
+  {
+    visualization_msgs::Marker marker;
+    marker.header.frame_id = base_frame_;
+    marker.header.stamp = stamp;
+    marker.ns = ns;
+    marker.id = id;
+    marker.type = visualization_msgs::Marker::LINE_STRIP;
+    marker.action = visualization_msgs::Marker::ADD;
+    marker.frame_locked = true;
+    marker.pose.orientation.w = 1.0;
+    marker.scale.x = line_width;
+    marker.color.r = static_cast<float>(r);
+    marker.color.g = static_cast<float>(g);
+    marker.color.b = static_cast<float>(b);
+    marker.color.a = static_cast<float>(a);
+    appendTcpTrackingZoneRectangle(marker,
+                                   half_x,
+                                   half_y,
+                                   tracking_zone_marker_z_ + 0.5 * tracking_zone_marker_height_ + 0.01);
+    if (marker.points.size() < 2)
+    {
+      marker.action = visualization_msgs::Marker::DELETE;
+    }
+    return marker;
+  }
+
+  void publishTcpTrackingZoneMarkers(const ros::Time& stamp)
+  {
+    visualization_msgs::MarkerArray arr;
+    if (!base_enabled_ || !tracking_zone_markers_enabled_)
+    {
+      visualization_msgs::Marker marker;
+      marker.action = visualization_msgs::Marker::DELETEALL;
+      arr.markers.push_back(marker);
+      tcp_tracking_zone_marker_pub_.publish(arr);
+      return;
+    }
+
+    const double full_x = std::max(1e-6, arm_full_x_error_);
+    const double full_y = std::max(1e-6, arm_full_y_error_);
+    const double start_x = std::max(full_x + 1e-6, arm_start_x_error_);
+    const double start_y = std::max(full_y + 1e-6, arm_start_y_error_);
+
+    arr.markers.push_back(tcpTrackingZoneFillMarker(stamp,
+                                                    0,
+                                                    "tcp_tracking_start_zone",
+                                                    start_x,
+                                                    start_y,
+                                                    1.0,
+                                                    0.65,
+                                                    0.05,
+                                                    0.08));
+    arr.markers.push_back(tcpTrackingZoneFillMarker(stamp,
+                                                    1,
+                                                    "tcp_tracking_full_zone",
+                                                    full_x,
+                                                    full_y,
+                                                    0.0,
+                                                    0.85,
+                                                    0.25,
+                                                    0.16));
+    arr.markers.push_back(tcpTrackingZoneOutlineMarker(stamp,
+                                                       2,
+                                                       "tcp_tracking_start_zone",
+                                                       start_x,
+                                                       start_y,
+                                                       0.018,
+                                                       1.0,
+                                                       0.65,
+                                                       0.05,
+                                                       0.95));
+    arr.markers.push_back(tcpTrackingZoneOutlineMarker(stamp,
+                                                       3,
+                                                       "tcp_tracking_full_zone",
+                                                       full_x,
+                                                       full_y,
+                                                       0.024,
+                                                       0.0,
+                                                       0.85,
+                                                       0.25,
+                                                       0.95));
+    tcp_tracking_zone_marker_pub_.publish(arr);
+  }
+
+  void publishTcpTrackingZoneMarkersIfDue(const ros::Time& now)
+  {
+    if (!dueByRate(now, last_tracking_zone_marker_pub_time_, tracking_zone_marker_rate_hz_))
+    {
+      return;
+    }
+    publishTcpTrackingZoneMarkers(now);
+    last_tracking_zone_marker_pub_time_ = now;
+  }
+
   std::string stateString() const
   {
     if (!pathFrameReady()) return "waiting_origin";
@@ -2738,6 +2941,7 @@ private:
   ros::Publisher path_marker_pub_;
   ros::Publisher current_marker_pub_;
   ros::Publisher preferred_tcp_marker_pub_;
+  ros::Publisher tcp_tracking_zone_marker_pub_;
   ros::Publisher simulated_obstacle_marker_pub_;
   ros::Publisher reaction_perimeter_marker_pub_;
   ros::Publisher debug_pub_;
@@ -2766,6 +2970,7 @@ private:
   double lifter_rate_hz_{10.0};
   double debug_rate_hz_{10.0};
   double path_marker_rate_hz_{2.0};
+  double tracking_zone_marker_rate_hz_{2.0};
   double s_{0.0};
   bool loop_{false};
   bool paused_{true};
@@ -2815,6 +3020,9 @@ private:
   double arm_full_y_error_{0.12};
   double arm_start_x_error_{0.45};
   double arm_start_y_error_{0.35};
+  bool tracking_zone_markers_enabled_{true};
+  double tracking_zone_marker_z_{0.05};
+  double tracking_zone_marker_height_{0.02};
   double arm_far_scale_{0.0};
   bool arm_gate_only_preposition_{false};
   double max_tcp_error_for_progress_{0.0};
@@ -2867,6 +3075,7 @@ private:
   ros::Time last_lifter_pub_time_;
   ros::Time last_debug_pub_time_;
   ros::Time last_path_marker_pub_time_;
+  ros::Time last_tracking_zone_marker_pub_time_;
   ros::Time last_reaction_perimeter_marker_pub_time_;
 
   bool avoidance_enabled_{false};

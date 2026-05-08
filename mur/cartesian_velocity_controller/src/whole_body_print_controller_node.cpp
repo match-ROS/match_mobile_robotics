@@ -1009,21 +1009,39 @@ private:
            waypoint_mode == "first_absolute_then_offsets";
   }
 
+  bool incrementalWaypointMode(const std::string& waypoint_mode) const
+  {
+    return waypoint_mode == "first_absolute_then_incremental" ||
+           waypoint_mode == "first_absolute_rest_incremental" ||
+           waypoint_mode == "first_absolute_then_deltas";
+  }
+
   bool supportedWaypointMode(const std::string& waypoint_mode) const
   {
     return waypoint_mode == "absolute" ||
            waypoint_mode.empty() ||
-           firstRelativeWaypointMode(waypoint_mode);
+           firstRelativeWaypointMode(waypoint_mode) ||
+           incrementalWaypointMode(waypoint_mode);
   }
 
   Eigen::Vector3d resolvePathPoint(const Eigen::Vector3d& raw_point,
                                    const Eigen::Vector3d& first_point,
+                                   const Eigen::Vector3d& previous_point,
                                    bool have_first_point,
-                                   bool use_first_relative) const
+                                   bool use_first_relative,
+                                   bool use_incremental) const
   {
+    if (!have_first_point)
+    {
+      return raw_point;
+    }
     if (use_first_relative && have_first_point)
     {
       return first_point + raw_point;
+    }
+    if (use_incremental)
+    {
+      return previous_point + raw_point;
     }
     return raw_point;
   }
@@ -1147,6 +1165,7 @@ private:
                                const Eigen::Vector3d& first_point,
                                bool have_first_point,
                                bool use_first_relative,
+                               bool use_incremental,
                                const std::string& source_name,
                                int index) const
   {
@@ -1161,6 +1180,7 @@ private:
       return false;
     }
 
+    const Eigen::Vector3d start = points.back();
     Eigen::Vector3d raw_end;
     if (!readNamedPoint(spec, std::vector<std::string>{"end", "to", "position"}, raw_end))
     {
@@ -1168,8 +1188,8 @@ private:
       return false;
     }
 
-    const Eigen::Vector3d start = points.back();
-    const Eigen::Vector3d end = resolvePathPoint(raw_end, first_point, have_first_point, use_first_relative);
+    const Eigen::Vector3d end =
+        resolvePathPoint(raw_end, first_point, start, have_first_point, use_first_relative, use_incremental);
     const Eigen::Vector2d start_xy(start.x(), start.y());
     const Eigen::Vector2d end_xy(end.x(), end.y());
     const Eigen::Vector2d chord = end_xy - start_xy;
@@ -1197,7 +1217,8 @@ private:
         ROS_ERROR("Invalid center in arc %s[%d]", source_name.c_str(), index);
         return false;
       }
-      const Eigen::Vector3d center = resolvePathPoint(raw_center, first_point, have_first_point, use_first_relative);
+      const Eigen::Vector3d center =
+          resolvePathPoint(raw_center, first_point, start, have_first_point, use_first_relative, use_incremental);
       center_xy = Eigen::Vector2d(center.x(), center.y());
       const double r0 = (start_xy - center_xy).norm();
       const double r1 = (end_xy - center_xy).norm();
@@ -1309,11 +1330,12 @@ private:
     const std::string normalized_waypoint_mode = normalizedString(waypoint_mode);
     if (!supportedWaypointMode(normalized_waypoint_mode))
     {
-      ROS_ERROR("waypoint_mode must be 'absolute' or 'first_absolute_then_relative'");
+      ROS_ERROR("waypoint_mode must be 'absolute', 'first_absolute_then_relative', or 'first_absolute_then_incremental'");
       return points;
     }
 
     const bool use_first_relative = firstRelativeWaypointMode(normalized_waypoint_mode);
+    const bool use_incremental = incrementalWaypointMode(normalized_waypoint_mode);
     bool have_first_point = false;
     Eigen::Vector3d first_point = Eigen::Vector3d::Zero();
 
@@ -1327,6 +1349,7 @@ private:
                                      first_point,
                                      have_first_point,
                                      use_first_relative,
+                                     use_incremental,
                                      source_name,
                                      i))
         {
@@ -1350,7 +1373,7 @@ private:
         points.push_back(p);
         continue;
       }
-      p = resolvePathPoint(p, first_point, have_first_point, use_first_relative);
+      p = resolvePathPoint(p, first_point, points.back(), have_first_point, use_first_relative, use_incremental);
       points.push_back(p);
     }
     return points;

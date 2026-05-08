@@ -5,6 +5,12 @@
 # instant mur620b/print_origin coincides with mur620b/base_link, then stays
 # fixed in mur620b/odom for the rest of the path.
 frame_id: "mur620b/print_origin"
+# Supported waypoint modes:
+# - absolute: every point is expressed in frame_id.
+# - first_absolute_then_relative: first point absolute; following values are
+#   offsets from the first point, expressed in the same axes as frame_id.
+# - first_absolute_then_incremental: first point absolute; following values are
+#   deltas from the previous resolved point, expressed in the same axes as frame_id.
 waypoint_mode: "first_absolute_then_relative"
 path_origin:
   enabled: true
@@ -33,7 +39,9 @@ orientation_rpy: [3.141592653589793, 0.0, 0.0]
 waypoints:
   # First point: absolute in mur620b/print_origin.
   - position: [0.6, -0.8, 1.3]
-  # Following points: offsets relative to the first point.
+  # With waypoint_mode=first_absolute_then_relative, following points are offsets
+  # relative to the first point. With first_absolute_then_incremental, they are
+  # segment deltas from the previous resolved point.
   # - position: [0.00, 0.0, 0.0]
   # - position: [0.60, 0.0, 0.0]
   # - position: [2.20, 0.0, 0.0]
@@ -55,8 +63,8 @@ waypoints:
   # - position: [6.20, -1.5, 0.0]
 
   # Circular arc segment. It starts at the previous point and ends at "end".
-  # With waypoint_mode=first_absolute_then_relative, "end" and "center" use
-  # the same convention as position: offsets from the first waypoint.
+  # "end" and "center" use the same convention as position for the selected
+  # waypoint_mode.
   # "side" is the side where the arc bulges while moving from previous point
   # to end. Swap left/right to get the opposite concave/convex arc.
   #

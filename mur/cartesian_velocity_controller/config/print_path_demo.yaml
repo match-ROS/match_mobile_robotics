@@ -19,9 +19,12 @@ loop: false
 max_linear_velocity: 0.40
 max_linear_acceleration: 0.80
 max_linear_jerk: 10.0
-blend_tolerance: 0.08
+# Radius used to round sharp corners between consecutive path segments.
+# Set to 0.0 to keep exact angular waypoints.
+corner_radius: 0.2
+blend_tolerance: 0.03
 # Default internal sampling distance for circular arcs. Smaller values produce
-# smoother arcs with more generated points.
+# smoother arcs and rounded corners with more generated points.
 arc_max_step: 0.05
 
 # TCP local Z points downward relative to base_link Z-up.
@@ -31,11 +34,23 @@ waypoints:
   # First point: absolute in mur620b/print_origin.
   - position: [0.6, -0.8, 1.3]
   # Following points: offsets relative to the first point.
+  # - position: [0.00, 0.0, 0.0]
+  # - position: [0.60, 0.0, 0.0]
+  # - position: [2.20, 0.0, 0.0]
+  # - position: [4.20, -1.5, 0.0]
+  # - position: [6.20, -1.5, 0.0]
+
+
   - position: [0.00, 0.0, 0.0]
-  - position: [0.60, 0.0, 0.0]
-  - position: [2.20, 0.0, 0.0]
-  - position: [4.20, -1.5, 0.0]
-  - position: [6.20, -1.5, 0.0]
+  - position: [1.60, 0.0, 0.0]
+  - arc:
+      end: [2.00, -1.50, 0.0]
+      radius: 1.0
+      side: right
+      max_step: 0.05
+  # - position: [2.20, 0.0, 0.0]
+  # - position: [4.20, -1.5, 0.0]
+  # - position: [6.20, -1.5, 0.0]
 
   # Circular arc segment. It starts at the previous point and ends at "end".
   # With waypoint_mode=first_absolute_then_relative, "end" and "center" use

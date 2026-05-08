@@ -236,10 +236,21 @@ public:
     return setPoints(points);
   }
 
-  bool setPoints(const std::vector<Eigen::Vector3d>& points)
+  bool setPoints(const std::vector<Eigen::Vector3d>& points,
+                 double corner_radius = 0.0,
+                 double corner_max_step = 0.05)
   {
     points_.clear();
-    for (const auto& p : points)
+    const std::vector<Eigen::Vector3d> path_points = roundedCornerPoints(points, corner_radius, corner_max_step);
+    if (corner_radius > 1e-9)
+    {
+      ROS_INFO("Path corner rounding: radius=%.3f m, max_step=%.3f m, points %zu -> %zu",
+               corner_radius,
+               corner_max_step,
+               points.size(),
+               path_points.size());
+    }
+    for (const auto& p : path_points)
     {
       points_.push_back({p});
     }
@@ -319,6 +330,196 @@ public:
   double totalLength() const { return total_length_; }
 
 private:
+  struct CornerBlend
+  {
+    double entry_s{0.0};
+    double exit_s{0.0};
+    double offset{0.0};
+    Eigen::Vector3d entry{Eigen::Vector3d::Zero()};
+    Eigen::Vector3d exit{Eigen::Vector3d::Zero()};
+    Eigen::Vector3d tangent_in{Eigen::Vector3d::UnitX()};
+    Eigen::Vector3d tangent_out{Eigen::Vector3d::UnitX()};
+  };
+
+  void appendPointIfDistinct(std::vector<Eigen::Vector3d>& out, const Eigen::Vector3d& p) const
+  {
+    if (out.empty() || (out.back() - p).norm() > 1e-9)
+    {
+      out.push_back(p);
+    }
+  }
+
+  std::vector<double> cumulativePolylineLengths(const std::vector<Eigen::Vector3d>& points) const
+  {
+    std::vector<double> cumulative(points.size(), 0.0);
+    for (std::size_t i = 1; i < points.size(); ++i)
+    {
+      cumulative[i] = cumulative[i - 1] + (points[i] - points[i - 1]).norm();
+    }
+    return cumulative;
+  }
+
+  Eigen::Vector3d pointAtPolylineDistance(const std::vector<Eigen::Vector3d>& points,
+                                          const std::vector<double>& cumulative,
+                                          double s) const
+  {
+    if (points.empty())
+    {
+      return Eigen::Vector3d::Zero();
+    }
+    if (s <= 0.0)
+    {
+      return points.front();
+    }
+    if (s >= cumulative.back())
+    {
+      return points.back();
+    }
+
+    for (std::size_t i = 0; i + 1 < points.size(); ++i)
+    {
+      const double s0 = cumulative[i];
+      const double s1 = cumulative[i + 1];
+      if (s1 <= s0)
+      {
+        continue;
+      }
+      if (s <= s1)
+      {
+        const double u = (s - s0) / (s1 - s0);
+        return points[i] + u * (points[i + 1] - points[i]);
+      }
+    }
+    return points.back();
+  }
+
+  Eigen::Vector3d cubicBezierPoint(const Eigen::Vector3d& p0,
+                                   const Eigen::Vector3d& p1,
+                                   const Eigen::Vector3d& p2,
+                                   const Eigen::Vector3d& p3,
+                                   double u) const
+  {
+    const double t = clamp(u, 0.0, 1.0);
+    const double omt = 1.0 - t;
+    return omt * omt * omt * p0 +
+           3.0 * omt * omt * t * p1 +
+           3.0 * omt * t * t * p2 +
+           t * t * t * p3;
+  }
+
+  std::vector<Eigen::Vector3d> roundedCornerPoints(const std::vector<Eigen::Vector3d>& points,
+                                                   double corner_radius,
+                                                   double corner_max_step) const
+  {
+    const double radius = std::max(0.0, corner_radius);
+    const double max_step = std::max(1e-3, corner_max_step);
+    if (radius <= 1e-9 || points.size() < 3)
+    {
+      return points;
+    }
+
+    const std::vector<double> cumulative = cumulativePolylineLengths(points);
+    if (cumulative.empty() || cumulative.back() <= 1e-9)
+    {
+      return points;
+    }
+
+    std::vector<CornerBlend> blends;
+    blends.reserve(points.size());
+    constexpr double kMinCornerAngle = 0.08;  // Avoid smoothing already sampled circular arcs.
+    for (std::size_t i = 1; i + 1 < points.size(); ++i)
+    {
+      const Eigen::Vector3d incoming = points[i] - points[i - 1];
+      const Eigen::Vector3d outgoing = points[i + 1] - points[i];
+      const double len_in = incoming.norm();
+      const double len_out = outgoing.norm();
+      if (len_in <= 1e-9 || len_out <= 1e-9)
+      {
+        continue;
+      }
+
+      const Eigen::Vector3d tangent_in = incoming / len_in;
+      const Eigen::Vector3d tangent_out = outgoing / len_out;
+      const double turn_angle = std::acos(clamp(tangent_in.dot(tangent_out), -1.0, 1.0));
+      if (turn_angle <= kMinCornerAngle)
+      {
+        continue;
+      }
+
+      const double available_before = cumulative[i] - cumulative.front();
+      const double available_after = cumulative.back() - cumulative[i];
+      const double offset = std::min(radius, 0.45 * std::min(available_before, available_after));
+      if (offset <= 1e-9)
+      {
+        continue;
+      }
+
+      CornerBlend blend;
+      blend.entry_s = cumulative[i] - offset;
+      blend.exit_s = cumulative[i] + offset;
+      blend.offset = offset;
+      blend.entry = pointAtPolylineDistance(points, cumulative, blend.entry_s);
+      blend.exit = pointAtPolylineDistance(points, cumulative, blend.exit_s);
+      blend.tangent_in = tangent_in;
+      blend.tangent_out = tangent_out;
+      blends.push_back(blend);
+    }
+
+    if (blends.empty())
+    {
+      return points;
+    }
+
+    std::vector<Eigen::Vector3d> rounded;
+    rounded.reserve(points.size() * 3);
+    appendPointIfDistinct(rounded, points.front());
+    double consumed_s = 0.0;
+    std::size_t raw_index = 1;
+    for (const CornerBlend& blend : blends)
+    {
+      if (blend.entry_s <= consumed_s + 1e-9)
+      {
+        continue;
+      }
+
+      while (raw_index < points.size() && cumulative[raw_index] < blend.entry_s - 1e-9)
+      {
+        if (cumulative[raw_index] > consumed_s + 1e-9)
+        {
+          appendPointIfDistinct(rounded, points[raw_index]);
+        }
+        ++raw_index;
+      }
+
+      appendPointIfDistinct(rounded, blend.entry);
+      const double handle = 0.55 * blend.offset;
+      const Eigen::Vector3d c1 = blend.entry + blend.tangent_in * handle;
+      const Eigen::Vector3d c2 = blend.exit - blend.tangent_out * handle;
+      const int segments = std::max(2, static_cast<int>(std::ceil((blend.exit_s - blend.entry_s) / max_step)));
+      for (int j = 1; j <= segments; ++j)
+      {
+        const double u = static_cast<double>(j) / static_cast<double>(segments);
+        appendPointIfDistinct(rounded, cubicBezierPoint(blend.entry, c1, c2, blend.exit, u));
+      }
+
+      consumed_s = blend.exit_s;
+      while (raw_index < points.size() && cumulative[raw_index] <= consumed_s + 1e-9)
+      {
+        ++raw_index;
+      }
+    }
+
+    while (raw_index < points.size())
+    {
+      if (cumulative[raw_index] > consumed_s + 1e-9)
+      {
+        appendPointIfDistinct(rounded, points[raw_index]);
+      }
+      ++raw_index;
+    }
+    return rounded;
+  }
+
   std::vector<PathPoint> points_;
   std::vector<double> segment_lengths_;
   double total_length_{0.0};
@@ -333,7 +534,7 @@ public:
     , tf_listener_(tf_buffer_)
   {
     loadParams();
-    if (!external_target_enabled_ && !path_.setPoints(configured_path_points_))
+    if (!external_target_enabled_ && !path_.setPoints(configured_path_points_, corner_radius_, arc_max_step_))
     {
       ros::shutdown();
       return;
@@ -441,6 +642,7 @@ private:
     pnh_.param("path/max_linear_velocity", path_max_linear_velocity_, speed_);
     pnh_.param("path/max_linear_acceleration", path_max_linear_acceleration_, 0.0);
     pnh_.param("path/arc_max_step", arc_max_step_, arc_max_step_);
+    pnh_.param("path/corner_radius", corner_radius_, corner_radius_);
     pnh_.param("path/loop", loop_, false);
     pnh_.param("start_paused", paused_, true);
     stopped_ = false;
@@ -615,6 +817,8 @@ private:
     pnh_.param("path_spec/max_linear_velocity", path_max_linear_velocity_, path_max_linear_velocity_);
     pnh_.param("path_spec/max_linear_acceleration", path_max_linear_acceleration_, path_max_linear_acceleration_);
     pnh_.param("path_spec/arc_max_step", arc_max_step_, arc_max_step_);
+    pnh_.param("path_spec/blend_tolerance", corner_radius_, corner_radius_);
+    pnh_.param("path_spec/corner_radius", corner_radius_, corner_radius_);
     pnh_.param("path_spec/loop", loop_, loop_);
     if (path_max_linear_velocity_ > 1e-9)
     {
@@ -2805,9 +3009,9 @@ private:
     marker.action = visualization_msgs::Marker::ADD;
     marker.pose.orientation.w = 1.0;
     marker.scale.x = 0.02;
-    marker.color.r = 0.1;
-    marker.color.g = 0.8;
-    marker.color.b = 1.0;
+    marker.color.r = 1.0;
+    marker.color.g = 0.45;
+    marker.color.b = 0.0;
     marker.color.a = 1.0;
     for (const auto& p : path_.points())
     {
@@ -3447,6 +3651,7 @@ private:
   double path_max_linear_velocity_{0.0};
   double path_max_linear_acceleration_{0.0};
   double arc_max_step_{0.05};
+  double corner_radius_{0.0};
   double path_rate_hz_{30.0};
   double base_rate_hz_{20.0};
   double lifter_rate_hz_{10.0};

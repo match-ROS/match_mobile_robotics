@@ -2019,6 +2019,16 @@ private:
     return std::max(x_blend, y_blend);
   }
 
+  double pointFullTrackingZoneMargin(const Eigen::Vector3d& point_in_base,
+                                     const TrackingZoneLimits& full) const
+  {
+    const double dx = point_in_base.x() - base_preferred_x_;
+    const double dy = point_in_base.y() - base_preferred_y_;
+    const double x_margin = dx >= 0.0 ? full.x_forward - dx : full.x_backward + dx;
+    const double y_margin = dy >= 0.0 ? full.y_left - dy : full.y_right + dy;
+    return std::min(x_margin, y_margin);
+  }
+
   double computeArmTrackingScale(const Eigen::Vector3d& target_in_base,
                                  const Eigen::Vector3d& tcp_in_base)
   {
@@ -2990,11 +3000,25 @@ private:
     msg.arm_target_position = pointToMsg(arm_target);
     msg.current_tcp_position = pointToMsg(tcp);
     msg.target_in_base = pointToMsg(target_in_base);
+    const Eigen::Vector3d tcp_in_base = currentTcpInBase(target_in_base);
+    msg.current_tcp_in_base = pointToMsg(tcp_in_base);
     msg.tcp_error = vectorToMsg(target - tcp);
+    msg.target_preferred_tcp_error = vectorToMsg(
+        Eigen::Vector3d(target_in_base.x() - base_preferred_x_, target_in_base.y() - base_preferred_y_, 0.0));
+    msg.tcp_preferred_tcp_error = vectorToMsg(
+        Eigen::Vector3d(tcp_in_base.x() - base_preferred_x_, tcp_in_base.y() - base_preferred_y_, 0.0));
     msg.arm_tracking_scale = arm_scale;
     msg.base_enabled = base_enabled_;
     msg.base_tf_ok = base_tf_ok_;
     msg.base_in_tracking_zone = base_in_tracking_zone_;
+    const TrackingZoneLimits full = fullTrackingZoneLimits();
+    const TrackingZoneLimits start = startTrackingZoneLimits();
+    msg.target_tracking_zone_blend = base_enabled_ ? pointTrackingZoneBlend(target_in_base, full, start) : 0.0;
+    msg.tcp_tracking_zone_blend = base_enabled_ ? pointTrackingZoneBlend(tcp_in_base, full, start) : 0.0;
+    msg.tracking_zone_blend = std::max(msg.target_tracking_zone_blend, msg.tcp_tracking_zone_blend);
+    msg.target_full_zone_margin = base_enabled_ ? pointFullTrackingZoneMargin(target_in_base, full) : 0.0;
+    msg.tcp_full_zone_margin = base_enabled_ ? pointFullTrackingZoneMargin(tcp_in_base, full) : 0.0;
+    msg.tracking_zone_margin = std::min(msg.target_full_zone_margin, msg.tcp_full_zone_margin);
     msg.base_linear_saturated = last_base_linear_saturated_;
     msg.base_angular_saturated = last_base_angular_saturated_;
     msg.base_command = last_base_command_;
@@ -3011,6 +3035,14 @@ private:
     msg.lifter_velocity_command = last_lifter_velocity_command_;
     msg.preferred_tcp_x = base_preferred_x_;
     msg.preferred_tcp_y = base_preferred_y_;
+    msg.arm_full_x_backward_error = arm_full_x_backward_error_;
+    msg.arm_full_x_forward_error = arm_full_x_forward_error_;
+    msg.arm_full_y_right_error = arm_full_y_right_error_;
+    msg.arm_full_y_left_error = arm_full_y_left_error_;
+    msg.arm_start_x_backward_error = arm_start_x_backward_error_;
+    msg.arm_start_x_forward_error = arm_start_x_forward_error_;
+    msg.arm_start_y_right_error = arm_start_y_right_error_;
+    msg.arm_start_y_left_error = arm_start_y_left_error_;
     msg.avoidance_enabled = avoidance_enabled_;
     msg.avoidance_active = avoidance_active_;
     msg.avoidance_min_distance = std::isfinite(avoidance_min_distance_) ? avoidance_min_distance_ : -1.0;

@@ -43,6 +43,8 @@ TOPICS=(
   "/${MUR_NS}/whole_body_print_controller/path_marker"
   "/${MUR_NS}/whole_body_print_controller/current_marker"
   "/${MUR_NS}/whole_body_print_controller/preferred_tcp_marker"
+  "/${MUR_NS}/whole_body_print_controller/tcp_tracking_zone_markers"
+  "/${MUR_NS}/whole_body_print_controller/reaction_perimeter_markers"
   "/${MUR_NS}/whole_body_print_controller/simulated_obstacle_markers"
 
   "/${MUR_NS}/cartesian_velocity_controller_${ARM_SUFFIX}/target_pose"

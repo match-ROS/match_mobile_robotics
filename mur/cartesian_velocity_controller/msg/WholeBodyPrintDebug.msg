@@ -12,12 +12,21 @@ geometry_msgs/Point target_position
 geometry_msgs/Point arm_target_position
 geometry_msgs/Point current_tcp_position
 geometry_msgs/Point target_in_base
+geometry_msgs/Point current_tcp_in_base
 geometry_msgs/Vector3 tcp_error
+geometry_msgs/Vector3 target_preferred_tcp_error
+geometry_msgs/Vector3 tcp_preferred_tcp_error
 
 float64 arm_tracking_scale
 bool base_enabled
 bool base_tf_ok
 bool base_in_tracking_zone
+float64 target_tracking_zone_blend
+float64 tcp_tracking_zone_blend
+float64 tracking_zone_blend
+float64 target_full_zone_margin
+float64 tcp_full_zone_margin
+float64 tracking_zone_margin
 bool base_linear_saturated
 bool base_angular_saturated
 geometry_msgs/Twist base_command
@@ -36,6 +45,14 @@ float64 lifter_velocity_command
 
 float64 preferred_tcp_x
 float64 preferred_tcp_y
+float64 arm_full_x_backward_error
+float64 arm_full_x_forward_error
+float64 arm_full_y_right_error
+float64 arm_full_y_left_error
+float64 arm_start_x_backward_error
+float64 arm_start_x_forward_error
+float64 arm_start_y_right_error
+float64 arm_start_y_left_error
 
 bool avoidance_enabled
 bool avoidance_active

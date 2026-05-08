@@ -16,7 +16,7 @@ ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effe
 preposition:
   enabled: true
   # Delay after /resume before the base starts prepositioning. Useful for video recording.
-  resume_delay_s: 3.0
+  resume_delay_s: 12.0
   reached_mode: "tcp"
   base_target_tolerance: 0.25
   position_tolerance: 0.05
@@ -39,23 +39,23 @@ tracking:
   # the arm is not limited, while the base tries to recover toward the preferred TCP.
   # Symmetric fallback values. Directional values below override them per side.
   arm_full_x_error: 0.20
-  arm_full_y_error: 0.35
+  arm_full_y_error: 0.20
   arm_start_x_error: 0.35
-  arm_start_y_error: 0.50
+  arm_start_y_error: 0.35
   # Asymmetric TCP zone distances from base/preferred_tcp_x,y in base_frame:
   # +x=forward, -x=backward, +y=left, -y=right.
-  arm_full_x_backward_error: 0.30
-  arm_full_x_forward_error: 0.30
-  arm_full_y_right_error: 0.30
-  arm_full_y_left_error: 0.35
-  arm_start_x_backward_error: 0.55
-  arm_start_x_forward_error: 0.65
-  arm_start_y_right_error: 0.50
-  arm_start_y_left_error: 0.40
+  #arm_full_x_backward_error: 0.30
+  #arm_full_x_forward_error: 0.30
+  #arm_full_y_right_error: 0.30
+  #arm_full_y_left_error: 0.35
+  #arm_start_x_backward_error: 0.55
+  #arm_start_x_forward_error: 0.65
+  #arm_start_y_right_error: 0.50
+  #arm_start_y_left_error: 0.40
   zone_markers_enabled: true
   zone_marker_z: 1.3
   zone_marker_height: 0.02
-  arm_far_scale: 0.7
+  arm_far_scale: 1.0
   arm_gate_only_preposition: true
   # Prevent the time-based path reference from running away if the real robot lags.
   # Set any of these to 0.0 to disable that specific guard.
@@ -73,7 +73,7 @@ base:
   base_frame: "$(arg mur_ns)/base_link"
   # Desired path target position expressed in base_frame.
   # x is forward/backward, y is lateral left/right in the robot base frame.
-  preferred_tcp_x: 0.55
+  preferred_tcp_x: 0.25
   #preferred_tcp_y: -0.75
   preferred_tcp_y: -1.0
   max_linear_velocity: 0.5

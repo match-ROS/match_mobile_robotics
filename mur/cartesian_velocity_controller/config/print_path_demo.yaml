@@ -44,7 +44,7 @@ waypoints:
 # position x/y are offsets from the first waypoint x/y; z remains absolute unless
 # relative_z is set to true.
 obstacles:
-  enabled: true
+  enabled: false
   relative_to_first_waypoint: true
   relative_z: false
   marker_height: 0.12

@@ -489,7 +489,7 @@ private:
 
     pnh_.param("base_avoidance/enabled", avoidance_enabled_, false);
     pnh_.param("base_avoidance/use_laser_scans", avoidance_use_laser_scans_, true);
-    pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "mir/scan");
+    pnh_.param<std::string>("base_avoidance/scan_topic", avoidance_scan_topic_, "scan");
     loadScanTopics();
     pnh_.param<std::string>("base_avoidance/distance_mode", avoidance_distance_mode_, "radial");
     if (avoidance_distance_mode_ != "radial" &&
@@ -828,7 +828,7 @@ private:
 
     if (avoidance_scan_topics_.empty())
     {
-      avoidance_scan_topics_.push_back("mir/scan");
+      avoidance_scan_topics_.push_back("scan");
     }
   }
 

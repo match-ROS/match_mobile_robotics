@@ -56,9 +56,13 @@ TOPICS=(
 
 if [[ "${RECORD_SCANS}" == "true" ]]; then
   TOPICS+=(
-    "/${MUR_NS}/mir/f_scan"
-    "/${MUR_NS}/mir/b_scan"
-    "/${MUR_NS}/mir/scan"
+    "/${MUR_NS}/f_scan"
+    "/${MUR_NS}/b_scan"
+    "/${MUR_NS}/scan"
+    "/${MUR_NS}/f_raw_scan"
+    "/${MUR_NS}/b_raw_scan"
+    "/${MUR_NS}/f_scan_rep117"
+    "/${MUR_NS}/b_scan_rep117"
   )
 fi
 

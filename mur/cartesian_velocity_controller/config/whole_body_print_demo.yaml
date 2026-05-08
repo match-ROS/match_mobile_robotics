@@ -16,11 +16,11 @@ ee_state_topic: "cartesian_velocity_controller_$(arg controller_suffix)/end_effe
 preposition:
   enabled: true
   # Delay after /resume before the base starts prepositioning. Useful for video recording.
-  resume_delay_s: 12.0
+  resume_delay_s: 5.0
   reached_mode: "tcp"
   base_target_tolerance: 0.25
   position_tolerance: 0.05
-  dwell_s: 0.0
+  dwell_s: 20.0
 
 rates:
   # The arm controller runs independently at its own high control_rate.
@@ -104,9 +104,9 @@ base_compensation:
 
 base_avoidance:
   enabled: true
-  use_laser_scans: false
-  scan_topic: "mir/f_scan"
-  scan_topics: ["mir/f_scan", "mir/scan"]
+  use_laser_scans: true
+  scan_topic: "scan"
+  scan_topics: ["f_scan", "b_scan"]
   # radial: circular sectors; longitudinal/rectangular: front x-distance;
   # rounded_front/front_arc: rectangular sides with a circular front arc through the front corners.
   distance_mode: "rounded_front"

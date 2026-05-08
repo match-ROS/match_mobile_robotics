@@ -383,7 +383,7 @@ Visualization Manager:
         Interactive Marker Size: 0
         Joint Violation Color: 255; 0; 255
         Planning Group: UR_arm_r
-        Query Goal State: true
+        Query Goal State: false
         Query Start State: false
         Show Workspace: false
         Start State Alpha: 1
@@ -847,18 +847,18 @@ Visualization Manager:
                       {}
                   mur620b/camera_floor_left_depth_optical_frame:
                     {}
-                  mur620b/camera_infra1_frame:
-                    mur620b/camera_infra1_optical_frame:
-                      {}
-                  mur620b/camera_infra2_frame:
-                    mur620b/camera_infra2_optical_frame:
-                      {}
                 mur620b/camera_floor_right_link:
                   mur620b/camera_floor_right_color_frame:
                     mur620b/camera_floor_right_color_optical_frame:
                       {}
                   mur620b/camera_floor_right_depth_optical_frame:
                     {}
+                  mur620b/camera_infra1_frame:
+                    mur620b/camera_infra1_optical_frame:
+                      {}
+                  mur620b/camera_infra2_frame:
+                    mur620b/camera_infra2_optical_frame:
+                      {}
                 mur620b/fl_caster_rotation_link:
                   mur620b/fl_caster_wheel_link:
                     {}
@@ -1062,14 +1062,13 @@ Visualization Manager:
       Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /mur620b/whole_body_print_controller/simulated_obstacle_markers
       Name: MarkerArray
       Namespaces:
-        simulated_base_obstacle_labels: true
-        simulated_base_obstacles: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
     - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /mur620b/whole_body_print_controller/reaction_perimeter_markers
@@ -1137,14 +1136,13 @@ Visualization Manager:
       Use rainbow: true
       Value: true
     - Class: rviz/MarkerArray
-      Enabled: true
+      Enabled: false
       Marker Topic: /mur620b/whole_body_print_controller/tcp_tracking_zone_markers
       Name: MarkerArray
       Namespaces:
-        tcp_tracking_full_zone: true
-        tcp_tracking_start_zone: true
+        {}
       Queue Size: 100
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1173,7 +1171,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.00294303894043
+      Distance: 9.188069343566895
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1189,9 +1187,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.1197967529296875
+      Pitch: 1.5697963237762451
       Target Frame: mur620b/base_footprint
-      Yaw: 3.7504870891571045
+      Yaw: 3.7504868507385254
     Saved: ~
 Window Geometry:
   Displays:

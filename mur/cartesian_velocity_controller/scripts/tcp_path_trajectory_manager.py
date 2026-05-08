@@ -201,6 +201,144 @@ def _unit(v: Point3) -> Point3:
     return (v[0] / n, v[1] / n, v[2] / n)
 
 
+def _is_arc_item(value) -> bool:
+    if not isinstance(value, dict):
+        return False
+    if "arc" in value:
+        return True
+    return str(value.get("type", "")).strip().lower() == "arc"
+
+
+def _arc_spec_from_item(value, index: int):
+    if not isinstance(value, dict):
+        raise ValueError(f"waypoints[{index}] arc must be a dictionary")
+    spec = value.get("arc", value)
+    if not isinstance(spec, dict):
+        raise ValueError(f"waypoints[{index}].arc must be a dictionary")
+    return spec
+
+
+def _point_from_arc_end(spec, index: int) -> Point3:
+    for key in ("end", "to", "position"):
+        if key in spec:
+            return _point_from_value(spec[key], index)
+    raise ValueError(f"waypoints[{index}].arc must define end or to")
+
+
+def _resolve_path_point(raw_point: Point3, first_point: Optional[Point3], first_relative: bool) -> Point3:
+    if first_relative and first_point is not None:
+        return _add(first_point, raw_point)
+    return raw_point
+
+
+def _arc_side_sign(spec, index: int) -> int:
+    if "side" not in spec:
+        return 0
+    side = str(spec["side"]).strip().lower()
+    if side in ("left", "l", "sinistra"):
+        return 1
+    if side in ("right", "r", "destra"):
+        return -1
+    raise ValueError(f"waypoints[{index}].arc.side must be 'left' or 'right'")
+
+
+def _arc_direction_sign(spec, index: int) -> int:
+    if "direction" not in spec:
+        return 0
+    direction = str(spec["direction"]).strip().lower()
+    if direction in ("ccw", "counterclockwise", "anticlockwise"):
+        return 1
+    if direction in ("cw", "clockwise"):
+        return -1
+    raise ValueError(f"waypoints[{index}].arc.direction must be 'cw' or 'ccw'")
+
+
+def _arc_max_step(spec, default_step: float) -> float:
+    if "max_step" in spec:
+        return max(1e-3, abs(_as_float(spec["max_step"], "arc.max_step")))
+    if "step" in spec:
+        return max(1e-3, abs(_as_float(spec["step"], "arc.step")))
+    return max(1e-3, abs(default_step))
+
+
+def _arc_segments(spec) -> int:
+    if "segments" not in spec:
+        return 0
+    return max(1, int(round(_as_float(spec["segments"], "arc.segments"))))
+
+
+def _expand_circular_arc(start: Point3, end: Point3, spec, index: int, default_max_step: float) -> List[Point3]:
+    sx, sy, sz = start
+    ex, ey, ez = end
+    chord = (ex - sx, ey - sy)
+    chord_len = math.hypot(chord[0], chord[1])
+    if chord_len <= 1e-9:
+        raise ValueError(f"waypoints[{index}].arc start and end have the same XY position")
+
+    direction_sign = _arc_direction_sign(spec, index)
+
+    if "center" in spec:
+        center = _point_from_value(spec["center"], index)
+        cx, cy = center[0], center[1]
+        r0 = math.hypot(sx - cx, sy - cy)
+        r1 = math.hypot(ex - cx, ey - cy)
+        if r0 <= 1e-9 or r1 <= 1e-9 or abs(r0 - r1) > 1e-3:
+            raise ValueError(
+                f"waypoints[{index}].arc.center gives different start/end radii ({r0:.6f}, {r1:.6f})"
+            )
+        radius = 0.5 * (r0 + r1)
+    else:
+        if "radius" not in spec:
+            raise ValueError(f"waypoints[{index}].arc needs radius or center")
+        radius = abs(_as_float(spec["radius"], f"waypoints[{index}].arc.radius"))
+        half_chord = 0.5 * chord_len
+        if radius + 1e-9 < half_chord:
+            raise ValueError(
+                f"waypoints[{index}].arc.radius {radius:.6f} is smaller than half chord {half_chord:.6f}"
+            )
+
+        side_sign = _arc_side_sign(spec, index)
+        if side_sign == 0 and direction_sign == 0:
+            raise ValueError(f"waypoints[{index}].arc needs side: left/right or direction: cw/ccw")
+        if side_sign != 0 and direction_sign != 0 and direction_sign != -side_sign:
+            raise ValueError(f"waypoints[{index}].arc side and direction describe opposite arcs")
+
+        nx = -chord[1] / chord_len
+        ny = chord[0] / chord_len
+        h = math.sqrt(max(0.0, radius * radius - half_chord * half_chord))
+        if side_sign != 0:
+            cx = 0.5 * (sx + ex) - float(side_sign) * h * nx
+            cy = 0.5 * (sy + ey) - float(side_sign) * h * ny
+        else:
+            cx = 0.5 * (sx + ex) + float(direction_sign) * h * nx
+            cy = 0.5 * (sy + ey) + float(direction_sign) * h * ny
+
+    start_angle = math.atan2(sy - cy, sx - cx)
+    end_angle = math.atan2(ey - cy, ex - cx)
+    delta_angle = _normalize_angle(end_angle - start_angle)
+    if direction_sign > 0 and delta_angle < 0.0:
+        delta_angle += 2.0 * math.pi
+    elif direction_sign < 0 and delta_angle > 0.0:
+        delta_angle -= 2.0 * math.pi
+
+    arc_length = abs(delta_angle) * radius
+    segments = _arc_segments(spec)
+    if segments <= 0:
+        segments = max(1, int(math.ceil(arc_length / _arc_max_step(spec, default_max_step))))
+
+    points = []
+    for j in range(1, segments + 1):
+        u = float(j) / float(segments)
+        angle = start_angle + delta_angle * u
+        points.append((
+            cx + radius * math.cos(angle),
+            cy + radius * math.sin(angle),
+            sz + (ez - sz) * u,
+        ))
+    points[-1] = end
+    return points
+
+
 def _rotate_vector(q: Quaternion, v: Point3) -> Point3:
     # Quaternion-vector multiplication implemented explicitly to keep the node dependency-light.
     x, y, z, w = q.x, q.y, q.z, q.w
@@ -494,6 +632,8 @@ def _orientation_from_waypoint(value, inherited: QuaternionTuple, index: int) ->
         if not isinstance(rpy, (list, tuple)) or len(rpy) < 3:
             raise ValueError(f"waypoints[{index}].orientation_rpy must be [roll, pitch, yaw]")
         return _quaternion_tuple(_quaternion_from_rpy(float(rpy[0]), float(rpy[1]), float(rpy[2])))
+    if isinstance(value.get("arc"), dict):
+        return _orientation_from_waypoint(value["arc"], inherited, index)
     return inherited
 
 
@@ -680,6 +820,7 @@ class TcpPathTrajectoryManager:
         if self.rate_hz <= 0.0:
             raise ValueError("rate must be > 0")
 
+        self.arc_max_step = abs(float(rospy.get_param("~arc_max_step", path_data.get("arc_max_step", 0.05))))
         points, orientations = self._load_waypoints(path_data)
         self.waypoint_points = points
         self.waypoint_orientations = orientations
@@ -837,22 +978,69 @@ class TcpPathTrajectoryManager:
         default_orientation = _quaternion_tuple(self._load_orientation(path_data))
         points: List[Point3] = []
         orientations: List[QuaternionTuple] = []
+        first_relative = self._waypoint_mode_is_first_relative()
+        first_point: Optional[Point3] = None
 
         if "waypoints" in path_data:
             inherited = default_orientation
             for i, waypoint in enumerate(path_data["waypoints"]):
-                point = _point_from_waypoint(waypoint, i)
                 inherited = _orientation_from_waypoint(waypoint, inherited, i)
+                if _is_arc_item(waypoint):
+                    if not points:
+                        raise ValueError(f"waypoints[{i}].arc needs a previous point")
+                    spec = dict(_arc_spec_from_item(waypoint, i))
+                    end = _resolve_path_point(_point_from_arc_end(spec, i), first_point, first_relative)
+                    if "center" in spec:
+                        spec["center"] = _resolve_path_point(_point_from_value(spec["center"], i), first_point, first_relative)
+                    arc_points = _expand_circular_arc(points[-1], end, spec, i, self.arc_max_step)
+                    points.extend(arc_points)
+                    orientations.extend([inherited for _ in arc_points])
+                    continue
+
+                point = _point_from_waypoint(waypoint, i)
+                if first_point is None:
+                    first_point = point
+                else:
+                    point = _resolve_path_point(point, first_point, first_relative)
                 points.append(point)
                 orientations.append(inherited)
         else:
-            points = [_point_from_value(p, i) for i, p in enumerate(path_data["points"])]
-            orientations = [default_orientation for _ in points]
+            for i, item in enumerate(path_data["points"]):
+                if _is_arc_item(item):
+                    if not points:
+                        raise ValueError(f"points[{i}].arc needs a previous point")
+                    spec = dict(_arc_spec_from_item(item, i))
+                    end = _resolve_path_point(_point_from_arc_end(spec, i), first_point, first_relative)
+                    if "center" in spec:
+                        spec["center"] = _resolve_path_point(_point_from_value(spec["center"], i), first_point, first_relative)
+                    arc_points = _expand_circular_arc(points[-1], end, spec, i, self.arc_max_step)
+                    points.extend(arc_points)
+                    orientations.extend([default_orientation for _ in arc_points])
+                    continue
+
+                point = _point_from_value(item, i)
+                if first_point is None:
+                    first_point = point
+                else:
+                    point = _resolve_path_point(point, first_point, first_relative)
+                points.append(point)
+                orientations.append(default_orientation)
 
         if len(points) != len(orientations):
             raise ValueError("internal waypoint/orientation mismatch")
-        points = self._resolve_waypoint_mode(points)
         return points, orientations
+
+    def _waypoint_mode_is_first_relative(self) -> bool:
+        if self.waypoint_mode in ("absolute", ""):
+            return False
+        if self.waypoint_mode in (
+            "first_absolute_then_relative",
+            "first_absolute_rest_relative",
+            "first_absolute_then_offsets",
+        ):
+            return True
+        raise ValueError(
+            "waypoint_mode must be 'absolute' or 'first_absolute_then_relative'")
 
     def _resolve_waypoint_mode(self, points: List[Point3]) -> List[Point3]:
         if self.waypoint_mode in ("absolute", ""):

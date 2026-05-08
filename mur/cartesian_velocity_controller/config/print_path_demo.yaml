@@ -20,6 +20,9 @@ max_linear_velocity: 0.40
 max_linear_acceleration: 0.80
 max_linear_jerk: 10.0
 blend_tolerance: 0.08
+# Default internal sampling distance for circular arcs. Smaller values produce
+# smoother arcs with more generated points.
+arc_max_step: 0.05
 
 # TCP local Z points downward relative to base_link Z-up.
 orientation_rpy: [3.141592653589793, 0.0, 0.0]
@@ -33,6 +36,24 @@ waypoints:
   - position: [2.20, 0.0, 0.0]
   - position: [4.20, -1.5, 0.0]
   - position: [6.20, -1.5, 0.0]
+
+  # Circular arc segment. It starts at the previous point and ends at "end".
+  # With waypoint_mode=first_absolute_then_relative, "end" and "center" use
+  # the same convention as position: offsets from the first waypoint.
+  # "side" is the side where the arc bulges while moving from previous point
+  # to end. Swap left/right to get the opposite concave/convex arc.
+  #
+  # - arc:
+  #     end: [6.80, -0.90, 0.0]
+  #     radius: 0.80
+  #     side: left
+  #     max_step: 0.05
+  #
+  # Alternative: define the circle center directly instead of radius+side.
+  # - arc:
+  #     end: [6.80, -0.90, 0.0]
+  #     center: [6.80, -1.50, 0.0]
+  #     direction: cw
   
   # - position: [0.60, 0.0, 0.0]
   # - position: [0.90, -0.5, 0.0]

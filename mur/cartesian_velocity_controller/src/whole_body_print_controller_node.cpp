@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <limits>
 #include <map>
@@ -33,6 +34,8 @@
 
 namespace
 {
+constexpr double kPi = 3.14159265358979323846;
+
 struct PathPoint
 {
   Eigen::Vector3d p{Eigen::Vector3d::Zero()};
@@ -137,6 +140,24 @@ bool xmlRpcBool(const XmlRpc::XmlRpcValue& v, bool& out)
   return false;
 }
 
+bool xmlRpcString(const XmlRpc::XmlRpcValue& v, std::string& out)
+{
+  if (v.getType() != XmlRpc::XmlRpcValue::TypeString)
+  {
+    return false;
+  }
+  out = static_cast<std::string>(v);
+  return true;
+}
+
+std::string normalizedString(std::string value)
+{
+  std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
+    return static_cast<char>(std::tolower(c));
+  });
+  return value;
+}
+
 bool readPoint(const XmlRpc::XmlRpcValue& value, Eigen::Vector3d& out)
 {
   if (value.getType() == XmlRpc::XmlRpcValue::TypeArray && value.size() >= 3)
@@ -167,6 +188,25 @@ bool readPoint(const XmlRpc::XmlRpcValue& value, Eigen::Vector3d& out)
     return readPoint(value["position"], out);
   }
 
+  return false;
+}
+
+bool readNamedPoint(const XmlRpc::XmlRpcValue& value,
+                    const std::vector<std::string>& names,
+                    Eigen::Vector3d& out)
+{
+  if (value.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+  {
+    return false;
+  }
+
+  for (const auto& name : names)
+  {
+    if (value.hasMember(name) && readPoint(value[name], out))
+    {
+      return true;
+    }
+  }
   return false;
 }
 
@@ -400,6 +440,7 @@ private:
     pnh_.param("path/speed", speed_, 0.03);
     pnh_.param("path/max_linear_velocity", path_max_linear_velocity_, speed_);
     pnh_.param("path/max_linear_acceleration", path_max_linear_acceleration_, 0.0);
+    pnh_.param("path/arc_max_step", arc_max_step_, arc_max_step_);
     pnh_.param("path/loop", loop_, false);
     pnh_.param("start_paused", paused_, true);
     stopped_ = false;
@@ -573,6 +614,7 @@ private:
     pnh_.param("path_spec/speed", speed_, speed_);
     pnh_.param("path_spec/max_linear_velocity", path_max_linear_velocity_, path_max_linear_velocity_);
     pnh_.param("path_spec/max_linear_acceleration", path_max_linear_acceleration_, path_max_linear_acceleration_);
+    pnh_.param("path_spec/arc_max_step", arc_max_step_, arc_max_step_);
     pnh_.param("path_spec/loop", loop_, loop_);
     if (path_max_linear_velocity_ > 1e-9)
     {
@@ -756,6 +798,300 @@ private:
     }
   }
 
+  bool firstRelativeWaypointMode(const std::string& waypoint_mode) const
+  {
+    return waypoint_mode == "first_absolute_then_relative" ||
+           waypoint_mode == "first_absolute_rest_relative" ||
+           waypoint_mode == "first_absolute_then_offsets";
+  }
+
+  bool supportedWaypointMode(const std::string& waypoint_mode) const
+  {
+    return waypoint_mode == "absolute" ||
+           waypoint_mode.empty() ||
+           firstRelativeWaypointMode(waypoint_mode);
+  }
+
+  Eigen::Vector3d resolvePathPoint(const Eigen::Vector3d& raw_point,
+                                   const Eigen::Vector3d& first_point,
+                                   bool have_first_point,
+                                   bool use_first_relative) const
+  {
+    if (use_first_relative && have_first_point)
+    {
+      return first_point + raw_point;
+    }
+    return raw_point;
+  }
+
+  bool extractArcSpec(const XmlRpc::XmlRpcValue& value, XmlRpc::XmlRpcValue& spec) const
+  {
+    if (value.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+    {
+      return false;
+    }
+
+    if (value.hasMember("arc"))
+    {
+      spec = value["arc"];
+      return true;
+    }
+
+    std::string type;
+    if (value.hasMember("type") && xmlRpcString(value["type"], type) && normalizedString(type) == "arc")
+    {
+      spec = value;
+      return true;
+    }
+
+    return false;
+  }
+
+  bool readArcSide(const XmlRpc::XmlRpcValue& spec, int& side_sign) const
+  {
+    side_sign = 0;
+    if (spec.getType() != XmlRpc::XmlRpcValue::TypeStruct || !spec.hasMember("side"))
+    {
+      return true;
+    }
+
+    std::string side;
+    if (!xmlRpcString(spec["side"], side))
+    {
+      return false;
+    }
+
+    side = normalizedString(side);
+    if (side == "left" || side == "l" || side == "sinistra")
+    {
+      side_sign = 1;
+      return true;
+    }
+    if (side == "right" || side == "r" || side == "destra")
+    {
+      side_sign = -1;
+      return true;
+    }
+    return false;
+  }
+
+  bool readArcDirection(const XmlRpc::XmlRpcValue& spec, int& direction_sign) const
+  {
+    direction_sign = 0;
+    if (spec.getType() != XmlRpc::XmlRpcValue::TypeStruct || !spec.hasMember("direction"))
+    {
+      return true;
+    }
+
+    std::string direction;
+    if (!xmlRpcString(spec["direction"], direction))
+    {
+      return false;
+    }
+
+    direction = normalizedString(direction);
+    if (direction == "ccw" || direction == "counterclockwise" || direction == "anticlockwise")
+    {
+      direction_sign = 1;
+      return true;
+    }
+    if (direction == "cw" || direction == "clockwise")
+    {
+      direction_sign = -1;
+      return true;
+    }
+    return false;
+  }
+
+  double readArcMaxStep(const XmlRpc::XmlRpcValue& spec) const
+  {
+    double max_step = arc_max_step_;
+    if (spec.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+    {
+      return std::max(1e-3, max_step);
+    }
+
+    double candidate = max_step;
+    if (spec.hasMember("max_step") && xmlRpcNumber(spec["max_step"], candidate))
+    {
+      max_step = candidate;
+    }
+    else if (spec.hasMember("step") && xmlRpcNumber(spec["step"], candidate))
+    {
+      max_step = candidate;
+    }
+    return std::max(1e-3, max_step);
+  }
+
+  int readArcSegments(const XmlRpc::XmlRpcValue& spec) const
+  {
+    if (spec.getType() != XmlRpc::XmlRpcValue::TypeStruct || !spec.hasMember("segments"))
+    {
+      return 0;
+    }
+
+    double segments = 0.0;
+    if (!xmlRpcNumber(spec["segments"], segments))
+    {
+      return 0;
+    }
+    return std::max(1, static_cast<int>(std::round(segments)));
+  }
+
+  bool appendCircularArcPoints(std::vector<Eigen::Vector3d>& points,
+                               const XmlRpc::XmlRpcValue& spec,
+                               const Eigen::Vector3d& first_point,
+                               bool have_first_point,
+                               bool use_first_relative,
+                               const std::string& source_name,
+                               int index) const
+  {
+    if (spec.getType() != XmlRpc::XmlRpcValue::TypeStruct)
+    {
+      ROS_ERROR("Invalid arc in %s at index %d: arc must be a dictionary", source_name.c_str(), index);
+      return false;
+    }
+    if (points.empty())
+    {
+      ROS_ERROR("Invalid arc in %s at index %d: an arc needs a previous point", source_name.c_str(), index);
+      return false;
+    }
+
+    Eigen::Vector3d raw_end;
+    if (!readNamedPoint(spec, std::vector<std::string>{"end", "to", "position"}, raw_end))
+    {
+      ROS_ERROR("Invalid arc in %s at index %d: missing end/to point", source_name.c_str(), index);
+      return false;
+    }
+
+    const Eigen::Vector3d start = points.back();
+    const Eigen::Vector3d end = resolvePathPoint(raw_end, first_point, have_first_point, use_first_relative);
+    const Eigen::Vector2d start_xy(start.x(), start.y());
+    const Eigen::Vector2d end_xy(end.x(), end.y());
+    const Eigen::Vector2d chord = end_xy - start_xy;
+    const double chord_len = chord.norm();
+    if (chord_len <= 1e-9)
+    {
+      ROS_ERROR("Invalid arc in %s at index %d: start and end have the same XY position", source_name.c_str(), index);
+      return false;
+    }
+
+    Eigen::Vector2d center_xy;
+    double radius = 0.0;
+    int direction_sign = 0;
+    if (!readArcDirection(spec, direction_sign))
+    {
+      ROS_ERROR("Invalid arc direction in %s at index %d: use cw or ccw", source_name.c_str(), index);
+      return false;
+    }
+
+    if (spec.hasMember("center"))
+    {
+      Eigen::Vector3d raw_center;
+      if (!readPoint(spec["center"], raw_center))
+      {
+        ROS_ERROR("Invalid center in arc %s[%d]", source_name.c_str(), index);
+        return false;
+      }
+      const Eigen::Vector3d center = resolvePathPoint(raw_center, first_point, have_first_point, use_first_relative);
+      center_xy = Eigen::Vector2d(center.x(), center.y());
+      const double r0 = (start_xy - center_xy).norm();
+      const double r1 = (end_xy - center_xy).norm();
+      if (r0 <= 1e-9 || r1 <= 1e-9 || std::abs(r0 - r1) > 1e-3)
+      {
+        ROS_ERROR("Invalid center in arc %s[%d]: start/end radii differ (%.6f vs %.6f)",
+                  source_name.c_str(),
+                  index,
+                  r0,
+                  r1);
+        return false;
+      }
+      radius = 0.5 * (r0 + r1);
+    }
+    else
+    {
+      if (!spec.hasMember("radius") || !xmlRpcNumber(spec["radius"], radius) || radius <= 0.0)
+      {
+        ROS_ERROR("Invalid arc in %s at index %d: radius must be > 0", source_name.c_str(), index);
+        return false;
+      }
+      const double half_chord = 0.5 * chord_len;
+      if (radius + 1e-9 < half_chord)
+      {
+        ROS_ERROR("Invalid arc in %s at index %d: radius %.6f is smaller than half chord %.6f",
+                  source_name.c_str(),
+                  index,
+                  radius,
+                  half_chord);
+        return false;
+      }
+
+      int side_sign = 0;
+      if (!readArcSide(spec, side_sign))
+      {
+        ROS_ERROR("Invalid arc side in %s at index %d: use left or right", source_name.c_str(), index);
+        return false;
+      }
+      if (side_sign == 0 && direction_sign == 0)
+      {
+        ROS_ERROR("Invalid arc in %s at index %d: radius arcs need side: left/right or direction: cw/ccw",
+                  source_name.c_str(),
+                  index);
+        return false;
+      }
+      if (side_sign != 0 && direction_sign != 0 && direction_sign != -side_sign)
+      {
+        ROS_ERROR("Invalid arc in %s at index %d: side and direction describe opposite arcs",
+                  source_name.c_str(),
+                  index);
+        return false;
+      }
+
+      const Eigen::Vector2d left_normal(-chord.y() / chord_len, chord.x() / chord_len);
+      const double h = std::sqrt(std::max(0.0, radius * radius - half_chord * half_chord));
+      if (side_sign != 0)
+      {
+        center_xy = 0.5 * (start_xy + end_xy) - static_cast<double>(side_sign) * h * left_normal;
+      }
+      else
+      {
+        center_xy = 0.5 * (start_xy + end_xy) + static_cast<double>(direction_sign) * h * left_normal;
+      }
+    }
+
+    const double start_angle = std::atan2(start_xy.y() - center_xy.y(), start_xy.x() - center_xy.x());
+    const double end_angle = std::atan2(end_xy.y() - center_xy.y(), end_xy.x() - center_xy.x());
+    double delta_angle = normalizeAngle(end_angle - start_angle);
+    if (direction_sign > 0 && delta_angle < 0.0)
+    {
+      delta_angle += 2.0 * kPi;
+    }
+    else if (direction_sign < 0 && delta_angle > 0.0)
+    {
+      delta_angle -= 2.0 * kPi;
+    }
+
+    const double arc_length = std::abs(delta_angle) * radius;
+    int segments = readArcSegments(spec);
+    if (segments <= 0)
+    {
+      segments = std::max(1, static_cast<int>(std::ceil(arc_length / readArcMaxStep(spec))));
+    }
+
+    for (int j = 1; j <= segments; ++j)
+    {
+      const double u = static_cast<double>(j) / static_cast<double>(segments);
+      const double a = start_angle + delta_angle * u;
+      Eigen::Vector3d p;
+      p.x() = center_xy.x() + radius * std::cos(a);
+      p.y() = center_xy.y() + radius * std::sin(a);
+      p.z() = start.z() + (end.z() - start.z()) * u;
+      points.push_back(p);
+    }
+    points.back() = end;
+    return true;
+  }
+
   std::vector<Eigen::Vector3d> parsePathPoints(const XmlRpc::XmlRpcValue& raw_points,
                                                const std::string& source_name,
                                                const std::string& waypoint_mode) const
@@ -766,9 +1102,36 @@ private:
       ROS_ERROR("%s must be an array", source_name.c_str());
       return points;
     }
+    const std::string normalized_waypoint_mode = normalizedString(waypoint_mode);
+    if (!supportedWaypointMode(normalized_waypoint_mode))
+    {
+      ROS_ERROR("waypoint_mode must be 'absolute' or 'first_absolute_then_relative'");
+      return points;
+    }
+
+    const bool use_first_relative = firstRelativeWaypointMode(normalized_waypoint_mode);
+    bool have_first_point = false;
+    Eigen::Vector3d first_point = Eigen::Vector3d::Zero();
 
     for (int i = 0; i < raw_points.size(); ++i)
     {
+      XmlRpc::XmlRpcValue arc_spec;
+      if (extractArcSpec(raw_points[i], arc_spec))
+      {
+        if (!appendCircularArcPoints(points,
+                                     arc_spec,
+                                     first_point,
+                                     have_first_point,
+                                     use_first_relative,
+                                     source_name,
+                                     i))
+        {
+          points.clear();
+          return points;
+        }
+        continue;
+      }
+
       Eigen::Vector3d p;
       if (!readPoint(raw_points[i], p))
       {
@@ -776,21 +1139,15 @@ private:
         points.clear();
         return points;
       }
-      points.push_back(p);
-    }
-
-    if (waypoint_mode == "first_absolute_then_relative" ||
-        waypoint_mode == "first_absolute_rest_relative" ||
-        waypoint_mode == "first_absolute_then_offsets")
-    {
-      if (!points.empty())
+      if (!have_first_point)
       {
-        const Eigen::Vector3d first = points.front();
-        for (std::size_t i = 1; i < points.size(); ++i)
-        {
-          points[i] = first + points[i];
-        }
+        first_point = p;
+        have_first_point = true;
+        points.push_back(p);
+        continue;
       }
+      p = resolvePathPoint(p, first_point, have_first_point, use_first_relative);
+      points.push_back(p);
     }
     return points;
   }
@@ -3089,6 +3446,7 @@ private:
   double path_speed_current_{0.0};
   double path_max_linear_velocity_{0.0};
   double path_max_linear_acceleration_{0.0};
+  double arc_max_step_{0.05};
   double path_rate_hz_{30.0};
   double base_rate_hz_{20.0};
   double lifter_rate_hz_{10.0};

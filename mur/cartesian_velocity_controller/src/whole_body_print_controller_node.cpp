@@ -386,6 +386,14 @@ public:
   }
 
 private:
+  struct TrackingZoneLimits
+  {
+    double x_backward{0.0};
+    double x_forward{0.0};
+    double y_right{0.0};
+    double y_left{0.0};
+  };
+
   void loadParams()
   {
     pnh_.param<std::string>("path/frame_id", path_frame_, "map");
@@ -417,6 +425,23 @@ private:
     pnh_.param("tracking/arm_full_y_error", arm_full_y_error_, 0.12);
     pnh_.param("tracking/arm_start_x_error", arm_start_x_error_, 0.45);
     pnh_.param("tracking/arm_start_y_error", arm_start_y_error_, 0.35);
+    arm_full_x_backward_error_ = arm_full_x_error_;
+    arm_full_x_forward_error_ = arm_full_x_error_;
+    arm_full_y_right_error_ = arm_full_y_error_;
+    arm_full_y_left_error_ = arm_full_y_error_;
+    arm_start_x_backward_error_ = arm_start_x_error_;
+    arm_start_x_forward_error_ = arm_start_x_error_;
+    arm_start_y_right_error_ = arm_start_y_error_;
+    arm_start_y_left_error_ = arm_start_y_error_;
+    pnh_.param("tracking/arm_full_x_backward_error", arm_full_x_backward_error_, arm_full_x_backward_error_);
+    pnh_.param("tracking/arm_full_x_forward_error", arm_full_x_forward_error_, arm_full_x_forward_error_);
+    pnh_.param("tracking/arm_full_y_right_error", arm_full_y_right_error_, arm_full_y_right_error_);
+    pnh_.param("tracking/arm_full_y_left_error", arm_full_y_left_error_, arm_full_y_left_error_);
+    pnh_.param("tracking/arm_start_x_backward_error", arm_start_x_backward_error_, arm_start_x_backward_error_);
+    pnh_.param("tracking/arm_start_x_forward_error", arm_start_x_forward_error_, arm_start_x_forward_error_);
+    pnh_.param("tracking/arm_start_y_right_error", arm_start_y_right_error_, arm_start_y_right_error_);
+    pnh_.param("tracking/arm_start_y_left_error", arm_start_y_left_error_, arm_start_y_left_error_);
+    sanitizeTrackingZoneLimits();
     pnh_.param("tracking/zone_markers_enabled", tracking_zone_markers_enabled_, true);
     pnh_.param("tracking/zone_marker_z", tracking_zone_marker_z_, 0.05);
     pnh_.param("tracking/zone_marker_height", tracking_zone_marker_height_, 0.02);
@@ -1906,6 +1931,94 @@ private:
     return external_velocity;
   }
 
+  static double sanitizeTrackingLimit(double value)
+  {
+    return std::max(1e-6, value);
+  }
+
+  void sanitizeTrackingZoneLimits()
+  {
+    arm_full_x_error_ = sanitizeTrackingLimit(arm_full_x_error_);
+    arm_full_y_error_ = sanitizeTrackingLimit(arm_full_y_error_);
+    arm_start_x_error_ = std::max(arm_full_x_error_ + 1e-6, arm_start_x_error_);
+    arm_start_y_error_ = std::max(arm_full_y_error_ + 1e-6, arm_start_y_error_);
+
+    arm_full_x_backward_error_ = sanitizeTrackingLimit(arm_full_x_backward_error_);
+    arm_full_x_forward_error_ = sanitizeTrackingLimit(arm_full_x_forward_error_);
+    arm_full_y_right_error_ = sanitizeTrackingLimit(arm_full_y_right_error_);
+    arm_full_y_left_error_ = sanitizeTrackingLimit(arm_full_y_left_error_);
+    arm_start_x_backward_error_ = std::max(arm_full_x_backward_error_ + 1e-6, arm_start_x_backward_error_);
+    arm_start_x_forward_error_ = std::max(arm_full_x_forward_error_ + 1e-6, arm_start_x_forward_error_);
+    arm_start_y_right_error_ = std::max(arm_full_y_right_error_ + 1e-6, arm_start_y_right_error_);
+    arm_start_y_left_error_ = std::max(arm_full_y_left_error_ + 1e-6, arm_start_y_left_error_);
+  }
+
+  TrackingZoneLimits fullTrackingZoneLimits() const
+  {
+    TrackingZoneLimits limits;
+    limits.x_backward = arm_full_x_backward_error_;
+    limits.x_forward = arm_full_x_forward_error_;
+    limits.y_right = arm_full_y_right_error_;
+    limits.y_left = arm_full_y_left_error_;
+    return limits;
+  }
+
+  TrackingZoneLimits startTrackingZoneLimits() const
+  {
+    TrackingZoneLimits limits;
+    limits.x_backward = arm_start_x_backward_error_;
+    limits.x_forward = arm_start_x_forward_error_;
+    limits.y_right = arm_start_y_right_error_;
+    limits.y_left = arm_start_y_left_error_;
+    return limits;
+  }
+
+  bool pointInsideTrackingZone(const Eigen::Vector3d& point_in_base,
+                               const TrackingZoneLimits& limits) const
+  {
+    const double dx = point_in_base.x() - base_preferred_x_;
+    const double dy = point_in_base.y() - base_preferred_y_;
+    return dx >= -limits.x_backward && dx <= limits.x_forward &&
+           dy >= -limits.y_right && dy <= limits.y_left;
+  }
+
+  static double signedAxisBlend(double delta, double full_negative, double full_positive,
+                                double start_negative, double start_positive)
+  {
+    const bool positive = delta >= 0.0;
+    const double distance = std::abs(delta);
+    const double full = positive ? full_positive : full_negative;
+    const double start = positive ? start_positive : start_negative;
+    if (distance >= start)
+    {
+      return 1.0;
+    }
+    if (distance <= full)
+    {
+      return 0.0;
+    }
+    return clamp((distance - full) / (start - full), 0.0, 1.0);
+  }
+
+  double pointTrackingZoneBlend(const Eigen::Vector3d& point_in_base,
+                                const TrackingZoneLimits& full,
+                                const TrackingZoneLimits& start) const
+  {
+    const double dx = point_in_base.x() - base_preferred_x_;
+    const double dy = point_in_base.y() - base_preferred_y_;
+    const double x_blend = signedAxisBlend(dx,
+                                           full.x_backward,
+                                           full.x_forward,
+                                           start.x_backward,
+                                           start.x_forward);
+    const double y_blend = signedAxisBlend(dy,
+                                           full.y_right,
+                                           full.y_left,
+                                           start.y_right,
+                                           start.y_left);
+    return std::max(x_blend, y_blend);
+  }
+
   double computeArmTrackingScale(const Eigen::Vector3d& target_in_base,
                                  const Eigen::Vector3d& tcp_in_base)
   {
@@ -1917,29 +2030,17 @@ private:
 
     updateTrackingZoneState(target_in_base, tcp_in_base);
 
-    const double target_dx = std::abs(target_in_base.x() - base_preferred_x_);
-    const double target_dy = std::abs(target_in_base.y() - base_preferred_y_);
-    const double tcp_dx = std::abs(tcp_in_base.x() - base_preferred_x_);
-    const double tcp_dy = std::abs(tcp_in_base.y() - base_preferred_y_);
-    const double dx = std::max(target_dx, tcp_dx);
-    const double dy = std::max(target_dy, tcp_dy);
-    const double full_x = std::max(1e-6, arm_full_x_error_);
-    const double full_y = std::max(1e-6, arm_full_y_error_);
-    const double start_x = std::max(full_x + 1e-6, arm_start_x_error_);
-    const double start_y = std::max(full_y + 1e-6, arm_start_y_error_);
-
     if (base_in_tracking_zone_)
     {
       return 1.0;
     }
-    if (dx >= start_x || dy >= start_y)
-    {
-      return clamp(arm_far_scale_, 0.0, 1.0);
-    }
 
-    const double rx = std::max(0.0, (dx - full_x) / (start_x - full_x));
-    const double ry = std::max(0.0, (dy - full_y) / (start_y - full_y));
-    const double blend = clamp(std::max(rx, ry), 0.0, 1.0);
+    const TrackingZoneLimits full = fullTrackingZoneLimits();
+    const TrackingZoneLimits start = startTrackingZoneLimits();
+    const double blend = clamp(std::max(pointTrackingZoneBlend(target_in_base, full, start),
+                                        pointTrackingZoneBlend(tcp_in_base, full, start)),
+                               0.0,
+                               1.0);
     return clamp(1.0 - blend * (1.0 - arm_far_scale_), 0.0, 1.0);
   }
 
@@ -1952,14 +2053,9 @@ private:
       return;
     }
 
-    const double full_x = std::max(1e-6, arm_full_x_error_);
-    const double full_y = std::max(1e-6, arm_full_y_error_);
-    const double target_dx = std::abs(target_in_base.x() - base_preferred_x_);
-    const double target_dy = std::abs(target_in_base.y() - base_preferred_y_);
-    const double tcp_dx = std::abs(tcp_in_base.x() - base_preferred_x_);
-    const double tcp_dy = std::abs(tcp_in_base.y() - base_preferred_y_);
-    base_in_tracking_zone_ =
-        (target_dx <= full_x && target_dy <= full_y && tcp_dx <= full_x && tcp_dy <= full_y);
+    const TrackingZoneLimits full = fullTrackingZoneLimits();
+    base_in_tracking_zone_ = pointInsideTrackingZone(target_in_base, full) &&
+                             pointInsideTrackingZone(tcp_in_base, full);
   }
 
   bool startReached(const Eigen::Vector3d& start_target)
@@ -2693,19 +2789,19 @@ private:
   }
 
   void appendTcpTrackingZoneRectangle(visualization_msgs::Marker& marker,
-                                      double half_x,
-                                      double half_y,
+                                      const TrackingZoneLimits& limits,
                                       double z) const
   {
-    if (half_x <= 1e-6 || half_y <= 1e-6)
+    if (limits.x_backward <= 1e-6 || limits.x_forward <= 1e-6 ||
+        limits.y_right <= 1e-6 || limits.y_left <= 1e-6)
     {
       return;
     }
 
-    const double min_x = base_preferred_x_ - half_x;
-    const double max_x = base_preferred_x_ + half_x;
-    const double min_y = base_preferred_y_ - half_y;
-    const double max_y = base_preferred_y_ + half_y;
+    const double min_x = base_preferred_x_ - limits.x_backward;
+    const double max_x = base_preferred_x_ + limits.x_forward;
+    const double min_y = base_preferred_y_ - limits.y_right;
+    const double max_y = base_preferred_y_ + limits.y_left;
     marker.points.push_back(tcpTrackingZonePoint(min_x, min_y, z));
     marker.points.push_back(tcpTrackingZonePoint(max_x, min_y, z));
     marker.points.push_back(tcpTrackingZonePoint(max_x, max_y, z));
@@ -2716,8 +2812,7 @@ private:
   visualization_msgs::Marker tcpTrackingZoneFillMarker(const ros::Time& stamp,
                                                        int id,
                                                        const std::string& ns,
-                                                       double half_x,
-                                                       double half_y,
+                                                       const TrackingZoneLimits& limits,
                                                        double r,
                                                        double g,
                                                        double b,
@@ -2731,18 +2826,23 @@ private:
     marker.type = visualization_msgs::Marker::CUBE;
     marker.action = visualization_msgs::Marker::ADD;
     marker.frame_locked = true;
-    marker.pose.position.x = base_preferred_x_;
-    marker.pose.position.y = base_preferred_y_;
+    const double min_x = base_preferred_x_ - limits.x_backward;
+    const double max_x = base_preferred_x_ + limits.x_forward;
+    const double min_y = base_preferred_y_ - limits.y_right;
+    const double max_y = base_preferred_y_ + limits.y_left;
+    marker.pose.position.x = 0.5 * (min_x + max_x);
+    marker.pose.position.y = 0.5 * (min_y + max_y);
     marker.pose.position.z = tracking_zone_marker_z_;
     marker.pose.orientation.w = 1.0;
-    marker.scale.x = std::max(0.0, 2.0 * half_x);
-    marker.scale.y = std::max(0.0, 2.0 * half_y);
+    marker.scale.x = std::max(0.0, max_x - min_x);
+    marker.scale.y = std::max(0.0, max_y - min_y);
     marker.scale.z = tracking_zone_marker_height_;
     marker.color.r = static_cast<float>(r);
     marker.color.g = static_cast<float>(g);
     marker.color.b = static_cast<float>(b);
     marker.color.a = static_cast<float>(a);
-    if (half_x <= 1e-6 || half_y <= 1e-6)
+    if (limits.x_backward <= 1e-6 || limits.x_forward <= 1e-6 ||
+        limits.y_right <= 1e-6 || limits.y_left <= 1e-6)
     {
       marker.action = visualization_msgs::Marker::DELETE;
     }
@@ -2752,8 +2852,7 @@ private:
   visualization_msgs::Marker tcpTrackingZoneOutlineMarker(const ros::Time& stamp,
                                                           int id,
                                                           const std::string& ns,
-                                                          double half_x,
-                                                          double half_y,
+                                                          const TrackingZoneLimits& limits,
                                                           double line_width,
                                                           double r,
                                                           double g,
@@ -2775,8 +2874,7 @@ private:
     marker.color.b = static_cast<float>(b);
     marker.color.a = static_cast<float>(a);
     appendTcpTrackingZoneRectangle(marker,
-                                   half_x,
-                                   half_y,
+                                   limits,
                                    tracking_zone_marker_z_ + 0.5 * tracking_zone_marker_height_ + 0.01);
     if (marker.points.size() < 2)
     {
@@ -2797,16 +2895,13 @@ private:
       return;
     }
 
-    const double full_x = std::max(1e-6, arm_full_x_error_);
-    const double full_y = std::max(1e-6, arm_full_y_error_);
-    const double start_x = std::max(full_x + 1e-6, arm_start_x_error_);
-    const double start_y = std::max(full_y + 1e-6, arm_start_y_error_);
+    const TrackingZoneLimits full = fullTrackingZoneLimits();
+    const TrackingZoneLimits start = startTrackingZoneLimits();
 
     arr.markers.push_back(tcpTrackingZoneFillMarker(stamp,
                                                     0,
                                                     "tcp_tracking_start_zone",
-                                                    start_x,
-                                                    start_y,
+                                                    start,
                                                     1.0,
                                                     0.65,
                                                     0.05,
@@ -2814,8 +2909,7 @@ private:
     arr.markers.push_back(tcpTrackingZoneFillMarker(stamp,
                                                     1,
                                                     "tcp_tracking_full_zone",
-                                                    full_x,
-                                                    full_y,
+                                                    full,
                                                     0.0,
                                                     0.85,
                                                     0.25,
@@ -2823,8 +2917,7 @@ private:
     arr.markers.push_back(tcpTrackingZoneOutlineMarker(stamp,
                                                        2,
                                                        "tcp_tracking_start_zone",
-                                                       start_x,
-                                                       start_y,
+                                                       start,
                                                        0.018,
                                                        1.0,
                                                        0.65,
@@ -2833,8 +2926,7 @@ private:
     arr.markers.push_back(tcpTrackingZoneOutlineMarker(stamp,
                                                        3,
                                                        "tcp_tracking_full_zone",
-                                                       full_x,
-                                                       full_y,
+                                                       full,
                                                        0.024,
                                                        0.0,
                                                        0.85,
@@ -3020,6 +3112,14 @@ private:
   double arm_full_y_error_{0.12};
   double arm_start_x_error_{0.45};
   double arm_start_y_error_{0.35};
+  double arm_full_x_backward_error_{0.15};
+  double arm_full_x_forward_error_{0.15};
+  double arm_full_y_right_error_{0.12};
+  double arm_full_y_left_error_{0.12};
+  double arm_start_x_backward_error_{0.45};
+  double arm_start_x_forward_error_{0.45};
+  double arm_start_y_right_error_{0.35};
+  double arm_start_y_left_error_{0.35};
   bool tracking_zone_markers_enabled_{true};
   double tracking_zone_marker_z_{0.05};
   double tracking_zone_marker_height_{0.02};

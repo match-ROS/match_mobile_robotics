@@ -25,6 +25,7 @@ Panels:
         - /MarkerArray11
         - /Reaction Perimeter1
         - /LaserScan1
+        - /LaserScan2
       Splitter Ratio: 0.36256906390190125
     Tree Height: 988
   - Class: rviz/Selection
@@ -1041,7 +1042,7 @@ Visualization Manager:
       Marker Topic: /mur620b/whole_body_print_controller/current_marker
       Name: Marker
       Namespaces:
-        {}
+        whole_body_print_path: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -1135,6 +1136,15 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /mur620b/whole_body_print_controller/tcp_tracking_zone_markers
+      Name: MarkerArray
+      Namespaces:
+        tcp_tracking_full_zone: true
+        tcp_tracking_start_zone: true
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -1163,7 +1173,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 6.460903644561768
+      Distance: 11.00294303894043
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -1171,17 +1181,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.5084558129310608
-        Y: -1.3495206832885742
-        Z: 4.589707851409912
+        X: 2.2780699729919434
+        Y: -0.5655332803726196
+        Z: 0.394496351480484
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2847965955734253
+      Pitch: 1.1197967529296875
       Target Frame: mur620b/base_footprint
-      Yaw: 3.570444345474243
+      Yaw: 3.7504870891571045
     Saved: ~
 Window Geometry:
   Displays:

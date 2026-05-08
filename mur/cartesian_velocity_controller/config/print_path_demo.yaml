@@ -11,7 +11,7 @@ frame_id: "mur620b/print_origin"
 #   offsets from the first point, expressed in the same axes as frame_id.
 # - first_absolute_then_incremental: first point absolute; following values are
 #   deltas from the previous resolved point, expressed in the same axes as frame_id.
-waypoint_mode: "first_absolute_then_relative"
+waypoint_mode: "first_absolute_then_incremental"
 path_origin:
   enabled: true
   capture: "node_start"
@@ -38,7 +38,7 @@ orientation_rpy: [3.141592653589793, 0.0, 0.0]
 
 waypoints:
   # First point: absolute in mur620b/print_origin.
-  - position: [0.6, -0.8, 1.3]
+  - position: [0.6, -1.0, 1.3]
   # With waypoint_mode=first_absolute_then_relative, following points are offsets
   # relative to the first point. With first_absolute_then_incremental, they are
   # segment deltas from the previous resolved point.
@@ -49,18 +49,22 @@ waypoints:
   # - position: [6.20, -1.5, 0.0]
 
 
+  # - position: [0.00, 0.0, 0.0]
+  # - position: [2.0, 0.0, 0.0]
+  # - arc:
+  #     end: [0.80, -3.50, 0.0]
+  #     radius: 2.0
+  #     side: left
+  #     max_step: 0.05
+
   - position: [0.00, 0.0, 0.0]
-  - position: [1.60, 0.0, 0.0]
-  - position: [1.60, -0.5, 0.0]
-  - position: [2.60, -0.5, 0.0]
+  - position: [2.0, 0.0, 0.0]
   - arc:
-      end: [5.00, -2.50, 0.0]
-      radius: 4.0
-      side: left
+      end: [1.50, 4.50, 0.0]
+      radius: 3.0
+      side: right
       max_step: 0.05
-  # - position: [2.20, 0.0, 0.0]
-  # - position: [4.20, -1.5, 0.0]
-  # - position: [6.20, -1.5, 0.0]
+
 
   # Circular arc segment. It starts at the previous point and ends at "end".
   # "end" and "center" use the same convention as position for the selected
@@ -90,12 +94,12 @@ waypoints:
 # position x/y are offsets from the first waypoint x/y; z remains absolute unless
 # relative_z is set to true.
 obstacles:
-  enabled: false
+  enabled: true
   relative_to_first_waypoint: true
   relative_z: false
   marker_height: 0.12
   items:
     - name: "sim_obstacle_1"
-      position: [3.20, -0.4, 0.0]
+      position: [3.10, 1.4, 0.0]
       radius: 0.10
   

@@ -84,16 +84,106 @@ def _zero_twist() -> Twist:
     return Twist()
 
 
-def _scaled_twist(msg, scale: float) -> Twist:
+def _twist_values(msg) -> Tuple[float, float, float, float, float, float]:
     src = msg.twist if hasattr(msg, "twist") else msg
+    return (
+        float(src.linear.x),
+        float(src.linear.y),
+        float(src.linear.z),
+        float(src.angular.x),
+        float(src.angular.y),
+        float(src.angular.z),
+    )
+
+
+def _twist_from_values(values: Tuple[float, float, float, float, float, float]) -> Twist:
     out = Twist()
-    out.linear.x = float(src.linear.x) * scale
-    out.linear.y = float(src.linear.y) * scale
-    out.linear.z = float(src.linear.z) * scale
-    out.angular.x = float(src.angular.x) * scale
-    out.angular.y = float(src.angular.y) * scale
-    out.angular.z = float(src.angular.z) * scale
+    out.linear.x = values[0]
+    out.linear.y = values[1]
+    out.linear.z = values[2]
+    out.angular.x = values[3]
+    out.angular.y = values[4]
+    out.angular.z = values[5]
     return out
+
+
+@dataclass
+class TwistSample:
+    rel_t: float
+    values: Tuple[float, float, float, float, float, float]
+
+
+@dataclass
+class ScaledReplay:
+    output_dt_s: float
+    duration_s: float
+    commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]]
+
+    @property
+    def tick_count(self) -> int:
+        if not self.commands_by_side:
+            return 0
+        return len(next(iter(self.commands_by_side.values())))
+
+
+def _resample_time_scaled_twists(
+    samples: List[TwistSample],
+    source_duration_s: float,
+    speed_scale: float,
+    output_rate_hz: float,
+) -> Tuple[float, List[Tuple[float, float, float, float, float, float]]]:
+    if source_duration_s <= 0.0:
+        raise ReplayAbort("Invalid source duration for replay")
+    if speed_scale <= 0.0:
+        raise ReplayAbort("speed_scale must be > 0")
+    if output_rate_hz <= 0.0:
+        raise ReplayAbort("replay_rate_hz must be > 0")
+    if not samples:
+        raise ReplayAbort("No twist samples available for resampling")
+
+    eps = 1e-12
+    output_dt_s = 1.0 / output_rate_hz
+    output_duration_s = source_duration_s / speed_scale
+    tick_count = max(1, int(math.ceil(output_duration_s / output_dt_s - eps)))
+
+    clean: List[TwistSample] = []
+    for sample in sorted(samples, key=lambda item: item.rel_t):
+        rel_t = min(max(float(sample.rel_t), 0.0), source_duration_s)
+        item = TwistSample(rel_t=rel_t, values=sample.values)
+        if clean and abs(rel_t - clean[-1].rel_t) <= eps:
+            clean[-1] = item
+        else:
+            clean.append(item)
+
+    last_sample_end_s = min(source_duration_s, clean[-1].rel_t + output_dt_s)
+    values: List[Tuple[float, float, float, float, float, float]] = []
+    source_index = 0
+    for tick in range(tick_count):
+        source_a = speed_scale * tick * output_dt_s
+        source_b = min(source_duration_s, speed_scale * (tick + 1) * output_dt_s)
+        acc = [0.0] * 6
+
+        while source_index < len(clean):
+            next_t = clean[source_index + 1].rel_t if source_index + 1 < len(clean) else last_sample_end_s
+            if next_t > source_a + eps:
+                break
+            source_index += 1
+
+        idx = source_index
+        while idx < len(clean):
+            start_t = clean[idx].rel_t
+            end_t = clean[idx + 1].rel_t if idx + 1 < len(clean) else last_sample_end_s
+            if start_t >= source_b - eps:
+                break
+            overlap = min(source_b, end_t) - max(source_a, start_t)
+            if overlap > eps:
+                for component in range(6):
+                    acc[component] += overlap * clean[idx].values[component]
+            idx += 1
+
+        values.append(tuple(component / output_dt_s for component in acc))
+
+    return output_dt_s, values
 
 
 @dataclass
@@ -269,9 +359,19 @@ class DualSlaveTwistReplay:
         self.start_delay_s = _get_float("~start_delay_s", 2.0)
         self.speed_scale = _get_float("~speed_scale", 1.0)
         self.time_scale = _get_float("~time_scale", 1.0)
+        self.replay_rate_hz = _get_float("~replay_rate_hz", 500.0)
         self.publish_zero_rate_hz = _get_float("~publish_zero_rate_hz", 20.0)
         self.zero_before_s = _get_float("~zero_before_s", 0.5)
         self.zero_after_s = _get_float("~zero_after_s", 0.5)
+        if self.speed_scale <= 0.0:
+            raise ReplayAbort("speed_scale must be > 0")
+        if self.replay_rate_hz <= 0.0:
+            raise ReplayAbort("replay_rate_hz must be > 0")
+        if abs(self.time_scale - 1.0) > 1e-9:
+            raise ReplayAbort(
+                "time_scale is deprecated for trajectory replay. Use speed_scale as the "
+                "area-preserving trajectory speed factor: 2.0 halves duration, 0.5 doubles it."
+            )
         self.planning_time = _get_float("~planning_time", 5.0)
         self.num_planning_attempts = _get_int("~num_planning_attempts", 5)
         self.max_velocity_scaling_factor = _get_float("~max_velocity_scaling_factor", 0.1)
@@ -602,12 +702,12 @@ class DualSlaveTwistReplay:
                 )
             rospy.loginfo("%s: FT sensor zeroed successfully: %s", side, response.message)
 
-    def _load_events(self) -> List[Tuple[float, str, object]]:
+    def _load_samples(self) -> Dict[str, List[TwistSample]]:
         source_topics = {
             self.arms["left"]["command_topic"]: "left",
             self.arms["right"]["command_topic"]: "right",
         }
-        events: List[Tuple[float, str, object]] = []
+        samples: Dict[str, List[TwistSample]] = {side: [] for side in self.arms}
         with rosbag.Bag(self.bag_path, "r") as bag:
             for topic, msg, stamp in bag.read_messages(
                 topics=list(source_topics.keys()),
@@ -616,13 +716,42 @@ class DualSlaveTwistReplay:
             ):
                 side = source_topics[topic]
                 rel_t = stamp.to_sec() - self.replay_start_s
-                events.append((rel_t, side, msg))
-        events.sort(key=lambda item: item[0])
-        if not events:
-            raise ReplayAbort("No twist messages found in replay window")
-        return events
+                samples[side].append(TwistSample(rel_t=rel_t, values=_twist_values(msg)))
 
-    def _run_replay(self, events: List[Tuple[float, str, object]]) -> None:
+        missing = [side for side, side_samples in samples.items() if not side_samples]
+        if missing:
+            raise ReplayAbort(f"No twist messages found in replay window for arm(s): {missing}")
+        for side_samples in samples.values():
+            side_samples.sort(key=lambda item: item.rel_t)
+        return samples
+
+    def _build_scaled_replay(self, samples: Dict[str, List[TwistSample]]) -> ScaledReplay:
+        source_duration_s = self.replay_end_s - self.replay_start_s
+        output_dt_s = 1.0 / self.replay_rate_hz
+        commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]] = {}
+
+        for side, side_samples in samples.items():
+            side_dt_s, commands = _resample_time_scaled_twists(
+                side_samples,
+                source_duration_s,
+                self.speed_scale,
+                self.replay_rate_hz,
+            )
+            output_dt_s = side_dt_s
+            commands_by_side[side] = commands
+
+        counts = {side: len(commands) for side, commands in commands_by_side.items()}
+        if len(set(counts.values())) != 1:
+            raise ReplayAbort(f"Internal replay resampling mismatch: {counts}")
+
+        tick_count = next(iter(counts.values()))
+        return ScaledReplay(
+            output_dt_s=output_dt_s,
+            duration_s=tick_count * output_dt_s,
+            commands_by_side=commands_by_side,
+        )
+
+    def _run_replay(self, replay: ScaledReplay) -> None:
         self._publish_status("publishing zero before replay")
         self._publish_zero_for(self.zero_before_s)
 
@@ -636,25 +765,42 @@ class DualSlaveTwistReplay:
 
         self._publish_status("replaying")
         wall_start = rospy.Time.now()
-        for rel_t, side, msg in events:
+        for tick in range(replay.tick_count):
             self._check_safety()
-            target_time = wall_start + rospy.Duration(max(0.0, rel_t * self.time_scale))
+            target_time = wall_start + rospy.Duration(tick * replay.output_dt_s)
             while not rospy.is_shutdown() and rospy.Time.now() < target_time:
                 self._check_safety()
                 rospy.sleep(min(0.002, max(0.0, (target_time - rospy.Time.now()).to_sec())))
             if rospy.is_shutdown():
                 raise ReplayAbort("ROS shutdown")
-            self.pubs[side].publish(_scaled_twist(msg, self.speed_scale))
+            for side, commands in replay.commands_by_side.items():
+                self.pubs[side].publish(_twist_from_values(commands[tick]))
+
+        replay_end = wall_start + rospy.Duration(replay.duration_s)
+        while not rospy.is_shutdown() and rospy.Time.now() < replay_end:
+            self._check_safety()
+            rospy.sleep(min(0.002, max(0.0, (replay_end - rospy.Time.now()).to_sec())))
 
         self._publish_status("publishing zero after replay")
         self._publish_zero_for(self.zero_after_s)
         self._publish_status("complete")
 
     def run(self) -> None:
-        events = self._load_events()
+        samples = self._load_samples()
+        replay = self._build_scaled_replay(samples)
         self._publish_status(
-            "loaded %d twist messages, window %.6f -> %.6f, duration %.3fs"
-            % (len(events), self.replay_start_s, self.replay_end_s, self.replay_end_s - self.replay_start_s)
+            "loaded %s twist samples, window %.6f -> %.6f, source duration %.3fs, "
+            "speed_scale %.3f, replay duration %.3fs, rate %.1f Hz, ticks %d"
+            % (
+                {side: len(side_samples) for side, side_samples in samples.items()},
+                self.replay_start_s,
+                self.replay_end_s,
+                self.replay_end_s - self.replay_start_s,
+                self.speed_scale,
+                replay.duration_s,
+                self.replay_rate_hz,
+                replay.tick_count,
+            )
         )
         if self.dry_run:
             self._publish_status("dry_run_complete")
@@ -675,7 +821,7 @@ class DualSlaveTwistReplay:
                 self._publish_status("home_only_complete")
                 self._publish_zero_for(self.zero_after_s)
                 return
-            self._run_replay(events)
+            self._run_replay(replay)
         except Exception:
             self._publish_zero_for(self.zero_after_s)
             raise

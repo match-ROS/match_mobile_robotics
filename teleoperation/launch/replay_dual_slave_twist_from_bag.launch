@@ -23,7 +23,10 @@
   <arg name="dry_run" default="false" />
   <arg name="home_only" default="false" />
   <arg name="execute_home" default="true" />
+  <!-- Area-preserving trajectory speed factor: 2.0 halves duration, 0.5 doubles it. -->
   <arg name="speed_scale" default="1.0" />
+  <arg name="replay_rate_hz" default="500.0" />
+  <!-- Deprecated: keep at 1.0. Use speed_scale for time-scaled trajectory replay. -->
   <arg name="time_scale" default="1.0" />
 
   <arg name="planning_time" default="5.0" />
@@ -68,6 +71,7 @@
     <param name="home_only" value="$(arg home_only)" />
     <param name="execute_home" value="$(arg execute_home)" />
     <param name="speed_scale" value="$(arg speed_scale)" />
+    <param name="replay_rate_hz" value="$(arg replay_rate_hz)" />
     <param name="time_scale" value="$(arg time_scale)" />
 
     <param name="planning_time" value="$(arg planning_time)" />

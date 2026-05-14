@@ -1,8 +1,0 @@
-Dato il pacchetto di teleoperazione qui presente ho bisogno di introdurre le seguenti funzionalità:
-
-- Vorrei introdurre un sistema di scalatura del movimento. In pratica, dato un punto iniziale nello spazio operativo del master, e di conseguenza lo stesso punto riportato nel sistema dello slave, vorrei che i due robot si muovessero in un intorno di quel punto con spostamenti scalati tra loro. In pratica vorrei un coefficiente che mi definisse tale scalatura. Se io muovessi il master di 50 cm in una direzione, lo slave si dovrebbe muovere solo di 25 cm nella stessa direzione. In questo caso vorrei che il coefficiente sia pari a 2.
-Di conseguenza anche il twist di velocità di feedforward dovrebbe essere scalato per mantenere tale vincolo. Stesso discorso vale per la posizione target dello slave.
-Il punto iniziale mi serve per avere un punto in cui le due pose sono sovrapposte nello stesso sistema di riferimento.
-Nel caso della posizione la scalatura è abbastanza facile, diverso per la rotazione. In questo caso vorrei che il coefficiente per la rotazione sia indipendente da quello della traslazione in modo da poterlo impostare come mi fa più comodo.
-
-- L'altra funzionalità che mi serve è poter avere due master che controllano un solo slave. L'idea è farlo ottenendo la posizione media tra i due master e trasferendola allo slave. Vorrei che sia la posizione che l'orientamento siano la media tra i due master. Ho bisogno di un frame comune tra i due master, che voglio definire, per calcolare la media tra le pose e riportarla sullo slave, e un frame per lo slave su cui riportare la posa che può essere il base frame dello slave. Stesso discorso per il twist di feedforward che deve essere la media tra i due.

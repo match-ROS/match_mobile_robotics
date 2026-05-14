@@ -34,9 +34,11 @@ roslaunch teleoperation replay_dual_slave_twist_from_bag.launch \
   home_only:=true
 ```
 
-## 4. Replay prudente
+## 4. Replay time-scaled
 
-Esegue il replay dei twist registrati con velocita' scalata:
+Esegue la stessa traiettoria con durata scalata, preservando l'integrale dei twist.
+`speed_scale:=2.0` dimezza la durata, `speed_scale:=0.5` la raddoppia.
+Il nodo ricampiona i comandi a `replay_rate_hz` (default 500 Hz).
 
 ```bash
 roslaunch teleoperation replay_dual_slave_twist_from_bag.launch \
@@ -44,4 +46,6 @@ roslaunch teleoperation replay_dual_slave_twist_from_bag.launch \
   speed_scale:=0.5
 ```
 
-Quando il test prudente e' corretto, ripetere con `speed_scale:=1.0`.
+Quando il test prudente e' corretto, ripetere con `speed_scale:=1.0` o con il
+fattore desiderato. Lasciare `time_scale:=1.0`: il parametro e' mantenuto solo
+per compatibilita' del launch file.

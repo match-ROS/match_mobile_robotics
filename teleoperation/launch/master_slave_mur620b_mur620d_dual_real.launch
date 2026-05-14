@@ -5,6 +5,18 @@
   <arg name="right_arm_ns" default="UR10_r" />
   <arg name="override_home_with_master_neutral" default="false" />
 
+  <!-- Optional bimanual object coupling. When enabled, master target publishers write
+       raw/intermediate topics and teleop_bimanual_object_coupling owns the final slave targets. -->
+  <arg name="use_bimanual_object_coupling" default="true" />
+  <arg name="bimanual_coupling_rate" default="500.0" />
+  <arg name="bimanual_coupling_input_timeout_s" default="0.15" />
+  <arg name="bimanual_coupling_enable_blend_s" default="0.4" />
+  <arg name="bimanual_coupling_disable_blend_s" default="1.0" />
+  <arg name="bimanual_coupling_feedback_fade_s" default="1.0" />
+  <arg name="bimanual_coupling_average_orientation_mode" default="slerp" />
+  <arg name="coupling_force_reflection_scale_topic" default="/teleop_bimanual_object_coupling/force_reflection_scale" />
+  <arg name="coupling_active_topic" default="/teleop_bimanual_object_coupling/active" />
+
   <!-- Optional: zero/tare all UR10e FT sensors at startup -->
   <arg name="do_ur10e_zero_loadcell_master_left" default="true" />
   <arg name="do_ur10e_zero_loadcell_master_right" default="true" />
@@ -35,6 +47,12 @@
        default="$(eval arg('left_motion_master_neutral_orientation_xyzw') if arg('override_home_with_master_neutral') == 'true' else arg('left_home_orientation_xyzw'))" />
   <arg name="left_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/target_pose')" />
   <arg name="left_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/feedforward_twist')" />
+  <arg name="left_raw_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/raw_target_pose')" />
+  <arg name="left_raw_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/raw_feedforward_twist')" />
+  <arg name="left_master_target_pose_topic"
+       default="$(eval arg('left_raw_target_pose_topic') if arg('use_bimanual_object_coupling') else arg('left_target_pose_topic'))" />
+  <arg name="left_master_feedforward_twist_topic"
+       default="$(eval arg('left_raw_feedforward_twist_topic') if arg('use_bimanual_object_coupling') else arg('left_feedforward_twist_topic'))" />
   <arg name="left_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/slave_actual_pose')" />
   <arg name="left_home_return_status_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/left/home_return/status')" />
   <arg name="left_master_filtered_master_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('left_arm_ns') + '/master_wrench_filtered')" />
@@ -64,6 +82,12 @@
        default="$(eval arg('right_motion_master_neutral_orientation_xyzw') if arg('override_home_with_master_neutral') == 'true' else arg('right_home_orientation_xyzw'))" />
   <arg name="right_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/target_pose')" />
   <arg name="right_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/feedforward_twist')" />
+  <arg name="right_raw_target_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/raw_target_pose')" />
+  <arg name="right_raw_feedforward_twist_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/raw_feedforward_twist')" />
+  <arg name="right_master_target_pose_topic"
+       default="$(eval arg('right_raw_target_pose_topic') if arg('use_bimanual_object_coupling') else arg('right_target_pose_topic'))" />
+  <arg name="right_master_feedforward_twist_topic"
+       default="$(eval arg('right_raw_feedforward_twist_topic') if arg('use_bimanual_object_coupling') else arg('right_feedforward_twist_topic'))" />
   <arg name="right_slave_actual_pose_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/slave_actual_pose')" />
   <arg name="right_home_return_status_topic" default="$(eval '/teleop/' + arg('master_robot_ns') + '_to_' + arg('slave_robot_ns') + '/right/home_return/status')" />
   <arg name="right_master_filtered_master_wrench_topic" default="$(eval '/teleop_debug/' + arg('master_robot_ns') + '_' + arg('right_arm_ns') + '/master_wrench_filtered')" />
@@ -116,6 +140,42 @@
     <param name="wait_timeout_s" value="$(arg ur10e_zero_loadcell_wait_timeout_s)" />
   </node>
 
+  <!-- Bimanual object coupling:
+       - independent mode: forwards raw master-generated targets to the final slave topics;
+       - coupled mode: the averaged master target frame drives a rigid virtual object between slave TCPs.
+       Services:
+         /teleop_bimanual_object_coupling/enable
+         /teleop_bimanual_object_coupling/disable -->
+  <node pkg="teleoperation"
+        type="teleop_bimanual_object_coupling"
+        name="teleop_bimanual_object_coupling"
+        output="screen"
+        if="$(arg use_bimanual_object_coupling)">
+    <param name="common_frame" value="$(arg left_slave_base_inertia_frame)" />
+    <param name="left_output_frame" value="$(arg left_slave_base_inertia_frame)" />
+    <param name="right_output_frame" value="$(arg right_slave_base_inertia_frame)" />
+    <param name="left_slave_tcp_frame" value="$(arg left_slave_tool_frame)" />
+    <param name="right_slave_tcp_frame" value="$(arg right_slave_tool_frame)" />
+
+    <param name="left_input_pose_topic" value="$(arg left_raw_target_pose_topic)" />
+    <param name="left_input_twist_topic" value="$(arg left_raw_feedforward_twist_topic)" />
+    <param name="right_input_pose_topic" value="$(arg right_raw_target_pose_topic)" />
+    <param name="right_input_twist_topic" value="$(arg right_raw_feedforward_twist_topic)" />
+
+    <param name="left_output_pose_topic" value="$(arg left_target_pose_topic)" />
+    <param name="left_output_twist_topic" value="$(arg left_feedforward_twist_topic)" />
+    <param name="right_output_pose_topic" value="$(arg right_target_pose_topic)" />
+    <param name="right_output_twist_topic" value="$(arg right_feedforward_twist_topic)" />
+
+    <param name="rate" value="$(arg bimanual_coupling_rate)" />
+    <param name="input_timeout_s" value="$(arg bimanual_coupling_input_timeout_s)" />
+    <param name="enable_blend_duration_s" value="$(arg bimanual_coupling_enable_blend_s)" />
+    <param name="disable_blend_duration_s" value="$(arg bimanual_coupling_disable_blend_s)" />
+    <param name="feedback_fade_duration_s" value="$(arg bimanual_coupling_feedback_fade_s)" />
+    <param name="average_orientation_mode" value="$(arg bimanual_coupling_average_orientation_mode)" />
+    <param name="publish_debug_frames" value="true" />
+  </node>
+
   <!-- MASTER LEFT: publish targets for slave left -->
   <node pkg="teleoperation"
         type="teleop_master_haptic_controller"
@@ -134,8 +194,10 @@
     <param name="use_latest_tf_for_wrench" value="true" />
 
     <param name="publish_slave_targets" value="true" />
-    <param name="slave_target_pose_topic" value="$(arg left_target_pose_topic)" />
-    <param name="slave_feedforward_twist_topic" value="$(arg left_feedforward_twist_topic)" />
+    <param name="slave_target_pose_topic" value="$(arg left_master_target_pose_topic)" />
+    <param name="slave_feedforward_twist_topic" value="$(arg left_master_feedforward_twist_topic)" />
+    <param name="force_reflection_gate_topic" value="$(arg coupling_force_reflection_scale_topic)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="home_return_disable_topic" value="$(arg coupling_active_topic)" if="$(arg use_bimanual_object_coupling)" />
 
     <!-- Keep the tested frame-override logic: publish master-left pose in master-left base,
          but label the message as slave-left base so the numerically identical arm can consume it directly. -->
@@ -198,8 +260,10 @@
     <param name="use_latest_tf_for_wrench" value="true" />
 
     <param name="publish_slave_targets" value="true" />
-    <param name="slave_target_pose_topic" value="$(arg right_target_pose_topic)" />
-    <param name="slave_feedforward_twist_topic" value="$(arg right_feedforward_twist_topic)" />
+    <param name="slave_target_pose_topic" value="$(arg right_master_target_pose_topic)" />
+    <param name="slave_feedforward_twist_topic" value="$(arg right_master_feedforward_twist_topic)" />
+    <param name="force_reflection_gate_topic" value="$(arg coupling_force_reflection_scale_topic)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="home_return_disable_topic" value="$(arg coupling_active_topic)" if="$(arg use_bimanual_object_coupling)" />
 
     <!-- Same tested frame-override logic for the right arm pair. -->
     <param name="slave_base_frame" value="$(arg right_master_base_inertia_frame)" />

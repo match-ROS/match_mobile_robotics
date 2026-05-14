@@ -6,6 +6,7 @@ add_compile_options(-std=c++17)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   std_msgs
+  std_srvs
   geometry_msgs
   sensor_msgs
   tf2
@@ -20,7 +21,7 @@ find_package(Eigen3 REQUIRED)
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS roscpp std_msgs geometry_msgs sensor_msgs tf2 tf2_ros tf2_geometry_msgs tf2_eigen moveit_core moveit_ros_planning
+  CATKIN_DEPENDS roscpp std_msgs std_srvs geometry_msgs sensor_msgs tf2 tf2_ros tf2_geometry_msgs tf2_eigen moveit_core moveit_ros_planning
   DEPENDS EIGEN3
 )
 
@@ -100,6 +101,16 @@ target_link_libraries(teleop_bimanual_coupling
   ${catkin_LIBRARIES}
 )
 
+add_executable(teleop_bimanual_object_coupling
+  src/teleop_bimanual_object_coupling_node.cpp
+)
+add_dependencies(teleop_bimanual_object_coupling
+  ${catkin_EXPORTED_TARGETS}
+)
+target_link_libraries(teleop_bimanual_object_coupling
+  ${catkin_LIBRARIES}
+)
+
 # =============================================================================
 # Install
 # =============================================================================
@@ -111,6 +122,7 @@ install(TARGETS
   teleop_master_haptic_controller
   teleop_slave_twist_outer_loop
   teleop_bimanual_coupling
+  teleop_bimanual_object_coupling
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

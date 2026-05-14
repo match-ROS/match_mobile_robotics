@@ -4,6 +4,8 @@
 #include <geometry_msgs/Twist.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <geometry_msgs/WrenchStamped.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/Float64.h>
 #include <std_msgs/Float64MultiArray.h>
 #include <std_msgs/String.h>
 
@@ -122,6 +124,8 @@ public:
 
     pnh_.param<double>("force_reflection_scale", kf_force_, kf_force_);
     pnh_.param<double>("torque_reflection_scale", kf_torque_, kf_torque_);
+    pnh_.param<std::string>("force_reflection_gate_topic", force_reflection_gate_topic_, force_reflection_gate_topic_);
+    pnh_.param<std::string>("home_return_disable_topic", home_return_disable_topic_, home_return_disable_topic_);
     pnh_.param<bool>("passivity/enabled", passivity_config_.enabled, passivity_config_.enabled);
     pnh_.param<bool>("passivity/linear_only", passivity_config_.linear_only, passivity_config_.linear_only);
     pnh_.param<double>("passivity/tank_energy_init", passivity_config_.tank_energy_init, passivity_config_.tank_energy_init);
@@ -326,6 +330,26 @@ public:
     {
       sub_coupling_wrench_ = nh_.subscribe(coupling_wrench_topic_, 1, &TeleopMasterHapticController::couplingWrenchCb, this,
                                            ros::TransportHints().tcpNoDelay());
+    }
+
+    if (!force_reflection_gate_topic_.empty())
+    {
+      sub_force_reflection_gate_ = nh_.subscribe(force_reflection_gate_topic_, 1,
+                                                 &TeleopMasterHapticController::forceReflectionGateCb, this,
+                                                 ros::TransportHints().tcpNoDelay());
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "Force reflection gate enabled: topic='%s'",
+                     force_reflection_gate_topic_.c_str());
+    }
+
+    if (!home_return_disable_topic_.empty())
+    {
+      sub_home_return_disable_ = nh_.subscribe(home_return_disable_topic_, 1,
+                                               &TeleopMasterHapticController::homeReturnDisableCb, this,
+                                               ros::TransportHints().tcpNoDelay());
+      ROS_INFO_NAMED("teleop_master_haptic_controller",
+                     "External home-return disable enabled: topic='%s'",
+                     home_return_disable_topic_.c_str());
     }
 
     if (!slave_actual_pose_topic_.empty())
@@ -799,6 +823,19 @@ private:
     has_coupling_ = true;
   }
 
+  void forceReflectionGateCb(const std_msgs::Float64ConstPtr& msg)
+  {
+    const double gate = std::isfinite(msg->data) ? std::clamp(msg->data, 0.0, 1.0) : 1.0;
+    std::lock_guard<std::mutex> lock(mutex_);
+    force_reflection_gate_ = gate;
+  }
+
+  void homeReturnDisableCb(const std_msgs::BoolConstPtr& msg)
+  {
+    std::lock_guard<std::mutex> lock(mutex_);
+    home_return_externally_disabled_ = msg->data;
+  }
+
   void slaveActualPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
   {
     const Eigen::Vector3d raw_pos(msg->pose.position.x, msg->pose.position.y, msg->pose.position.z);
@@ -992,6 +1029,8 @@ private:
     ros::Time master_stamp, slave_stamp, coupling_stamp;
     bool has_slave = false;
     bool has_coupling = false;
+    double force_reflection_gate = 1.0;
+    bool home_return_externally_disabled = false;
     {
       std::lock_guard<std::mutex> lock(mutex_);
       if (!has_master_)
@@ -1010,7 +1049,11 @@ private:
       has_coupling = has_coupling_;
       coupling_raw = coupling_wrench_raw_;
       coupling_stamp = coupling_stamp_;
+
+      force_reflection_gate = force_reflection_gate_;
+      home_return_externally_disabled = home_return_externally_disabled_;
     }
+    force_reflection_gate = std::clamp(force_reflection_gate, 0.0, 1.0);
 
     const bool master_stale = ((now - master_stamp).toSec() > wrench_timeout_s_);
     const bool slave_stale = has_slave && ((now - slave_stamp).toSec() > wrench_timeout_s_);
@@ -1352,7 +1395,7 @@ private:
     const bool spring_enabled = has_slave_actual_pose_ &&
                                  (spring_k_lin_ > 0.0 || spring_k_ang_ > 0.0) &&
                                  publish_slave_targets_;
-    const bool home_return_ready = home_return_enabled_ && has_home_target_;
+    const bool home_return_ready = home_return_enabled_ && has_home_target_ && !home_return_externally_disabled;
     const bool need_master_pose = spring_enabled || home_return_ready;
     Eigen::Vector3d p_master = Eigen::Vector3d::Zero();
     Eigen::Quaterniond q_master = Eigen::Quaterniond::Identity();
@@ -1545,11 +1588,11 @@ private:
     Eigen::Vector3d Tau_reflection = Eigen::Vector3d::Zero();
     if (use_forces_)
     {
-      F_reflection = (-kf_force_ * slave_filt_.f).eval();
+      F_reflection = (-(force_reflection_gate * kf_force_) * slave_filt_.f).eval();
     }
     if (use_torques_)
     {
-      Tau_reflection = (-kf_torque_ * slave_filt_.tau).eval();
+      Tau_reflection = (-(force_reflection_gate * kf_torque_) * slave_filt_.tau).eval();
     }
     const teleoperation::PassivityLayerResult passivity_result =
         passivity_layer_.step(F_reflection, Tau_reflection, v_lin_cmd_, v_ang_cmd_, D_lin, D_ang, dt_used);
@@ -1793,6 +1836,8 @@ private:
   ros::Subscriber sub_slave_wrench_;
   ros::Subscriber sub_coupling_wrench_;
   ros::Subscriber sub_slave_actual_pose_;
+  ros::Subscriber sub_force_reflection_gate_;
+  ros::Subscriber sub_home_return_disable_;
   ros::Publisher pub_cmd_;
   ros::Publisher pub_cmd_stamped_;
   teleoperation::WrenchDebugPublisher debug_master_filt_pub_;
@@ -1882,6 +1927,8 @@ private:
 
   double kf_force_{0.3};
   double kf_torque_{0.0};
+  std::string force_reflection_gate_topic_;
+  std::string home_return_disable_topic_;
   teleoperation::PassivityLayerConfig passivity_config_;
   bool passivity_publish_debug_{true};
   bool use_forces_{true};
@@ -1995,6 +2042,8 @@ private:
   ros::Time master_stamp_{0};
   ros::Time slave_stamp_{0};
   ros::Time coupling_stamp_{0};
+  double force_reflection_gate_{1.0};
+  bool home_return_externally_disabled_{false};
 
   // Filtered
   bool has_filtered_master_{false};

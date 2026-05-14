@@ -43,10 +43,19 @@ TOPICS=(
   /teleop/mur620b_to_mur620d/right/target_pose
   /teleop/mur620b_to_mur620d/left/feedforward_twist
   /teleop/mur620b_to_mur620d/right/feedforward_twist
+  /teleop/mur620b_to_mur620d/left/raw_target_pose
+  /teleop/mur620b_to_mur620d/right/raw_target_pose
+  /teleop/mur620b_to_mur620d/left/raw_feedforward_twist
+  /teleop/mur620b_to_mur620d/right/raw_feedforward_twist
   /teleop/mur620b_to_mur620d/left/slave_actual_pose
   /teleop/mur620b_to_mur620d/right/slave_actual_pose
   /teleop/mur620b_to_mur620d/left/home_return/status
   /teleop/mur620b_to_mur620d/right/home_return/status
+  /teleop_bimanual_object_coupling/active
+  /teleop_bimanual_object_coupling/state
+  /teleop_bimanual_object_coupling/force_reflection_scale
+  /teleop_bimanual_object_coupling/debug/object_pose
+  /teleop_bimanual_object_coupling/debug/master_average_pose
   /mur620b/UR10_l/wrench
   /mur620b/UR10_r/wrench
   /mur620d/UR10_l/wrench
@@ -69,6 +78,8 @@ TOPICS=(
   /teleop_debug/mur620b_UR10_l/slave_wrench_filtered
   /teleop_debug/mur620b_UR10_r/master_wrench_filtered
   /teleop_debug/mur620b_UR10_r/slave_wrench_filtered
+  /teleop_debug/mur620d_UR10_l/slave_wrench_filtered
+  /teleop_debug/mur620d_UR10_r/slave_wrench_filtered
   /teleop_master_haptic_controller_left/debug/admittance_stats
   /teleop_master_haptic_controller_left/debug/admittance_dynamics
   /teleop_master_haptic_controller_left/debug/dt_stats

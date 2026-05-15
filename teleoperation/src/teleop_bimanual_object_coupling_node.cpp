@@ -114,6 +114,9 @@ public:
     pnh_.param<double>("feedback_fade_duration_s", feedback_fade_duration_s_, feedback_fade_duration_s_);
     pnh_.param<std::string>("average_orientation_mode", average_orientation_mode_, average_orientation_mode_);
     pnh_.param<bool>("publish_debug_frames", publish_debug_frames_, publish_debug_frames_);
+    pnh_.param<bool>("use_latest_tf_for_inputs", use_latest_tf_for_inputs_, use_latest_tf_for_inputs_);
+    pnh_.param<bool>("auto_enable", auto_enable_, auto_enable_);
+    pnh_.param<double>("auto_enable_delay_s", auto_enable_delay_s_, auto_enable_delay_s_);
 
     sanitizeDurations();
 
@@ -146,6 +149,18 @@ public:
     const double period = (rate_ > 0.0) ? (1.0 / rate_) : 0.01;
     timer_ = nh_.createTimer(ros::Duration(period), &TeleopBimanualObjectCoupling::tick, this);
 
+    if (auto_enable_)
+    {
+      const double timer_delay_s = std::max(0.001, auto_enable_delay_s_);
+      auto_enable_timer_ = nh_.createTimer(ros::Duration(timer_delay_s),
+                                           &TeleopBimanualObjectCoupling::autoEnableTick,
+                                           this,
+                                           true);
+      ROS_INFO_NAMED("teleop_bimanual_object_coupling",
+                     "Automatic coupling enable scheduled after %.3fs.",
+                     auto_enable_delay_s_);
+    }
+
     ROS_INFO_NAMED("teleop_bimanual_object_coupling",
                    "Bimanual object coupling ready. common='%s' outputs L='%s' R='%s' services '~enable'/'~disable'.",
                    common_frame_.c_str(), left_output_frame_.c_str(), right_output_frame_.c_str());
@@ -164,6 +179,8 @@ private:
       input_timeout_s_ = 0.0;
     if (!std::isfinite(tf_timeout_s_) || tf_timeout_s_ < 0.0)
       tf_timeout_s_ = 0.0;
+    if (!std::isfinite(auto_enable_delay_s_) || auto_enable_delay_s_ < 0.0)
+      auto_enable_delay_s_ = 0.0;
   }
 
   void leftPoseCb(const geometry_msgs::PoseStampedConstPtr& msg)
@@ -220,6 +237,15 @@ private:
     return ok;
   }
 
+  ros::Time inputLookupTime(const ros::Time& stamp) const
+  {
+    if (use_latest_tf_for_inputs_ || stamp.isZero())
+    {
+      return ros::Time(0);
+    }
+    return stamp;
+  }
+
   static bool poseMsgToIso(const geometry_msgs::PoseStamped& msg, Eigen::Isometry3d& out)
   {
     Eigen::Quaterniond q(msg.pose.orientation.w,
@@ -251,7 +277,7 @@ private:
     {
       try
       {
-        const ros::Time stamp = in.header.stamp.isZero() ? ros::Time(0) : in.header.stamp;
+        const ros::Time stamp = inputLookupTime(in.header.stamp);
         const geometry_msgs::TransformStamped T =
             tf_buffer_.lookupTransform(common_frame_, in.header.frame_id, stamp, ros::Duration(tf_timeout_s_));
         tf2::doTransform(in, common_msg, T);
@@ -290,7 +316,7 @@ private:
 
     try
     {
-      const ros::Time stamp = in.header.stamp.isZero() ? ros::Time(0) : in.header.stamp;
+      const ros::Time stamp = inputLookupTime(in.header.stamp);
       const geometry_msgs::TransformStamped T =
           tf_buffer_.lookupTransform(common_frame_, in.header.frame_id, stamp, ros::Duration(tf_timeout_s_));
       tf2::Quaternion q;
@@ -726,6 +752,32 @@ private:
     return true;
   }
 
+  void autoEnableTick(const ros::TimerEvent& /*ev*/)
+  {
+    if (mode_ != Mode::Independent)
+    {
+      ROS_INFO_NAMED("teleop_bimanual_object_coupling",
+                     "Automatic coupling enable skipped: coupling is already active.");
+      return;
+    }
+
+    std_srvs::Trigger::Request req;
+    std_srvs::Trigger::Response res;
+    (void)enableCb(req, res);
+    if (res.success)
+    {
+      ROS_INFO_NAMED("teleop_bimanual_object_coupling",
+                     "Automatic coupling enable succeeded: %s",
+                     res.message.c_str());
+    }
+    else
+    {
+      ROS_WARN_NAMED("teleop_bimanual_object_coupling",
+                     "Automatic coupling enable failed after %.3fs: %s",
+                     auto_enable_delay_s_, res.message.c_str());
+    }
+  }
+
   double elapsedModeTime(const ros::Time& now) const
   {
     if (mode_start_time_.isZero())
@@ -910,6 +962,7 @@ private:
   ros::ServiceServer srv_enable_;
   ros::ServiceServer srv_disable_;
   ros::Timer timer_;
+  ros::Timer auto_enable_timer_;
 
   std::string common_frame_{"base_link"};
   std::string left_output_frame_{"base_link"};
@@ -934,6 +987,9 @@ private:
   double feedback_fade_duration_s_{1.0};
   std::string average_orientation_mode_{"slerp"};
   bool publish_debug_frames_{true};
+  bool use_latest_tf_for_inputs_{true};
+  bool auto_enable_{false};
+  double auto_enable_delay_s_{0.0};
 
   geometry_msgs::PoseStamped left_pose_;
   geometry_msgs::TwistStamped left_twist_;

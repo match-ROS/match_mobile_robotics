@@ -7,9 +7,12 @@
 
   <!-- Optional bimanual object coupling. When enabled, master target publishers write
        raw/intermediate topics and teleop_bimanual_object_coupling owns the final slave targets. -->
-  <arg name="use_bimanual_object_coupling" default="false" />
+  <arg name="use_bimanual_object_coupling" default="true" />
   <arg name="bimanual_coupling_rate" default="500.0" />
   <arg name="bimanual_coupling_input_timeout_s" default="0.15" />
+  <arg name="bimanual_coupling_use_latest_tf_for_inputs" default="true" />
+  <arg name="bimanual_coupling_auto_enable" default="false" />
+  <arg name="bimanual_coupling_auto_enable_delay_s" default="5.0" />
   <arg name="bimanual_coupling_enable_blend_s" default="0.4" />
   <arg name="bimanual_coupling_disable_blend_s" default="1.0" />
   <arg name="bimanual_coupling_feedback_fade_s" default="1.0" />
@@ -169,6 +172,9 @@
 
     <param name="rate" value="$(arg bimanual_coupling_rate)" />
     <param name="input_timeout_s" value="$(arg bimanual_coupling_input_timeout_s)" />
+    <param name="use_latest_tf_for_inputs" value="$(arg bimanual_coupling_use_latest_tf_for_inputs)" />
+    <param name="auto_enable" value="$(arg bimanual_coupling_auto_enable)" />
+    <param name="auto_enable_delay_s" value="$(arg bimanual_coupling_auto_enable_delay_s)" />
     <param name="enable_blend_duration_s" value="$(arg bimanual_coupling_enable_blend_s)" />
     <param name="disable_blend_duration_s" value="$(arg bimanual_coupling_disable_blend_s)" />
     <param name="feedback_fade_duration_s" value="$(arg bimanual_coupling_feedback_fade_s)" />

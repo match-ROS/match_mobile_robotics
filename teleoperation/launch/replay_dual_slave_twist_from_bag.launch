@@ -1,6 +1,6 @@
 <launch>
   <arg name="bag" default="" />
-  <arg name="manifest" default="/home/pantanetti/rosbags/Rotazione_cesta_trasparente_2_2026-05-07_11-44-17/dual_real_2026-05-07_11-44-17_0_replay_analysis/replay_manifest.yaml" />
+  <arg name="manifest" default="/home/pantanetti/rosbags/Movimento_semplice_scal_3.0_2026-05-06_15-12-42/Movimento_semplice_scal_3.0_2026-05-06_15-12-42_0_replay_analysis/replay_manifest.yaml" />
   <arg name="robot_ns" default="mur620d" />
 
   <arg name="left_arm_ns" default="UR10_l" />
@@ -24,15 +24,16 @@
   <arg name="home_only" default="false" />
   <arg name="execute_home" default="true" />
   <!-- Area-preserving trajectory speed factor: 2.0 halves duration, 0.5 doubles it. -->
-  <arg name="speed_scale" default="1.0" />
+  <arg name="speed_scale" default="5.0" />
   <arg name="replay_rate_hz" default="500.0" />
   <!-- Deprecated: keep at 1.0. Use speed_scale for time-scaled trajectory replay. -->
   <arg name="time_scale" default="1.0" />
 
   <arg name="planning_time" default="5.0" />
   <arg name="num_planning_attempts" default="5" />
-  <arg name="max_velocity_scaling_factor" default="0.1" />
-  <arg name="max_acceleration_scaling_factor" default="0.1" />
+  <!-- MoveIt pre-positioning speed. Replay speed is controlled separately by speed_scale. -->
+  <arg name="max_velocity_scaling_factor" default="0.05" />
+  <arg name="max_acceleration_scaling_factor" default="0.05" />
   <arg name="goal_joint_tolerance" default="0.001" />
 
   <arg name="auto_load_controllers" default="true" />

@@ -7,7 +7,7 @@
 
   <!-- Optional bimanual object coupling. When enabled, master target publishers write
        raw/intermediate topics and teleop_bimanual_object_coupling owns the final slave targets. -->
-  <arg name="use_bimanual_object_coupling" default="true" />
+  <arg name="use_bimanual_object_coupling" default="false" />
   <arg name="bimanual_coupling_rate" default="500.0" />
   <arg name="bimanual_coupling_input_timeout_s" default="0.15" />
   <arg name="bimanual_coupling_enable_blend_s" default="0.4" />

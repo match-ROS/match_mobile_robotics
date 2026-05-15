@@ -7,6 +7,8 @@ set -euo pipefail
 
 WORKSPACE="${WORKSPACE:-/home/pantanetti/catkin_ws}"
 BAG_DIR="${BAG_DIR:-${HOME}/rosbags}"
+REPLAY_PARAM_NS="${REPLAY_PARAM_NS:-/replay_dual_slave_twist_from_bag}"
+REPLAY_PARAM_WAIT_ATTEMPTS="${REPLAY_PARAM_WAIT_ATTEMPTS:-20}"
 LABEL_RAW="${1:-dual_slave_replay}"
 LABEL="$(printf '%s' "${LABEL_RAW}" | tr -c '[:alnum:]_.-' '_')"
 TIMESTAMP="$(date +%F_%H-%M-%S)"
@@ -26,6 +28,60 @@ mkdir -p "${RUN_DIR}"
 if ! rosnode list >/dev/null 2>&1; then
   echo "ROS master non raggiungibile. Avvia prima roscore/roslaunch e riprova." >&2
   exit 1
+fi
+
+clean_rosparam_scalar() {
+  local value="$1"
+  case "${value}" in
+    "''" | '""')
+      value=""
+      ;;
+  esac
+  printf '%s' "${value}"
+}
+
+get_replay_param() {
+  local key="$1"
+  rosparam get "${REPLAY_PARAM_NS}/${key}" 2>/dev/null || true
+}
+
+wait_for_replay_manifest_param() {
+  local value=""
+  local i=0
+  for ((i = 0; i < REPLAY_PARAM_WAIT_ATTEMPTS; ++i)); do
+    value="$(clean_rosparam_scalar "$(get_replay_param manifest)")"
+    if [[ -n "${value}" ]]; then
+      printf '%s' "${value}"
+      return 0
+    fi
+    sleep 0.25
+  done
+  return 0
+}
+
+read_manifest_bag_path() {
+  local manifest_path="$1"
+  if [[ -z "${manifest_path}" || ! -f "${manifest_path}" ]]; then
+    return 0
+  fi
+  python3 -c 'import sys, yaml
+with open(sys.argv[1], "r") as f:
+    data = yaml.safe_load(f) or {}
+value = data.get("bag", "") if isinstance(data, dict) else ""
+print(value or "")' "${manifest_path}" 2>/dev/null || true
+}
+
+SOURCE_MANIFEST="$(wait_for_replay_manifest_param)"
+SOURCE_BAG_PARAM="$(clean_rosparam_scalar "$(get_replay_param bag)")"
+SOURCE_BAG_FROM_MANIFEST="$(read_manifest_bag_path "${SOURCE_MANIFEST}")"
+SOURCE_BAG="${SOURCE_BAG_PARAM:-${SOURCE_BAG_FROM_MANIFEST}}"
+SOURCE_MANIFEST_COPY=""
+
+if [[ -n "${SOURCE_MANIFEST}" && -f "${SOURCE_MANIFEST}" ]]; then
+  SOURCE_MANIFEST_COPY="${RUN_DIR}/source_replay_manifest.yaml"
+  cp -f "${SOURCE_MANIFEST}" "${SOURCE_MANIFEST_COPY}"
+else
+  echo "WARNING: manifest replay non trovato nei parametri (${REPLAY_PARAM_NS}/manifest)." >&2
 fi
 
 TOPICS=(
@@ -61,6 +117,12 @@ dump_metadata() {
   echo "label=${LABEL_RAW}"
   echo "workspace=${WORKSPACE}"
   echo "bag_prefix=${BAG_PREFIX}"
+  echo "replay_param_ns=${REPLAY_PARAM_NS}"
+  echo "source_manifest=${SOURCE_MANIFEST}"
+  echo "source_manifest_copy=${SOURCE_MANIFEST_COPY}"
+  echo "source_bag_param=${SOURCE_BAG_PARAM}"
+  echo "source_bag_manifest=${SOURCE_BAG_FROM_MANIFEST}"
+  echo "source_bag=${SOURCE_BAG}"
   echo "ros_master_uri=${ROS_MASTER_URI:-}"
   echo "ros_ip=${ROS_IP:-}"
   echo "ros_hostname=${ROS_HOSTNAME:-}"
@@ -68,10 +130,21 @@ dump_metadata() {
   echo "kernel=$(uname -a)"
 } > "${RUN_DIR}/run_metadata.env"
 
+{
+  echo "replay_param_ns=${REPLAY_PARAM_NS}"
+  echo "source_manifest=${SOURCE_MANIFEST}"
+  echo "source_manifest_copy=${SOURCE_MANIFEST_COPY}"
+  echo "source_bag_param=${SOURCE_BAG_PARAM}"
+  echo "source_bag_manifest=${SOURCE_BAG_FROM_MANIFEST}"
+  echo "source_bag=${SOURCE_BAG}"
+} > "${RUN_DIR}/source_replay_metadata.env"
+
 printf '%s\n' "${TOPICS[@]}" > "${RUN_DIR}/recorded_topics.txt"
 
 echo "Salvataggio replay in: ${RUN_DIR}"
 echo "Bag prefix: ${BAG_PREFIX}"
+echo "Manifest sorgente: ${SOURCE_MANIFEST:-non trovato}"
+echo "Bag sorgente: ${SOURCE_BAG:-non trovata}"
 echo "Topic registrati: ${#TOPICS[@]}"
 echo "Snapshot parametri iniziale..."
 dump_metadata "before"

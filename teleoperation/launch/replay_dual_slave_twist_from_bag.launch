@@ -1,6 +1,6 @@
 <launch>
   <arg name="bag" default="" />
-  <arg name="manifest" default="/home/pantanetti/rosbags/Movimento_semplice_scal_3.0_2026-05-06_15-12-42/Movimento_semplice_scal_3.0_2026-05-06_15-12-42_0_replay_analysis/replay_manifest.yaml" />
+  <arg name="manifest" default="/home/pantanetti/rosbags/Rotazione_cesta_trasparente_2_2026-05-07_11-44-17/dual_real_2026-05-07_11-44-17_0_replay_analysis/replay_manifest.yaml" />
   <arg name="robot_ns" default="mur620d" />
 
   <arg name="left_arm_ns" default="UR10_l" />

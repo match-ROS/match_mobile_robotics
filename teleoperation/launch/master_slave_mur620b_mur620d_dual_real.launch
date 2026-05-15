@@ -11,7 +11,7 @@
   <arg name="bimanual_coupling_rate" default="500.0" />
   <arg name="bimanual_coupling_input_timeout_s" default="0.15" />
   <arg name="bimanual_coupling_use_latest_tf_for_inputs" default="true" />
-  <arg name="bimanual_coupling_auto_enable" default="true" />
+  <arg name="bimanual_coupling_auto_enable" default="false" />
   <arg name="bimanual_coupling_auto_enable_delay_s" default="20.0" />
   <arg name="bimanual_coupling_enable_blend_s" default="0.4" />
   <arg name="bimanual_coupling_disable_blend_s" default="1.0" />

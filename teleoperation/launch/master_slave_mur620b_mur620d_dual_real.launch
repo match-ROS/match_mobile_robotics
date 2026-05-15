@@ -11,14 +11,18 @@
   <arg name="bimanual_coupling_rate" default="500.0" />
   <arg name="bimanual_coupling_input_timeout_s" default="0.15" />
   <arg name="bimanual_coupling_use_latest_tf_for_inputs" default="true" />
-  <arg name="bimanual_coupling_auto_enable" default="false" />
-  <arg name="bimanual_coupling_auto_enable_delay_s" default="5.0" />
+  <arg name="bimanual_coupling_auto_enable" default="true" />
+  <arg name="bimanual_coupling_auto_enable_delay_s" default="20.0" />
   <arg name="bimanual_coupling_enable_blend_s" default="0.4" />
   <arg name="bimanual_coupling_disable_blend_s" default="1.0" />
   <arg name="bimanual_coupling_feedback_fade_s" default="1.0" />
   <arg name="bimanual_coupling_average_orientation_mode" default="slerp" />
   <arg name="coupling_force_reflection_scale_topic" default="/teleop_bimanual_object_coupling/force_reflection_scale" />
   <arg name="coupling_active_topic" default="/teleop_bimanual_object_coupling/active" />
+  <arg name="force_reflection_software_zero_enabled" default="true" />
+  <arg name="force_reflection_software_zero_delay_s" default="1.0" />
+  <arg name="force_reflection_software_zero_capture_window_s" default="0.25" />
+  <arg name="force_reflection_software_zero_delta_fade_s" default="0.2" />
 
   <!-- Optional: zero/tare all UR10e FT sensors at startup -->
   <arg name="do_ur10e_zero_loadcell_master_left" default="true" />
@@ -204,6 +208,11 @@
     <param name="slave_feedforward_twist_topic" value="$(arg left_master_feedforward_twist_topic)" />
     <param name="force_reflection_gate_topic" value="$(arg coupling_force_reflection_scale_topic)" if="$(arg use_bimanual_object_coupling)" />
     <param name="home_return_disable_topic" value="$(arg coupling_active_topic)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/enabled" value="$(arg force_reflection_software_zero_enabled)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/active_topic" value="$(arg coupling_active_topic)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/capture_delay_s" value="$(arg force_reflection_software_zero_delay_s)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/capture_window_s" value="$(arg force_reflection_software_zero_capture_window_s)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/delta_fade_s" value="$(arg force_reflection_software_zero_delta_fade_s)" if="$(arg use_bimanual_object_coupling)" />
 
     <!-- Keep the tested frame-override logic: publish master-left pose in master-left base,
          but label the message as slave-left base so the numerically identical arm can consume it directly. -->
@@ -270,6 +279,11 @@
     <param name="slave_feedforward_twist_topic" value="$(arg right_master_feedforward_twist_topic)" />
     <param name="force_reflection_gate_topic" value="$(arg coupling_force_reflection_scale_topic)" if="$(arg use_bimanual_object_coupling)" />
     <param name="home_return_disable_topic" value="$(arg coupling_active_topic)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/enabled" value="$(arg force_reflection_software_zero_enabled)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/active_topic" value="$(arg coupling_active_topic)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/capture_delay_s" value="$(arg force_reflection_software_zero_delay_s)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/capture_window_s" value="$(arg force_reflection_software_zero_capture_window_s)" if="$(arg use_bimanual_object_coupling)" />
+    <param name="force_reflection_bias/delta_fade_s" value="$(arg force_reflection_software_zero_delta_fade_s)" if="$(arg use_bimanual_object_coupling)" />
 
     <!-- Same tested frame-override logic for the right arm pair. -->
     <param name="slave_base_frame" value="$(arg right_master_base_inertia_frame)" />

@@ -126,6 +126,25 @@ public:
     pnh_.param<double>("torque_reflection_scale", kf_torque_, kf_torque_);
     pnh_.param<std::string>("force_reflection_gate_topic", force_reflection_gate_topic_, force_reflection_gate_topic_);
     pnh_.param<std::string>("home_return_disable_topic", home_return_disable_topic_, home_return_disable_topic_);
+    pnh_.param<bool>("force_reflection_bias/enabled", force_reflection_bias_enabled_, force_reflection_bias_enabled_);
+    pnh_.param<std::string>("force_reflection_bias/active_topic",
+                            force_reflection_bias_active_topic_,
+                            force_reflection_bias_active_topic_);
+    pnh_.param<double>("force_reflection_bias/capture_delay_s",
+                       force_reflection_bias_capture_delay_s_,
+                       force_reflection_bias_capture_delay_s_);
+    pnh_.param<double>("force_reflection_bias/capture_window_s",
+                       force_reflection_bias_capture_window_s_,
+                       force_reflection_bias_capture_window_s_);
+    pnh_.param<double>("force_reflection_bias/delta_fade_s",
+                       force_reflection_bias_delta_fade_s_,
+                       force_reflection_bias_delta_fade_s_);
+    if (!std::isfinite(force_reflection_bias_capture_delay_s_) || force_reflection_bias_capture_delay_s_ < 0.0)
+      force_reflection_bias_capture_delay_s_ = 0.0;
+    if (!std::isfinite(force_reflection_bias_capture_window_s_) || force_reflection_bias_capture_window_s_ < 0.0)
+      force_reflection_bias_capture_window_s_ = 0.0;
+    if (!std::isfinite(force_reflection_bias_delta_fade_s_) || force_reflection_bias_delta_fade_s_ < 0.0)
+      force_reflection_bias_delta_fade_s_ = 0.0;
     pnh_.param<bool>("passivity/enabled", passivity_config_.enabled, passivity_config_.enabled);
     pnh_.param<bool>("passivity/linear_only", passivity_config_.linear_only, passivity_config_.linear_only);
     pnh_.param<double>("passivity/tank_energy_init", passivity_config_.tank_energy_init, passivity_config_.tank_energy_init);
@@ -350,6 +369,27 @@ public:
       ROS_INFO_NAMED("teleop_master_haptic_controller",
                      "External home-return disable enabled: topic='%s'",
                      home_return_disable_topic_.c_str());
+    }
+
+    if (force_reflection_bias_enabled_)
+    {
+      if (!force_reflection_bias_active_topic_.empty())
+      {
+        sub_force_reflection_bias_active_ = nh_.subscribe(force_reflection_bias_active_topic_, 1,
+                                                          &TeleopMasterHapticController::forceReflectionBiasActiveCb,
+                                                          this,
+                                                          ros::TransportHints().tcpNoDelay());
+        ROS_INFO_NAMED("teleop_master_haptic_controller",
+                       "Force reflection software zero enabled: active_topic='%s' delay=%.3fs window=%.3fs",
+                       force_reflection_bias_active_topic_.c_str(),
+                       force_reflection_bias_capture_delay_s_,
+                       force_reflection_bias_capture_window_s_);
+      }
+      else
+      {
+        ROS_WARN_NAMED("teleop_master_haptic_controller",
+                       "force_reflection_bias/enabled is true but force_reflection_bias/active_topic is empty.");
+      }
     }
 
     if (!slave_actual_pose_topic_.empty())
@@ -690,6 +730,108 @@ private:
     return applyScheduleShape(smoothstep01(u), shape_exp);
   }
 
+  void resetForceReflectionBiasState()
+  {
+    has_force_reflection_bias_ = false;
+    force_reflection_bias_capturing_ = false;
+    force_reflection_bias_capture_started_ = ros::Time(0);
+    force_reflection_bias_captured_time_ = ros::Time(0);
+    force_reflection_bias_sample_count_ = 0;
+    force_reflection_bias_sum_.f.setZero();
+    force_reflection_bias_sum_.tau.setZero();
+    force_reflection_bias_.f.setZero();
+    force_reflection_bias_.tau.setZero();
+    force_reflection_delta_filt_.f.setZero();
+    force_reflection_delta_filt_.tau.setZero();
+    force_reflection_delta_db_state_ = teleoperation::WrenchDeadbandState{};
+  }
+
+  void updateForceReflectionBiasState(bool active,
+                                      const ros::Time& active_since,
+                                      bool has_slave,
+                                      const Wrench3& slave_wrench,
+                                      const ros::Time& now)
+  {
+    if (!force_reflection_bias_enabled_)
+    {
+      return;
+    }
+
+    if (!active)
+    {
+      force_reflection_bias_last_active_ = false;
+      resetForceReflectionBiasState();
+      return;
+    }
+
+    if (!force_reflection_bias_last_active_)
+    {
+      resetForceReflectionBiasState();
+      force_reflection_bias_last_active_ = true;
+    }
+
+    if (has_force_reflection_bias_ || !has_slave)
+    {
+      return;
+    }
+
+    const ros::Time activation_time = active_since.isZero() ? now : active_since;
+    if ((now - activation_time).toSec() < force_reflection_bias_capture_delay_s_)
+    {
+      return;
+    }
+
+    if (!force_reflection_bias_capturing_)
+    {
+      force_reflection_bias_capturing_ = true;
+      force_reflection_bias_capture_started_ = now;
+      force_reflection_bias_sample_count_ = 0;
+      force_reflection_bias_sum_.f.setZero();
+      force_reflection_bias_sum_.tau.setZero();
+    }
+
+    force_reflection_bias_sum_.f += slave_wrench.f;
+    force_reflection_bias_sum_.tau += slave_wrench.tau;
+    force_reflection_bias_sample_count_ += 1;
+
+    const double capture_elapsed = (now - force_reflection_bias_capture_started_).toSec();
+    if (force_reflection_bias_capture_window_s_ > 0.0 &&
+        capture_elapsed < force_reflection_bias_capture_window_s_)
+    {
+      return;
+    }
+
+    const double n = static_cast<double>(std::max(1, force_reflection_bias_sample_count_));
+    force_reflection_bias_.f = force_reflection_bias_sum_.f / n;
+    force_reflection_bias_.tau = force_reflection_bias_sum_.tau / n;
+    has_force_reflection_bias_ = true;
+    force_reflection_bias_capturing_ = false;
+    force_reflection_bias_captured_time_ = now;
+    force_reflection_delta_filt_.f.setZero();
+    force_reflection_delta_filt_.tau.setZero();
+    force_reflection_delta_db_state_ = teleoperation::WrenchDeadbandState{};
+
+    ROS_INFO_NAMED("teleop_master_haptic_controller",
+                   "Captured force reflection software zero: |F|=%.3f N |Tau|=%.3f Nm samples=%d",
+                   force_reflection_bias_.f.norm(),
+                   force_reflection_bias_.tau.norm(),
+                   force_reflection_bias_sample_count_);
+  }
+
+  double forceReflectionBiasDeltaGain(const ros::Time& now) const
+  {
+    if (!has_force_reflection_bias_)
+    {
+      return 0.0;
+    }
+    if (force_reflection_bias_delta_fade_s_ <= 0.0 || force_reflection_bias_captured_time_.isZero())
+    {
+      return 1.0;
+    }
+    return smoothstep01((now - force_reflection_bias_captured_time_).toSec() /
+                        force_reflection_bias_delta_fade_s_);
+  }
+
   void resetControllerState()
   {
     v_lin_cmd_.setZero();
@@ -714,6 +856,8 @@ private:
     has_dyn_m_extra_filt_ = false;
     dyn_m_extra_lin_filt_.setZero();
     dyn_m_extra_ang_filt_.setZero();
+
+    resetForceReflectionBiasState();
 
     passivity_layer_.reset();
     home_integral_lin_.setZero();
@@ -828,6 +972,21 @@ private:
     const double gate = std::isfinite(msg->data) ? std::clamp(msg->data, 0.0, 1.0) : 1.0;
     std::lock_guard<std::mutex> lock(mutex_);
     force_reflection_gate_ = gate;
+  }
+
+  void forceReflectionBiasActiveCb(const std_msgs::BoolConstPtr& msg)
+  {
+    const bool active = msg->data;
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (active && (!force_reflection_bias_active_ || force_reflection_bias_active_since_.isZero()))
+    {
+      force_reflection_bias_active_since_ = ros::Time::now();
+    }
+    else if (!active)
+    {
+      force_reflection_bias_active_since_ = ros::Time(0);
+    }
+    force_reflection_bias_active_ = active;
   }
 
   void homeReturnDisableCb(const std_msgs::BoolConstPtr& msg)
@@ -1030,6 +1189,8 @@ private:
     bool has_slave = false;
     bool has_coupling = false;
     double force_reflection_gate = 1.0;
+    bool force_reflection_bias_active = false;
+    ros::Time force_reflection_bias_active_since;
     bool home_return_externally_disabled = false;
     {
       std::lock_guard<std::mutex> lock(mutex_);
@@ -1051,6 +1212,8 @@ private:
       coupling_stamp = coupling_stamp_;
 
       force_reflection_gate = force_reflection_gate_;
+      force_reflection_bias_active = force_reflection_bias_active_;
+      force_reflection_bias_active_since = force_reflection_bias_active_since_;
       home_return_externally_disabled = home_return_externally_disabled_;
     }
     force_reflection_gate = std::clamp(force_reflection_gate, 0.0, 1.0);
@@ -1268,6 +1431,12 @@ private:
       coupling_filt_.tau.setZero();
       coupling_db_state_ = teleoperation::WrenchDeadbandState{};
     }
+
+    updateForceReflectionBiasState(force_reflection_bias_active,
+                                   force_reflection_bias_active_since,
+                                   has_slave,
+                                   slave_filt_,
+                                   now);
 
     debug_master_filt_pub_.publish(master_filt_, now, wrench_target_frame_);
     debug_slave_filt_pub_.publish(slave_filt_, now, wrench_target_frame_);
@@ -1580,6 +1749,38 @@ private:
       D_ang += D_ang_extra;
     }
 
+    Wrench3 slave_reflection_wrench;
+    slave_reflection_wrench.f = (force_reflection_gate * slave_filt_.f).eval();
+    slave_reflection_wrench.tau = (force_reflection_gate * slave_filt_.tau).eval();
+    if (force_reflection_bias_enabled_ && force_reflection_bias_active && has_force_reflection_bias_)
+    {
+      Wrench3 slave_delta;
+      slave_delta.f = slave_filt_.f - force_reflection_bias_.f;
+      slave_delta.tau = slave_filt_.tau - force_reflection_bias_.tau;
+
+      force_reflection_delta_filt_ = teleoperation::filterClampDeadbandWrenchNorm(
+          force_reflection_delta_filt_, slave_delta, false, alpha_feedback,
+          force_deadband_enter_, force_deadband_exit_,
+          torque_deadband_enter_, torque_deadband_exit_,
+          (max_force_feedback_ > 0.0 ? max_force_feedback_ : max_force_),
+          (max_torque_feedback_ > 0.0 ? max_torque_feedback_ : max_torque_),
+          use_torques_, cross_deadband_scale_, force_reflection_delta_db_state_);
+
+      if (!use_forces_)
+      {
+        force_reflection_delta_filt_.f.setZero();
+        force_reflection_delta_db_state_.f_active = false;
+      }
+
+      const double delta_gain = forceReflectionBiasDeltaGain(now);
+      slave_reflection_wrench.f =
+          (delta_gain * force_reflection_delta_filt_.f +
+           force_reflection_gate * force_reflection_bias_.f).eval();
+      slave_reflection_wrench.tau =
+          (delta_gain * force_reflection_delta_filt_.tau +
+           force_reflection_gate * force_reflection_bias_.tau).eval();
+    }
+
     // Force reflection: slave FT typically measures the wrench applied *on the slave tool* by the environment.
     // To obtain an opposing reflected contribution at the master, we invert the slave wrench sign here.
     // The spring force K_s*(p_m - p_s) already points in the direction master→slave, so adding it
@@ -1588,11 +1789,11 @@ private:
     Eigen::Vector3d Tau_reflection = Eigen::Vector3d::Zero();
     if (use_forces_)
     {
-      F_reflection = (-(force_reflection_gate * kf_force_) * slave_filt_.f).eval();
+      F_reflection = (-kf_force_ * slave_reflection_wrench.f).eval();
     }
     if (use_torques_)
     {
-      Tau_reflection = (-(force_reflection_gate * kf_torque_) * slave_filt_.tau).eval();
+      Tau_reflection = (-kf_torque_ * slave_reflection_wrench.tau).eval();
     }
     const teleoperation::PassivityLayerResult passivity_result =
         passivity_layer_.step(F_reflection, Tau_reflection, v_lin_cmd_, v_ang_cmd_, D_lin, D_ang, dt_used);
@@ -1837,6 +2038,7 @@ private:
   ros::Subscriber sub_coupling_wrench_;
   ros::Subscriber sub_slave_actual_pose_;
   ros::Subscriber sub_force_reflection_gate_;
+  ros::Subscriber sub_force_reflection_bias_active_;
   ros::Subscriber sub_home_return_disable_;
   ros::Publisher pub_cmd_;
   ros::Publisher pub_cmd_stamped_;
@@ -1929,6 +2131,11 @@ private:
   double kf_torque_{0.0};
   std::string force_reflection_gate_topic_;
   std::string home_return_disable_topic_;
+  bool force_reflection_bias_enabled_{false};
+  std::string force_reflection_bias_active_topic_;
+  double force_reflection_bias_capture_delay_s_{1.0};
+  double force_reflection_bias_capture_window_s_{0.25};
+  double force_reflection_bias_delta_fade_s_{0.2};
   teleoperation::PassivityLayerConfig passivity_config_;
   bool passivity_publish_debug_{true};
   bool use_forces_{true};
@@ -2043,6 +2250,8 @@ private:
   ros::Time slave_stamp_{0};
   ros::Time coupling_stamp_{0};
   double force_reflection_gate_{1.0};
+  bool force_reflection_bias_active_{false};
+  ros::Time force_reflection_bias_active_since_{0};
   bool home_return_externally_disabled_{false};
 
   // Filtered
@@ -2052,6 +2261,16 @@ private:
   Wrench3 master_filt_;
   Wrench3 slave_filt_;
   Wrench3 coupling_filt_;
+  bool force_reflection_bias_last_active_{false};
+  bool has_force_reflection_bias_{false};
+  bool force_reflection_bias_capturing_{false};
+  ros::Time force_reflection_bias_capture_started_{0};
+  ros::Time force_reflection_bias_captured_time_{0};
+  int force_reflection_bias_sample_count_{0};
+  Wrench3 force_reflection_bias_sum_;
+  Wrench3 force_reflection_bias_;
+  Wrench3 force_reflection_delta_filt_;
+  teleoperation::WrenchDeadbandState force_reflection_delta_db_state_;
 
   // Controller state
   ros::Time last_time_{0};

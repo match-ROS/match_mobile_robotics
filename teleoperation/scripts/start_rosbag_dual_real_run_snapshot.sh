@@ -39,6 +39,8 @@ if ! rosnode list >/dev/null 2>&1; then
 fi
 
 TOPICS=(
+  /rosout
+  /rosout_agg
   /teleop/mur620b_to_mur620d/left/target_pose
   /teleop/mur620b_to_mur620d/right/target_pose
   /teleop/mur620b_to_mur620d/left/feedforward_twist
@@ -85,11 +87,13 @@ TOPICS=(
   /teleop_master_haptic_controller_left/debug/dt_stats
   /teleop_master_haptic_controller_left/debug/v_cmd_pre
   /teleop_master_haptic_controller_left/debug/v_cmd_post
+  /teleop_master_haptic_controller_left/debug/passivity_stats
   /teleop_master_haptic_controller_right/debug/admittance_stats
   /teleop_master_haptic_controller_right/debug/admittance_dynamics
   /teleop_master_haptic_controller_right/debug/dt_stats
   /teleop_master_haptic_controller_right/debug/v_cmd_pre
   /teleop_master_haptic_controller_right/debug/v_cmd_post
+  /teleop_master_haptic_controller_right/debug/passivity_stats
   /tf_static
   /tf
 )

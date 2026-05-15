@@ -142,6 +142,16 @@ force_reflection_scale: 0.50
 #torque_reflection_scale: 0.10
 torque_reflection_scale: 0.0
 
+# Optional software zero for force reflection while an external mode is active.
+# In dual bimanual coupling this is enabled from the launch file and uses the
+# coupling active topic. Dynamic mass/damping still use the absolute slave wrench.
+force_reflection_bias:
+  enabled: false
+  active_topic: ""
+  capture_delay_s: 1.0
+  capture_window_s: 0.25
+  delta_fade_s: 0.2
+
 ## ----------------------------
 ## Passivity layer on direct force reflection
 ## ----------------------------

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import bisect
 import math
 import os
 import sys
@@ -118,12 +119,39 @@ class ScaledReplay:
     output_dt_s: float
     duration_s: float
     commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]]
+    speed_mode: str = "fixed"
+    effective_speed_scale_min: float = 0.0
+    effective_speed_scale_mean: float = 0.0
+    effective_speed_scale_max: float = 0.0
 
     @property
     def tick_count(self) -> int:
         if not self.commands_by_side:
             return 0
         return len(next(iter(self.commands_by_side.values())))
+
+
+@dataclass
+class SourceInterval:
+    start_s: float
+    end_s: float
+    values_by_side: Dict[str, Tuple[float, float, float, float, float, float]]
+
+    @property
+    def duration_s(self) -> float:
+        return self.end_s - self.start_s
+
+
+@dataclass
+class AdaptiveLimitViolation:
+    ratio: float
+    source_start_s: float
+    source_end_s: float
+    tick: int
+    side: str
+    kind: str
+    value: float
+    limit: float
 
 
 def _resample_time_scaled_twists(
@@ -184,6 +212,730 @@ def _resample_time_scaled_twists(
         values.append(tuple(component / output_dt_s for component in acc))
 
     return output_dt_s, values
+
+
+def _clean_twist_samples(
+    samples: List[TwistSample],
+    source_duration_s: float,
+    eps: float,
+) -> List[TwistSample]:
+    clean: List[TwistSample] = []
+    for sample in sorted(samples, key=lambda item: item.rel_t):
+        rel_t = min(max(float(sample.rel_t), 0.0), source_duration_s)
+        item = TwistSample(rel_t=rel_t, values=sample.values)
+        if clean and abs(rel_t - clean[-1].rel_t) <= eps:
+            clean[-1] = item
+        else:
+            clean.append(item)
+    return clean
+
+
+def _values_norm(values: Tuple[float, float, float, float, float, float], start: int) -> float:
+    return math.sqrt(
+        values[start] * values[start]
+        + values[start + 1] * values[start + 1]
+        + values[start + 2] * values[start + 2]
+    )
+
+
+def _apply_common_scale(
+    values: Tuple[float, float, float, float, float, float],
+    scale: float,
+) -> Tuple[float, float, float, float, float, float]:
+    return tuple(scale * value for value in values)
+
+
+def _component_limit_scale(
+    values: Tuple[float, float, float, float, float, float],
+    linear_limit: float,
+    angular_limit: float,
+) -> float:
+    scale = 1.0
+    for component in range(3):
+        value = abs(values[component])
+        if linear_limit > 0.0 and value > linear_limit and value * scale > linear_limit:
+            scale = linear_limit / value
+    for component in range(3, 6):
+        value = abs(values[component])
+        if angular_limit > 0.0 and value > angular_limit and value * scale > angular_limit:
+            scale = angular_limit / value
+    return scale
+
+
+def _simulate_ur_twist_limiter_samples(
+    samples_by_side: Dict[str, List[TwistSample]],
+    linear_speed_limit: float,
+    angular_speed_limit: float,
+    linear_accel_step_limit: float,
+    angular_accel_step_limit: float,
+    linear_jerk_step_limit: float,
+    angular_jerk_step_limit: float,
+) -> Dict[str, List[TwistSample]]:
+    filtered: Dict[str, List[TwistSample]] = {}
+    zero = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    for side, samples in samples_by_side.items():
+        last_command = zero
+        last_acc = zero
+        side_filtered: List[TwistSample] = []
+        for sample in sorted(samples, key=lambda item: item.rel_t):
+            output = _apply_common_scale(
+                sample.values,
+                _component_limit_scale(sample.values, linear_speed_limit, angular_speed_limit),
+            )
+
+            acc = tuple(output[i] - last_command[i] for i in range(6))
+            acc = _apply_common_scale(
+                acc,
+                _component_limit_scale(acc, linear_accel_step_limit, angular_accel_step_limit),
+            )
+
+            jerk = tuple(acc[i] - last_acc[i] for i in range(6))
+            jerk_scale = _component_limit_scale(
+                jerk,
+                linear_jerk_step_limit,
+                angular_jerk_step_limit,
+            )
+            acc = tuple(last_acc[i] + jerk_scale * jerk[i] for i in range(6))
+            output = tuple(last_command[i] + acc[i] for i in range(6))
+
+            side_filtered.append(TwistSample(rel_t=sample.rel_t, values=output))
+            last_command = output
+            last_acc = acc
+        filtered[side] = side_filtered
+
+    return filtered
+
+
+def _append_unique_time(times: List[float], value: float, eps: float) -> None:
+    value = float(value)
+    if value < 0.0:
+        value = 0.0
+    times.append(value)
+
+
+def _unique_sorted_times(times: List[float], source_duration_s: float, eps: float) -> List[float]:
+    out: List[float] = []
+    for value in sorted(min(max(float(t), 0.0), source_duration_s) for t in times):
+        if not out or abs(value - out[-1]) > eps:
+            out.append(value)
+        else:
+            out[-1] = value
+    if not out or out[0] > eps:
+        out.insert(0, 0.0)
+    else:
+        out[0] = 0.0
+    if out[-1] < source_duration_s - eps:
+        out.append(source_duration_s)
+    else:
+        out[-1] = source_duration_s
+    return out
+
+
+def _build_source_intervals(
+    samples_by_side: Dict[str, List[TwistSample]],
+    source_duration_s: float,
+    output_dt_s: float,
+    eps: float,
+) -> List[SourceInterval]:
+    clean_by_side = {
+        side: _clean_twist_samples(side_samples, source_duration_s, eps)
+        for side, side_samples in samples_by_side.items()
+    }
+    if any(not side_samples for side_samples in clean_by_side.values()):
+        raise ReplayAbort("No twist samples available for adaptive resampling")
+
+    last_end_by_side: Dict[str, float] = {}
+    breakpoints: List[float] = [0.0, source_duration_s]
+    for side, clean in clean_by_side.items():
+        last_end_by_side[side] = min(source_duration_s, clean[-1].rel_t + output_dt_s)
+        for sample in clean:
+            _append_unique_time(breakpoints, sample.rel_t, eps)
+        _append_unique_time(breakpoints, last_end_by_side[side], eps)
+
+    times = _unique_sorted_times(breakpoints, source_duration_s, eps)
+    indices = {side: -1 for side in clean_by_side}
+    intervals: List[SourceInterval] = []
+    zero = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    for idx in range(len(times) - 1):
+        start_s = times[idx]
+        end_s = times[idx + 1]
+        if end_s <= start_s + eps:
+            continue
+
+        values_by_side: Dict[str, Tuple[float, float, float, float, float, float]] = {}
+        for side, clean in clean_by_side.items():
+            sample_idx = indices[side]
+            while sample_idx + 1 < len(clean) and clean[sample_idx + 1].rel_t <= start_s + eps:
+                sample_idx += 1
+            indices[side] = sample_idx
+
+            if sample_idx < 0:
+                values_by_side[side] = zero
+                continue
+
+            next_s = (
+                clean[sample_idx + 1].rel_t
+                if sample_idx + 1 < len(clean)
+                else last_end_by_side[side]
+            )
+            values_by_side[side] = clean[sample_idx].values if start_s < next_s - eps else zero
+
+        intervals.append(SourceInterval(start_s=start_s, end_s=end_s, values_by_side=values_by_side))
+
+    if not intervals:
+        raise ReplayAbort("Adaptive replay produced no source intervals")
+    return intervals
+
+
+def _adaptive_velocity_limited_scales(
+    intervals: List[SourceInterval],
+    max_speed_scale: float,
+    max_linear_speed: float,
+    max_angular_speed: float,
+    min_required_speed_scale: float,
+    eps: float,
+) -> List[float]:
+    scales: List[float] = []
+    for interval in intervals:
+        scale = max_speed_scale
+        for values in interval.values_by_side.values():
+            lin_norm = _values_norm(values, 0)
+            ang_norm = _values_norm(values, 3)
+            if max_linear_speed > 0.0 and lin_norm > eps:
+                scale = min(scale, max_linear_speed / lin_norm)
+            if max_angular_speed > 0.0 and ang_norm > eps:
+                scale = min(scale, max_angular_speed / ang_norm)
+
+        if min_required_speed_scale > 0.0 and scale < min_required_speed_scale - eps:
+            raise ReplayAbort(
+                "Adaptive velocity limits require speed_scale %.6g below adaptive_min_speed_scale %.6g"
+                % (scale, min_required_speed_scale)
+            )
+        scales.append(max(eps, scale))
+    return scales
+
+
+def _advance_adaptive_source(
+    intervals: List[SourceInterval],
+    scales: List[float],
+    source_s: float,
+    interval_idx: int,
+    wall_dt_s: float,
+    source_duration_s: float,
+    eps: float,
+) -> Tuple[float, int]:
+    remaining_wall_s = wall_dt_s
+    current_s = source_s
+    idx = interval_idx
+
+    while remaining_wall_s > eps and current_s < source_duration_s - eps:
+        while idx < len(intervals) and intervals[idx].end_s <= current_s + eps:
+            idx += 1
+        if idx >= len(intervals):
+            return source_duration_s, idx
+
+        interval = intervals[idx]
+        source_step_to_end = interval.end_s - current_s
+        if source_step_to_end <= eps:
+            idx += 1
+            continue
+
+        scale = max(scales[idx], eps)
+        wall_to_end_s = source_step_to_end / scale
+        if wall_to_end_s > remaining_wall_s + eps:
+            current_s += remaining_wall_s * scale
+            remaining_wall_s = 0.0
+        else:
+            current_s = interval.end_s
+            remaining_wall_s -= wall_to_end_s
+            idx += 1
+
+    return min(current_s, source_duration_s), idx
+
+
+def _integrate_adaptive_interval(
+    intervals: List[SourceInterval],
+    side: str,
+    source_a_s: float,
+    source_b_s: float,
+    interval_idx: int,
+    eps: float,
+) -> Tuple[Tuple[float, float, float, float, float, float], int]:
+    if source_b_s <= source_a_s + eps:
+        return (0.0, 0.0, 0.0, 0.0, 0.0, 0.0), interval_idx
+
+    acc = [0.0] * 6
+    idx = interval_idx
+    while idx < len(intervals) and intervals[idx].end_s <= source_a_s + eps:
+        idx += 1
+    start_idx = idx
+
+    while idx < len(intervals):
+        interval = intervals[idx]
+        if interval.start_s >= source_b_s - eps:
+            break
+        overlap = min(source_b_s, interval.end_s) - max(source_a_s, interval.start_s)
+        if overlap > eps:
+            values = interval.values_by_side[side]
+            for component in range(6):
+                acc[component] += overlap * values[component]
+        idx += 1
+
+    return tuple(acc), start_idx
+
+
+def _render_adaptive_time_scaled_twists(
+    intervals: List[SourceInterval],
+    scales: List[float],
+    output_dt_s: float,
+    source_duration_s: float,
+    side_names: List[str],
+    eps: float,
+) -> Tuple[
+    Dict[str, List[Tuple[float, float, float, float, float, float]]],
+    List[Tuple[float, float]],
+]:
+    commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]] = {
+        side: [] for side in side_names
+    }
+    source_bounds: List[Tuple[float, float]] = []
+    source_a_s = 0.0
+    profile_idx = 0
+    integral_idx_by_side = {side: 0 for side in side_names}
+
+    while source_a_s < source_duration_s - eps:
+        source_b_s, profile_idx = _advance_adaptive_source(
+            intervals,
+            scales,
+            source_a_s,
+            profile_idx,
+            output_dt_s,
+            source_duration_s,
+            eps,
+        )
+        if source_b_s <= source_a_s + eps:
+            raise ReplayAbort("Adaptive replay source time stopped progressing")
+
+        for side in side_names:
+            integral, integral_idx = _integrate_adaptive_interval(
+                intervals,
+                side,
+                source_a_s,
+                source_b_s,
+                integral_idx_by_side[side],
+                eps,
+            )
+            integral_idx_by_side[side] = integral_idx
+            commands_by_side[side].append(tuple(component / output_dt_s for component in integral))
+
+        source_bounds.append((source_a_s, source_b_s))
+        source_a_s = source_b_s
+
+    return commands_by_side, source_bounds
+
+
+def _append_adaptive_violation(
+    violations: List[AdaptiveLimitViolation],
+    ratio: float,
+    *,
+    allowed_ratio: float,
+    source_start_s: float,
+    source_end_s: float,
+    tick: int,
+    side: str,
+    kind: str,
+    value: float,
+    limit: float,
+) -> None:
+    if ratio <= allowed_ratio:
+        return
+    violations.append(
+        AdaptiveLimitViolation(
+            ratio=ratio,
+            source_start_s=source_start_s,
+            source_end_s=source_end_s,
+            tick=tick,
+            side=side,
+            kind=kind,
+            value=value,
+            limit=limit,
+        )
+    )
+
+
+def _adaptive_output_limit_violations(
+    commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]],
+    source_bounds: List[Tuple[float, float]],
+    output_dt_s: float,
+    max_linear_speed: float,
+    max_angular_speed: float,
+    max_linear_accel: float,
+    max_angular_accel: float,
+    tolerance: float,
+    include_stop: bool = True,
+) -> List[AdaptiveLimitViolation]:
+    allowed_ratio = 1.0 + max(0.0, tolerance)
+    violations: List[AdaptiveLimitViolation] = []
+    zero = (0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
+
+    for side, commands in commands_by_side.items():
+        for tick, values in enumerate(commands):
+            source_start_s, source_end_s = source_bounds[tick]
+            if max_linear_speed > 0.0:
+                value = _values_norm(values, 0)
+                _append_adaptive_violation(
+                    violations,
+                    value / max_linear_speed,
+                    allowed_ratio=allowed_ratio,
+                    source_start_s=source_start_s,
+                    source_end_s=source_end_s,
+                    tick=tick,
+                    side=side,
+                    kind="linear_speed",
+                    value=value,
+                    limit=max_linear_speed,
+                )
+            if max_angular_speed > 0.0:
+                value = _values_norm(values, 3)
+                _append_adaptive_violation(
+                    violations,
+                    value / max_angular_speed,
+                    allowed_ratio=allowed_ratio,
+                    source_start_s=source_start_s,
+                    source_end_s=source_end_s,
+                    tick=tick,
+                    side=side,
+                    kind="angular_speed",
+                    value=value,
+                    limit=max_angular_speed,
+                )
+
+        if not commands:
+            continue
+
+        prev_values = zero
+        stop_extra_tick = 1 if include_stop else 0
+        for tick in range(len(commands) + stop_extra_tick):
+            curr_values = commands[tick] if tick < len(commands) else zero
+            if tick == 0:
+                source_start_s, source_end_s = source_bounds[0]
+            elif tick >= len(commands):
+                source_start_s, source_end_s = source_bounds[-1]
+            else:
+                source_start_s = min(source_bounds[tick - 1][0], source_bounds[tick][0])
+                source_end_s = max(source_bounds[tick - 1][1], source_bounds[tick][1])
+
+            if max_linear_accel > 0.0:
+                delta = tuple(curr_values[i] - prev_values[i] for i in range(6))
+                value = _values_norm(delta, 0) / output_dt_s
+                _append_adaptive_violation(
+                    violations,
+                    value / max_linear_accel,
+                    allowed_ratio=allowed_ratio,
+                    source_start_s=source_start_s,
+                    source_end_s=source_end_s,
+                    tick=tick,
+                    side=side,
+                    kind="linear_accel",
+                    value=value,
+                    limit=max_linear_accel,
+                )
+            if max_angular_accel > 0.0:
+                delta = tuple(curr_values[i] - prev_values[i] for i in range(6))
+                value = _values_norm(delta, 3) / output_dt_s
+                _append_adaptive_violation(
+                    violations,
+                    value / max_angular_accel,
+                    allowed_ratio=allowed_ratio,
+                    source_start_s=source_start_s,
+                    source_end_s=source_end_s,
+                    tick=tick,
+                    side=side,
+                    kind="angular_accel",
+                    value=value,
+                    limit=max_angular_accel,
+                )
+            prev_values = curr_values
+
+    violations.sort(key=lambda item: item.ratio, reverse=True)
+    return violations
+
+
+def _adaptive_output_limit_violation(
+    commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]],
+    source_bounds: List[Tuple[float, float]],
+    output_dt_s: float,
+    max_linear_speed: float,
+    max_angular_speed: float,
+    max_linear_accel: float,
+    max_angular_accel: float,
+    tolerance: float,
+    include_stop: bool = True,
+) -> Optional[AdaptiveLimitViolation]:
+    violations = _adaptive_output_limit_violations(
+        commands_by_side,
+        source_bounds,
+        output_dt_s,
+        max_linear_speed,
+        max_angular_speed,
+        max_linear_accel,
+        max_angular_accel,
+        tolerance,
+        include_stop=include_stop,
+    )
+    return violations[0] if violations else None
+
+
+def _cap_adaptive_scales_in_window(
+    intervals: List[SourceInterval],
+    interval_end_times: List[float],
+    scales: List[float],
+    source_start_s: float,
+    source_end_s: float,
+    speed_scale_cap: float,
+    min_required_speed_scale: float,
+    eps: float,
+) -> bool:
+    if speed_scale_cap <= eps:
+        speed_scale_cap = eps
+    if min_required_speed_scale > 0.0 and speed_scale_cap < min_required_speed_scale - eps:
+        raise ReplayAbort(
+            "Adaptive output limits require speed_scale %.6g below adaptive_min_speed_scale %.6g"
+            % (speed_scale_cap, min_required_speed_scale)
+        )
+
+    center_s = 0.5 * (source_start_s + source_end_s)
+    half_width_s = max(eps, 0.5 * (source_end_s - source_start_s))
+    min_scale = max(eps, min_required_speed_scale if min_required_speed_scale > 0.0 else eps)
+    changed = False
+
+    idx = bisect.bisect_right(interval_end_times, source_start_s + eps)
+    while idx < len(intervals):
+        interval = intervals[idx]
+        if interval.start_s >= source_end_s - eps:
+            break
+
+        interval_mid_s = 0.5 * (interval.start_s + interval.end_s)
+        normalized_distance = min(1.0, abs(interval_mid_s - center_s) / half_width_s)
+        strength = 0.25 + 0.75 * (1.0 - normalized_distance)
+        local_cap = max(min_scale, speed_scale_cap / strength)
+        if local_cap < scales[idx] * (1.0 - 1e-9):
+            scales[idx] = local_cap
+            changed = True
+        idx += 1
+
+    return changed
+
+
+def _adaptive_source_accel_limited_scales(
+    intervals: List[SourceInterval],
+    interval_end_times: List[float],
+    scales: List[float],
+    output_dt_s: float,
+    max_linear_accel: float,
+    max_angular_accel: float,
+    min_required_speed_scale: float,
+    local_smoothing_window_s: float,
+    eps: float,
+) -> None:
+    if max_linear_accel <= 0.0 and max_angular_accel <= 0.0:
+        return
+
+    window_pad_s = max(output_dt_s, local_smoothing_window_s)
+    side_names = list(intervals[0].values_by_side.keys())
+
+    for idx in range(1, len(intervals)):
+        prev_interval = intervals[idx - 1]
+        curr_interval = intervals[idx]
+        source_dt_s = max(output_dt_s, curr_interval.start_s - prev_interval.start_s)
+        cap = math.inf
+        for side in side_names:
+            prev_values = prev_interval.values_by_side[side]
+            curr_values = curr_interval.values_by_side[side]
+            delta = tuple(curr_values[i] - prev_values[i] for i in range(6))
+            if max_linear_accel > 0.0:
+                source_accel = _values_norm(delta, 0) / source_dt_s
+                if source_accel > eps:
+                    cap = min(cap, math.sqrt(max_linear_accel / source_accel))
+            if max_angular_accel > 0.0:
+                source_accel = _values_norm(delta, 3) / source_dt_s
+                if source_accel > eps:
+                    cap = min(cap, math.sqrt(max_angular_accel / source_accel))
+
+        if cap < math.inf:
+            transition_s = curr_interval.start_s
+            _cap_adaptive_scales_in_window(
+                intervals,
+                interval_end_times,
+                scales,
+                max(0.0, transition_s - window_pad_s),
+                min(intervals[-1].end_s, transition_s + window_pad_s),
+                cap,
+                min_required_speed_scale,
+                eps,
+            )
+
+
+def _limit_adaptive_output_commands(
+    commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]],
+    output_dt_s: float,
+    max_linear_speed: float,
+    max_angular_speed: float,
+    max_linear_accel: float,
+    max_angular_accel: float,
+    linear_jerk_step_limit: float,
+    angular_jerk_step_limit: float,
+) -> Dict[str, List[Tuple[float, float, float, float, float, float]]]:
+    if not commands_by_side:
+        return commands_by_side
+
+    # The controller limits acceleration per component. The adaptive limits are
+    # checked as vector norms, so divide by sqrt(3) to keep the norm below limit.
+    component_norm_margin = math.sqrt(3.0)
+    linear_accel_step = (
+        max_linear_accel * output_dt_s / component_norm_margin
+        if max_linear_accel > 0.0
+        else 0.0
+    )
+    angular_accel_step = (
+        max_angular_accel * output_dt_s / component_norm_margin
+        if max_angular_accel > 0.0
+        else 0.0
+    )
+    sample_commands = {
+        side: [
+            TwistSample(rel_t=tick * output_dt_s, values=values)
+            for tick, values in enumerate(commands)
+        ]
+        for side, commands in commands_by_side.items()
+    }
+    filtered = _simulate_ur_twist_limiter_samples(
+        sample_commands,
+        max_linear_speed,
+        max_angular_speed,
+        linear_accel_step,
+        angular_accel_step,
+        linear_jerk_step_limit,
+        angular_jerk_step_limit,
+    )
+    return {side: [sample.values for sample in samples] for side, samples in filtered.items()}
+
+
+def _resample_adaptive_time_scaled_twists(
+    samples_by_side: Dict[str, List[TwistSample]],
+    source_duration_s: float,
+    max_speed_scale: float,
+    output_rate_hz: float,
+    max_linear_speed: float,
+    max_angular_speed: float,
+    max_linear_accel: float,
+    max_angular_accel: float,
+    min_required_speed_scale: float,
+    accel_tolerance: float,
+    local_smoothing_window_s: float,
+    output_linear_jerk_step: float,
+    output_angular_jerk_step: float,
+) -> Tuple[
+    float,
+    float,
+    float,
+    float,
+    Dict[str, List[Tuple[float, float, float, float, float, float]]],
+]:
+    if source_duration_s <= 0.0:
+        raise ReplayAbort("Invalid source duration for replay")
+    if max_speed_scale <= 0.0:
+        raise ReplayAbort("speed_scale must be > 0")
+    if output_rate_hz <= 0.0:
+        raise ReplayAbort("replay_rate_hz must be > 0")
+    if min_required_speed_scale < 0.0:
+        raise ReplayAbort("adaptive_min_speed_scale must be >= 0")
+    if local_smoothing_window_s < 0.0:
+        raise ReplayAbort("adaptive_local_smoothing_window_s must be >= 0")
+    if output_linear_jerk_step < 0.0:
+        raise ReplayAbort("adaptive_filter_linear_jerk_step must be >= 0")
+    if output_angular_jerk_step < 0.0:
+        raise ReplayAbort("adaptive_filter_angular_jerk_step must be >= 0")
+
+    eps = 1e-12
+    output_dt_s = 1.0 / output_rate_hz
+    intervals = _build_source_intervals(samples_by_side, source_duration_s, output_dt_s, eps)
+    interval_end_times = [interval.end_s for interval in intervals]
+    scales = _adaptive_velocity_limited_scales(
+        intervals,
+        max_speed_scale,
+        max_linear_speed,
+        max_angular_speed,
+        min_required_speed_scale,
+        eps,
+    )
+    _adaptive_source_accel_limited_scales(
+        intervals,
+        interval_end_times,
+        scales,
+        output_dt_s,
+        max_linear_accel,
+        max_angular_accel,
+        min_required_speed_scale,
+        local_smoothing_window_s,
+        eps,
+    )
+
+    side_names = list(samples_by_side.keys())
+    commands_by_side, source_bounds = _render_adaptive_time_scaled_twists(
+        intervals,
+        scales,
+        output_dt_s,
+        source_duration_s,
+        side_names,
+        eps,
+    )
+
+    commands_by_side = _limit_adaptive_output_commands(
+        commands_by_side,
+        output_dt_s,
+        max_linear_speed,
+        max_angular_speed,
+        max_linear_accel,
+        max_angular_accel,
+        output_linear_jerk_step,
+        output_angular_jerk_step,
+    )
+    violation = _adaptive_output_limit_violation(
+        commands_by_side,
+        source_bounds,
+        output_dt_s,
+        max_linear_speed,
+        max_angular_speed,
+        max_linear_accel,
+        max_angular_accel,
+        accel_tolerance,
+        include_stop=False,
+    )
+    if violation is not None:
+        raise ReplayAbort(
+            "Adaptive output limiter left a limit violation near source %.6fs "
+            "(%s %.6g > %.6g, ratio %.3f)"
+            % (
+                violation.source_start_s,
+                violation.kind,
+                violation.value,
+                violation.limit,
+                violation.ratio,
+            )
+        )
+
+    profile_duration_s = sum(
+        interval.duration_s / max(scale, eps)
+        for interval, scale in zip(intervals, scales)
+    )
+    if profile_duration_s <= 0.0:
+        raise ReplayAbort("Adaptive replay profile has invalid duration")
+
+    overall_effective_scale = source_duration_s / profile_duration_s
+    return output_dt_s, min(scales), overall_effective_scale, max(scales), commands_by_side
 
 
 @dataclass
@@ -360,6 +1112,21 @@ class DualSlaveTwistReplay:
         self.speed_scale = _get_float("~speed_scale", 1.0)
         self.time_scale = _get_float("~time_scale", 1.0)
         self.replay_rate_hz = _get_float("~replay_rate_hz", 500.0)
+        self.replay_speed_mode = _get_str("~replay_speed_mode", "fixed").strip().lower()
+        self.adaptive_max_linear_speed_mps = _get_float("~adaptive_max_linear_speed_mps", 0.0)
+        self.adaptive_max_angular_speed_radps = _get_float("~adaptive_max_angular_speed_radps", 0.0)
+        self.adaptive_max_linear_accel_mps2 = _get_float("~adaptive_max_linear_accel_mps2", 0.0)
+        self.adaptive_max_angular_accel_radps2 = _get_float("~adaptive_max_angular_accel_radps2", 0.0)
+        self.adaptive_min_speed_scale = _get_float("~adaptive_min_speed_scale", 0.0)
+        self.adaptive_accel_tolerance = _get_float("~adaptive_accel_tolerance", 1e-3)
+        self.adaptive_local_smoothing_window_s = _get_float("~adaptive_local_smoothing_window_s", 0.05)
+        self.adaptive_source_filter = _get_str("~adaptive_source_filter", "ur_twist_limiter").strip().lower()
+        self.adaptive_filter_linear_speed_mps = _get_float("~adaptive_filter_linear_speed_mps", 0.6)
+        self.adaptive_filter_angular_speed_radps = _get_float("~adaptive_filter_angular_speed_radps", 1.0)
+        self.adaptive_filter_linear_accel_step = _get_float("~adaptive_filter_linear_accel_step", 0.004)
+        self.adaptive_filter_angular_accel_step = _get_float("~adaptive_filter_angular_accel_step", 0.007)
+        self.adaptive_filter_linear_jerk_step = _get_float("~adaptive_filter_linear_jerk_step", 0.0008)
+        self.adaptive_filter_angular_jerk_step = _get_float("~adaptive_filter_angular_jerk_step", 0.0017)
         self.publish_zero_rate_hz = _get_float("~publish_zero_rate_hz", 20.0)
         self.zero_before_s = _get_float("~zero_before_s", 0.5)
         self.zero_after_s = _get_float("~zero_after_s", 0.5)
@@ -367,6 +1134,27 @@ class DualSlaveTwistReplay:
             raise ReplayAbort("speed_scale must be > 0")
         if self.replay_rate_hz <= 0.0:
             raise ReplayAbort("replay_rate_hz must be > 0")
+        if self.replay_speed_mode not in ("fixed", "adaptive"):
+            raise ReplayAbort("replay_speed_mode must be 'fixed' or 'adaptive'")
+        if self.adaptive_source_filter not in ("none", "ur_twist_limiter"):
+            raise ReplayAbort("adaptive_source_filter must be 'none' or 'ur_twist_limiter'")
+        for param_name, param_value in [
+            ("adaptive_max_linear_speed_mps", self.adaptive_max_linear_speed_mps),
+            ("adaptive_max_angular_speed_radps", self.adaptive_max_angular_speed_radps),
+            ("adaptive_max_linear_accel_mps2", self.adaptive_max_linear_accel_mps2),
+            ("adaptive_max_angular_accel_radps2", self.adaptive_max_angular_accel_radps2),
+            ("adaptive_min_speed_scale", self.adaptive_min_speed_scale),
+            ("adaptive_accel_tolerance", self.adaptive_accel_tolerance),
+            ("adaptive_local_smoothing_window_s", self.adaptive_local_smoothing_window_s),
+            ("adaptive_filter_linear_speed_mps", self.adaptive_filter_linear_speed_mps),
+            ("adaptive_filter_angular_speed_radps", self.adaptive_filter_angular_speed_radps),
+            ("adaptive_filter_linear_accel_step", self.adaptive_filter_linear_accel_step),
+            ("adaptive_filter_angular_accel_step", self.adaptive_filter_angular_accel_step),
+            ("adaptive_filter_linear_jerk_step", self.adaptive_filter_linear_jerk_step),
+            ("adaptive_filter_angular_jerk_step", self.adaptive_filter_angular_jerk_step),
+        ]:
+            if param_value < 0.0:
+                raise ReplayAbort(f"{param_name} must be >= 0")
         if abs(self.time_scale - 1.0) > 1e-9:
             raise ReplayAbort(
                 "time_scale is deprecated for trajectory replay. Use speed_scale as the "
@@ -730,6 +1518,53 @@ class DualSlaveTwistReplay:
         output_dt_s = 1.0 / self.replay_rate_hz
         commands_by_side: Dict[str, List[Tuple[float, float, float, float, float, float]]] = {}
 
+        if self.replay_speed_mode == "adaptive":
+            adaptive_samples = samples
+            if self.adaptive_source_filter == "ur_twist_limiter":
+                adaptive_samples = _simulate_ur_twist_limiter_samples(
+                    samples,
+                    self.adaptive_filter_linear_speed_mps,
+                    self.adaptive_filter_angular_speed_radps,
+                    self.adaptive_filter_linear_accel_step,
+                    self.adaptive_filter_angular_accel_step,
+                    self.adaptive_filter_linear_jerk_step,
+                    self.adaptive_filter_angular_jerk_step,
+                )
+            (
+                output_dt_s,
+                effective_min,
+                effective_mean,
+                effective_max,
+                commands_by_side,
+            ) = _resample_adaptive_time_scaled_twists(
+                adaptive_samples,
+                source_duration_s,
+                self.speed_scale,
+                self.replay_rate_hz,
+                self.adaptive_max_linear_speed_mps,
+                self.adaptive_max_angular_speed_radps,
+                self.adaptive_max_linear_accel_mps2,
+                self.adaptive_max_angular_accel_radps2,
+                self.adaptive_min_speed_scale,
+                self.adaptive_accel_tolerance,
+                self.adaptive_local_smoothing_window_s,
+                self.adaptive_filter_linear_jerk_step,
+                self.adaptive_filter_angular_jerk_step,
+            )
+            counts = {side: len(commands) for side, commands in commands_by_side.items()}
+            if len(set(counts.values())) != 1:
+                raise ReplayAbort(f"Internal adaptive replay resampling mismatch: {counts}")
+            tick_count = next(iter(counts.values()))
+            return ScaledReplay(
+                output_dt_s=output_dt_s,
+                duration_s=tick_count * output_dt_s,
+                commands_by_side=commands_by_side,
+                speed_mode="adaptive",
+                effective_speed_scale_min=effective_min,
+                effective_speed_scale_mean=effective_mean,
+                effective_speed_scale_max=effective_max,
+            )
+
         for side, side_samples in samples.items():
             side_dt_s, commands = _resample_time_scaled_twists(
                 side_samples,
@@ -749,6 +1584,10 @@ class DualSlaveTwistReplay:
             output_dt_s=output_dt_s,
             duration_s=tick_count * output_dt_s,
             commands_by_side=commands_by_side,
+            speed_mode="fixed",
+            effective_speed_scale_min=self.speed_scale,
+            effective_speed_scale_mean=self.speed_scale,
+            effective_speed_scale_max=self.speed_scale,
         )
 
     def _run_replay(self, replay: ScaledReplay) -> None:
@@ -788,15 +1627,28 @@ class DualSlaveTwistReplay:
     def run(self) -> None:
         samples = self._load_samples()
         replay = self._build_scaled_replay(samples)
+        replay_mode_summary = (
+            "mode adaptive, source_filter %s, speed_scale cap %.3f, "
+            "effective speed_scale min/mean/max %.3f/%.3f/%.3f"
+            % (
+                self.adaptive_source_filter,
+                self.speed_scale,
+                replay.effective_speed_scale_min,
+                replay.effective_speed_scale_mean,
+                replay.effective_speed_scale_max,
+            )
+            if replay.speed_mode == "adaptive"
+            else "mode fixed, speed_scale %.3f" % self.speed_scale
+        )
         self._publish_status(
             "loaded %s twist samples, window %.6f -> %.6f, source duration %.3fs, "
-            "speed_scale %.3f, replay duration %.3fs, rate %.1f Hz, ticks %d"
+            "%s, replay duration %.3fs, rate %.1f Hz, ticks %d"
             % (
                 {side: len(side_samples) for side, side_samples in samples.items()},
                 self.replay_start_s,
                 self.replay_end_s,
                 self.replay_end_s - self.replay_start_s,
-                self.speed_scale,
+                replay_mode_summary,
                 replay.duration_s,
                 self.replay_rate_hz,
                 replay.tick_count,

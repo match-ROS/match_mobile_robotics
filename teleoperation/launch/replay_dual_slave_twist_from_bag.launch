@@ -24,8 +24,30 @@
   <arg name="home_only" default="false" />
   <arg name="execute_home" default="true" />
   <!-- Area-preserving trajectory speed factor: 2.0 halves duration, 0.5 doubles it. -->
-  <arg name="speed_scale" default="5.0" />
+  <arg name="speed_scale" default="4.0" />
   <arg name="replay_rate_hz" default="500.0" />
+  <!-- Replay speed mode: fixed keeps the current constant speed_scale behavior; adaptive retimes locally. -->
+  <arg name="replay_speed_mode" default="adaptive" />
+  <!-- Slightly below ur_twist_limiter ddynamic defaults: 0.6 m/s, 1.0 rad/s,
+       0.004 m/s per 500 Hz tick, 0.007 rad/s per 500 Hz tick. -->
+  <arg name="adaptive_max_linear_speed_mps" default="0.59" />
+  <arg name="adaptive_max_angular_speed_radps" default="0.98" />
+  <arg name="adaptive_max_linear_accel_mps2" default="1.95" />
+  <arg name="adaptive_max_angular_accel_radps2" default="3.45" />
+  <!-- Optional lower bound. Keep 0.0 to allow the adaptive profile to slow as much as needed. -->
+  <arg name="adaptive_min_speed_scale" default="0.0" />
+  <arg name="adaptive_accel_tolerance" default="0.001" />
+  <!-- Source-time half-neighborhood used for local scale smoothing around output-limit violations. -->
+  <arg name="adaptive_local_smoothing_window_s" default="0.05" />
+  <!-- Filter applied to the recorded source profile before adaptive analysis.
+       ur_twist_limiter mirrors the downstream limiter ddynamic defaults; accel/jerk are per callback step. -->
+  <arg name="adaptive_source_filter" default="ur_twist_limiter" />
+  <arg name="adaptive_filter_linear_speed_mps" default="0.6" />
+  <arg name="adaptive_filter_angular_speed_radps" default="1.0" />
+  <arg name="adaptive_filter_linear_accel_step" default="0.004" />
+  <arg name="adaptive_filter_angular_accel_step" default="0.007" />
+  <arg name="adaptive_filter_linear_jerk_step" default="0.0008" />
+  <arg name="adaptive_filter_angular_jerk_step" default="0.0017" />
   <!-- Deprecated: keep at 1.0. Use speed_scale for time-scaled trajectory replay. -->
   <arg name="time_scale" default="1.0" />
 
@@ -73,6 +95,21 @@
     <param name="execute_home" value="$(arg execute_home)" />
     <param name="speed_scale" value="$(arg speed_scale)" />
     <param name="replay_rate_hz" value="$(arg replay_rate_hz)" />
+    <param name="replay_speed_mode" value="$(arg replay_speed_mode)" />
+    <param name="adaptive_max_linear_speed_mps" value="$(arg adaptive_max_linear_speed_mps)" />
+    <param name="adaptive_max_angular_speed_radps" value="$(arg adaptive_max_angular_speed_radps)" />
+    <param name="adaptive_max_linear_accel_mps2" value="$(arg adaptive_max_linear_accel_mps2)" />
+    <param name="adaptive_max_angular_accel_radps2" value="$(arg adaptive_max_angular_accel_radps2)" />
+    <param name="adaptive_min_speed_scale" value="$(arg adaptive_min_speed_scale)" />
+    <param name="adaptive_accel_tolerance" value="$(arg adaptive_accel_tolerance)" />
+    <param name="adaptive_local_smoothing_window_s" value="$(arg adaptive_local_smoothing_window_s)" />
+    <param name="adaptive_source_filter" value="$(arg adaptive_source_filter)" />
+    <param name="adaptive_filter_linear_speed_mps" value="$(arg adaptive_filter_linear_speed_mps)" />
+    <param name="adaptive_filter_angular_speed_radps" value="$(arg adaptive_filter_angular_speed_radps)" />
+    <param name="adaptive_filter_linear_accel_step" value="$(arg adaptive_filter_linear_accel_step)" />
+    <param name="adaptive_filter_angular_accel_step" value="$(arg adaptive_filter_angular_accel_step)" />
+    <param name="adaptive_filter_linear_jerk_step" value="$(arg adaptive_filter_linear_jerk_step)" />
+    <param name="adaptive_filter_angular_jerk_step" value="$(arg adaptive_filter_angular_jerk_step)" />
     <param name="time_scale" value="$(arg time_scale)" />
 
     <param name="planning_time" value="$(arg planning_time)" />

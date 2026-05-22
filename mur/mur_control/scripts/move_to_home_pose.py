@@ -4,9 +4,12 @@ import sys
 import rospy
 import moveit_commander
 from math import pi, tau
+from std_msgs.msg import Bool
 
 moveit_commander.roscpp_initialize(sys.argv)
 rospy.init_node("move_to_home_node", anonymous=True)
+
+home_pose_ready_pub = rospy.Publisher("/home_pose_ready", Bool, queue_size=1, latch=True)
 
 robot = moveit_commander.RobotCommander()
 scene = moveit_commander.PlanningSceneInterface()
@@ -26,6 +29,9 @@ for group_name in group_names:
 	except moveit_commander.MoveItCommanderException as e:
 		rospy.logwarn("Exception occured: {}".format(e))
 		pass
+
+home_pose_ready_pub.publish(Bool(data=True))
+rospy.loginfo("Home pose reached; published /home_pose_ready.")
 
 
 # group_name = "UR_arm"

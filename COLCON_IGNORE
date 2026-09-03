@@ -1,0 +1,2 @@
+ROS 1 reference repository. Keep it in the workspace for porting notes, but do
+not let colcon treat its catkin packages as part of the ROS 2 build.
